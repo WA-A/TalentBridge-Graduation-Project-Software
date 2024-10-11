@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Text, View, TouchableOpacity, Animated } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-
+import { AnimatedCircles, useLineEffect} from './../compnent/Animation'
 import {
     StyledContainer,
     InnerContainer,
@@ -19,46 +19,22 @@ import {
     RightIcon,
     Circle,
     Rectangle,
-    StyledLine
+    StyledLine,
+    Circle1,
+    Circle2,
+    
 } from './../compnent/Style';
 //icon 
-import { FontAwesome, Ionicons, AntDesign, FontAwesome6, MaterialCommunityIcons } from '@expo/vector-icons';
+import { FontAwesome, Ionicons, AntDesign
+    ,FontAwesome6, MaterialCommunityIcons,FontAwesome5Brands
+} from '@expo/vector-icons';
 
 //formik
 import { Formik } from 'formik';
+import styled from 'styled-components/native';
 
 //color
-const { brand, darkLight } = Colors;
-//line animation :
-const LineEffect = () => {
-    const width = useRef(new Animated.Value(0)).current;
-
-    useEffect(() => {
-        const loopAnimation = Animated.loop(
-            Animated.sequence([
-                Animated.timing(width, {
-                    toValue: 30, // العرض النهائي
-                    duration: 2000, // مدة الظهور
-                    useNativeDriver: false,
-                }),
-                Animated.timing(width, {
-                    toValue: 0, // إرجاع العرض إلى 0 (لإخفاء الخط)
-                    duration: 3000, // مدة الاختفاء
-                    useNativeDriver: false,
-                }),
-                Animated.delay(2000),
-            ])
-        );
-        loopAnimation.start();
-       
-        // تنظيف عند إلغاء المكون
-        return () => loopAnimation.stop();
-    }, [width]);
-
-    return (
-        <Animated.View style={{ width, height: 2, backgroundColor: 'red' }} />
-    );
-};
+const { brand, darkLight,careysPink,firstColor,secColor,thirdColor,fourhColor,fifthColor ,primary,tertiary} = Colors;
 
 const TypingEffect = () => {
     const [text, setText] = useState('');
@@ -77,7 +53,6 @@ const TypingEffect = () => {
 
                 // تشغيل أنيميشن اختفاء النص لليسار
                 Animated.timing(animationValue, {
-                    toValue: -300, // المسافة التي سينزلق فيها النص لليسار
                     duration: 2000, // مدة الحركة بالمللي ثانية
                     useNativeDriver: true,
                 }).start(() => {
@@ -101,6 +76,8 @@ const TypingEffect = () => {
     );
 };
 export default function Login({ navigation }) {
+    const lineWidth = useLineEffect(); // الحصول على القيمة المتحركة للعرض
+
     const [hidePassword, setHidePassword] = useState(true);
     const slideAnim = useRef(new Animated.Value(0)).current;
 
@@ -130,22 +107,13 @@ export default function Login({ navigation }) {
         <StyledContainer>
             <StatusBar style="dark" />
 
-            {/* دوائر ملونة على الأطراف */}
             <Rectangle top="px" left="px" />
-            {/*<Circle top="100px" right="20px" />
-<Circle bottom="50px" left="150px" />*/}
+            
             <InnerContainer>
+            <AnimatedCircles></AnimatedCircles>
                 <PageLogo resizeMode="cover" source={require('./../assets/Talent_Bridge_logo_with_black_border3.png')} />
                 {/*<Text>StatusBarHeight: {StatusBarHeight}px</Text>*/}
-                <Animated.Text style={{ transform: [{ translateX }], fontSize: 17, fontWeight: 'bold', marginBottom: 5, letterSpacing: 1 }}>
-                    TALENT BRIDGE
-                </Animated.Text>
-                <SubTitle>Account Login</SubTitle>
-                <SubTitle></SubTitle>
                 <TypingEffect></TypingEffect>
-                <LineEffect></LineEffect>
-                <StyledLine></StyledLine>
-                
                 <Formik
 
                     initialValues={{ email: '', password: '' }}
@@ -178,17 +146,57 @@ export default function Login({ navigation }) {
                                 hidePassword={hidePassword}
                                 setHidePassword={setHidePassword}
                             />
+   <StyledButton onPress={handleSubmit}>
+                                <ButtonText>Login</ButtonText>
+                            </StyledButton>
 
                             {/* Forgot Password Section */}
                             <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
-                                <Text style={{ color: brand, textAlign: 'right', marginBottom: 20 }}>
+                                <Text style={{ color: brand,fontWeight:'bold', textAlign: 'center', marginBottom: 20 }}>
                                     Forgot Password?
                                 </Text>
                             </TouchableOpacity>
+                        
+      <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 40 }}>
+    {/* Google Login */}
+    <TouchableOpacity onPress={() => { /* تنفيذ تسجيل الدخول باستخدام Google */ }} 
+    style={{  alignItems: 'center', }}>
+         <View style={styles.iconContainer}>
+         <View style={styles.circleBackground}>
 
-                            <StyledButton onPress={handleSubmit}>
-                                <ButtonText>Login</ButtonText>
-                            </StyledButton>
+        <FontAwesome name="google" size={17} color={primary} />
+        </View>
+        <Text style={{ marginLeft: 12, fontSize: 15, color: brand, fontWeight: 'bold' }}>
+            Google
+        </Text>
+        </View>
+       
+    </TouchableOpacity>
+
+    {/* Facebook Login */}
+    <TouchableOpacity onPress={() => { /* تنفيذ تسجيل الدخول باستخدام Facebook */ }} 
+    style={{ flexDirection: 'row', alignItems: 'center',  }}>
+       <View style={styles.iconContainer}>
+        <Ionicons name="logo-facebook" size={30} color="#4267B2" />
+        <Text style={{ marginLeft: 10, fontSize: 15, color: '#4267B2', fontWeight: 'bold' }}>
+            Facebook
+        </Text>
+        </View>
+    </TouchableOpacity>
+</View>
+
+                            {/* Add the message with TouchableOpacity */}
+                            <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 20, }}>
+                                <Text style={{ color: darkLight }}>
+                                    You do not have an account?
+                                </Text>
+                                <TouchableOpacity onPress={() => navigation.navigate('Signup')}>
+                                <Text   style={{ color: brand,fontWeight:'bold',marginLeft: 5}}>
+                                 Please sign up.
+                                    </Text>
+                                </TouchableOpacity>
+                            </View>
+                           
                         </StyledFormArea>
                     )}
                 </Formik>
@@ -210,6 +218,38 @@ const MyTextInput = ({ label, icon, isPassword, hidePassword, setHidePassword, .
                     <Ionicons name={hidePassword ? "eye-off" : "eye"} size={25} color={darkLight} />
                 </RightIcon>
             )}
+
+            
         </View>
     );
+};
+const styles = {
+    iconContainer: {
+        width:150,
+        height:50,
+        borderRadius: 15, 
+        marginHorizontal: 5, // تباعد بين الأيقونات
+        alignItems: 'center', // محاذاة الأيقونة في الوسط
+        justifyContent: 'center', // محاذاة الأيقونة في الوسط
+        shadowColor: "#000", // إضافة تأثير الظل
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.1,
+        shadowRadius: 3.84,
+        borderWidth: 1, // سماكة الحدود
+        borderColor: '#e0e0e0', // لون الحدود الخفيف جداً
+        backgroundColor: 'transparent', // خلفية شفافة (من نفس لون الشاشة)
+        flexDirection: 'row'
+
+    },
+      circleBackground: {
+        width: 27, // العرض والارتفاع لجعل الدائرة متساوية
+        height: 27,
+        borderRadius: 35, // نصف العرض أو الارتفاع لجعل الشكل دائري
+        backgroundColor:brand, // لون الخلفية للدائرة
+        alignItems: 'center', // محاذاة الأيقونة في الوسط
+        justifyContent: 'center', // محاذاة الأيقونة في الوسط
+    },
 };

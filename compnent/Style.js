@@ -1,7 +1,7 @@
 // Style.js
 import styled from 'styled-components/native';
 import Constants from 'expo-constants';
-import { Animated } from 'react-native';
+
 export const Colors = {
     primary: "#ffffff",
     primaryDark: "#334664",
@@ -63,7 +63,7 @@ export const SubTitle = styled.Text`
     letter-spacing: 1px;
     font-weight: bold;
     color: ${tertiary};
-    
+
 `;
 
 export const Talent  = styled.Text`
@@ -155,9 +155,45 @@ export const ButtonText = styled.Text`
 
 
 export const Circle = styled.View`
-    width: 100px;
-    height: 100px;
-    background-color: ${brand}; /* يمكنك تغيير اللون هنا */
+    width: 5px;
+    height: 30px;
+    background-color: ${fifthColor}; /* يمكنك تغيير اللون هنا */
+    border-radius: 50px; /* لجعل الشكل دائري */
+    position: absolute;
+    top: ${({ top }) => top || '10px'};
+    left: ${({ left }) => left || '10px'};
+    right: ${({ right }) => right || 'auto'};
+    bottom: ${({ bottom }) => bottom || 'auto'};
+    opacity: 0.5; /* يمكنك التحكم في الشفافية */
+`;
+export const Circle1 = styled.View`
+    width: 40px;
+    height: 10px;
+    background-color: ${primary}; /* يمكنك تغيير اللون هنا */
+    border-radius: 10px; /* لجعل الشكل دائري */
+    position: absolute;
+    top: ${({ top }) => top || '10px'};
+    left: ${({ left }) => left || '10px'};
+    right: ${({ right }) => right || 'auto'};
+    bottom: ${({ bottom }) => bottom || 'auto'};
+    opacity: 0.5; /* يمكنك التحكم في الشفافية */
+`;
+export const Circle2 = styled.View`
+    width: 50px;
+    height: 50px;
+    background-color: ${careysPink}; /* يمكنك تغيير اللون هنا */
+    border-radius: 50px; /* لجعل الشكل دائري */
+    position: absolute;
+    top: ${({ top }) => top || '10px'};
+    left: ${({ left }) => left || '10px'};
+    right: ${({ right }) => right || 'auto'};
+    bottom: ${({ bottom }) => bottom || 'auto'};
+    opacity: 0.5; /* يمكنك التحكم في الشفافية */
+`;
+export const Circle3 = styled.View`
+    width: 20px;
+    height: 20px;
+    background-color: ${tertiary}; /* يمكنك تغيير اللون هنا */
     border-radius: 50px; /* لجعل الشكل دائري */
     position: absolute;
     top: ${({ top }) => top || '10px'};
@@ -168,7 +204,7 @@ export const Circle = styled.View`
 `;
 export const Rectangle = styled.View`
     width: 400px;
-    height: 425px;
+    height: 400px;
     background-color: ${brand}; /* يمكنك تغيير اللون هنا */
     border-radius: 5px; /* لجعل الشكل دائري */
     position: absolute;
@@ -184,3 +220,25 @@ export const StyledLine = styled.View`
     margin: ${props => props.margin || '10px 0'}; /* المسافة الافتراضية حول الخط */
     width: ${props => props.width || '7%'}; /* طول الخط */
 `;
+
+
+export const pickerStyle = {
+    height: 50,
+    width: '30%',
+    borderWidth: 1,
+    borderColor: '#ccc', // لون الحدود
+    borderRadius: 10, // زوايا دائرية
+    borderRadius:50,
+    backgroundColor: secColor, // لون الخلفية
+    marginVertical: 10, // تباعد رأسي
+    paddingHorizontal: 10, // تباعد داخلي
+};
+
+export const labelStyle = {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: darkLight, // استخدم اللون المناسب من ألوانك
+    marginBottom: 5, // تباعد بين النص و الـ Picker
+};
+
+
