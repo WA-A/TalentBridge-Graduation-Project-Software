@@ -1,3 +1,4 @@
+
 // Animation.js
 import React, { useEffect, useRef ,useState} from 'react';
 import { Text,Animated, View, StyleSheet } from 'react-native';
