@@ -185,6 +185,10 @@ export default function Signup({ navigation }) {
                             </StyledFormArea>
                         )}
                     </Formik>
+                      {/* Back to screen button WelcomeScreen */}
+                 <TouchableOpacity style={{ marginTop: 20 }} onPress={() => navigation.navigate('WelcomeScreen')}>
+                    <Text style={{ color: brand, fontWeight: 'bold', textAlign: 'center' }}>Back to Welcome Screen</Text>
+                </TouchableOpacity>
                 </InnerContainer>
             </ScrollView>
         </StyledContainer>

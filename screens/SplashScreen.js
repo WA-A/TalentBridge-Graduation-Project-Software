@@ -31,7 +31,7 @@ const { brand, darkLight,careysPink,firstColor,secColor,thirdColor,fourhColor,fi
 const SplashScreen = ({ navigation }) => {
   useEffect(() => {
     setTimeout(() => {
-      navigation.replace('Login');  
+      navigation.replace('WelcomeScreen');  
     }, 3000);
   }, []);
 
