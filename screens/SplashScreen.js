@@ -1,37 +1,37 @@
 
 // Animation.js
-import React, { useEffect, useRef ,useState} from 'react';
-import { Text,Animated, View, StyleSheet } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { Text, Animated, View, StyleSheet } from 'react-native';
 
 import {
-    StyledContainer,
-    InnerContainer,
-    PageLogo,
-    PageTitle,
-    StatusBarHeight,
-    StyledFormArea,
-    SubTitle,
-    LeftIcon,
-    ButtonText,
-    StyledButton,
-    StyleInputLable,
-    StyledTextInput,
-    Colors,
-    RightIcon,
-    Rectangle,
-    StyledLine,
-    Circle,
-    Circle1,
-    Circle2,
-    Circle3,
+  StyledContainer,
+  InnerContainer,
+  PageLogo,
+  PageTitle,
+  StatusBarHeight,
+  StyledFormArea,
+  SubTitle,
+  LeftIcon,
+  ButtonText,
+  StyledButton,
+  StyleInputLable,
+  StyledTextInput,
+  Colors,
+  RightIcon,
+  Rectangle,
+  StyledLine,
+  Circle,
+  Circle1,
+  Circle2,
+  Circle3,
 } from './../compnent/Style';
-const { brand, darkLight,careysPink,firstColor,secColor,thirdColor,fourhColor,fifthColor } = Colors;
+const { brand, darkLight, careysPink, firstColor, secColor, thirdColor, fourhColor, fifthColor } = Colors;
 
 
 const SplashScreen = ({ navigation }) => {
   useEffect(() => {
     setTimeout(() => {
-      navigation.replace('WelcomeScreen');  
+
     }, 3000);
   }, []);
 
@@ -47,7 +47,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor : thirdColor
+    backgroundColor: thirdColor
   },
   text: {
     color: '#FFF',

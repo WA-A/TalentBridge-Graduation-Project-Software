@@ -53,7 +53,7 @@ export default function Signup({ navigation }) {
 
     const [hidePassword, setHidePassword] = useState(true);
     const slideAnim = useRef(new Animated.Value(0)).current;
-
+/////
     useEffect(() => {
         const slideInOut = () => {
             Animated.sequence([
@@ -76,7 +76,12 @@ export default function Signup({ navigation }) {
     return (
         <StyledContainer>
             <StatusBar style="dark" />
-
+            <TouchableOpacity
+    onPress={() => navigation.navigate('WelcomeScreen')}
+    style={{ position: 'absolute', top: 40, left: 20, zIndex: 10 }}
+>
+    <Ionicons name="arrow-back" size={30} color={brand} />
+</TouchableOpacity>
             <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled"
              showsVerticalScrollIndicator={false} // تعطيل التأشير العمودي
              showsHorizontalScrollIndicator={false} >
