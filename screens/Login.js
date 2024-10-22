@@ -94,7 +94,7 @@ export default function Login({ navigation }) {
             ]).start(() => slideInOut()); // إعادة تشغيل الحركة بعد الانتهاء
         };
 
-        slideInOut(); // بدء الحركة
+        slideInOut(); 
     }, [slideAnim]);
 
     // تحويل القيمة المتحركة إلى موضع أفقي
@@ -108,7 +108,14 @@ export default function Login({ navigation }) {
             <StatusBar style="dark" />
 
             <Rectangle top="px" left="px" />
-            
+            {/* زر الرجوع */}
+<TouchableOpacity
+    onPress={() => navigation.navigate('WelcomeScreen')}
+    style={{ position: 'absolute', top: 40, left: 20, zIndex: 10 }}
+>
+    <Ionicons name="arrow-back" size={30} color={brand} />
+</TouchableOpacity>
+
             <InnerContainer>
             <AnimatedCircles></AnimatedCircles>
                 <PageLogo resizeMode="cover" source={require('./../assets/Talent_Bridge_logo_with_black_border3.png')} />
