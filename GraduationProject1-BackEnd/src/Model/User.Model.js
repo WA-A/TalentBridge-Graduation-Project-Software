@@ -1,5 +1,6 @@
 import mongoose, { Schema, model } from 'mongoose';
 
+
 const UserSchema = new Schema({
    FullName:{
       type: String,
@@ -31,7 +32,7 @@ const UserSchema = new Schema({
     type:String
     },
     BirthDate: {
-      type: Date,
+      type:Date,
       required: true // Make this field mandatory
   },
     Location:{
@@ -65,7 +66,11 @@ const UserSchema = new Schema({
      SendCode:{
       type:String,
         default:null,
-     }
+     },
+     ConfirmEmail:{
+      type:String,
+      default:false
+   },
     },
     {
      timestamps:true,
