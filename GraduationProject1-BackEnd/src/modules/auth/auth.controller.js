@@ -11,13 +11,13 @@ import xlsx from "xlsx";
 export const SignUp = async (req,res)=>{
    
    
-    const {UserName,Email,Password} = req.body;
+    const {FullName,Username,Email, Password,ConfirmPassword,Gender,DateofBirth,PhoneNumber,Location,YearsofExperience} = req.body;
 
     const HashedPassword = bcrypt.hashSync(Password,parseInt(process.env.SALTROUND));
      
-    const CreateUser = await UserModel.create({UserName,Email,Password:HashedPassword});
+    const CreateUser = await UserModel.create({FullName,Username,Email,Password:HashedPassword,ConfirmPassword,Gender,DateofBirth,PhoneNumber,Location,YearsofExperience});
     const decoded = jwt.sign(token,process.env.CONFIRM_EMAILTOKEN);
-   await SendEmail(Email,`Welcom`,`<h2>hello ${UserName}</h2>`,decoded);
+   //await SendEmail(Email,`Welcom`,`<h2>hello ${FullName}</h2>`,decoded);
     return res.status(201).json({message:" success",user:CreateUser});
 
 }

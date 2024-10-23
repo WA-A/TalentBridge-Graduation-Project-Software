@@ -11,7 +11,7 @@ import fileUpload from "../../../utls/Multer.js";
 
 
 
-router.post('/signup',Validation(schema.RegisterSchema),CheckEmail,AsyncHandler(AuthController.SignUp));
+router.post('/signup',Validation(schema.RegisterSchema),CheckEmail,AuthController.SignUp);
 router.post('/addexcle',fileUpload().single('excle'),AsyncHandler(AuthController.AddUserExcel));
 router.post('/signin',Validation(schema.LoginSchema),AuthController.SignIn);
 router.patch('/sendcode',Validation(schema.SendCodeSchema),AuthController.SendCode);
