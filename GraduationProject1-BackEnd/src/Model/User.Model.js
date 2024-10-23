@@ -16,28 +16,35 @@ const UserSchema = new Schema({
         type:String,
         unique:true
      },
-     IsDeleted:{ // delete user and may return after delete
-     type:Boolean,
-     default:false,
-     },
      Password:{
         type:String,
         required:true
      },
-     Phone:{
+     ConfirmPassword:{
+      type:String,
+      default:false
+   },
+     PhoneNumber:{
       type:String
      },
     Address:{
     type:String
     },
-     ConfirmEmail:{
-        type:Boolean,
-        default:false
-     },
-     gender:{
+    BirthDate: {
+      type: Date,
+      required: true // Make this field mandatory
+  },
+    Location:{
+      type:String
+      },
+     Gender:{
         type:String,
         enum:['Male','Female'],
      },
+     IsDeleted:{ // delete user and may return after delete
+      type:Boolean,
+      default:false,
+      },
      PictureProfile:{
       type:Object
      },
@@ -49,11 +56,6 @@ const UserSchema = new Schema({
      },
      YearsOfExperience:{
       type:Number
-     },
-     Status:{
-        type:String,
-        default:'Active',
-        enum:['Active','NotActive'],
      },
      Role:{
         type:String,
