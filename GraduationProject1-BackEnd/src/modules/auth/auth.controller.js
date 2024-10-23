@@ -3,32 +3,24 @@ import jwt from 'jsonwebtoken';
 import { SendEmail } from "../../../utls/SendEmail.js";
 import { customAlphabet, nanoid } from 'nanoid';
 import UserModel from '../../Model/User.Model.js';
-//import { read, writeFileXLSX } from "xlsx";
-import xlsx from "xlsx";
+
 
 
 
 export const SignUp = async (req,res)=>{
    
-   
-    const {FullName,Username,Email, Password,ConfirmPassword,Gender,DateofBirth,PhoneNumber,Location,YearsofExperience} = req.body;
+    const {FullName,Username,Email, Password,ConfirmPassword,Gender,BirthDate,PhoneNumber,Location,YearsofExperience} = req.body;
 
     const HashedPassword = bcrypt.hashSync(Password,parseInt(process.env.SALTROUND));
      
-    const CreateUser = await UserModel.create({FullName,Username,Email,Password:HashedPassword,ConfirmPassword,Gender,DateofBirth,PhoneNumber,Location,YearsofExperience});
+    const CreateUser = await UserModel.create({FullName,Username,Email,Password:HashedPassword,ConfirmPassword,Gender,BirthDate,PhoneNumber,Location,YearsofExperience});
     const decoded = jwt.sign(token,process.env.CONFIRM_EMAILTOKEN);
    //await SendEmail(Email,`Welcom`,`<h2>hello ${FullName}</h2>`,decoded);
     return res.status(201).json({message:" success",user:CreateUser});
 
 }
 
-export const ConfirmEmail = async(req,res)=>{
-const token = req.params.token;
-const decoded = jwt.verify(token,process.env.CONFIRM_EMAILTOKEN);
-await UserModel.findOneAndUpdate({Email:decoded.Email},{ConfirmEmail:true});
-return res.status(200).json({message:"success"});
 
-}
 export const SignIn = async (req,res)=>{
     const {Email,Password} = req.body;
 
@@ -42,13 +34,8 @@ export const SignIn = async (req,res)=>{
     const Match = bcrypt.compare(Password,user.Password);
      
 
-    if(user.Status == "Not Active"){
-        return res.status(400).json({message:" The account is blocked"});
-
-    }
-
     if(!Match){
-        return res.status(400).json({message:" Invalid data"});
+        return res.status(400).json({message:" worng password"});
 
     }
 
@@ -95,15 +82,13 @@ export const SendCode = async(req,res)=>{
          
      }
 
-
-     export const AddUserExcel = async(req,res)=>{
-            const WorkBook = xlsx.readFile(req.file.path);
-            const worksheet= WorkBook.Sheet[WorkBook.SheetNames[0]];
-            const users= xlsx.utils.sheet_to_json(worksheet);
-
-            await UserModel.insertMany(users);
-
-            return res.json({message:"sucess"});
-     }
+     export const ConfirmEmail = async(req,res)=>{
+        const token = req.params.token;
+        const decoded = jwt.verify(token,process.env.CONFIRM_EMAILTOKEN);
+        await UserModel.findOneAndUpdate({Email:decoded.Email},{ConfirmEmail:true});
+        return res.status(200).json({message:"success"});
+        
+        }
+     
     
   
