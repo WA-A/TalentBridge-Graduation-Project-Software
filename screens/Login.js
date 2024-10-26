@@ -201,16 +201,24 @@ export default function Login({ navigation }) {
                                 <Text   style={{ color: brand,fontWeight:'bold',marginLeft: 5}}>
                                  Please sign up.
                                     </Text>
-                                </TouchableOpacity>
+                                    </TouchableOpacity>
+
+
+                               
+
                             </View>
-                           
+                           <View>
+                           <TouchableOpacity onPress={() => navigation.navigate('HomeScreen')}>
+                                    
+                                    <Text style={{ color: darkLight,margin:20 }}>
+                                        Home after login
+                                    </Text>
+                                    </TouchableOpacity>
+    
+                           </View>
                         </StyledFormArea>
                     )}
                 </Formik>
-                 {/* Back to screen button WelcomeScreen */}
-                 <TouchableOpacity style={{ marginTop: 20 }} onPress={() => navigation.navigate('WelcomeScreen')}>
-                    <Text style={{ color: brand, fontWeight: 'bold', textAlign: 'center' }}>Back to Welcome Screen</Text>
-                </TouchableOpacity>
             </InnerContainer>
         </StyledContainer>
     );
