@@ -40,6 +40,39 @@ export const ViewOwnProfile = async (req, res) => {
     }
  };
  
- 
+ // Edit Own Profile
+export const UpdateOwnProfile = async (req,res)=>{
+    const user = await UserModel.findById(req.params.id);
+
+    if(!user){
+        return res.status(404).json({message:"user not found"});
+    
+    }
+    ;
+    
+    if(await UserModel.findOne({_id:{$ne:req.params.id}})){
+        return res.status(409).json({message:"UserName aleardy exists"});
+    }
+    
+
+    
+    if(req.file){
+        const {secure_url,public_id} = await Cloudinary.uploader.upload(req.file.path,
+            {
+                folder:'GraduationProject1-Software/Proflie/id'
+            });
+    
+            Cloudinary.uploader.destroy(user.image.public_id);
+            user.image = {secure_url,public_id};
+        
+    }
+    
+    user.Status = req.body.Status;
+    user.updatedBy = req.user._id;
+    await user.save(); // to update in DB
+    return res.status(200).json({message:"success",user});
+    
+}
+ // View other people's profiles
  
  
