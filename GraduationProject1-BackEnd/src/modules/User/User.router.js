@@ -7,7 +7,6 @@ import { EndPoints } from "./User.Role.js";
 
 
 router.post('/createprofile',auth(EndPoints.CreateProfile),fileUpload(FileValue.PictureProfile).single('PictureProfile'),UserController.createProfile);
-
-
+router.get('/viewpwnprofile',auth(EndPoints.CreateProfile),UserController.ViewOwnProfile);
 
 export default router
