@@ -14,7 +14,7 @@ export const SignUp = async (req,res)=>{
     const HashedPassword = bcrypt.hashSync(Password,parseInt(process.env.SALTROUND));
      
     const CreateUser = await UserModel.create({FullName,Username,Email,Password:HashedPassword,ConfirmPassword,Gender,BirthDate,PhoneNumber,Location,YearsofExperience});
-    const decoded = jwt.sign(token,process.env.CONFIRM_EMAILTOKEN);
+    const token = jwt.sign({Email},process.env.CONFIRM_EMAILTOKEN);
    //await SendEmail(Email,`Welcom`,`<h2>hello ${FullName}</h2>`,decoded);
     return res.status(201).json({message:" success",user:CreateUser});
 

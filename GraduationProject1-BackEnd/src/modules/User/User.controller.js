@@ -1,14 +1,30 @@
 import UserModel from "../../Model/User.Model.js";
+import Cloudinary from '../../../utls/Cloudinary.js';
 
+// Create Own Profile
+export const createProfile = async (req, res) => {
+   const { About, Bio } = req.body;
+   const authuser = req.user;
 
-export const GetUsers = async (req,res) =>{
-    const users = await UserModel.find({});
-    return res.status(200).json({message:"success",users});
-}
+   const existingUser = await UserModel.findById(authuser._id)
 
+    if (!existingUser) {
+        return res.status(404).json({ message: "User not found" });
+    }
 
-export const GetDataUser = async (req,res) =>{
-    const users = await UserModel.findById(req.user._id); // Get user information based on who is logged in 
-    return res.status(200).json({message:"success",users});
+   
+   
+    const {secure_url,public_id} = await Cloudinary.uploader.upload(req.file.path,
+    {
+        folder:'GraduationProject1-Software/Proflie/id'
+    });
+    
+    existingUser.PictureProfile = { secure_url, public_id }; 
+
+    
+    const user =  await UserModel.create(req.body);
+    return res.status(200).json({message:user});
+
+   
 }
 
