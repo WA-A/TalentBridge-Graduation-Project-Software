@@ -55,9 +55,10 @@ const UserSchema = new Schema({
      Bio:{
       type:String,
      },
-     YearsOfExperience:{
-      type:Number
-     },
+     YearsOfExperience: {
+      type: Number,
+      required: function() { return this.Role === 'Senior'; } 
+   },
      Role:{
         type:String,
         default:'Junior',
@@ -78,5 +79,5 @@ const UserSchema = new Schema({
 );
  
 
-const UserModel = model('User',UserSchema); // no relation in mongodb [ no sql]
+const UserModel = model('User',UserSchema); 
 export default UserModel;
