@@ -13,7 +13,19 @@ export const CreateProject = async(req,res)=>{
 }
 
 //  View Own Project Created
+export const GetProjectsBySenior = async (req, res) => {
+    
+        const CreatedBySenior = req.user._id; 
+        const projects = await ProjectsModel.find({ CreatedBySenior });
 
+        
+        if (!projects.length) {
+            return res.status(404).json({ message: "No projects found for this senior." });
+    } 
+    return res.status(200).json({ projects });
+      
+    
+};
  
  // Edit Own Project Created
 
