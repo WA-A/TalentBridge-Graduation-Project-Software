@@ -21,7 +21,6 @@ const ProjectsSchema = new Schema({
   Field: {
     type: String,
     required: true,
-    enum: ['IT', 'Marketing', 'Design', 'Engineering'],
     trim: true, 
   },
   Status: {

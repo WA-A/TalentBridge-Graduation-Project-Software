@@ -75,5 +75,26 @@ export const DeleteProjectBySenior = async (req, res) => {
 };
 
  // View other people's Project in all fileds
+
+ export const GetProjectsByField = async (req, res) => {
+    const { Field } = req.params; 
+    const CreatedBySenior = req.user._id; 
+    console.log("Field parameter received:", Field);
+    
+    
+    if (!Field) {
+        return res.status(400).json({ message: "Field parameter is required." });
+    }
+
+    const projects = await ProjectsModel.find({ Field: Field });
+
+    if (projects.length === 0) {
+        return res.status(404).json({ message: "No projects found in this field." });
+    }
+
+    return res.status(200).json({ message: "Projects retrieved successfully.", projects });
+};
+
+
  
  
