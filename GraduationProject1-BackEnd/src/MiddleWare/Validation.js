@@ -4,7 +4,7 @@ export const Validation = (schema)=>{
    return (req,res,next)=>{
     
     if(req.file){
-        fileData.image = req.file
+        fileData.PictureProfile = req.file
     }
     
     const {error}={...req.body,...req.params,...req.query};
