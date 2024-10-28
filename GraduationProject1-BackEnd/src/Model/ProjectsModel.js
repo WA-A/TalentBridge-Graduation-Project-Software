@@ -1,4 +1,4 @@
-import mongoose, { Schema, model } from 'mongoose';
+import mongoose, { Schema, model,Types } from 'mongoose';
 
 
 const ProjectsSchema = new Schema({
@@ -17,9 +17,12 @@ const ProjectsSchema = new Schema({
     ref: 'User',
     required: true,
   },
-  RequiredSkills: {
-    type: [String], // Array of skill names
+  RequiredSkills: [{ type: String }],
+  Field: {
+    type: String,
     required: true,
+    enum: ['IT', 'Marketing', 'Design', 'Engineering'],
+    trim: true, 
   },
   Status: {
     type: String,
@@ -42,16 +45,16 @@ const ProjectsSchema = new Schema({
   updatedBy:{type:Types.ObjectId,ref:'User'},
 },
 {
-  timestamps:true,
+ // timestamps:true,
    toJSON:{virtuals:true},
    toObject:{virtuals:true}
 });
 
-// Middleware to update the 'updated_at' field automatically before each save
-projectSchema.pre('save', function (next) {
-  this.updated_at = Date.now();
-  next();
-});
+// // Middleware to update the 'updated_at' field automatically before each save
+// ProjectsSchema.pre('save', function (next) {
+//   this.updated_at = Date.now();
+//   next();
+// });
 
 
 const ProjectsModel = model('Projects',ProjectsSchema); 
