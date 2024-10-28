@@ -12,6 +12,6 @@ router.post('/createproject',Validation(schema.CreateProjectSchema),auth(EndPoin
 router.get('/viewownprojectcreated',auth(EndPoints.CreateProject),ProjectController.GetProjectsBySenior);
 router.put('/updateownprojectcreated/:ProjectId',Validation(schema.UpdateProjectSchema),auth(EndPoints.CreateProject),ProjectController.UpdateProjectBySenior);
 router.delete('/deleteownprojectcreated/:ProjectId',Validation(schema.DeleteProjectSchema),auth(EndPoints.CreateProject),ProjectController.DeleteProjectBySenior);
-router.get('/viewprojectbyfiled/:Filed',Validation(schema.GetProjectsByFieldSchema),auth(EndPoints.CreateProject),ProjectController.GetProjectsByField);
+router.get('/viewprojectbyfiled',Validation(schema.GetProjectsByFieldSchema),auth(EndPoints.CreateProject),ProjectController.GetProjectsByField);
 
 export default router

@@ -77,7 +77,7 @@ export const DeleteProjectBySenior = async (req, res) => {
  // View other people's Project in all fileds
 
  export const GetProjectsByField = async (req, res) => {
-    const { Field } = req.params; 
+    const { Field } = req.body; 
     const CreatedBySenior = req.user._id; 
     console.log("Field parameter received:", Field);
     
@@ -85,7 +85,6 @@ export const DeleteProjectBySenior = async (req, res) => {
     if (!Field) {
         return res.status(400).json({ message: "Field parameter is required." });
     }
-
     const projects = await ProjectsModel.find({ Field: Field });
 
     if (projects.length === 0) {
