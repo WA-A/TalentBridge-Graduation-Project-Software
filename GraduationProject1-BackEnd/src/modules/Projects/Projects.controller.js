@@ -56,7 +56,23 @@ export const GetProjectsBySenior = async (req, res) => {
 };
 
 // Delete Own Project Created
+export const DeleteProjectBySenior = async (req, res) => {
+    const { ProjectId } = req.params; 
+    const CreatedBySenior = req.user._id; 
 
+  
+    const deletedProject = await ProjectsModel.findOneAndDelete({
+        _id: ProjectId,
+        CreatedBySenior
+    });
+
+    
+    if (!deletedProject) {
+        return res.status(404).json({ message: "Project not found or you are not authorized to delete this project." });
+    }
+
+    return res.status(200).json({ message: "Project deleted successfully." });
+};
 
  // View other people's Project in all fileds
  
