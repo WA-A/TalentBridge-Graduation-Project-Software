@@ -2,6 +2,6 @@ import {Roles} from '../../MiddleWare/auth.js'
 
 
 export const EndPoints = {
-    CreateProfile:[Roles.Junior,Roles.Senior],
+    CreateProject:[Roles.Senior],
     
 }

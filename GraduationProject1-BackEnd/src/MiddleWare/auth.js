@@ -2,8 +2,9 @@ import jwt from 'jsonwebtoken';
 import UserModel from './../Model/User.Model.js';
 
 export const Roles = { // --> array تحتوي من له صلاحية للاستخدام
-    Admin:'Admin',
-    User:'User'
+    Admin: 'Admin',
+    Junior: 'Junior',
+    Senior: 'Senior'
 }
 
 export const auth = (AccessRole = []) =>{
@@ -11,7 +12,7 @@ export const auth = (AccessRole = []) =>{
     return async (req,res,next)=>{
         const {authorization} = req.headers;
         
-        if(!authorization.startsWith(process.env.BEARERKEY)){ // bearer token the before is named basic token
+        if(!authorization?.startsWith(process.env.BEARERKEY)){ // bearer token the before is named basic token
             //return res.json({message:"Invalid token"});
             return next(new Error (`Invalid token`,401));
 
@@ -19,7 +20,7 @@ export const auth = (AccessRole = []) =>{
         
         
         const token = authorization.split(process.env.BEARERKEY)[1]; // [1] means after Wasan__
-        
+        console.log (token);
         const decoded =  jwt.verify(token,process.env.LOGINSIG)
         
         if(!decoded){ 

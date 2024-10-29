@@ -242,3 +242,78 @@ export const labelStyle = {
 };
 
 
+export const Card = styled.View`
+width: 100%;
+border-radius: 10px;
+
+`;
+export const ContainerCard = styled.View`
+flex: 1;
+align-items: center;
+padding: 5px;
+`;
+
+export const UserInfo =styled.View`
+flex-direction: row;
+justify-content: flex-start;
+padding: 15px;
+`;
+export const UserIMg = styled.Image`
+width: 50px;
+height: 50px;
+border-radius: 25px;
+`;
+
+export const UserInfoText = styled.View`
+flex-direction: column;
+justify-content: center;
+margin-left: 10px;
+`;
+export const UserName =styled.Text`
+font-size: 14px;
+font-weight: bold;
+font-family: 'Lato-Regular' ;
+`;
+
+
+export const PostTime = styled.Text`
+font-size: 12px;
+font-family: 'Lato-Regular' ;
+color:${darkLight};
+`;
+
+export const PostText =styled.Text`
+font-size: 14px;
+font-family: 'Lato-Regular' ;
+padding-left: 15px;
+padding-right: 15px;
+`;
+
+export const PostIMg = styled.Image`
+width: 100%;
+height:250px;
+margin-top: 15px;
+`;
+
+export const ReactionOfPost = styled.View`
+flex-direction: row;
+justify-content: space-around;
+padding: 15px;
+`;
+
+
+
+export const Interaction = styled.TouchableOpacity`
+flex-direction: row;
+justify-content: center;
+border-radius: 5px;
+padding: 2px 5px;
+`;
+
+export const InteractionText = styled.Text`
+font-size:12px;
+font-weight: bold;
+font-family: 'Lato-Regular' ;
+margin-top: 5px;
+margin-left: 5px;
+`;
