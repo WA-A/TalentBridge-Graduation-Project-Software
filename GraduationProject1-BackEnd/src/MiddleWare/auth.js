@@ -2,8 +2,9 @@ import jwt from 'jsonwebtoken';
 import UserModel from './../Model/User.Model.js';
 
 export const Roles = { // --> array تحتوي من له صلاحية للاستخدام
-    Admin:'Admin',
-    User:'User'
+    Admin: 'Admin',
+    Junior: 'Junior',
+    Senior: 'Senior'
 }
 
 export const auth = (AccessRole = []) =>{

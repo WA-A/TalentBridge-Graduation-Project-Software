@@ -1,7 +1,7 @@
 import connectDB from '../DB/ConnectDB.js';
 import AuthRouter from './modules/auth/auth.router.js';
 import UserRouter from './modules/User/User.router.js';
-
+import projectRouter from './modules/Projects/Projects.router.js'
 import cors from 'cors';
 
 
@@ -11,6 +11,7 @@ const Appinit = (app,express)=>{
     connectDB();
     app.use('/user',UserRouter);
     app.use('/auth',AuthRouter);
+    app.use('/project',projectRouter);
     
     app.use('*',(req,res)=>{
         return res.status(404).json({message:"Page not Found"});
