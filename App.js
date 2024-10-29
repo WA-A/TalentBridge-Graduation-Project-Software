@@ -9,7 +9,7 @@ import WelcomeScreen from './screens/WelcomeScreen';
 import HomeScreen from './screens/HomeScreen';
 import AddPostScreen from './screens/AddPostScreen';
 import { NightModeProvider } from './screens/NightModeContext'; // Import the provider
-
+import ProjectsSeniorPage from './screens/ProjectsSeniorPage.js'
 const Stack = createStackNavigator();
 
 export default function App() {
@@ -48,7 +48,12 @@ export default function App() {
                         component={HomeScreen}
                         options={{ headerShown: false }}
                     />
-                </Stack.Navigator>
+                    
+                    <Stack.Screen 
+                    name="ProjectsSeniorPage" 
+                    component={ProjectsSeniorPage} />
+                    </Stack.Navigator>
+                
             </NavigationContainer>
         </NightModeProvider>
     );
