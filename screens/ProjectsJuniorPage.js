@@ -1,34 +1,47 @@
 import React, { useState, useContext } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Modal, FlatList, Image } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Modal, FlatList, ScrollView, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import { NightModeContext } from './NightModeContext';
-import { Colors } from '../compnent/Style';
+import { Colors } from './../compnent/Style';
 
-// Color constants
 const { secondary, primary, darkLight, fourhColor, careysPink } = Colors;
 const fields = [
-    'IT', 'Digital Marketing', 'Graphic Design', 'Data Science', 
-    'Web Development', 'Mobile Development', 'Cybersecurity',
-    'Machine Learning', 'Blockchain', 'Cloud Computing', 
-    'Artificial Intelligence', 'Project Management', 'Content Writing',
+    'IT',
+    'Digital Marketing',
+    'Graphic Design',
+    'Data Science',
+    'Web Development',
+    'Mobile Development',
+    'Cybersecurity',
+    'Machine Learning',
+    'Blockchain',
+    'Cloud Computing',
+    'Artificial Intelligence',
+    'Project Management',
+    'Content Writing',
 ];
 
-const ProjectsJuniorPage = () => {
+const projects = [
+    { id: '1', title: 'Project Alpha', description: 'An AI-based project' },
+    { id: '2', title: 'Beta Marketing', description: 'Digital Marketing Strategies' },
+    { id: '3', title: 'Gamma Design', description: 'UI/UX Design Concepts' },
+    { id: '4', title: 'Delta Data', description: 'Data Science Analysis' },
+];
+
+const ProjectsSeniorPage = () => {
     const nav = useNavigation();
     const { isNightMode, toggleNightMode } = useContext(NightModeContext);
     const [modalVisible, setModalVisible] = useState(false);
     const [selectedField, setSelectedField] = useState('');
 
-    // Load custom fonts
     let [fontsLoaded] = useFonts({
         'Updock-Regular': require('./../compnent/fonts/Updock-Regular.ttf'),
         'Lato-Bold': require('./../compnent/fonts/Lato-Bold.ttf'),
         'Lato-Regular': require('./../compnent/fonts/Lato-Regular.ttf'),
     });
 
-    // Early return if fonts are not loaded
     if (!fontsLoaded) {
         return <View><Text>Loading...</Text></View>;
     }
@@ -39,25 +52,22 @@ const ProjectsJuniorPage = () => {
     };
 
     return (
-        <View style={{ flex: 1 }}>
+        <View style={{ flex: 1, backgroundColor: isNightMode ? darkLight : '#FFF' }}>
             <View style={{ height: 20, backgroundColor: isNightMode ? "#000" : secondary }} />
 
-            {/* Header */}
             <View style={{
-                flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+                flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', 
                 paddingHorizontal: 10, paddingVertical: 10, backgroundColor: isNightMode ? "#000" : secondary
             }}>
                 <Text style={{
-                    fontFamily: 'Updock-Regular', fontSize: 30, position: 'absolute',
+                    fontFamily: 'Updock-Regular', fontSize: 30, position: 'absolute', 
                     left: 0, right: 0, textAlign: 'center', color: isNightMode ? primary : "#000"
                 }}>
                     Talent Bridge
                 </Text>
-
                 <TouchableOpacity onPress={() => nav.navigate('notifications')}>
                     <Ionicons name="notifications" size={25} color={secondary} />
                 </TouchableOpacity>
-
                 <TouchableOpacity onPress={toggleNightMode}>
                     <View style={{ position: 'relative', width: 50, height: 50 }}>
                         <Ionicons name={isNightMode ? "sunny" : "moon"} size={25} color={darkLight} style={{ position: 'absolute', top: 9, right: 20 }} />
@@ -67,11 +77,7 @@ const ProjectsJuniorPage = () => {
                 </TouchableOpacity>
             </View>
 
-            {/* Icon Navigation */}
-            <View style={{
-                flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-                paddingHorizontal: 10, paddingVertical: 10, backgroundColor: fourhColor, elevation: 3
-            }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 10, paddingVertical: 10, backgroundColor: fourhColor, elevation: 3 }}>
                 <TouchableOpacity onPress={() => nav.navigate('Search')}>
                     <Ionicons name="search" size={25} color="#000" />
                 </TouchableOpacity>
@@ -80,7 +86,16 @@ const ProjectsJuniorPage = () => {
                 </TouchableOpacity>
             </View>
 
-            {/* Modal for Selecting Field */}
+            {/* Projects List in Center */}
+            <ScrollView contentContainerStyle={styles.projectsContainer}>
+                {projects.map((project) => (
+                    <View key={project.id} style={styles.projectCard}>
+                        <Text style={styles.projectTitle}>{project.title}</Text>
+                        <Text style={styles.projectDescription}>{project.description}</Text>
+                    </View>
+                ))}
+            </ScrollView>
+
             <Modal
                 animationType="slide"
                 transparent={true}
@@ -114,7 +129,6 @@ const ProjectsJuniorPage = () => {
                 <TouchableOpacity onPress={toggleNightMode}>
                     <Ionicons name="settings" size={25} color="#000" />
                 </TouchableOpacity>
-               
                 <TouchableOpacity onPress={() => nav.navigate('Profile')}>
                     <Image
                         source={require('./../assets/img1.jpeg')}
@@ -124,7 +138,6 @@ const ProjectsJuniorPage = () => {
                         }}
                     />
                 </TouchableOpacity>
-                
                 <TouchableOpacity onPress={() => nav.navigate('HomeScreen')}>
                     <Ionicons name="home" size={25} color="#000" />
                 </TouchableOpacity>
@@ -134,6 +147,31 @@ const ProjectsJuniorPage = () => {
 };
 
 const styles = StyleSheet.create({
+    projectsContainer: {
+        padding: 15,
+    },
+    projectCard: {
+        backgroundColor: Colors.secondary,
+        padding: 20,
+        borderRadius: 10,
+        marginBottom: 15,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+        elevation: 5,
+    },
+    projectTitle: {
+        fontFamily: 'Lato-Bold',
+        fontSize: 18,
+        color: Colors.primary,
+        marginBottom: 5,
+    },
+    projectDescription: {
+        fontFamily: 'Lato-Regular',
+        fontSize: 14,
+        color: Colors.darkLight,
+    },
     modalContainer: {
         flex: 1,
         justifyContent: 'center',
@@ -157,7 +195,7 @@ const styles = StyleSheet.create({
     closeButton: {
         marginTop: 20,
         alignItems: 'center',
-        backgroundColor: "#C99FA9",
+        backgroundColor: careysPink,
         padding: 10,
         borderRadius: 5,
     },
@@ -167,4 +205,4 @@ const styles = StyleSheet.create({
     },
 });
 
-export default ProjectsJuniorPage;
+export default ProjectsSeniorPage;
