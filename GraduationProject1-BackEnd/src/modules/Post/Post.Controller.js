@@ -1,6 +1,8 @@
 import cloudinary from '../../../utls/Cloudinary.js';
 import PostModel from './../../Model/PostModel.js';
 
+
+// Create Own Post
 export const CreatePost = async (req, res, next) => {
     try {
         
@@ -49,7 +51,7 @@ export const CreatePost = async (req, res, next) => {
 };
 
 
-
+// Update Own Post
 export const UpdatePost = async (req, res, next) => {
     try {
         const { postId } = req.params; 
@@ -99,3 +101,24 @@ export const UpdatePost = async (req, res, next) => {
     }
 };
 
+
+
+// Get Own Posts
+
+export const GetUserPosts = async (req, res, next) => {
+    try {
+        const userId = req.params.userId; 
+
+        
+        const posts = await PostModel.find({ UserId: userId }).populate('UserId', 'ProfileImage');
+
+        return res.status(200).json({ message: "Posts retrieved successfully", posts });
+    } catch (error) {
+        console.error("Error retrieving posts:", error);
+        return next(error);
+    }
+};
+
+// Get All Posts
+
+// Delete Own Post
