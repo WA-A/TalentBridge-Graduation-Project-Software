@@ -9,5 +9,7 @@ const router = Router();
 
 
 router.post('/createpost',auth(EndPoints.CreatePost),fileUpload(FileValue.image).fields([{ name: 'images'}, { name: 'videos'}, { name: 'files'} ]),PostController.CreatePost);
+router.put('/updatepost/:postId',auth(EndPoints.CreatePost),fileUpload(FileValue.image).fields([{ name: 'images'}, { name: 'videos'}, { name: 'files'} ]),PostController.UpdatePost);
+router.get('/getpost/:userId',auth(EndPoints.CreatePost),PostController.GetUserPosts);
 
 export default router;
