@@ -121,4 +121,17 @@ export const GetUserPosts = async (req, res, next) => {
 
 // Get All Posts
 
+export const GetAllPosts = async (req, res, next) => {
+    try {
+        
+        const posts = await PostModel.find().populate('UserId', 'ProfileImage');
+
+        return res.status(200).json({ message: "Posts retrieved successfully", posts });
+    } catch (error) {
+        console.error("Error retrieving posts:", error);
+        return next(error);
+    }
+};
+
+
 // Delete Own Post
