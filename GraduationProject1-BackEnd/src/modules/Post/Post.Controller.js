@@ -123,7 +123,7 @@ export const GetUserPosts = async (req, res, next) => {
 
 export const GetAllPosts = async (req, res, next) => {
     try {
-        
+
         const posts = await PostModel.find().populate('UserId', 'ProfileImage');
 
         return res.status(200).json({ message: "Posts retrieved successfully", posts });
@@ -135,3 +135,27 @@ export const GetAllPosts = async (req, res, next) => {
 
 
 // Delete Own Post
+
+export const DeletePost = async (req, res, next) => {
+    try {
+        const postId = req.params.postId; 
+        const userId = req.user._id; 
+
+        const post = await PostModel.findById(postId);
+
+        if (!post) {
+            return res.status(404).json({ message: "Post not found" });
+        }
+
+        if (post.UserId.toString() !== userId.toString()) {
+            return res.status(403).json({ message: "You are not authorized to delete this post" });
+        }
+
+        await PostModel.findByIdAndDelete(postId);
+
+        return res.status(200).json({ message: "Post deleted successfully" });
+    } catch (error) {
+        console.error("Error deleting post:", error);
+        return next(error);
+    }
+};
