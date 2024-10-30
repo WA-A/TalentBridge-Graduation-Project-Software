@@ -11,19 +11,19 @@ const PostSchema = new Schema({
     },
     Images: [
         {
-            type: String,
+            type:Object,
             required: false,
         }
     ],
     Videos: [
         {
-            type: String,
+            type:Object,
             required: false,
         }
     ],
     Files: [
         {
-            type: String,
+            type:Object,
             required: false,
         }
     ],
@@ -32,10 +32,10 @@ const PostSchema = new Schema({
         ref: 'User',
         required: true,
     },
-    ProfileImage: {
-        type: String,
-        required: true,
-    },
+    // ProfileImage: {
+    //     type: String,
+    //     required: true,
+    // },
     like: [
         {
             type: Types.ObjectId,
