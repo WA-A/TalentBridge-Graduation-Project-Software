@@ -1,27 +1,27 @@
 import { Schema, Types, model } from 'mongoose';
 
 const PostSchema = new Schema({
-    title: {
+    Title: {
         type: String,
         required: true,
     },
-    body: {
+    Body: {
         type: String,
         required: true,
     },
-    images: [
+    Images: [
         {
             type: String,
             required: false,
         }
     ],
-    videos: [
+    Videos: [
         {
             type: String,
             required: false,
         }
     ],
-    files: [
+    Files: [
         {
             type: String,
             required: false,
@@ -32,7 +32,7 @@ const PostSchema = new Schema({
         ref: 'User',
         required: true,
     },
-    profileImage: {
+    ProfileImage: {
         type: String,
         required: true,
     },
