@@ -5,7 +5,6 @@ import PostModel from './../../Model/PostModel.js';
 // Create Own Post
 export const CreatePost = async (req, res, next) => {
     try {
-        
         const { Title, Body } = req.body;
         if (!Title || !Body) {
             return next(new Error("Title and Body are required."));
@@ -13,22 +12,21 @@ export const CreatePost = async (req, res, next) => {
 
         const UserId = req.user._id; 
 
-        
         const images = req.files['images'] ? await Promise.all(req.files['images'].map(async (file) => {
-            const { secure_url, public_id } = await cloudinary.uploader.upload(file.path, { folder: 'GraduationProject1-Software/Post/${UserId}' });
+            const { secure_url, public_id } = await cloudinary.uploader.upload(file.path, { folder: `GraduationProject1-Software/Post/${UserId}` });
             return { secure_url, public_id };
         })) : [];
 
-       
         const videos = req.files['videos'] ? await Promise.all(req.files['videos'].map(async (file) => {
-            const { secure_url, public_id } = await cloudinary.uploader.upload(file.path, { folder: 'GraduationProject1-Software/Post/${UserId}' });
+            const { secure_url, public_id } = await cloudinary.uploader.upload(file.path, { folder: `GraduationProject1-Software/Post/${UserId}` });
             return { secure_url, public_id };
         })) : [];
 
-        
         const files = req.files['files'] ? req.files['files'].map(file => file.path) : []; 
 
-        
+        // Ensure the ProfileImage is coming from the user object
+        const ProfileImage = req.user.profileImage;
+
         const Post = await PostModel.create({
             Title,
             Body,
@@ -36,7 +34,7 @@ export const CreatePost = async (req, res, next) => {
             Videos: videos,
             Files: files,
             UserId,
-            ProfileImage: req.user.profileImage, 
+            ProfileImage,  // Using the ProfileImage from req.user
         });
 
         if (!Post) {
@@ -58,40 +56,58 @@ export const UpdatePost = async (req, res, next) => {
         const { Title, Body } = req.body;
         const UserId = req.user._id;
 
+        // Find the existing post by ID
         const post = await PostModel.findById(postId);
         if (!post) {
             return next(new Error("Post not found"));
         }
 
+        // Check if the user is the owner of the post
+        if (post.UserId.toString() !== UserId.toString()) {
+            return next(new Error("You are not authorized to update this post"));
+        }
+
+        // Update Title and Body if provided
         if (Title) post.Title = Title;
         if (Body) post.Body = Body;
 
+        // Handle images if provided
         if (req.files['images']) {
+            // Delete existing images from Cloudinary
             await Promise.all(post.Images.map(async (image) => {
                 await cloudinary.uploader.destroy(image.public_id);
             }));
 
+            // Upload new images
             post.Images = await Promise.all(req.files['images'].map(async (file) => {
                 const { secure_url, public_id } = await cloudinary.uploader.upload(file.path, { folder: `GraduationProject1-Software/Post/${UserId}` });
                 return { secure_url, public_id };
             }));
         }
 
+        // Handle videos if provided
         if (req.files['videos']) {
+            // Delete existing videos from Cloudinary
             await Promise.all(post.Videos.map(async (video) => {
                 await cloudinary.uploader.destroy(video.public_id);
             }));
 
+            // Upload new videos
             post.Videos = await Promise.all(req.files['videos'].map(async (file) => {
                 const { secure_url, public_id } = await cloudinary.uploader.upload(file.path, { folder: `GraduationProject1-Software/Post/${UserId}` });
                 return { secure_url, public_id };
             }));
         }
 
+        // Handle files if provided
         if (req.files['files']) {
             post.Files = req.files['files'].map(file => file.path);
         }
 
+        // Ensure the ProfileImage is updated from the user's profile
+        post.ProfileImage = req.user.profileImage; // Update ProfileImage
+
+        // Save the updated post
         await post.save();
 
         return res.status(200).json({ message: "Post updated successfully", post });
@@ -103,35 +119,71 @@ export const UpdatePost = async (req, res, next) => {
 
 
 
+
 // Get Own Posts
 
 export const GetUserPosts = async (req, res, next) => {
     try {
-        const userId = req.params.userId; 
+        const userId = req.params.userId;
 
-        
-        const posts = await PostModel.find({ UserId: userId }).populate('UserId', 'ProfileImage');
+        // Validate the userId
+        if (!userId) {
+            return res.status(400).json({ message: "User ID is required." });
+        }
 
-        return res.status(200).json({ message: "Posts retrieved successfully", posts });
+        // Fetch posts for the specified user and populate the UserId field with ProfileImage
+        const posts = await PostModel.find({ UserId: userId })
+            .populate('UserId', 'ProfileImage');
+
+        if (!posts || posts.length === 0) {
+            return res.status(404).json({ message: "No posts found for this user." });
+        }
+
+        // Add profile image to each post
+        const postsWithProfileImage = posts.map(post => {
+            return {
+                ...post.toObject(), // Convert to plain object
+                ProfileImage: post.UserId.ProfileImage // Add ProfileImage from populated UserId
+            };
+        });
+
+        return res.status(200).json({ message: "Posts retrieved successfully", posts: postsWithProfileImage });
     } catch (error) {
         console.error("Error retrieving posts:", error);
         return next(error);
     }
 };
+
+
+
 
 // Get All Posts
 
 export const GetAllPosts = async (req, res, next) => {
     try {
+        // Fetch all posts and populate the UserId field with ProfileImage
+        const posts = await PostModel.find()
+            .populate('UserId', 'ProfileImage');
 
-        const posts = await PostModel.find().populate('UserId', 'ProfileImage');
+        // Check if there are any posts
+        if (!posts || posts.length === 0) {
+            return res.status(404).json({ message: "No posts found." });
+        }
 
-        return res.status(200).json({ message: "Posts retrieved successfully", posts });
+        // Add profile image to each post
+        const postsWithProfileImage = posts.map(post => ({
+            ...post.toObject(), // Convert to plain object to avoid Mongoose document issues
+            ProfileImage: post.UserId.ProfileImage // Add ProfileImage from the populated UserId
+        }));
+
+        return res.status(200).json({ message: "Posts retrieved successfully", posts: postsWithProfileImage });
     } catch (error) {
         console.error("Error retrieving posts:", error);
         return next(error);
     }
 };
+
+
 
 
 // Delete Own Post
