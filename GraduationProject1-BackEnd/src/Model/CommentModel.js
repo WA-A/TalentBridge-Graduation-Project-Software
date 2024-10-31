@@ -7,19 +7,19 @@ const CommentSchema = new Schema({
     },
     Images: [ 
         {
-            type: String, 
+            type:Object,
             required: false,
         }
     ],
     Videos: [ 
         {
-            type: String, 
+            type:Object,
             required: false,
         }
     ],
     Files: [ 
         {
-            type: String, 
+            type:Object,
             required: false,
         }
     ],

@@ -7,4 +7,6 @@ import { EndPoints } from "./Comment.Role.js";
 const router = Router();
 
 router.post('/createcomment/:PostId',auth(EndPoints.CreateComment),fileUpload(FileValue.image).fields([{ name: 'images'}, { name: 'videos'}, { name: 'files'}]),CommentController.CreateComment);
+router.put('/updatecomment/:CommentId',auth(EndPoints.CreateComment),fileUpload(FileValue.image).fields([{ name: 'images'}, { name: 'videos'}, { name: 'files'} ]),CommentController.UpdateComment);
+
 export default router;
