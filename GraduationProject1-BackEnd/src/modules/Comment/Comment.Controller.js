@@ -4,7 +4,7 @@ import CommentModel from './../../Model/CommentModel.js';
 export const CreateComment = async (req, res, next) => {
     try {
         req.body.UserId = req.user._id;
-        req.body.PostId = req.params.id;
+        req.body.PostId = req.params.PostId; // التأكد من استخدام PostId من params
 
         if (req.files && req.files.length > 0) {
             const images = [];
@@ -12,7 +12,7 @@ export const CreateComment = async (req, res, next) => {
             const files = [];
 
             for (const file of req.files) {
-                const { secure_url, public_id } = await cloudinary.uploader.upload(file.path, { folder: 'Comments' });
+                const { secure_url, public_id } = await cloudinary.uploader.upload(file.path, { folder: `GraduationProject1-Software/Comments/${req.user._id}` });
 
                 if (file.mimetype.startsWith("image")) {
                     images.push({ secure_url, public_id });
@@ -23,9 +23,9 @@ export const CreateComment = async (req, res, next) => {
                 }
             }
 
-            if (images.length > 0) req.body.images = images;
-            if (videos.length > 0) req.body.videos = videos;
-            if (files.length > 0) req.body.files = files;
+            if (images.length > 0) req.body.Images = images;
+            if (videos.length > 0) req.body.Videos = videos;
+            if (files.length > 0) req.body.Files = files;
         }
 
         const comment = await CommentModel.create(req.body);

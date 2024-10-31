@@ -15,13 +15,13 @@ export const CreatePost = async (req, res, next) => {
 
         
         const images = req.files['images'] ? await Promise.all(req.files['images'].map(async (file) => {
-            const { secure_url, public_id } = await cloudinary.uploader.upload(file.path, { folder: 'GraduationProject1-Software/Post' });
+            const { secure_url, public_id } = await cloudinary.uploader.upload(file.path, { folder: 'GraduationProject1-Software/Post/${UserId}' });
             return { secure_url, public_id };
         })) : [];
 
        
         const videos = req.files['videos'] ? await Promise.all(req.files['videos'].map(async (file) => {
-            const { secure_url, public_id } = await cloudinary.uploader.upload(file.path, { folder: 'GraduationProject1-Software/Post' });
+            const { secure_url, public_id } = await cloudinary.uploader.upload(file.path, { folder: 'GraduationProject1-Software/Post/${UserId}' });
             return { secure_url, public_id };
         })) : [];
 
