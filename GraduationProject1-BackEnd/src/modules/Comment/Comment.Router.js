@@ -8,5 +8,6 @@ const router = Router();
 
 router.post('/createcomment/:PostId',auth(EndPoints.CreateComment),fileUpload(FileValue.image).fields([{ name: 'images'}, { name: 'videos'}, { name: 'files'}]),CommentController.CreateComment);
 router.put('/updatecomment/:CommentId',auth(EndPoints.CreateComment),fileUpload(FileValue.image).fields([{ name: 'images'}, { name: 'videos'}, { name: 'files'} ]),CommentController.UpdateComment);
-
+router.get('/getallcomments/:PostId',auth(EndPoints.CreateComment),CommentController.GetAllComments);
+//router.delete('/deletepost/:postId',auth(EndPoints.CreatePost),PostController.DeletePost);
 export default router;
