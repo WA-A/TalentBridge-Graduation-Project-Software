@@ -6,7 +6,8 @@ import { Dimensions } from 'react-native';
 import { useFonts } from 'expo-font';
 import { NightModeContext } from './NightModeContext';
 
-import { Colors,
+import {
+    Colors,
     Card,
     ContainerCard,
     UserIMg,
@@ -18,9 +19,10 @@ import { Colors,
     PostIMg,
     ReactionOfPost,
     Interaction,
-    InteractionText,} from './../compnent/Style'
+    InteractionText,
+} from './../compnent/Style'
 // Color constants
-const { secondary, primary, careysPink, darkLight, fourhColor,tertiary ,fifthColor} = Colors;
+const { secondary, primary, careysPink, darkLight, fourhColor, tertiary, fifthColor } = Colors;
 const { width } = Dimensions.get('window');
 
 const HomeScreen = () => {
@@ -39,25 +41,25 @@ const HomeScreen = () => {
 
     return (
         <View style={{ flex: 1 }}>
-            <View style={{ height: 20, backgroundColor: isNightMode ? "#000" :secondary }} />
+            <View style={{ height: 20, backgroundColor: isNightMode ? "#000" : secondary }} />
 
             {/* Header */}
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 10, paddingVertical: 10,backgroundColor: isNightMode ? "#000" :secondary }}>
-            <Text style={{ fontFamily: 'Updock-Regular', fontSize: 30, position: 'absolute', left: 0, right: 0, textAlign: 'center',color: isNightMode ? primary :"#000" }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 10, paddingVertical: 10, backgroundColor: isNightMode ? "#000" : secondary }}>
+                <Text style={{ fontFamily: 'Updock-Regular', fontSize: 30, position: 'absolute', left: 0, right: 0, textAlign: 'center', color: isNightMode ? primary : "#000" }}>
                     Talent Bridge
                 </Text>
 
 
                 <TouchableOpacity onPress={() => nav.navigate('Chat')}>
-                    <EvilIcons name="sc-telegram" size={39} color={careysPink} style={{ position: 'absolute', top: -20,left:10 }} />
-                    <EvilIcons name="sc-telegram" size={37} color={darkLight} style={{ position: 'absolute', top: -20,left:10  }} />
+                    <EvilIcons name="sc-telegram" size={39} color={careysPink} style={{ position: 'absolute', top: -20, left: 10 }} />
+                    <EvilIcons name="sc-telegram" size={37} color={darkLight} style={{ position: 'absolute', top: -20, left: 10 }} />
                 </TouchableOpacity>
 
 
                 <TouchableOpacity onPress={toggleNightMode}>
                     <View style={{ position: 'relative', width: 50, height: 50 }}>
                         <Ionicons name={isNightMode ? "sunny" : "moon"} size={25} color={darkLight} style={{ position: 'absolute', top: 9, right: 20 }} />
-                        <Ionicons name="cloud" size={30.7} color={ isNightMode ? "#000" :secondary} style={{ position: 'absolute', top: 8.7, left: -12 }} />
+                        <Ionicons name="cloud" size={30.7} color={isNightMode ? "#000" : secondary} style={{ position: 'absolute', top: 8.7, left: -12 }} />
                         <Ionicons name="cloud" size={27} color={careysPink} style={{ position: 'absolute', top: 11, left: -11 }} />
                     </View>
                 </TouchableOpacity>
@@ -84,7 +86,7 @@ const HomeScreen = () => {
             >
                 {Array(5).fill().map((_, index) => (
                     <ContainerCard key={index}>
-                        <Card style={{ backgroundColor: isNightMode ? "#454545" :secondary  }}>
+                        <Card style={{ backgroundColor: isNightMode ? "#454545" : secondary }}>
                             <UserInfo>
                                 <UserIMg source={require('./../assets/img1.jpeg')} />
                                 <UserInfoText>
@@ -96,7 +98,7 @@ const HomeScreen = () => {
                             <PostIMg source={require('./../assets/img1.jpeg')} />
                             <ReactionOfPost>
                                 <Interaction>
-                                    <Ionicons style={{ color: isNightMode ? secondary : 'rgba(0, 0, 0, 0.2)' }}  name="heart-circle" size={25} />
+                                    <Ionicons style={{ color: isNightMode ? secondary : 'rgba(0, 0, 0, 0.2)' }} name="heart-circle" size={25} />
                                     <InteractionText style={{ color: isNightMode ? primary : "#000" }}>Like</InteractionText>
                                 </Interaction>
                                 <Interaction>
@@ -113,7 +115,7 @@ const HomeScreen = () => {
             <Animated.View
                 style={{
                     transform: [{ translateY: bottomBarTranslate }],
-                    backgroundColor: isNightMode ? "#454545" :secondary ,
+                    backgroundColor: isNightMode ? "#454545" : secondary,
                     flexDirection: 'row',
                     justifyContent: 'space-around',
                     padding: 10,
@@ -127,8 +129,8 @@ const HomeScreen = () => {
                     <Ionicons name="settings" size={25} color="#000" />
                 </TouchableOpacity>
                 <TouchableOpacity onPress={() => nav.navigate('ProjectsSeniorPage')}>
-                  <Ionicons name="folder" size={25} color="#000" />
-                     </TouchableOpacity>
+                    <Ionicons name="folder" size={25} color="#000" />
+                </TouchableOpacity>
                 <TouchableOpacity onPress={() => nav.navigate('Profile')}>
                     <Image
                         source={require('./../assets/img1.jpeg')}
