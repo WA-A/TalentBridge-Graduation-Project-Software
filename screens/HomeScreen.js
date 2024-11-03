@@ -29,16 +29,7 @@ const HomeScreen = () => {
     const [scrollY] = useState(new Animated.Value(0));
 
     // Load custom fonts
-    let [fontsLoaded] = useFonts({
-        'Updock-Regular': require('./../compnent/fonts/Updock-Regular.ttf'),
-        'Lato-Bold': require('./../compnent/fonts/Lato-Bold.ttf'),
-        'Lato-Regular': require('./../compnent/fonts/Lato-Regular.ttf'),
-    });
 
-    // Early return if fonts are not loaded
-    if (!fontsLoaded) {
-        return <View><Text>Loading...</Text></View>;
-    }
 
     const bottomBarTranslate = scrollY.interpolate({
         inputRange: [0, 50],
