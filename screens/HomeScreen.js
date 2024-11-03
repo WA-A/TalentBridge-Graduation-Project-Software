@@ -126,9 +126,9 @@ const HomeScreen = () => {
                 <TouchableOpacity onPress={toggleNightMode}>
                     <Ionicons name="settings" size={25} color="#000" />
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => nav.navigate('Projects')}>
-                    <Ionicons name="folder" size={25} color="#000" />
-                </TouchableOpacity>
+                <TouchableOpacity onPress={() => nav.navigate('ProjectsSeniorPage')}>
+                  <Ionicons name="folder" size={25} color="#000" />
+                     </TouchableOpacity>
                 <TouchableOpacity onPress={() => nav.navigate('Profile')}>
                     <Image
                         source={require('./../assets/img1.jpeg')}
