@@ -25,7 +25,7 @@ import {
     Circle2,
     Circle3,
 } from './../compnent/Style';
-const { brand, darkLight,careysPink,firstColor,secColor,thirdColor,fourhColor,fifthColor } = Colors;
+const { brand, darkLight,careysPink,firstColor,secColor,thirdColor,fourhColor,fifthColor,secondary } = Colors;
 
 
 const SplashScreen = ({ navigation }) => {
@@ -47,13 +47,12 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor : thirdColor
+    backgroundColor : secondary
   },
   text: {
     color: '#FFF',
     fontSize: 24,
     fontWeight: 'bold',
-
   },
 });
 

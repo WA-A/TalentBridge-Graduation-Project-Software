@@ -9,10 +9,22 @@ import WelcomeScreen from './screens/WelcomeScreen';
 import HomeScreen from './screens/HomeScreen';
 import AddPostScreen from './screens/AddPostScreen';
 import { NightModeProvider } from './screens/NightModeContext'; // Import the provider
-
+import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView, Animated } from 'react-native';
+import { useFonts } from 'expo-font';
+import ProjectsSeniorPage from './screens/ProjectsSeniorPage.js'
 const Stack = createStackNavigator();
 
 export default function App() {
+    let [fontsLoaded] = useFonts({
+        'Updock-Regular': require('./compnent/fonts/Updock-Regular.ttf'),
+        'Lato-Bold': require('./compnent/fonts/Lato-Bold.ttf'),
+        'Lato-Regular': require('./compnent/fonts/Lato-Regular.ttf'),
+    });
+
+    // Early return if fonts are not loaded
+    if (!fontsLoaded) {
+        return <View><Text>Loading...</Text></View>;
+    }
     return (
         // Wrap the entire NavigationContainer with NightModeProvider
         <NightModeProvider>
@@ -48,7 +60,12 @@ export default function App() {
                         component={HomeScreen}
                         options={{ headerShown: false }}
                     />
-                </Stack.Navigator>
+                    
+                    <Stack.Screen 
+                    name="ProjectsSeniorPage" 
+                    component={ProjectsSeniorPage} />
+                    </Stack.Navigator>
+                
             </NavigationContainer>
         </NightModeProvider>
     );
