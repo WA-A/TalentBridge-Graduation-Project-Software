@@ -10,5 +10,5 @@ import * as schema from './User.Validation.js';
 
 
 router.post('/createprofile',Validation(schema.CreateProfileSchema),auth(EndPoints.CreateProfile),fileUpload(FileValue.image).single('PictureProfile'),UserController.CreateProfile);
-
+router.patch('/updateprofile',auth(EndPoints.CreateProfile),fileUpload(FileValue.image).single('PictureProfile'),UserController.UpdateProfile);
 export default router
