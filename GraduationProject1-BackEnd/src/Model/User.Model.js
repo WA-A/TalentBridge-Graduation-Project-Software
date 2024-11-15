@@ -72,6 +72,11 @@ const UserSchema = new Schema({
       type:String,
       default:false
    },
+   Field: { 
+      type: String, 
+      enum: ['IT', 'Digital Marketing', 'Decor Design', 'Graphic Design'], 
+      required: true 
+   }
     },
     {
      timestamps:true,
