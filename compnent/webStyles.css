@@ -1,0 +1,77 @@
+/* webStyles.css */
+.date-picker {
+    font-family: 'Arial', sans-serif;  /* استخدام خط جميل */
+    font-size: 16px;  /* حجم الخط */
+    color: #333;  /* لون النص */
+    border-radius:30px;  /* حواف دائرية */
+    border: 2px solid #ccc;  /* الحدود */
+    background-color: "#E5E7Eb";  /* الخلفية البيضاء */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);  /* إضافة الظلال */
+    width: 97%;  /* جعل الـ DatePicker يأخذ كامل العرض */
+    transition: all 0.3s ease;  /* تأثير التغيير السلس */
+    margin-top: 3px;
+    margin-bottom: 10px; 
+    padding-left: 55px;
+    padding: 15px;
+    cursor: pointer;
+}
+.date-picker:hover{
+    background-color: #c6c5c6;
+
+}
+
+  .react-datepicker__header {
+    background-color: #b7a5cc;
+    color: white;
+  }
+  
+  .react-datepicker__day:hover {
+    background-color: #d7a9ea;
+    color: white;
+  }
+  
+  .react-datepicker__day--selected {
+    background-color: #b7a5cc;
+    color: white;
+  }
+  
+  /* webStyles.css */
+
+/* تخصيص التقويم نفسه */
+.react-datepicker__triangle {
+  display: none; /* إخفاء المثلث الموجود أعلى التقويم */
+}
+
+.react-datepicker {
+  background-color: #fff; /* تغيير خلفية التقويم */
+  border-radius: 15px; /* إضافة حواف دائرية للتقويم */
+  width: 350px; /* جعل العرض أكبر */
+  padding: 20px; /* إضافة حواف داخلية */
+  box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.1); /* إضافة ظل */
+  z-index: 9999; /* التأكد من أن التقويم يظهر فوق باقي العناصر */
+}
+
+/* تخصيص الأزرار في رأس التقويم */
+.react-datepicker__header button {
+  background-color: transparent;
+  border: none;
+  color: white;
+}
+
+/* تخصيص الأيام داخل التقويم */
+.react-datepicker__day {
+  width: 40px;  /* زيادة العرض */
+  height: 40px; /* زيادة الارتفاع */
+  line-height: 40px; /* محاذاة النص داخل اليوم */
+  text-align: center;
+  border-radius: 50%; /* جعل الأيام دائرية */
+  margin: 5px; /* مسافة بين الأيام */
+  transition: background-color 0.2s ease-in-out; /* إضافة تأثير عند التمرير */
+}
+
+/* تخصيص الأيام في الشهر الحالي */
+.react-datepicker__month {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-around;
+}

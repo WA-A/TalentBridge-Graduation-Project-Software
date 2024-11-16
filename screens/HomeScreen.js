@@ -1,5 +1,5 @@
 import React, { useState, useContext } from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView, Animated } from 'react-native';
+import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView, Animated,Button,Alert } from 'react-native';
 import { Ionicons, Feather, FontAwesome5, EvilIcons, FontAwesome } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { Dimensions } from 'react-native';
@@ -47,8 +47,7 @@ const HomeScreen = () => {
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 10, paddingVertical: 10, backgroundColor: isNightMode ? "#000" : secondary }}>
                 <Text style={{ fontFamily: 'Updock-Regular', fontSize: 30, position: 'absolute', left: 0, right: 0, textAlign: 'center', color: isNightMode ? primary : "#000" }}>
                     Talent Bridge
-                </Text>
-
+                </Text>    
 
                 <TouchableOpacity onPress={() => nav.navigate('Chat')}>
                     <EvilIcons name="sc-telegram" size={39} color={careysPink} style={{ position: 'absolute', top: -20, left: 10 }} />
@@ -150,6 +149,9 @@ const HomeScreen = () => {
                     <Ionicons name="home" size={25} color="#000" />
                 </TouchableOpacity>
             </Animated.View>
+
+   
+
         </View>
     );
 };

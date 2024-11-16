@@ -107,7 +107,7 @@ export default function Login({ navigation }) {
         <StyledContainer>
             <StatusBar style="dark" />
 
-            <Rectangle top="px" left="px" />
+            <Rectangle top="0px" left="0px" />
             {/* زر الرجوع */}
 <TouchableOpacity
     onPress={() => navigation.navigate('WelcomeScreen')}
@@ -117,11 +117,10 @@ export default function Login({ navigation }) {
 </TouchableOpacity>
 
             <InnerContainer>
-            <AnimatedCircles></AnimatedCircles>
                 <PageLogo resizeMode="cover" source={require('./../assets/Talent_Bridge_logo_with_black_border3.png')} />
                 {/*<Text>StatusBarHeight: {StatusBarHeight}px</Text>*/}
-                <TypingEffect></TypingEffect>
-                <Formik
+                <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 5 }}>Account Login</Text>     
+           <Formik
 
                     initialValues={{ email: '', password: '' }}
                     onSubmit={(values) => {
@@ -159,12 +158,12 @@ export default function Login({ navigation }) {
 
                             {/* Forgot Password Section */}
                             <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
-                                <Text style={{ color: brand,fontWeight:'bold', textAlign: 'center', marginBottom: 20 }}>
+                                <Text style={{ color: brand,fontWeight:'bold', textAlign: 'center', marginBottom: 20, marginTop: 20 }}>
                                     Forgot Password?
                                 </Text>
                             </TouchableOpacity>
                         
-      <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 40 }}>
+      <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 20 }}>
     {/* Google Login */}
     <TouchableOpacity onPress={() => { /* تنفيذ تسجيل الدخول باستخدام Google */ }} 
     style={{  alignItems: 'center', }}>
@@ -202,10 +201,6 @@ export default function Login({ navigation }) {
                                  Please sign up.
                                     </Text>
                                     </TouchableOpacity>
-
-
-                               
-
                             </View>
                            <View>
                            <TouchableOpacity onPress={() => navigation.navigate('HomeScreen')}>
