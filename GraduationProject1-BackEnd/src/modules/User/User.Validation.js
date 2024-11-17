@@ -1,7 +1,7 @@
 import joi from 'joi';
 
 export const CreateProfileSchema = joi.object({
-    Bio: joi.string().min(10).max(100).required(),
+    Bio: joi.string().min(3).max(100).required(),
     About: joi.string().min(10).max(100).required(),
     PictureProfile: joi.object({
         fieldname: joi.string().required(),
@@ -14,3 +14,6 @@ export const CreateProfileSchema = joi.object({
         size: joi.number().max(1000000).required(),
     }).required(),
 });
+
+
+
