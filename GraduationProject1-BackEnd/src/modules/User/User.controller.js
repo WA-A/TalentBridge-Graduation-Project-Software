@@ -100,7 +100,25 @@ export const ViewOwnProfile = async (req, res) => {
  };
  
  
- 
+ // View Other People's Profiles
+export const ViewOtherProfile = async (req, res) => {
+    try {
+        const { userId } = req.params; 
+
+       
+        const user = await UserModel.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        
+        return res.status(200).json(user);
+    } catch (error) {
+        console.error("Error viewing profile:", error);
+        return res.status(500).json({ message: error.message });
+    }
+};
+
  
 
 
