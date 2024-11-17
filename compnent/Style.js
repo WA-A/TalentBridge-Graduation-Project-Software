@@ -1,6 +1,7 @@
 // Style.js
 import styled from 'styled-components/native';
 import Constants from 'expo-constants';
+import { Dimensions } from 'react-native';
 
 export const Colors = {
     primary: "#ffffff",
@@ -89,7 +90,7 @@ export const StyledFormArea = styled.View`
 `;
 
 export const StyledTextInput = styled.TextInput`
-    background-color: ${secondary};
+    background-color: ${primary};
     padding: 15px;
     padding-left: 55px;
     padding-right: 55px;
@@ -99,7 +100,24 @@ export const StyledTextInput = styled.TextInput`
     margin-top: 3px;
     margin-bottom: 10px;
     color: ${black};
+    border: 1px solid ;
 `;
+
+export const StyledTextInputSignUp = styled.TextInput`
+    background-color: ${secondary};
+    color: ${darkLight};  /* لون النص */
+    border: 2px solid #ccc;  /* الحدود */
+    padding-left: 55px;
+    padding-right: 55px;
+    border-radius: 30px;
+    font-size: 16px;
+    height: 53px;
+    margin-top: 0px;
+    margin-bottom: 0px;
+    color: ${black};
+    border: 1px solid ;
+`;
+
 
 // تعريف StyleInputLabel
 export const StyleInputLable = styled.Text`
@@ -137,12 +155,12 @@ export const RightIcon = styled.TouchableOpacity`
 // تعريف StyledButton
 export const StyledButton = styled.TouchableOpacity`
     padding: 15px;
-    background-color: ${brand};
+    background-color: ${fifthColor};
     justify-content: center;
     border-radius: 30px;
-    margin-top: 3px;
-    margin-bottom: 10px;
-        height: 60px;
+    height: 60px;
+    border: 1px solid white;
+    margin-top: 2pxj;
 `;
 
 // تعريف ButtonText
@@ -202,10 +220,13 @@ export const Circle3 = styled.View`
     bottom: ${({ bottom }) => bottom || 'auto'};
     opacity: 0.5; /* يمكنك التحكم في الشفافية */
 `;
+
+const { width, height } = Dimensions.get('window');
+
 export const Rectangle = styled.View`
-    width: 400px;
-    height: 400px;
-    background-color: ${brand}; /* يمكنك تغيير اللون هنا */
+   width: ${width}px; /* عرض الشاشة */
+   height: ${height/1.65}px; /* ارتفاع الشاشة */
+    background-color: ${fourhColor}; /* يمكنك تغيير اللون هنا */
     border-radius: 5px; /* لجعل الشكل دائري */
     position: absolute;
     top: ${({ top }) => top || '10px'};
@@ -226,19 +247,21 @@ export const pickerStyle = {
     height: 50,
     width: '30%',
     borderWidth: 1,
-    borderColor: '#ccc', // لون الحدود
-    borderRadius: 10, // زوايا دائرية
-    borderRadius:50,
-    backgroundColor: secColor, // لون الخلفية
-    marginVertical: 10, // تباعد رأسي
-    paddingHorizontal: 10, // تباعد داخلي
+    borderColor: '#ccc',
+    backgroundColor: secColor,
+    marginVertical: 10,
+    paddingHorizontal: 10,
+    borderRadius: 10, // لا تكرر تعيين الـ borderRadius
 };
+
 
 export const labelStyle = {
     fontSize: 16,
     fontWeight: 'bold',
-    color: darkLight, // استخدم اللون المناسب من ألوانك
-    marginBottom: 5, // تباعد بين النص و الـ Picker
+    color: black, 
+    marginBottom: 5, 
+    left:10 ,
+
 };
 
 
@@ -317,4 +340,39 @@ font-family: 'Lato-Regular' ;
 margin-top: 5px;
 margin-left: 5px;
 `;
+
+export const mobileStyles = styled.View({
+  datePickerContainer: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 10,
+    padding: 15,
+    marginBottom: 20,
+    backgroundColor: '#fff',
+  },
+  datePickerText: {
+    fontSize: 16,
+    color: '#333',
+  },
+  genderOption: {
+    borderWidth: 1,
+    borderRadius: 5,
+    padding: 10,
+    marginHorizontal: 5,
+    flex: 1,
+    textAlign: 'center',
+  },
+  genderSelected: {
+    borderColor: '#6200EE', // لون مخصص للزر المحدد
+  },
+  genderUnselected: {
+    borderColor: '#ccc', // لون مخصص للزر غير المحدد
+  },
+  genderTextSelected: {
+    color: '#6200EE',
+  },
+  genderTextUnselected: {
+    color: '#ccc',
+  },
+});
 

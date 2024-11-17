@@ -1,26 +1,9 @@
 import React from 'react';
 import { View, Text, Image, TouchableOpacity } from 'react-native';
 import {
-  StyledContainer,
-  InnerContainer,
-  PageLogo,
-  PageTitle,
-  StatusBarHeight,
-  StyledFormArea,
-  SubTitle,
-  LeftIcon,
   ButtonText,
   StyledButton,
-  StyleInputLable,
-  StyledTextInput,
   Colors,
-  RightIcon,
-  Circle,
-  Rectangle,
-  StyledLine,
-  Circle1,
-  Circle2,
-
 } from './../compnent/Style';
 //icon 
 import {
@@ -33,13 +16,13 @@ import { Formik } from 'formik';
 import styled from 'styled-components/native';
 
 //color
-const { brand, darkLight, careysPink, firstColor, secColor, thirdColor, fourhColor, fifthColor, primary, tertiary, secondary } = Colors; import { Dimensions } from 'react-native';
+const { brand,fifthColor,secondary,primary } = Colors; import { Dimensions } from 'react-native';
 
 const { width } = Dimensions.get('window');
 
 const WelcomeScreen = ({ navigation }) => {
   return (
-    <View style={{ flex: 1, justifyContent: 'space-between', backgroundColor: '#ffff' }}>
+    <View style={{ flex: 1, justifyContent: 'space-between', backgroundColor: primary}}>
       {/* Navbar */}
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20, backgroundColor: secondary, elevation: 3 }}>
         {/* Logo */}
@@ -49,7 +32,7 @@ const WelcomeScreen = ({ navigation }) => {
         />
         {/* Login and Register buttons */}
         <View style={{ flexDirection: 'row' }}>
-          <StyledButton onPress={() => navigation.navigate('Login')}>
+          <StyledButton onPress={() => navigation.navigate('Login')}  style={{ backgroundColor: brand, marginRight: 10}}>
             <ButtonText>Login</ButtonText>
           </StyledButton>
           <StyledButton onPress={() => navigation.navigate('Signup')} style={{ backgroundColor: fifthColor }}>
@@ -93,4 +76,3 @@ const WelcomeScreen = ({ navigation }) => {
 };
 
 export default WelcomeScreen;
-//

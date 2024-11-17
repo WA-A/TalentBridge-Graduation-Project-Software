@@ -1,60 +1,55 @@
-import React, { useState } from 'react';
-import { Picker } from '@react-native-picker/picker';
-import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, Platform, ScrollView, StyleSheet } from 'react-native';
+import DateTimePickerModal from '@react-native-community/datetimepicker';  // للموبايل
 import { StatusBar } from 'expo-status-bar';
-import {
-    StyledContainer,
-    InnerContainer,
-    PageLogo,
-    StyledFormArea,
-    StyledButton,
-    ButtonText,
-    StyledTextInput,
-    Colors,
-    LeftIcon,
-    pickerStyle,
-    labelStyle
-} from './../compnent/Style';
-import { FontAwesome, Ionicons } from '@expo/vector-icons';
 import { Formik } from 'formik';
+import { FontAwesome, Ionicons } from '@expo/vector-icons';
+import { Picker } from '@react-native-picker/picker'
+import { Colors, StyledContainer, InnerContainer, PageLogo, StyledFormArea, StyledButton, ButtonText, StyledTextInputSignUp, LeftIcon, labelStyle } from './../compnent/Style';
 
-// Colors
-const { brand, darkLight, fifthColor } = Colors;
+// استيراد مكتبة DatePicker فقط للويب
+let DatePicker;
+if (Platform.OS === 'web') {
+    DatePicker = require('react-datepicker').default;
+    require('react-datepicker/dist/react-datepicker.css');  // استيراد أنماط الويب
+    import('./../compnent/webStyles.css');  // استيراد الأنماط الخاصة بالويب
+}
+
+// الألوان
+const { brand, darkLight, fifthColor, black, secondary, fourhColor, primary } = Colors;
 
 export default function Signup({ navigation }) {
     const [userType, setUserType] = useState('Junior');
-    const [gender, setGender] = useState(''); // State for gender
-    const [day, setDay] = useState('');
-    const [month, setMonth] = useState('');
-    const [year, setYear] = useState('');
-    const [fieldOfInterest, setFieldOfInterest] = useState('');
-    const [location, setLocation] = useState('');
-    const [yearsOfExperience, setYearsOfExperience] = useState('');
+    const [gender, setGender] = useState('');
+    const [dateOfBirth, setDateOfBirth] = useState(new Date());
+    const [isDatePickerVisible, setIsDatePickerVisible] = useState(false);
 
-    const days = Array.from({ length: 31 }, (_, i) => i + 1);
-    const months = [
-        { label: 'January', value: '01' },
-        { label: 'February', value: '02' },
-        { label: 'March', value: '03' },
-        { label: 'April', value: '04' },
-        { label: 'May', value: '05' },
-        { label: 'June', value: '06' },
-        { label: 'July', value: '07' },
-        { label: 'August', value: '08' },
-        { label: 'September', value: '09' },
-        { label: 'October', value: '10' },
-        { label: 'November', value: '11' },
-        { label: 'December', value: '12' },
+    // التعامل مع التاريخ على الموبايل
+    const handleDateConfirm = (event, date) => {
+        setDateOfBirth(date || dateOfBirth);
+        setIsDatePickerVisible(false);
+    };
+    const jobFields = [
+        { label: 'Software Engineer', value: 'Software Engineer' },
+        { label: 'Data Scientist', value: 'Data Scientist' },
+        { label: 'Product Manager', value: 'Product Manager' },
+        { label: 'UX/UI Designer', value: 'UX/UI Designer' },
+        { label: 'Marketing Specialist', value: 'Marketing Specialist' },
+        { label: 'Business Analyst', value: 'Business Analyst' },
+        { label: 'DevOps Engineer', value: 'DevOps Engineer' },
+        { label: 'QA Tester', value: 'QA Tester' }
     ];
-    const years = Array.from({ length: 100 }, (_, i) => new Date().getFullYear() - i);
 
-    const fieldsOfInterest = ['IT', 'Digital Marketing', 'Decor Design', 'Graphic Design'];
+
+    const [selectedJob, setSelectedJob] = useState('Software Engineer');
+
+
 
     return (
         <StyledContainer>
             <StatusBar style="dark" />
 
-            {/* Back to WelcomeScreen */}
+            {/* العودة إلى صفحة الترحيب */}
             <TouchableOpacity
                 onPress={() => navigation.navigate('WelcomeScreen')}
                 style={{ position: 'absolute', top: 40, left: 20, zIndex: 10 }}
@@ -65,7 +60,6 @@ export default function Signup({ navigation }) {
             <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
                 <InnerContainer>
                     <PageLogo resizeMode="cover" source={require('./../assets/Talent_Bridge_logo_with_black_border3.png')} />
-
                     {/* Toggle between Junior and Senior */}
                     <View style={{ flexDirection: 'row', justifyContent: 'center', marginBottom: 20 }}>
                         <TouchableOpacity
@@ -89,37 +83,28 @@ export default function Signup({ navigation }) {
                             <Text style={{ color: userType === 'Senior' ? brand : darkLight, fontSize: 18, fontWeight: 'bold' }}>Senior</Text>
                         </TouchableOpacity>
                     </View>
-
                     <Formik
-                        initialValues={{ email: '', password: '', confirmPassword: '', fullName: '', dateOfBirth: '', phoneNumber: '', location: '', username: '', address: '' }} // Add address to initialValues
+                        initialValues={{ email: '', password: '', confirmPassword: '', fullName: '', username: '', phoneNumber: '', location: '', address: '' }}
                         onSubmit={(values) => {
-                            console.log({ userType, gender, fieldOfInterest, yearsOfExperience, ...values });
+                            console.log({ userType, gender, dateOfBirth, ...values });
                         }}
                     >
                         {({ handleChange, handleBlur, handleSubmit, values }) => (
                             <StyledFormArea>
-                                 {/* Full Name */}
-                                 <MyTextInput
+                                {/* إدخال الاسم الكامل */}
+                                <Text style={labelStyle}>Full Name</Text>
+                                <MyTextInput
                                     icon="user"
-                                    placeholder="Full Name"
                                     placeholderTextColor={darkLight}
                                     onChangeText={handleChange('fullName')}
                                     onBlur={handleBlur('fullName')}
                                     value={values.fullName}
                                 />
-                                {/* Username */}
-                                <MyTextInput
-                                    icon="user"
-                                    placeholder="Username"
-                                    placeholderTextColor={darkLight}
-                                    onChangeText={handleChange('username')}
-                                    onBlur={handleBlur('username')}
-                                    value={values.username}
-                                />
-                                {/* Email */}
+
+                                {/* إدخال البريد الإلكتروني */}
+                                <Text style={labelStyle}>Email</Text>
                                 <MyTextInput
                                     icon="envelope-o"
-                                    placeholder="Email"
                                     placeholderTextColor={darkLight}
                                     onChangeText={handleChange('email')}
                                     onBlur={handleBlur('email')}
@@ -127,10 +112,10 @@ export default function Signup({ navigation }) {
                                     keyboardType="email-address"
                                 />
 
-                                {/* Password */}
+                                {/* إدخال كلمة المرور */}
+                                <Text style={labelStyle}>Password</Text>
                                 <MyTextInput
                                     icon="lock"
-                                    placeholder="Password"
                                     placeholderTextColor={darkLight}
                                     onChangeText={handleChange('password')}
                                     onBlur={handleBlur('password')}
@@ -138,10 +123,10 @@ export default function Signup({ navigation }) {
                                     secureTextEntry={true}
                                 />
 
-                                {/* Confirm Password */}
+                                {/* إدخال تأكيد كلمة المرور */}
+                                <Text style={labelStyle}>Confirm Password</Text>
                                 <MyTextInput
                                     icon="lock"
-                                    placeholder="Confirm Password"
                                     placeholderTextColor={darkLight}
                                     onChangeText={handleChange('confirmPassword')}
                                     onBlur={handleBlur('confirmPassword')}
@@ -149,110 +134,120 @@ export default function Signup({ navigation }) {
                                     secureTextEntry={true}
                                 />
 
-                                {/* Gender */}
-                                <Text style={labelStyle}>Gender</Text>
-                                <Picker
-                                    selectedValue={gender}
-                                    style={pickerStyle}
-                                    onValueChange={(itemValue) => setGender(itemValue)}
-                                >
-                                    <Picker.Item label="Select Gender" value="" />
-                                    <Picker.Item label="Male" value="Male" />
-                                    <Picker.Item label="Female" value="Female" />
-                                    <Picker.Item label="Other" value="Other" />
-                                </Picker>
 
-                                {/* Date of Birth */}
+
+                                {/* اختيار تاريخ الميلاد */}
                                 <Text style={labelStyle}>Date of Birth</Text>
-                                <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                                    <Picker
-                                        selectedValue={day}
-                                        style={pickerStyle}
-                                        onValueChange={(itemValue) => setDay(itemValue)}
+                                {Platform.OS === 'web' ? (
+                                    <DatePicker
+                                        selected={dateOfBirth}
+                                        onChange={(date) => setDateOfBirth(date)}
+                                        dateFormat="yyyy-MM-dd"
+                                        className="date-picker"
+
+                                    />
+                                ) : (
+                                    <TouchableOpacity
+                                        onPress={() => setIsDatePickerVisible(true)}
+                                        style={{
+                                            border: 2,  /* الحدود */
+                                            borderWidth: 1,
+                                            borderColor: black,
+                                            borderRadius: 30,
+                                            padding: 15,
+                                            marginBottom: 15,
+                                            backgroundColor: secondary,
+
+                                        }}
                                     >
-                                        <Picker.Item label="Day" value="" />
-                                        {days.map((d) => (
-                                            <Picker.Item key={d} label={String(d)} value={String(d)} />
-                                        ))}
-                                    </Picker>
+                                        <Text style={{ color: black }}>{dateOfBirth.toDateString()}</Text>
+                                    </TouchableOpacity>
+                                )}
 
-                                    <Picker
-                                        selectedValue={month}
-                                        style={pickerStyle}
-                                        onValueChange={(itemValue) => setMonth(itemValue)}
-                                    >
-                                        <Picker.Item label="Month" value="" />
-                                        {months.map((m) => (
-                                            <Picker.Item key={m.value} label={m.label} value={m.value} />
-                                        ))}
-                                    </Picker>
-
-                                    <Picker
-                                        selectedValue={year}
-                                        style={pickerStyle}
-                                        onValueChange={(itemValue) => setYear(itemValue)}
-                                    >
-                                        <Picker.Item label="Year" value="" />
-                                        {years.map((y) => (
-                                            <Picker.Item key={y} label={String(y)} value={String(y)} />
-                                        ))}
-                                    </Picker>
-                                </View>
-
-                                {/* Phone Number */}
-                                <MyTextInput
-                                    icon="phone"
-                                    placeholder="Phone Number"
-                                    placeholderTextColor={darkLight}
-                                    onChangeText={handleChange('phoneNumber')}
-                                    onBlur={handleBlur('phoneNumber')}
-                                    value={values.phoneNumber}
-                                    keyboardType="phone-pad"
-                                />
-
-                                {/* Location */}
-                                <MyTextInput
-                                    icon="map-marker"
-                                    placeholder="Location"
-                                    placeholderTextColor={darkLight}
-                                    onChangeText={handleChange('location')}
-                                    onBlur={handleBlur('location')}
-                                    value={values.location}
-                                />
-
-                                {/* Address */}
-                                <MyTextInput
-                                    icon="address-card" // You can change the icon as per your design
-                                    placeholder="Address"
-                                    placeholderTextColor={darkLight}
-                                    onChangeText={handleChange('address')}
-                                    onBlur={handleBlur('address')}
-                                    value={values.address}
-                                />
-
-                                {/* Years of Experience (Senior Only) */}
-                                {userType === 'Senior' && (
-                                    <MyTextInput
-                                        icon="briefcase"
-                                        placeholder="Years of Experience"
-                                        placeholderTextColor={darkLight}
-                                        onChangeText={handleChange('yearsOfExperience')}
-                                        onBlur={handleBlur('yearsOfExperience')}
-                                        value={yearsOfExperience}
-                                        keyboardType="numeric"
+                                {isDatePickerVisible && (
+                                    <DateTimePickerModal
+                                        value={dateOfBirth}
+                                        mode="date"
+                                        display="default"
+                                        onChange={handleDateConfirm}
+                                        themeVariant="light"  // يمكنك تغيير الوضع هنا (light أو dark)
                                     />
                                 )}
 
+                                {/* اختيار الجنس */}
+                                <Text style={labelStyle}>Gender</Text>
+                                <View style={{ flexDirection: 'row', justifyContent: 'space-around', marginBottom: 20 }}>
+                                    <TouchableOpacity
+                                        style={{
+                                            borderWidth: gender === 'Male' ? 3 : 1,
+                                            borderColor: gender === 'Male' ? fifthColor : black,
+                                            backgroundColor: gender === 'Male' ? fifthColor : secondary,
+                                            borderRadius: 30,
+                                            padding: 10,
+                                            width: '50%',
+                                            marginRight: 5,
+
+                                        }}
+                                        onPress={() => setGender('Male')}
+                                    >
+                                        <Text style={{ color: gender === 'Male' ? primary : black, textAlign: 'center', fontWeight: 'bold' }}>Male</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity
+                                        style={{
+                                            backgroundColor: secondary,
+                                            borderWidth: gender === 'Female' ? 3 : 1,
+                                            borderColor: gender === 'Female' ? brand : black,
+                                            backgroundColor: gender === 'Female' ? brand : secondary,
+                                            borderRadius: 30,
+                                            padding: 10,
+                                            width: '50%'
+                                        }}
+                                        onPress={() => setGender('Female')}
+                                    >
+                                        <Text style={{ color: gender === 'Female' ? primary : black, textAlign: 'center', fontWeight: 'bold' }}>Female</Text>
+                                    </TouchableOpacity>
+                                </View>
+
+
+
+
+
+                                {/* اختيار المجال الوظيفي */}
+                                <View style={{ marginBottom: 20 }}>
+                                    <Text style={labelStyle}>Job Field</Text>
+                                    <View style={styles.container}>
+                                        <View style={styles.pickerWrapper}>
+                                            {Platform.OS === 'web' ? (
+                                                // ستايل مخصص للويب
+                                                <Picker
+                                                    selectedValue={selectedJob}
+                                                    onValueChange={(itemValue) => setSelectedJob(itemValue)}
+                                                    style={styles.pickerWeb}
+                                                >
+                                                    {jobFields.map((field, index) => (
+                                                        <Picker.Item label={field.label} value={field.value} key={index} />
+                                                    ))}
+                                                </Picker>
+                                            ) : (
+                                                // ستايل مخصص للموبايل (أندرويد و iOS)
+                                                <Picker
+                                                    selectedValue={selectedJob}
+                                                    onValueChange={(itemValue) => setSelectedJob(itemValue)}
+                                                >
+                                                    {jobFields.map((field, index) => (
+                                                        <Picker.Item label={field.label} value={field.value} key={index} />
+                                                    ))}
+                                                </Picker>
+                                            )}
+                                        </View>
+                                    </View>
+                                </View>
+
+
+                                {/* زر التسجيل */}
                                 <StyledButton onPress={handleSubmit}>
                                     <ButtonText>Sign Up as {userType}</ButtonText>
                                 </StyledButton>
-
-                                <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 20 }}>
-                                    <Text style={{ color: darkLight }}>Already have an account? </Text>
-                                    <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-                                        <Text style={{ color: brand, fontWeight: 'bold' }}>Login</Text>
-                                    </TouchableOpacity>
-                                </View>
                             </StyledFormArea>
                         )}
                     </Formik>
@@ -262,14 +257,38 @@ export default function Signup({ navigation }) {
     );
 }
 
-// Create a custom text input component
+// مكون الإدخال الخاص
 const MyTextInput = ({ icon, ...props }) => {
     return (
-        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 20 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 20, justifyContent: 'center' }}>
             <LeftIcon>
-                <FontAwesome name={icon} size={30} color={fifthColor} />
+                <FontAwesome name={icon} size={20} color={fifthColor} marginBottom={20} />
             </LeftIcon>
-            <StyledTextInput {...props} />
+            <StyledTextInputSignUp {...props} style={{ width: '100%' }} />
         </View>
     );
 };
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    pickerWrapper: {
+        width: '100%',
+        borderWidth: 1,
+        borderRadius: 30,
+        backgroundColor: secondary,
+    },
+    pickerWeb: {
+        width: '100%',
+        height: 40,
+        borderRadius: 30,
+        backgroundColor: secondary,
+        borderWidth: 1,
+        paddingLeft: 10,
+        fontSize: 16,
+    },
+
+});

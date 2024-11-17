@@ -21,7 +21,7 @@ import {
     Circle,
     Circle1,
     Circle2,
-    Circle3,
+    Circle3,datePickerStyles
 } from './../compnent/Style';
 const { brand, darkLight,careysPink,firstColor,secColor,thirdColor,fourhColor,fifthColor } = Colors;
 
