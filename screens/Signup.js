@@ -37,7 +37,11 @@ export default function Signup({ navigation }) {
         { label: 'Marketing Specialist', value: 'Marketing Specialist' },
         { label: 'Business Analyst', value: 'Business Analyst' },
         { label: 'DevOps Engineer', value: 'DevOps Engineer' },
-        { label: 'QA Tester', value: 'QA Tester' }
+        { label: 'QA Tester', value: 'QA Tester' },
+        { label: 'IT', value: 'IT' },
+        { label: 'Digital Marketing', value: 'Digital Marketing' },
+        { label: 'Decor Design', value: 'Decor Design' },
+        { label: 'Graphic Design', value: 'Graphic Design' }
     ];
 
 

@@ -74,7 +74,20 @@ const UserSchema = new Schema({
    },
    Field: { 
       type: String, 
-      enum: ['IT', 'Digital Marketing', 'Decor Design', 'Graphic Design'], 
+      enum: [
+         'IT', 
+         'Digital Marketing', 
+         'Decor Design', 
+         'Graphic Design', 
+         'Software Engineer', 
+         'Data Scientist', 
+         'Product Manager', 
+         'UX/UI Designer', 
+         'Marketing Specialist', 
+         'Business Analyst', 
+         'DevOps Engineer', 
+         'QA Tester'
+       ], 
       required: true 
    }
     },
