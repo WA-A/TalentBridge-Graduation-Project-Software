@@ -252,8 +252,14 @@ export default function Signup({ navigation }) {
                                 <StyledButton onPress={handleSubmit}>
                                     <ButtonText>Sign Up as {userType}</ButtonText>
                                 </StyledButton>
+
+                                 {/* زر الانتقال لتسجيل الدخول */}
+                         <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+                         <Text style={{ color: fifthColor, textAlign: 'center', marginTop: 15 }}>Already have an account? Log In</Text>
+                     </TouchableOpacity>
+
                             </StyledFormArea>
-                        )}
+                        )}   
                     </Formik>
                 </InnerContainer>
             </ScrollView>
