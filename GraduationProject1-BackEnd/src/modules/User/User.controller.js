@@ -1,32 +1,91 @@
 import UserModel from "../../Model/User.Model.js";
 import Cloudinary from '../../../utls/Cloudinary.js';
 
+
 // Create Own Profile
-export const createProfile = async (req, res) => {
-   const { About, Bio } = req.body;
-   const authuser = req.user;
+export const CreateProfile = async (req, res) => {
+    try {
+       
+        const { About, Bio } = req.body;
+        const authuser = req.user;  
 
-   const existingUser = await UserModel.findById(authuser._id)
+        if (!authuser) {
+            return res.status(404).json({ message: "User not found" });
+        }
 
-    if (!existingUser) {
-        return res.status(404).json({ message: "User not found" });
+        if (!req.file) {
+            return res.status(400).json({ message: "No file uploaded" });
+        }
+
+        
+        const { secure_url, public_id } = await Cloudinary.uploader.upload(req.file.path, {
+            folder: `GraduationProject1-Software/Profile/${authuser._id}`,
+        });
+
+        
+        const existingUser = await UserModel.findById(authuser._id);
+        if (!existingUser) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        existingUser.PictureProfile = { secure_url, public_id };
+        existingUser.About = About;
+        existingUser.Bio = Bio;
+
+        await existingUser.save();
+
+        return res.status(200).json({
+            message: "Profile updated successfully",
+            user: existingUser,
+        });
+    } catch (error) {
+        console.error("Error in createProfile:", error);
+        return res.status(500).json({ message: "Internal server error", error: error.message });
     }
+};
 
-   
-   
-    const {secure_url,public_id} = await Cloudinary.uploader.upload(req.file.path,
-    {
-        folder:'GraduationProject1-Software/Proflie/id'
-    });
-    
-    existingUser.PictureProfile = { secure_url, public_id }; 
 
-    
-    const user =  await UserModel.create(req.body);
-    return res.status(200).json({message:user});
+// Update Own Profile
+export const UpdateProfile = async (req, res, next) => {
+    try {
+        const { About, Bio } = req.body;
+        const authUser = req.user;  
 
-   
-}
+        
+        const existingUser = await UserModel.findById(authUser._id);
+        if (!existingUser) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        
+        if (existingUser._id.toString() !== authUser._id.toString()) {
+            return res.status(403).json({ message: "You can only update your own profile" });
+        }
+
+        let profileImage = existingUser.PictureProfile;
+        if (req.file) {
+            const { secure_url, public_id } = await Cloudinary.uploader.upload(req.file.path, {
+                folder: `GraduationProject1-Software/Profile/${authUser._id}`,
+            });
+
+            profileImage = { secure_url, public_id };
+        }
+
+        existingUser.About = About || existingUser.About;
+        existingUser.Bio = Bio || existingUser.Bio;
+        existingUser.PictureProfile = profileImage;
+
+        await existingUser.save();
+
+        return res.status(200).json({
+            message: "Profile updated successfully",
+            user: existingUser,
+        });
+    } catch (error) {
+        console.error("Error updating profile:", error);
+        return next(error); 
+    }
+};
 
 //  View Own Profile
 export const ViewOwnProfile = async (req, res) => {  
@@ -40,39 +99,34 @@ export const ViewOwnProfile = async (req, res) => {
     }
  };
  
- // Edit Own Profile
-export const UpdateOwnProfile = async (req,res)=>{
-    const user = await UserModel.findById(req.params.id);
+ 
+ // View Other People's Profiles
+export const ViewOtherProfile = async (req, res) => {
+    try {
+        const { userId } = req.params; 
 
-    if(!user){
-        return res.status(404).json({message:"user not found"});
-    
-    }
-    ;
-    
-    if(await UserModel.findOne({_id:{$ne:req.params.id}})){
-        return res.status(409).json({message:"UserName aleardy exists"});
-    }
-    
+       
+        const user = await UserModel.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
 
-    
-    if(req.file){
-        const {secure_url,public_id} = await Cloudinary.uploader.upload(req.file.path,
-            {
-                folder:'GraduationProject1-Software/Proflie/id'
-            });
-    
-            Cloudinary.uploader.destroy(user.image.public_id);
-            user.image = {secure_url,public_id};
         
+        return res.status(200).json(user);
+    } catch (error) {
+        console.error("Error viewing profile:", error);
+        return res.status(500).json({ message: error.message });
     }
-    
-    user.Status = req.body.Status;
-    user.updatedBy = req.user._id;
-    await user.save(); // to update in DB
-    return res.status(200).json({message:"success",user});
-    
-}
- // View other people's profiles
+};
+
  
- 
+
+
+
+
+
+
+
+
+
+
