@@ -61,7 +61,7 @@ export default function Signup({ navigation }) {
                 <Ionicons name="arrow-back" size={30} color={brand} />
             </TouchableOpacity>
 
-            <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
+            <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
                 <InnerContainer>
                     <PageLogo resizeMode="cover" source={require('./../assets/Talent_Bridge_logo_with_black_border3.png')} />
                     {/* Toggle between Junior and Senior */}

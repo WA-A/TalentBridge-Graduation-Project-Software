@@ -1,0 +1,40 @@
+/* تعديل على الويب فقط لتفعيل التمرير */
+.container-card {
+    width: 100%; /* تأكد من أن البطاقات تأخذ عرض الشاشة بشكل كامل */
+    margin-bottom: 100px; /* أو قيمة مناسبة للبطاقات المتتالية */
+    margin-top: 100px;
+}
+
+.card {
+    width: 100%; /* تأكد من أن البطاقة تأخذ عرض كامل */
+    background-color: #f0f0f0; /* يمكنك تخصيص اللون حسب التفضيل */
+    border-radius: 10px;
+    padding: 15px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 20px; 
+}
+
+html, body {
+    height: 100%; 
+    margin: 0;
+    padding: 0;
+}
+
+#root {
+    height: 100%;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    overflow-y: scroll;
+
+}
+
+.container {
+    flex: 1;
+
+}
