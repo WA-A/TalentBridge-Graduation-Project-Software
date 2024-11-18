@@ -6,6 +6,7 @@ import { Formik } from 'formik';
 import { FontAwesome, Ionicons } from '@expo/vector-icons';
 import { Picker } from '@react-native-picker/picker'
 import { Colors, StyledContainer, InnerContainer, PageLogo, StyledFormArea, StyledButton, ButtonText, StyledTextInputSignUp, LeftIcon, labelStyle } from './../compnent/Style';
+import axios from 'axios';
 
 // استيراد مكتبة DatePicker فقط للويب
 let DatePicker;
@@ -46,8 +47,35 @@ export default function Signup({ navigation }) {
 
 
     const [selectedJob, setSelectedJob] = useState('Software Engineer');
-
-
+           
+    // Join Api With FrontPage
+    const handleSignup = async (data) => {
+        try {
+            const response = await axios.post('https://localhost:3000/auth/signup', {
+                FullName: data.FullName,
+                Email: data.Email,
+                Password: data.Password,
+                ConfirmPassword: data.ConfirmPassword,
+                Gender: data.Gender,
+                BirthDate: data.BirthDate,
+                PhoneNumber: data.PhoneNumber,
+                Location: data.Location,
+                YearsOfExperience: data.YearsOfExperience,
+                Field: data.Field
+            });
+    
+            if (response.status === 201) {
+                console.log('User registered successfully', response.data);
+                //navigation.navigate('HomeScreen');
+            } else {
+                console.log('Unexpected response:', response);
+            }
+        } catch (error) {
+            console.error('Error during signup:', error.response ? JSON.stringify(error.response.data) : error.message);
+        }
+    };
+    
+    
 
     return (
         <StyledContainer>
@@ -138,7 +166,24 @@ export default function Signup({ navigation }) {
                                     secureTextEntry={true}
                                 />
 
+                                  
+                                <Text style={labelStyle}>Phone Number</Text>
+                                <MyTextInput
+                                    icon="phone"
+                                    placeholderTextColor={darkLight}
+                                    onChangeText={handleChange('phoneNumber')}
+                                    onBlur={handleBlur('phoneNumber')}
+                                    value={values.phoneNumber}
+                                />
 
+                                <Text style={labelStyle}>Location</Text>
+                                <MyTextInput
+                                    icon="home"
+                                    placeholderTextColor={darkLight}
+                                    onChangeText={handleChange('location')}
+                                    onBlur={handleBlur('location')}
+                                    value={values.location}
+                                />
 
                                 {/* اختيار تاريخ الميلاد */}
                                 <Text style={labelStyle}>Date of Birth</Text>

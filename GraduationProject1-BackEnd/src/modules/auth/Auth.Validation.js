@@ -4,7 +4,6 @@ import joi from 'joi';
 // Registration Schema
 export const RegisterSchema = joi.object({
     FullName: joi.string().min(3).max(50).required(),
-    UserName: joi.string().alphanum().min(3).max(30).required(),
     Email: joi.string().email().required(),
     Password: joi.string().pattern(/^[A-Z][a-z0-9]{3,20}$/).required(),
     ConfirmPassword: joi.any().valid(joi.ref('Password')).required().messages({ 'any.only': 'Passwords do not match' }),
