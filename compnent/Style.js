@@ -313,10 +313,12 @@ padding-right: 15px;
 `;
 
 export const PostIMg = styled.Image`
-width: 100%;
-height:250px;
-margin-top: 15px;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16/9;
+    margin-top: 15;
 `;
+
 
 export const ReactionOfPost = styled.View`
 flex-direction: row;
@@ -340,39 +342,4 @@ font-family: 'Lato-Regular' ;
 margin-top: 5px;
 margin-left: 5px;
 `;
-
-export const mobileStyles = styled.View({
-  datePickerContainer: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 10,
-    padding: 15,
-    marginBottom: 20,
-    backgroundColor: '#fff',
-  },
-  datePickerText: {
-    fontSize: 16,
-    color: '#333',
-  },
-  genderOption: {
-    borderWidth: 1,
-    borderRadius: 5,
-    padding: 10,
-    marginHorizontal: 5,
-    flex: 1,
-    textAlign: 'center',
-  },
-  genderSelected: {
-    borderColor: '#6200EE', // لون مخصص للزر المحدد
-  },
-  genderUnselected: {
-    borderColor: '#ccc', // لون مخصص للزر غير المحدد
-  },
-  genderTextSelected: {
-    color: '#6200EE',
-  },
-  genderTextUnselected: {
-    color: '#ccc',
-  },
-});
 
