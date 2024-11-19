@@ -5,10 +5,16 @@ import Appinit from './src/app.router.js';
 
 dotenv.config();
 const app = express()
+
+const corsOptions = {
+         origin: 'http://localhost:8081', 
+         Credential:true 
+   
+    };
 const PORT = process.env.PORT || 3000;
 
 
-app.use(cors());
+app.use(cors(corsOptions));
 
 Appinit(app,express);
 
