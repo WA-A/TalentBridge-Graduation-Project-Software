@@ -4,23 +4,28 @@ import cors from 'cors';
 import Appinit from './src/app.router.js';
 
 dotenv.config();
-const app = express()
+const app = express();
 
 const corsOptions = {
-         origin: 'http://localhost:8081', 
-         Credential:true 
-   
-    };
-const PORT = process.env.PORT || 3000;
-
+  origin: 'http://localhost:8081',  
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,  
+};
 
 app.use(cors(corsOptions));
 
-Appinit(app,express);
+app.options('*', cors(corsOptions));  
+
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Credentials', 'true');
+  next();
+});
 
 
-app.listen(PORT,()=>{
-    console.log(`server is running ..... ${PORT}`);
-    });
+Appinit(app, express);
 
-   
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});
