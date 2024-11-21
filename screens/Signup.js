@@ -50,6 +50,7 @@ export default function Signup({ navigation }) {
     const [selectedJob, setSelectedJob] = useState('Software Engineer');
            
     // Join Api With FrontPage
+
     const handleSignup = async (data) => {
         try {
             console.log('Sending Signup Data:', data);
@@ -59,6 +60,7 @@ export default function Signup({ navigation }) {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify(data),
+                credentials: 'include',  
             });
     
             if (!response.ok) {
@@ -73,6 +75,9 @@ export default function Signup({ navigation }) {
             console.error('Error during signup:', error.message);
         }
     };
+    
+    
+    
     
     
     
@@ -116,7 +121,7 @@ export default function Signup({ navigation }) {
                         </TouchableOpacity>
                     </View>
                     <Formik
-                        initialValues={{ email: '', password: '', confirmPassword: '', fullName: '', username: '', phoneNumber: '', location: '', address: '' }}
+                        initialValues={{ email: '', password: '', confirmPassword: '', fullName: '', username: '', phoneNumber: '', location: '' }}
                         onSubmit={(values) => {
                             console.log({ userType,...values });
                           
