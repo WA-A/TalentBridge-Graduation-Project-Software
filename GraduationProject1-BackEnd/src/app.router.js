@@ -4,7 +4,7 @@ import UserRouter from './modules/User/User.router.js';
 import ProjectRouter from './modules/Projects/Projects.router.js'
 import PostRouter from './modules/Post/Post.Router.js'
 import CommentRouter from './modules/Comment/Comment.Router.js'
-
+import ChatRouter from "./modules/Chat/Chat.Router.js"
 import cors from 'cors';
 
 
@@ -17,6 +17,8 @@ const Appinit = (app,express)=>{
     app.use('/project',ProjectRouter);
     app.use('/post',PostRouter);
     app.use('/comment',CommentRouter);
+    app.use('/chat',ChatRouter);
+
 
 
     
