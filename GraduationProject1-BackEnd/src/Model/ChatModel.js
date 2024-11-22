@@ -11,6 +11,7 @@ const ChatSchema = new Schema(
         ],
         messages: [
             {
+                _id: { type: Types.ObjectId, auto: true },
                 sender: {
                     type: Types.ObjectId,
                     ref: 'User',
