@@ -8,7 +8,6 @@ import { Validation } from "../../MiddleWare/Validation.js";
 import * as schema from './Chat.Validation.js';
 const router = Router();
 
-router.post('/createchat',auth(EndPoints.CreateChat),ChatController.CreateChat);
-router.post('/addmessagetochat',auth(EndPoints.CreateChat),ChatController.AddMessageToChat);
+router.post('/createchat',auth(EndPoints.CreateChat),fileUpload(FileValue.image).fields([{ name: 'images'}, { name: 'videos'}, { name: 'files'} ]),ChatController.CreateChat);
 
 export default router;
