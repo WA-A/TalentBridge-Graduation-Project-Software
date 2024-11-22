@@ -13,5 +13,6 @@ router.post('/addmessagetochat',auth(EndPoints.CreateChat),fileUpload(FileValue.
 router.get('/getallchats',auth(EndPoints.CreateChat),ChatController.GetAllChats);
 router.put('/updatemessageinchat',auth(EndPoints.CreateChat),fileUpload(FileValue.image).fields([{ name: 'images'}, { name: 'videos'}, { name: 'files'} ]),ChatController.UpdateMessageInChat)
 router.delete('/deletemessageinchat',auth(EndPoints.CreateChat),ChatController.DeleteMessageFromChat)
+router.delete('/deletechat',auth(EndPoints.CreateChat),ChatController.DeleteChat)
 
 export default router;
