@@ -373,4 +373,22 @@ export const MarkMessagesAsRead = async (req, res, next) => {
 };
 
 
+export const GetUnreadMessagesCount = async (req, res, next) => {
+    try {
+        const { ChatId } = req.params;
 
+        const chat = await ChatModel.findById(ChatId);
+        if (!chat) {
+            return next(new Error("Chat not found."));
+        }
+
+        const unreadCount = chat.messages.filter(
+            (message) => !message.isRead && message.sender.toString() !== req.user._id.toString()
+        ).length;
+
+        return res.status(200).json({ unreadCount });
+    } catch (error) {
+        console.error("Error getting unread messages count:", error);
+        return next(error);
+    }
+};
