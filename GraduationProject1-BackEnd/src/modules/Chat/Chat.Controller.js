@@ -346,3 +346,31 @@ export const GetChatMessages = async (req, res, next) => {
         return next(error);
     }
 };
+
+
+export const MarkMessagesAsRead = async (req, res, next) => {
+    try {
+        const { ChatId } = req.body;
+
+        const chat = await ChatModel.findById(ChatId);
+        if (!chat) {
+            return next(new Error("Chat not found."));
+        }
+
+        chat.messages.forEach((message) => {
+            if (message.sender.toString() !== req.user._id.toString()) {
+                message.isRead = true;
+            }
+        });
+
+        await chat.save();
+
+        return res.status(200).json({ message: "Messages marked as read." });
+    } catch (error) {
+        console.error("Error marking messages as read:", error);
+        return next(error);
+    }
+};
+
+
+
