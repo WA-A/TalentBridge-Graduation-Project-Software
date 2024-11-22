@@ -329,3 +329,20 @@ export const DeleteChat = async (req, res, next) => {
         return next(error);
     }
 };
+
+
+export const GetChatMessages = async (req, res, next) => {
+    try {
+        const { ChatId } = req.params;
+
+        const chat = await ChatModel.findById(ChatId).populate('messages.sender', 'name email');
+        if (!chat) {
+            return next(new Error("Chat not found."));
+        }
+
+        return res.status(200).json({ messages: chat.messages });
+    } catch (error) {
+        console.error("Error fetching chat messages:", error);
+        return next(error);
+    }
+};
