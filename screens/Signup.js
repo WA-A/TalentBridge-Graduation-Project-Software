@@ -3,11 +3,11 @@ import { View, Text, TouchableOpacity, Platform, ScrollView, StyleSheet } from '
 import DateTimePickerModal from '@react-native-community/datetimepicker';  // للموبايل
 import { StatusBar } from 'expo-status-bar';
 import { Formik } from 'formik';
-import { Feather, FontAwesome, Ionicons,Error } from '@expo/vector-icons';
+import { Feather, FontAwesome, Ionicons, Error } from '@expo/vector-icons';
 import { Picker } from '@react-native-picker/picker'
-import { Colors, StyledContainer, InnerContainer, PageLogo, StyledFormArea, StyledButton, ButtonText, StyledTextInputSignUp, LeftIcon, labelStyle } from './../compnent/Style';
+import { Colors, StyledContainer, InnerContainer, PageLogo, StyledFormArea, StyledButton, ButtonText, StyledTextInputSignUp, LeftIcon, labelStyle, RightIcon, RightIcon2 } from './../compnent/Style';
 import axios from 'axios';
-import { useNavigation } from '@react-navigation/native'; 
+import { useNavigation } from '@react-navigation/native';
 
 // استيراد مكتبة DatePicker فقط للويب
 let DatePicker;
@@ -47,88 +47,88 @@ export default function Signup({ navigation }) {
     ];
 
 
-    
-    const [selectedJob, setSelectedJob] = useState('Software Engineer');    
+
+    const [selectedJob, setSelectedJob] = useState('Software Engineer');
     const [hidePassword, setHidePassword] = useState(true);
     const [hideConfirmPassword, setHideConfirmPassword] = useState(true);
-  
+
     const [errorMessage, setErrorMessage] = useState('');
     const [errorMessage2, setErrorMessage2] = useState('');
 
-    const [successMassage,setSuccessMassage]=useState('');
-    const [successMassage2,setSuccessMassage2]=useState('');
+    const [successMassage, setSuccessMassage] = useState('');
+    const [successMassage2, setSuccessMassage2] = useState('');
     //verify
-    const [name,setName]=useState('');
-    const [nameVerfy,setNameVerfy]=useState(false);
-    const [email,setEmail]=useState('');
-    const [emailVerfy,setemailVerfy]=useState(false);
-    const [password,setpassword]=useState('');
-    const [passwordVerfy,setPasswordVerfy]=useState(false);
-    const [confirmpasswordVerfy,setConfirmPasswordVerfy]=useState(false);
-    const [confirmPassword,setConfirmPassword]=useState('');
+    const [name, setName] = useState('');
+    const [nameVerfy, setNameVerfy] = useState(false);
+    const [email, setEmail] = useState('');
+    const [emailVerfy, setemailVerfy] = useState(false);
+    const [password, setpassword] = useState('');
+    const [passwordVerfy, setPasswordVerfy] = useState(false);
+    const [confirmpasswordVerfy, setConfirmPasswordVerfy] = useState(false);
+    const [confirmPassword, setConfirmPassword] = useState('');
 
-    function handleName(e){
+    function handleName(e) {
         const nameVar = e.nativeEvent.text;
         setName(nameVar);
         setNameVerfy(false);
-        
-        if(nameVar.length > 1){
+
+        if (nameVar.length > 1) {
             setName(nameVar);
             setNameVerfy(true);
-          }
-     
-         }
+        }
 
-    function handleemail(e){
+    }
+
+    function handleemail(e) {
         const emailVar = e.nativeEvent.text;
         setEmail(emailVar);
         setemailVerfy(false);
-        
-        if(/^[\w.%+-]+@[\w.-]+\.[a-zA-Z]{3,}$/.test(emailVar)){
+
+        if (/^[\w.%+-]+@[\w.-]+\.[a-zA-Z]{3,}$/.test(emailVar)) {
             setEmail(emailVar)
             setemailVerfy(true);
-           }
-         }
+        }
+    }
 
-         function handlePassword(e){
-            const passVar = e.nativeEvent.text;
-            setpassword(passVar);
-            setPasswordVerfy(false);
-                if(passVar.length > 0){
-                    setErrorMessage2('');
-                    setSuccessMassage2('');
-                }
-                   if (!/[A-Z]/.test([passVar])) {
-                    setErrorMessage('The password must contain at least one uppercase letter.');
-                } else if (!/\d/.test(passVar)) {
-                    setErrorMessage('The password must contain at least one number.');
-                } else if (passVar.length <= 6) {
-                    setErrorMessage('The password must be longer than 6 characters.');
-                } else {
-                    setErrorMessage(''); // إذا كانت كلمة المرور صحيحة، قم بإزالة الرسالة
-                    setpassword(passVar)
-                    setPasswordVerfy(true);
-                    setSuccessMassage('Password Valid!')
-                }
-              
-             }
-          
-        function handleCinfirmPassword(e) {
-            console.log("password:", password);
-            const ConfirmPassVar = e.nativeEvent.text;
-            setConfirmPassword(ConfirmPassVar);
-            setConfirmPasswordVerfy(false);
-        if (password !==  ConfirmPassVar) {
+    function handlePassword(e) {
+        const passVar = e.nativeEvent.text;
+        setpassword(passVar);
+        setPasswordVerfy(false);
+        if (passVar.length > 0) {
+            setErrorMessage2('');
+            setSuccessMassage2('');
+        }
+        if (!/[A-Z]/.test([passVar])) {
+            setErrorMessage('The password must contain at least one uppercase letter.');
+        } else if (!/\d/.test(passVar)) {
+            setErrorMessage('The password must contain at least one number.');
+        } else if (passVar.length <= 6) {
+            setErrorMessage('The password must be longer than 6 characters.');
+        } else {
+            setErrorMessage(''); // إذا كانت كلمة المرور صحيحة، قم بإزالة الرسالة
+            setpassword(passVar)
+            setPasswordVerfy(true);
+            setSuccessMassage('Password Valid!')
+        }
+
+    }
+
+    function handleCinfirmPassword(e) {
+        console.log("password:", password);
+        const ConfirmPassVar = e.nativeEvent.text;
+        setConfirmPassword(ConfirmPassVar);
+        setConfirmPasswordVerfy(false);
+        if (password !== ConfirmPassVar) {
             setErrorMessage2('Passwords do not match.');
 
-        } if(password === ConfirmPassVar) {
+        } if (password === ConfirmPassVar) {
             setErrorMessage2('');
             setConfirmPasswordVerfy(true);
             setSuccessMassage2('Passwords match!');
         }
-       
+
     };
-                    
+
     // Join Api With FrontPage
 
     const handleSignup = async (data) => {
@@ -140,14 +140,14 @@ export default function Signup({ navigation }) {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify(data),
-                credentials: 'include',  
+                credentials: 'include',
             });
-    
+
             if (!response.ok) {
                 const errorData = await response.json();
                 throw new Error(errorData.message || 'Something went wrong');
             }
-    
+
             const result = await response.json();
             console.log('User registered successfully:', result);
             navigation.navigate('HomeScreen');
@@ -155,12 +155,12 @@ export default function Signup({ navigation }) {
             console.error('Error during signup:', error.message);
         }
     };
-    
-    
-    
-    
-    
-    
+
+
+
+
+
+
 
 
     return (
@@ -204,8 +204,8 @@ export default function Signup({ navigation }) {
                     <Formik
                         initialValues={{ email: '', password: '', confirmPassword: '', fullName: '', username: '', phoneNumber: '', location: '' }}
                         onSubmit={(values) => {
-                            console.log({ userType,...values });
-                          
+                            console.log({ userType, ...values });
+
                         }}
                     >
                         {({ handleChange, handleBlur, handleSubmit, values }) => (
@@ -222,22 +222,22 @@ export default function Signup({ navigation }) {
                                     onChange={e => handleName(e)}
                                     rightIcon22={
                                         name.length < 1 ? null : nameVerfy ? (
-                                        <RightIcon2 style={{top:6}} >
-                                        <Feather name="check-circle" color="green" size={20} />
-                                        </RightIcon2>
-                                             ) : (
-                                            <RightIcon2 style={{top:6}} >
-                                           <Feather name="x-circle" color="red" size={20} />
-                                           </RightIcon2>
-                                             )} 
+                                            <RightIcon2 style={{ top: 6 }} >
+                                                <Feather name="check-circle" color="green" size={20} />
+                                            </RightIcon2>
+                                        ) : (
+                                            <RightIcon2 style={{ top: 6 }} >
+                                                <Feather name="x-circle" color="red" size={20} />
+                                            </RightIcon2>
+                                        )}
                                 />
-                                
-                                  {
-                                    name.length <1 ?null : nameVerfy ?null:
-                                    <Text style={{marginLeft:20,marginTop:-20,marginBottom:10,color:'red',}}>
-                                    Name should be more then 1 characters.</Text>
-                                  }
-                          
+
+                                {
+                                    name.length < 1 ? null : nameVerfy ? null :
+                                        <Text style={{ marginLeft: 20, marginTop: -20, marginBottom: 10, color: 'red', }}>
+                                            Name should be more then 1 characters.</Text>
+                                }
+
                                 {/* إدخال البريد الإلكتروني */}
 
                                 <Text style={labelStyle}>Email</Text>
@@ -252,21 +252,21 @@ export default function Signup({ navigation }) {
                                     onChange={e => handleemail(e)}
                                     rightIcon22={
                                         email.length < 1 ? null : emailVerfy ? (
-                                        <RightIcon2 style={{top:6}} >
-                                        <Feather name="check-circle" color="green" size={20} />
-                                        </RightIcon2>
-                                             ) : (
-                                            <RightIcon2 style={{top:6}} >
-                                           <Feather name="x-circle" color="red" size={20} />
-                                           </RightIcon2>
-                                             )}   
+                                            <RightIcon2 style={{ top: 6 }} >
+                                                <Feather name="check-circle" color="green" size={20} />
+                                            </RightIcon2>
+                                        ) : (
+                                            <RightIcon2 style={{ top: 6 }} >
+                                                <Feather name="x-circle" color="red" size={20} />
+                                            </RightIcon2>
+                                        )}
 
                                 />
-                                  {
-                                    email.length <1 ?null : emailVerfy ?null:
-                                    <Text style={{marginLeft:20,marginTop:-20,marginBottom:10,color:'red',fontWeight:'bold'}}>
-                                    Enter Proper Email Address.</Text>
-                                  }
+                                {
+                                    email.length < 1 ? null : emailVerfy ? null :
+                                        <Text style={{ marginLeft: 20, marginTop: -20, marginBottom: 10, color: 'red', fontWeight: 'bold' }}>
+                                            Enter Proper Email Address.</Text>
+                                }
 
 
 
@@ -283,25 +283,25 @@ export default function Signup({ navigation }) {
                                     isPassword={true}
                                     hidePassword={hidePassword}
                                     setHidePassword={setHidePassword}
-                                    
+
                                     onChange={e => handlePassword(e)}
                                     rightIcon22={
-                                     password.length < 1 ? null : passwordVerfy ? (
-                                        <RightIcon2 style={{top:6,right:40}} >
-                                        <Feather name="check-circle" color="green" size={20} />
-                                        </RightIcon2>
-                                             ) : (
-                                            <RightIcon2 style={{top:6,right:40}} >
-                                           <Feather name="x-circle" color="red" size={20} />
-                                           </RightIcon2>
-                                             )}     
+                                        password.length < 1 ? null : passwordVerfy ? (
+                                            <RightIcon2 style={{ top: 6, right: 40 }} >
+                                                <Feather name="check-circle" color="green" size={20} />
+                                            </RightIcon2>
+                                        ) : (
+                                            <RightIcon2 style={{ top: 6, right: 40 }} >
+                                                <Feather name="x-circle" color="red" size={20} />
+                                            </RightIcon2>
+                                        )}
 
                                 />
-                                    {errorMessage  ? (
-                <Text style={styles.error}>{errorMessage}</Text>
-            ) : (
-                <Text style={styles.success}>{successMassage}</Text>
-            )}
+                                {errorMessage ? (
+                                    <Text style={styles.error}>{errorMessage}</Text>
+                                ) : (
+                                    <Text style={styles.success}>{successMassage}</Text>
+                                )}
 
                                 {/* إدخال تأكيد كلمة المرور */}
                                 <Text style={labelStyle}>Confirm Password</Text>
@@ -319,22 +319,22 @@ export default function Signup({ navigation }) {
                                     onChange={e => handleCinfirmPassword(e)}
 
                                     rightIcon22={
-                                     confirmPassword.length < 1 ? null : confirmpasswordVerfy ? (
-                                        <RightIcon2 style={{top:6,right:40}} >
-                                        <Feather name="check-circle" color="green" size={20} />
-                                        </RightIcon2>
-                                             ) : (
-                                            <RightIcon2 style={{top:6,right:40}} >
-                                           <Feather name="x-circle" color="red" size={20} />
-                                           </RightIcon2>
-                                             )}   
+                                        confirmPassword.length < 1 ? null : confirmpasswordVerfy ? (
+                                            <RightIcon2 style={{ top: 6, right: 40 }} >
+                                                <Feather name="check-circle" color="green" size={20} />
+                                            </RightIcon2>
+                                        ) : (
+                                            <RightIcon2 style={{ top: 6, right: 40 }} >
+                                                <Feather name="x-circle" color="red" size={20} />
+                                            </RightIcon2>
+                                        )}
                                 />
-                                   {errorMessage2  ? (
-                <Text style={styles.error}>{errorMessage2}</Text>
-            ) : (
-                <Text style={styles.success}>{successMassage2}</Text>
-            )}
-                                  
+                                {errorMessage2 ? (
+                                    <Text style={styles.error}>{errorMessage2}</Text>
+                                ) : (
+                                    <Text style={styles.success}>{successMassage2}</Text>
+                                )}
+
                                 <Text style={labelStyle}>Phone Number</Text>
                                 <MyTextInput
                                     icon="phone"
@@ -354,19 +354,19 @@ export default function Signup({ navigation }) {
                                 />
 
                                 {/* عرض حقل عدد سنوات الخبرة إذا كان المستخدم "Senior" */}
-                         {userType === 'Senior' && (
-                                  <>
-                    <Text style={labelStyle}>Years of Experience</Text>
-                    <MyTextInput
-                        icon="briefcase"
-                        placeholderTextColor={darkLight}
-                        onChangeText={handleChange('yearsOfExperience')}
-                        onBlur={handleBlur('yearsOfExperience')}
-                        value={values.yearsOfExperience}
-                        keyboardType="numeric"
-                    />
-                </>
-            )}
+                                {userType === 'Senior' && (
+                                    <>
+                                        <Text style={labelStyle}>Years of Experience</Text>
+                                        <MyTextInput
+                                            icon="briefcase"
+                                            placeholderTextColor={darkLight}
+                                            onChangeText={handleChange('yearsOfExperience')}
+                                            onBlur={handleBlur('yearsOfExperience')}
+                                            value={values.yearsOfExperience}
+                                            keyboardType="numeric"
+                                        />
+                                    </>
+                                )}
 
                                 {/* اختيار تاريخ الميلاد */}
                                 <Text style={labelStyle}>Date of Birth</Text>
@@ -479,18 +479,18 @@ export default function Signup({ navigation }) {
                                 {/* زر التسجيل */}
                                 <StyledButton onPress={() => { console.log('Button Pressed'); handleSignup(values); }}>
                                     <ButtonText>Sign Up as {userType}</ButtonText>
-                                    </StyledButton>
+                                </StyledButton>
 
 
 
 
-                                 {/* زر الانتقال لتسجيل الدخول */}
-                         <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-                         <Text style={{ color: fifthColor, textAlign: 'center', marginTop: 15 }}>Already have an account? Log In</Text>
-                     </TouchableOpacity>
+                                {/* زر الانتقال لتسجيل الدخول */}
+                                <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+                                    <Text style={{ color: fifthColor, textAlign: 'center', marginTop: 15 }}>Already have an account? Log In</Text>
+                                </TouchableOpacity>
 
                             </StyledFormArea>
-                        )}   
+                        )}
                     </Formik>
                 </InnerContainer>
             </ScrollView>
@@ -499,7 +499,7 @@ export default function Signup({ navigation }) {
 }
 
 // مكون الإدخال الخاص
-const MyTextInput = ({ icon,rightIcon22,isPassword, hidePassword,setHidePassword,isConfirmPassword,hideConfirmPassword, setHideConfirmPassword,...props }) => {
+const MyTextInput = ({ icon, rightIcon22, isPassword, hidePassword, setHidePassword, isConfirmPassword, hideConfirmPassword, setHideConfirmPassword, ...props }) => {
     return (
         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 20, justifyContent: 'center' }}>
             <LeftIcon>
@@ -508,13 +508,13 @@ const MyTextInput = ({ icon,rightIcon22,isPassword, hidePassword,setHidePassword
             <StyledTextInputSignUp {...props} style={{ width: '100%' }} />
             {rightIcon22}
 
-                     {isPassword && (
-                <RightIcon style={{top:6}} onPress={() => setHidePassword(!hidePassword)}>
+            {isPassword && (
+                <RightIcon style={{ top: 6 }} onPress={() => setHidePassword(!hidePassword)}>
                     <Ionicons name={hidePassword ? "eye-off" : "eye"} size={25} color={darkLight} />
                 </RightIcon>
             )}
             {isConfirmPassword && (
-                <RightIcon style={{top:6}} onPress={() => setHideConfirmPassword(!hideConfirmPassword)}>
+                <RightIcon style={{ top: 6 }} onPress={() => setHideConfirmPassword(!hideConfirmPassword)}>
                     <Ionicons name={hideConfirmPassword ? "eye-off" : "eye"} size={25} color={darkLight} />
                 </RightIcon>
             )}
@@ -543,14 +543,14 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         paddingLeft: 10,
         fontSize: 16,
-    },   error: {
+    }, error: {
         color: 'red',
         fontSize: 12,
-        marginLeft:20,marginTop:-15,marginBottom:10,fontWeight:'bold'
+        marginLeft: 20, marginTop: -15, marginBottom: 10, fontWeight: 'bold'
     },
     success: {
         color: 'green',
-        fontSize: 12,marginLeft:20,marginTop:-15,marginBottom:10,fontWeight:'bold'
+        fontSize: 12, marginLeft: 20, marginTop: -15, marginBottom: 10, fontWeight: 'bold'
     },
 
 });
