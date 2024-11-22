@@ -183,7 +183,8 @@ export const GetAllChats = async (req, res) => {
 
 export const UpdateMessageInChat = async (req, res, next) => {
     try {
-        const { ChatId, MessageId, NewContent, NewMedia, MessageType = 'text' } = req.body;  
+        const { ChatId, MessageId, NewContent, NewMedia, MessageType = 'text' } = req.body;  // بيانات الطلب
+
         if (!ChatId || !MessageId || !NewContent) {
             return next(new Error("ChatId, MessageId, and new content are required."));
         }
@@ -269,7 +270,7 @@ export const DeleteMessageFromChat = async (req, res, next) => {
         const { ChatId, MessageId } = req.body;
 
         if (!ChatId || !MessageId) {
-            return next(new Error("Both ChatId and MessageId are required."));
+            return next(new Error("Both chatId and messageId are required."));
         }
 
         const chat = await ChatModel.findById(ChatId);
@@ -277,19 +278,16 @@ export const DeleteMessageFromChat = async (req, res, next) => {
             return next(new Error("Chat not found."));
         }
 
-        const messageIndex = chat.messages.findIndex(
-            (msg) => msg._id.toString() === MessageId
-        );
-
-        if (messageIndex === -1) {
+        const message = chat.messages.id(MessageId);
+        if (!message) {
             return next(new Error("Message not found."));
         }
 
-        if (chat.messages[messageIndex].sender.toString() !== req.user._id.toString()) {
+        if (message.sender.toString() !== req.user._id.toString()) {
             return next(new Error("You are not authorized to delete this message."));
         }
 
-        chat.messages.splice(messageIndex, 1);
+        message.remove();
 
         await chat.save();
 
@@ -303,3 +301,31 @@ export const DeleteMessageFromChat = async (req, res, next) => {
     }
 };
 
+
+export const DeleteChat = async (req, res, next) => {
+    try {
+        const { ChatId } = req.body;
+
+        if (!ChatId) {
+            return next(new Error("ChatId is required."));
+        }
+
+        const chat = await ChatModel.findById(ChatId);
+        if (!chat) {
+            return next(new Error("Chat not found."));
+        }
+
+        if (!chat.users.includes(req.user._id)) {
+            return next(new Error("You are not authorized to delete this chat."));
+        }
+
+        await ChatModel.findByIdAndDelete(ChatId);
+
+        return res.status(200).json({
+            message: "Chat deleted successfully.",
+        });
+    } catch (error) {
+        console.error("Error deleting chat:", error);
+        return next(error);
+    }
+};
