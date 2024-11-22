@@ -13,6 +13,6 @@ router.post('/createprofile',Validation(schema.CreateProfileSchema),auth(EndPoin
 router.patch('/updateprofile',Validation(schema.UpdateProfileSchema),auth(EndPoints.CreateProfile),fileUpload(FileValue.image).single('PictureProfile'),UserController.UpdateProfile);
 router.get('/viewownprofile',auth(EndPoints.CreateProfile),UserController.ViewOwnProfile);
 router.get('/viewotherprofile/:userId',auth(EndPoints.CreateProfile),UserController.ViewOtherProfile);
-
+router.get ('/test',UserController.test);
 
 export default router

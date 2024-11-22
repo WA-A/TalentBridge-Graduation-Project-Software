@@ -1,4 +1,4 @@
-import React from 'react';
+import React , { useState, useEffect } from 'react';
 import { View, Text, Image, TouchableOpacity } from 'react-native';
 import {
   ButtonText,
@@ -21,6 +21,18 @@ const { brand,fifthColor,secondary,primary } = Colors; import { Dimensions } fro
 const { width } = Dimensions.get('window');
 
 const WelcomeScreen = ({ navigation }) => {
+  const [data, setData] = useState(null);
+
+  useEffect(() => {
+    fetch('http://localhost:3000/user/test')  
+      .then((response) => response.json())
+      .then((data) => {
+        setData(data);  
+      })
+      .catch((error) => {
+        console.error('Error fetching data:', error);
+      });
+  }, []);  
   return (
     <View style={{ flex: 1, justifyContent: 'space-between', backgroundColor: primary}}>
       {/* Navbar */}
@@ -49,6 +61,12 @@ const WelcomeScreen = ({ navigation }) => {
         <Text style={{ fontSize: 24, fontWeight: 'bold', color: brand }}>
           Between Juniors and Professionals
         </Text>
+        {/* عرض البيانات أسفل النص */}
+        {data && (
+          <View style={{ marginTop: 20 }}>
+           <Text style={{ fontSize: 18, fontWeight: 'bold' }}>{data.message}</Text>
+          </View>
+        )}
       </View>
 
       {/* Footer */}

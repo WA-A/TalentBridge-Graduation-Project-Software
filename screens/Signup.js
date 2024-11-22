@@ -48,40 +48,47 @@ export default function Signup({ navigation }) {
 
 
     const [selectedJob, setSelectedJob] = useState('Software Engineer');
-           
+
+    const [values, setValues] = useState({
+        fullName: '',
+        userName: '',
+        email: '',
+        password: '',
+        confirmPassword: '',
+        phoneNumber: '',
+        address: '',
+        birthDate: '',
+        location: '',
+        gender: '',
+        yearsOfExperience: '', 
+    });
+    
+    
+
     // Join Api With FrontPage
 
-    const handleSignup = async (data) => {
+    const handleSignup = async (values) => {
         try {
-            console.log('Sending Signup Data:', data);
-            const response = await fetch('http://localhost:3000/auth/signup', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(data),
-                credentials: 'include',  
-            });
-    
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'Something went wrong');
-            }
-    
-            const result = await response.json();
-            console.log('User registered successfully:', result);
-            navigation.navigate('HomeScreen');
+          const response = await fetch('http://localhost:3000/auth/signup', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(values),
+            credentials: 'include', 
+          });
+      
+          if (!response.ok) {
+            navigation.navigate('HomeScreen');  
+          }
+      
+          const data = await response.json();
+          console.log('Signup successful:', data);
         } catch (error) {
-            console.error('Error during signup:', error.message);
+          console.error('Error during signup:', error);
         }
-    };
-    
-    
-    
-    
-    
-    
-
+      };
+      
     return (
         <StyledContainer>
             <StatusBar style="dark" />
@@ -121,7 +128,7 @@ export default function Signup({ navigation }) {
                         </TouchableOpacity>
                     </View>
                     <Formik
-                        initialValues={{ email: '', password: '', confirmPassword: '', fullName: '', username: '', phoneNumber: '', location: '' }}
+                        initialValues={{ fullName: '', email: '', password: '', confirmPassword: '', phoneNumber: '', location: '' }}
                         onSubmit={(values) => {
                             console.log({ userType,...values });
                           
