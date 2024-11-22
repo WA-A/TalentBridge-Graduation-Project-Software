@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Text, View, TouchableOpacity, Animated } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { AnimatedCircles, useLineEffect} from './../compnent/Animation'
+import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
     StyledContainer,
     InnerContainer,
@@ -77,147 +79,151 @@ const TypingEffect = () => {
 };
 export default function Login({ navigation }) {
     const lineWidth = useLineEffect(); // الحصول على القيمة المتحركة للعرض
-
     const [hidePassword, setHidePassword] = useState(true);
     const slideAnim = useRef(new Animated.Value(0)).current;
 
     useEffect(() => {
         const slideInOut = () => {
-            // إعدادات الحركة
             Animated.sequence([
                 Animated.timing(slideAnim, {
-                    toValue: 1, // إظهار العبارة
-                    duration: 1000, // زمن الحركة
+                    toValue: 1,
+                    duration: 1000,
                     useNativeDriver: true,
                 }),
-
-            ]).start(() => slideInOut()); // إعادة تشغيل الحركة بعد الانتهاء
+            ]).start(() => slideInOut());
         };
-
         slideInOut(); 
     }, [slideAnim]);
 
-    // تحويل القيمة المتحركة إلى موضع أفقي
     const translateX = slideAnim.interpolate({
         inputRange: [0, 1],
         outputRange: [300, 0], // 300 تعني بداية الحركة من خارج الشاشة
     });
 
+
+    // Join API With Front
+    const handleLogin = async (values) => {
+        try {
+            const response = await fetch('http://localhost:3000/auth/signin', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(values),
+            });
+    
+            // إذا كانت الاستجابة ناجحة
+            if (response.ok) {
+                const data = await response.json();
+                console.log('Login Success:', data);
+                // إضافة منطق لتوجيه المستخدم إلى الصفحة التالية بعد النجاح
+            } else {
+                // إذا فشل الطلب (مثلاً خطأ 400 أو 500)
+                const errorData = await response.json();
+                console.log('Login failed:', errorData);
+                alert('Login failed: ' + errorData.message);
+            }
+        } catch (error) {
+            // في حالة حدوث خطأ آخر
+            console.log('Login failed:', error.message);
+            alert('An error occurred: ' + error.message);
+        }
+    };
+    
+    
     return (
         <StyledContainer>
             <StatusBar style="dark" />
-
             <Rectangle top="0px" left="0px" />
-            {/* زر الرجوع */}
-<TouchableOpacity
-    onPress={() => navigation.navigate('WelcomeScreen')}
-    style={{ position: 'absolute', top: 40, left: 20, zIndex: 10 }}
->
-    <Ionicons name="arrow-back" size={30} color={brand} />
-</TouchableOpacity>
+            <TouchableOpacity
+                onPress={() => navigation.navigate('WelcomeScreen')}
+                style={{ position: 'absolute', top: 40, left: 20, zIndex: 10 }}
+            >
+                <Ionicons name="arrow-back" size={30} color={brand} />
+            </TouchableOpacity>
 
             <InnerContainer>
                 <PageLogo resizeMode="cover" source={require('./../assets/Talent_Bridge_logo_with_black_border3.png')} />
-                {/*<Text>StatusBarHeight: {StatusBarHeight}px</Text>*/}
                 <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 5 }}>Account Login</Text>     
-           <Formik
-
+                <Formik
                     initialValues={{ email: '', password: '' }}
-                    onSubmit={(values) => {
-                        console.log(values);
-                        // يمكنك إضافة التنقل هنا بعد تسجيل الدخول الناجح
-                        // navigation.navigate('Home');
-                    }}
+                    onSubmit={handleLogin}
                 >
                     {({ handleChange, handleBlur, handleSubmit, values }) => (
-                        <StyledFormArea>
-                            <MyTextInput
-                                icon="envelope-o"
-                                placeholder="Email"
-                                placeholderTextColor={darkLight}
-                                onChangeText={handleChange('email')}
-                                onBlur={handleBlur('email')}
-                                value={values.email}
-                                keyboardType="email-address"
-                            />
-                            <MyTextInput
-                                icon="lock"
-                                placeholder="Password"
-                                placeholderTextColor={darkLight}
-                                onChangeText={handleChange('password')}
-                                onBlur={handleBlur('password')}
-                                value={values.password}
-                                secureTextEntry={hidePassword}  // جعل الإدخال كنقاط
-                                isPassword={true}
-                                hidePassword={hidePassword}
-                                setHidePassword={setHidePassword}
-                            />
-   <StyledButton onPress={handleSubmit}>
-                                <ButtonText>Login</ButtonText>
-                            </StyledButton>
+                       <StyledFormArea>
+                       <MyTextInput
+                           icon="envelope-o"
+                           placeholder="Email"
+                           placeholderTextColor={darkLight}
+                           onChangeText={handleChange('email')}
+                           onBlur={handleBlur('email')}
+                           value={values.email}
+                           keyboardType="email-address"
+                       />
+                       <MyTextInput
+                           icon="lock"
+                           placeholder="Password"
+                           placeholderTextColor={darkLight}
+                           onChangeText={handleChange('password')}
+                           onBlur={handleBlur('password')}
+                           value={values.password}
+                           secureTextEntry={hidePassword}
+                           isPassword={true}
+                           hidePassword={hidePassword}
+                           setHidePassword={setHidePassword}
+                       />
+                       <StyledButton onPress={handleSubmit}>
+                           <ButtonText>Login</ButtonText>
+                       </StyledButton>
+                 
+                   
 
-                            {/* Forgot Password Section */}
-                            <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
-                                <Text style={{ color: brand,fontWeight:'bold', textAlign: 'center', marginBottom: 20, marginTop: 20 }}>
+                            <TouchableOpacity >
+                                <Text style={{ color: brand, fontWeight: 'bold', textAlign: 'center', marginBottom: 20, marginTop: 20 }}>
                                     Forgot Password?
                                 </Text>
                             </TouchableOpacity>
-                        
-      <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 20 }}>
-    {/* Google Login */}
-    <TouchableOpacity onPress={() => { /* تنفيذ تسجيل الدخول باستخدام Google */ }} 
-    style={{  alignItems: 'center', }}>
-         <View style={styles.iconContainer}>
-         <View style={styles.circleBackground}>
 
-        <FontAwesome name="google" size={17} color={primary} />
-        </View>
-        <Text style={{ marginLeft: 12, fontSize: 15, color: brand, fontWeight: 'bold' }}>
-            Google
-        </Text>
-        </View>
-       
-    </TouchableOpacity>
+                            <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 20 }}>
+                                <TouchableOpacity onPress={() => { /* تنفيذ تسجيل الدخول باستخدام Google */ }} style={{ alignItems: 'center' }}>
+                                    <View style={styles.iconContainer}>
+                                        <View style={styles.circleBackground}>
+                                            <FontAwesome name="google" size={17} color={primary} />
+                                        </View>
+                                        <Text style={{ marginLeft: 12, fontSize: 15, color: brand, fontWeight: 'bold' }}>Google</Text>
+                                    </View>
+                                </TouchableOpacity>
 
-    {/* Facebook Login */}
-    <TouchableOpacity onPress={() => { /* تنفيذ تسجيل الدخول باستخدام Facebook */ }} 
-    style={{ flexDirection: 'row', alignItems: 'center',  }}>
-       <View style={styles.iconContainer}>
-        <Ionicons name="logo-facebook" size={30} color="#4267B2" />
-        <Text style={{ marginLeft: 10, fontSize: 15, color: '#4267B2', fontWeight: 'bold' }}>
-            Facebook
-        </Text>
-        </View>
-    </TouchableOpacity>
-</View>
+                                <TouchableOpacity onPress={() => { /* تنفيذ تسجيل الدخول باستخدام Facebook */ }} style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                    <View style={styles.iconContainer}>
+                                        <Ionicons name="logo-facebook" size={30} color="#4267B2" />
+                                        <Text style={{ marginLeft: 10, fontSize: 15, color: '#4267B2', fontWeight: 'bold' }}>Facebook</Text>
+                                    </View>
+                                </TouchableOpacity>
+                            </View>
 
-                            {/* Add the message with TouchableOpacity */}
-                            <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 20, }}>
+                            <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 20 }}>
                                 <Text style={{ color: darkLight }}>
                                     You do not have an account?
                                 </Text>
                                 <TouchableOpacity onPress={() => navigation.navigate('Signup')}>
-                                <Text   style={{ color: brand,fontWeight:'bold',marginLeft: 5}}>
-                                 Please sign up.
+                                    <Text style={{ color: brand, fontWeight: 'bold', marginLeft: 5 }}>
+                                        Please sign up.
                                     </Text>
-                                    </TouchableOpacity>
+                                </TouchableOpacity>
                             </View>
-                           <View>
-                           <TouchableOpacity onPress={() => navigation.navigate('HomeScreen')}>
-                                    
-                                    <Text style={{ color: darkLight,margin:20 }}>
-                                        Home after login
-                                    </Text>
-                                    </TouchableOpacity>
-    
-                           </View>
+
+                            <View>
+                                <TouchableOpacity onPress={() => navigation.navigate('HomeScreen')}>
+                                    <Text style={{ color: darkLight, margin: 20 }}>Home after login</Text>
+                                </TouchableOpacity>
+                            </View>
                         </StyledFormArea>
                     )}
                 </Formik>
             </InnerContainer>
         </StyledContainer>
-    );
-};
+    )};
 
 const MyTextInput = ({ label, icon, isPassword, hidePassword, setHidePassword, ...props }) => {
     return (

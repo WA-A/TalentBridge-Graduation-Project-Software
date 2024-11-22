@@ -2,6 +2,10 @@ import UserModel from "../../Model/User.Model.js";
 import Cloudinary from '../../../utls/Cloudinary.js';
 
 
+
+export const test = async (req,res)=>{
+    return res.status(404).json({ message: "success join " });
+}
 // Create Own Profile
 export const CreateProfile = async (req, res) => {
     try {
