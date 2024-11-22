@@ -15,5 +15,6 @@ router.put('/updatemessageinchat',auth(EndPoints.CreateChat),fileUpload(FileValu
 router.delete('/deletemessageinchat',auth(EndPoints.CreateChat),ChatController.DeleteMessageFromChat)
 router.delete('/deletechat',auth(EndPoints.CreateChat),ChatController.DeleteChat)
 router.get('/getchatmessages/:ChatId',auth(EndPoints.CreateChat),ChatController.GetAllChats);
+router.post('/markmessagesasread',auth(EndPoints.CreateChat),ChatController.MarkMessagesAsRead);
 
 export default router;
