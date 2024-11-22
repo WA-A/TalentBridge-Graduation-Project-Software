@@ -9,5 +9,6 @@ import * as schema from './Chat.Validation.js';
 const router = Router();
 
 router.post('/createchat',auth(EndPoints.CreateChat),ChatController.CreateChat);
+router.post('/addmessagetochat',auth(EndPoints.CreateChat),ChatController.AddMessageToChat);
 
 export default router;
