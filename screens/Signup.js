@@ -175,7 +175,7 @@ export default function Signup({ navigation }) {
 
       };
       
-    };
+    
 
     return (
         <StyledContainer>
@@ -511,7 +511,7 @@ export default function Signup({ navigation }) {
         </StyledContainer>
     );
 
-
+}
 // مكون الإدخال الخاص
 const MyTextInput = ({ icon, rightIcon22, isPassword, hidePassword, setHidePassword, isConfirmPassword, hideConfirmPassword, setHideConfirmPassword, ...props }) => {
     return (
@@ -557,7 +557,8 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         paddingLeft: 10,
         fontSize: 16,
-    }, error: {
+    }, 
+    error: {
         color: 'red',
         fontSize: 12,
         marginLeft: 20, marginTop: -15, marginBottom: 10, fontWeight: 'bold'
