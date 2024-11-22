@@ -151,6 +151,17 @@ export const RightIcon = styled.TouchableOpacity`
     width: 40px; 
     
 `;
+export const RightIcon2 = styled.TouchableOpacity`
+    right: 12px;
+    top: 15px;
+    position: absolute;
+    z-index: 1;
+    align-items: center;
+    justify-content: center;
+    height: 40px;  
+    width: 40px; 
+    
+`;
 
 // تعريف StyledButton
 export const StyledButton = styled.TouchableOpacity`
