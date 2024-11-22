@@ -5,7 +5,9 @@ import { StatusBar } from 'expo-status-bar';
 import { Formik } from 'formik';
 import { Feather, FontAwesome, Ionicons,Error } from '@expo/vector-icons';
 import { Picker } from '@react-native-picker/picker'
-import { Colors, StyledContainer, InnerContainer, PageLogo, StyledFormArea, StyledButton, ButtonText, StyledTextInputSignUp, LeftIcon, labelStyle, RightIcon,RightIcon2} from '../compnent/Style';
+import { Colors, StyledContainer, InnerContainer, PageLogo, StyledFormArea, StyledButton, ButtonText, StyledTextInputSignUp, LeftIcon, labelStyle } from './../compnent/Style';
+import axios from 'axios';
+import { useNavigation } from '@react-navigation/native'; 
 
 // استيراد مكتبة DatePicker فقط للويب
 let DatePicker;
@@ -46,8 +48,7 @@ export default function Signup({ navigation }) {
 
 
     
-    const [selectedJob, setSelectedJob] = useState('Software Engineer');
-    
+    const [selectedJob, setSelectedJob] = useState('Software Engineer');    
     const [hidePassword, setHidePassword] = useState(true);
     const [hideConfirmPassword, setHideConfirmPassword] = useState(true);
   
@@ -127,7 +128,40 @@ export default function Signup({ navigation }) {
         }
        
     };
-         
+                    
+    // Join Api With FrontPage
+
+    const handleSignup = async (data) => {
+        try {
+            console.log('Sending Signup Data:', data);
+            const response = await fetch('http://localhost:3000/auth/signup', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data),
+                credentials: 'include',  
+            });
+    
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Something went wrong');
+            }
+    
+            const result = await response.json();
+            console.log('User registered successfully:', result);
+            navigation.navigate('HomeScreen');
+        } catch (error) {
+            console.error('Error during signup:', error.message);
+        }
+    };
+    
+    
+    
+    
+    
+    
+
 
     return (
         <StyledContainer>
@@ -168,9 +202,10 @@ export default function Signup({ navigation }) {
                         </TouchableOpacity>
                     </View>
                     <Formik
-                        initialValues={{ email: '', password: '', confirmPassword: '', fullName: '', username: '', phoneNumber: '', location: '', address: '' }}
+                        initialValues={{ email: '', password: '', confirmPassword: '', fullName: '', username: '', phoneNumber: '', location: '' }}
                         onSubmit={(values) => {
-                            console.log({ userType, gender, dateOfBirth, ...values });
+                            console.log({ userType,...values });
+                          
                         }}
                     >
                         {({ handleChange, handleBlur, handleSubmit, values }) => (
@@ -299,7 +334,39 @@ export default function Signup({ navigation }) {
             ) : (
                 <Text style={styles.success}>{successMassage2}</Text>
             )}
+                                  
+                                <Text style={labelStyle}>Phone Number</Text>
+                                <MyTextInput
+                                    icon="phone"
+                                    placeholderTextColor={darkLight}
+                                    onChangeText={handleChange('phoneNumber')}
+                                    onBlur={handleBlur('phoneNumber')}
+                                    value={values.phoneNumber}
+                                />
 
+                                <Text style={labelStyle}>Location</Text>
+                                <MyTextInput
+                                    icon="home"
+                                    placeholderTextColor={darkLight}
+                                    onChangeText={handleChange('location')}
+                                    onBlur={handleBlur('location')}
+                                    value={values.location}
+                                />
+
+                                {/* عرض حقل عدد سنوات الخبرة إذا كان المستخدم "Senior" */}
+                         {userType === 'Senior' && (
+                                  <>
+                    <Text style={labelStyle}>Years of Experience</Text>
+                    <MyTextInput
+                        icon="briefcase"
+                        placeholderTextColor={darkLight}
+                        onChangeText={handleChange('yearsOfExperience')}
+                        onBlur={handleBlur('yearsOfExperience')}
+                        value={values.yearsOfExperience}
+                        keyboardType="numeric"
+                    />
+                </>
+            )}
 
                                 {/* اختيار تاريخ الميلاد */}
                                 <Text style={labelStyle}>Date of Birth</Text>
@@ -379,7 +446,7 @@ export default function Signup({ navigation }) {
 
                                 {/* اختيار المجال الوظيفي */}
                                 <View style={{ marginBottom: 20 }}>
-                                    <Text style={labelStyle}>Job Field</Text>
+                                    <Text style={labelStyle}>Field</Text>
                                     <View style={styles.container}>
                                         <View style={styles.pickerWrapper}>
                                             {Platform.OS === 'web' ? (
@@ -410,9 +477,12 @@ export default function Signup({ navigation }) {
 
 
                                 {/* زر التسجيل */}
-                                <StyledButton onPress={handleSubmit}>
+                                <StyledButton onPress={() => { console.log('Button Pressed'); handleSignup(values); }}>
                                     <ButtonText>Sign Up as {userType}</ButtonText>
-                                </StyledButton>
+                                    </StyledButton>
+
+
+
 
                                  {/* زر الانتقال لتسجيل الدخول */}
                          <TouchableOpacity onPress={() => navigation.navigate('Login')}>

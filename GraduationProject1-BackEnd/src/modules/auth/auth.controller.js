@@ -9,11 +9,18 @@ import UserModel from '../../Model/User.Model.js';
 
 export const SignUp = async (req,res)=>{
    
-    const {FullName,Username,Email, Password,ConfirmPassword,Gender,BirthDate,PhoneNumber,Location,YearsofExperience,Field} = req.body;
+    const {FullName,Email,Password,ConfirmPassword,Gender,BirthDate,PhoneNumber,Location,YearsofExperience,Field} = req.body;
+    if (Password !== ConfirmPassword) {
+        return res.status(400).json({ message: "Passwords do not match" });
+    }
 
+   
+    if (!Password) {
+        return res.status(400).json({ message: "Password is required" });
+    }
     const HashedPassword = bcrypt.hashSync(Password,parseInt(process.env.SALTROUND));
      
-    const CreateUser = await UserModel.create({FullName,Username,Email,Password:HashedPassword,ConfirmPassword,Gender,BirthDate,PhoneNumber,Location,YearsofExperience,Field});
+    const CreateUser = await UserModel.create({FullName,Email,Password:HashedPassword,ConfirmPassword,Gender,BirthDate,PhoneNumber,Location,YearsofExperience,Field});
     const token = jwt.sign({Email},process.env.CONFIRM_EMAILTOKEN);
    //await SendEmail(Email,`Welcom`,`<h2>hello ${FullName}</h2>`,decoded);
     return res.status(201).json({message:" success",user:CreateUser});

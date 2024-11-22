@@ -10,10 +10,10 @@ import * as schema from './Auth.Validation.js';
 
 
 
-router.post('/signup',Validation(schema.RegisterSchema),CheckEmail,AuthController.SignUp);
-router.post('/signin',Validation(schema.LoginSchema),AuthController.SignIn);
-router.patch('/sendcode',Validation(schema.SendCodeSchema),AuthController.SendCode);
-router.patch('/forgotpassword',Validation(schema.ForgetPasswordSchema),AuthController.ForgotPassword);
+router.post('/signup',CheckEmail,AuthController.SignUp); //,Validation(schema.RegisterSchema)
+router.post('/signin',AsyncHandler(AuthController.SignIn)); //,Validation(schema.LoginSchema)
+router.patch('/sendcode',AsyncHandler(AuthController.SendCode)); //,Validation(schema.SendCodeSchema)
+router.patch('/forgotpassword',AsyncHandler(AuthController.ForgotPassword)); //,Validation(schema.ForgetPasswordSchema)
 //router.get('/confirmemail/:token',AuthController.ConfirmEmail);
 
 

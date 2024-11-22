@@ -6,7 +6,7 @@ import Cloudinary from '../../../utls/Cloudinary.js';
 export const CreateProfile = async (req, res) => {
     try {
        
-        const { About, Bio } = req.body;
+        const { About, Bio ,UserName} = req.body;
         const authuser = req.user;  
 
         if (!authuser) {
@@ -31,6 +31,7 @@ export const CreateProfile = async (req, res) => {
         existingUser.PictureProfile = { secure_url, public_id };
         existingUser.About = About;
         existingUser.Bio = Bio;
+        existingUser.UserName = UserName;
 
         await existingUser.save();
 
@@ -48,7 +49,7 @@ export const CreateProfile = async (req, res) => {
 // Update Own Profile
 export const UpdateProfile = async (req, res, next) => {
     try {
-        const { About, Bio } = req.body;
+        const { About, Bio ,UserName } = req.body;
         const authUser = req.user;  
 
         
@@ -74,6 +75,7 @@ export const UpdateProfile = async (req, res, next) => {
         existingUser.About = About || existingUser.About;
         existingUser.Bio = Bio || existingUser.Bio;
         existingUser.PictureProfile = profileImage;
+        existingUser.UserName = UserName || existingUser.UserName;
 
         await existingUser.save();
 
