@@ -181,3 +181,85 @@ export const GetAllChats = async (req, res) => {
 
 
 
+export const UpdateMessageInChat = async (req, res, next) => {
+    try {
+        const { ChatId, MessageId, NewContent, NewMedia, MessageType = 'text' } = req.body;  // بيانات الطلب
+
+        if (!ChatId || !MessageId || !NewContent) {
+            return next(new Error("ChatId, MessageId, and new content are required."));
+        }
+
+        const chat = await ChatModel.findById(ChatId);
+        if (!chat) {
+            return next(new Error("Chat not found."));
+        }
+
+        const message = chat.messages.id(MessageId);
+        if (!message) {
+            return next(new Error("Message not found."));
+        }
+
+        if (message.sender.toString() !== req.user._id.toString()) {
+            return next(new Error("You are not authorized to edit this message."));
+        }
+
+        message.content = NewContent;
+        message.messageType = MessageType;
+        message.media = NewMedia || message.media; 
+
+        let media = [];
+
+        if (req.files) {
+            if (req.files['images']) {
+                const images = await Promise.all(req.files['images'].map(async (file) => {
+                    const { secure_url, public_id } = await cloudinary.uploader.upload(file.path, {
+                        folder: `Chats/${req.user._id}`,
+                    });
+                    fs.unlinkSync(file.path);
+                    return { secure_url, public_id };
+                }));
+                media.push(...images);
+            }
+
+            if (req.files['videos']) {
+                const videos = await Promise.all(req.files['videos'].map(async (file) => {
+                    const { secure_url, public_id } = await cloudinary.uploader.upload(file.path, {
+                        resource_type: 'video',
+                        folder: `Chats/${req.user._id}`,
+                    });
+                    fs.unlinkSync(file.path);
+                    return { secure_url, public_id };
+                }));
+                media.push(...videos);
+            }
+
+            if (req.files['files']) {
+                const files = await Promise.all(req.files['files'].map(async (file) => {
+                    const { secure_url, public_id } = await cloudinary.uploader.upload(file.path, {
+                        resource_type: 'auto',
+                        folder: `Chats/${req.user._id}`,
+                    });
+                    fs.unlinkSync(file.path);
+                    return { secure_url, public_id };
+                }));
+                media.push(...files);
+            }
+        }
+
+        if (media.length > 0) {
+            message.media = media;
+        }
+
+        message.messageType = media.length > 0 ? (
+            media[0].secure_url ? 'image' :
+            media[0].video_url ? 'video' : 'file'
+        ) : 'text';
+
+        await chat.save();
+
+        return res.status(200).json({ message: "Message updated successfully.", chat });
+    } catch (error) {
+        console.error("Error editing message:", error);
+        return next(error);
+    }
+};
