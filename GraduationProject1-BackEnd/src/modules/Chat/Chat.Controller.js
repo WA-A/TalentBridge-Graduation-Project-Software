@@ -178,6 +178,23 @@ export const GetAllChats = async (req, res) => {
 };
 
 
+export const GetChatMessages = async (req, res, next) => {
+    try {
+        const { ChatId } = req.params;
+
+        const chat = await ChatModel.findById(ChatId).populate('messages.sender', 'name email');
+        if (!chat) {
+            return next(new Error("Chat not found."));
+        }
+
+        return res.status(200).json({ messages: chat.messages });
+    } catch (error) {
+        console.error("Error fetching chat messages:", error);
+        return next(error);
+    }
+};
+
+
 export const UpdateMessageInChat = async (req, res, next) => {
     try {
         const { ChatId, MessageId, NewContent, NewMedia, MessageType = 'text' } = req.body;  // بيانات الطلب
@@ -323,23 +340,6 @@ export const DeleteChat = async (req, res, next) => {
         });
     } catch (error) {
         console.error("Error deleting chat:", error);
-        return next(error);
-    }
-};
-
-
-export const GetChatMessages = async (req, res, next) => {
-    try {
-        const { ChatId } = req.params;
-
-        const chat = await ChatModel.findById(ChatId).populate('messages.sender', 'name email');
-        if (!chat) {
-            return next(new Error("Chat not found."));
-        }
-
-        return res.status(200).json({ messages: chat.messages });
-    } catch (error) {
-        console.error("Error fetching chat messages:", error);
         return next(error);
     }
 };
