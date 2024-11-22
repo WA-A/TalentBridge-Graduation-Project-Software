@@ -158,7 +158,24 @@ export const AddMessageToChat = async (req, res) => {
 };
 
 
+export const GetAllChats = async (req, res) => {
+    try {
+        const loggedInUserId = req.user.id;  
 
+        const chats = await ChatModel.find({
+            users: loggedInUserId  
+        });
+
+        if (chats.length === 0) {
+            return res.status(404).json({ message: 'No chats found for this user' });
+        }
+
+        return res.status(200).json({ message: 'Chats retrieved successfully', chats });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: 'Failed to retrieve chats' });
+    }
+};
 
 
 
