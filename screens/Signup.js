@@ -65,27 +65,6 @@ export default function Signup({ navigation }) {
         yearsOfExperience: '', 
     });
     
-    
-
-    // Join Api With FrontPage
-
-    const handleSignup = async (values) => {
-        try {
-          const response = await fetch('http://localhost:3000/auth/signup', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(values),
-            credentials: 'include', 
-          });
-      
-          if (!response.ok) {
-            navigation.navigate('HomeScreen');  
-          }
-      
-          const data = await response.json();
-          console.log('Signup successful:', data);
 
     const [hidePassword, setHidePassword] = useState(true);
     const [hideConfirmPassword, setHideConfirmPassword] = useState(true);
@@ -196,15 +175,7 @@ export default function Signup({ navigation }) {
 
       };
       
-    };
-
-
-
-
-
-
-
-
+    
 
     return (
         <StyledContainer>
@@ -539,8 +510,8 @@ export default function Signup({ navigation }) {
             </ScrollView>
         </StyledContainer>
     );
-}
 
+}
 // مكون الإدخال الخاص
 const MyTextInput = ({ icon, rightIcon22, isPassword, hidePassword, setHidePassword, isConfirmPassword, hideConfirmPassword, setHideConfirmPassword, ...props }) => {
     return (
@@ -586,7 +557,8 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         paddingLeft: 10,
         fontSize: 16,
-    }, error: {
+    }, 
+    error: {
         color: 'red',
         fontSize: 12,
         marginLeft: 20, marginTop: -15, marginBottom: 10, fontWeight: 'bold'
