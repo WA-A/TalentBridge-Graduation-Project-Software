@@ -9,5 +9,5 @@ import * as schema from './Chat.Validation.js';
 const router = Router();
 
 router.post('/createchat',auth(EndPoints.CreateChat),fileUpload(FileValue.image).fields([{ name: 'images'}, { name: 'videos'}, { name: 'files'} ]),ChatController.CreateChat);
-
+router.post('/addmessagetochat',auth(EndPoints.CreateChat),fileUpload(FileValue.image).fields([{ name: 'images'}, { name: 'videos'}, { name: 'files'} ]),ChatController.AddMessageToChat);
 export default router;
