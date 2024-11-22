@@ -183,8 +183,7 @@ export const GetAllChats = async (req, res) => {
 
 export const UpdateMessageInChat = async (req, res, next) => {
     try {
-        const { ChatId, MessageId, NewContent, NewMedia, MessageType = 'text' } = req.body;  // بيانات الطلب
-
+        const { ChatId, MessageId, NewContent, NewMedia, MessageType = 'text' } = req.body;  
         if (!ChatId || !MessageId || !NewContent) {
             return next(new Error("ChatId, MessageId, and new content are required."));
         }
@@ -263,3 +262,44 @@ export const UpdateMessageInChat = async (req, res, next) => {
         return next(error);
     }
 };
+
+
+export const DeleteMessageFromChat = async (req, res, next) => {
+    try {
+        const { ChatId, MessageId } = req.body;
+
+        if (!ChatId || !MessageId) {
+            return next(new Error("Both ChatId and MessageId are required."));
+        }
+
+        const chat = await ChatModel.findById(ChatId);
+        if (!chat) {
+            return next(new Error("Chat not found."));
+        }
+
+        const messageIndex = chat.messages.findIndex(
+            (msg) => msg._id.toString() === MessageId
+        );
+
+        if (messageIndex === -1) {
+            return next(new Error("Message not found."));
+        }
+
+        if (chat.messages[messageIndex].sender.toString() !== req.user._id.toString()) {
+            return next(new Error("You are not authorized to delete this message."));
+        }
+
+        chat.messages.splice(messageIndex, 1);
+
+        await chat.save();
+
+        return res.status(200).json({
+            message: "Message deleted successfully.",
+            chat,
+        });
+    } catch (error) {
+        console.error("Error deleting message:", error);
+        return next(error);
+    }
+};
+
