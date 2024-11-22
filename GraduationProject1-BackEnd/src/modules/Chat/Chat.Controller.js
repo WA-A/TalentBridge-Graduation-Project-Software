@@ -178,9 +178,6 @@ export const GetAllChats = async (req, res) => {
 };
 
 
-
-
-
 export const UpdateMessageInChat = async (req, res, next) => {
     try {
         const { ChatId, MessageId, NewContent, NewMedia, MessageType = 'text' } = req.body;  // بيانات الطلب
@@ -389,6 +386,31 @@ export const GetUnreadMessagesCount = async (req, res, next) => {
         return res.status(200).json({ unreadCount });
     } catch (error) {
         console.error("Error getting unread messages count:", error);
+        return next(error);
+    }
+};
+
+
+export const SearchMessages = async (req, res, next) => {
+    try {
+        const { ChatId, Query } = req.body;
+
+        if (!ChatId || !Query) {
+            return next(new Error("ChatId and query are required."));
+        }
+
+        const chat = await ChatModel.findById(ChatId);
+        if (!chat) {
+            return next(new Error("Chat not found."));
+        }
+
+        const matchingMessages = chat.messages.filter((message) =>
+            message.content.toLowerCase().includes(Query.toLowerCase())
+        );
+
+        return res.status(200).json({ matchingMessages });
+    } catch (error) {
+        console.error("Error searching messages:", error);
         return next(error);
     }
 };

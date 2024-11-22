@@ -17,5 +17,6 @@ router.delete('/deletechat',auth(EndPoints.CreateChat),ChatController.DeleteChat
 router.get('/getchatmessages/:ChatId',auth(EndPoints.CreateChat),ChatController.GetAllChats);
 router.post('/markmessagesasread',auth(EndPoints.CreateChat),ChatController.MarkMessagesAsRead);
 router.get('/getunreadmessagescount/:ChatId',auth(EndPoints.CreateChat),ChatController.GetUnreadMessagesCount);
+router.post('/searchmessages',auth(EndPoints.CreateChat),ChatController.SearchMessages);
 
 export default router;
