@@ -46,25 +46,12 @@ export default function Signup({ navigation }) {
         { label: 'Graphic Design', value: 'Graphic Design' }
     ];
 
+    const [values, setValues] = useState({
+        FullName: '', Email: '', Password: '', ConfirmPassword: '', Gender: '', BirthDate: '', PhoneNumber: '', Location: '', YearsofExperience: '', Field: '',
+    });
 
 
     const [selectedJob, setSelectedJob] = useState('Software Engineer');
-
-
-    const [values, setValues] = useState({
-        fullName: '',
-        userName: '',
-        email: '',
-        password: '',
-        confirmPassword: '',
-        phoneNumber: '',
-        address: '',
-        birthDate: '',
-        location: '',
-        gender: '',
-        yearsOfExperience: '', 
-    });
-    
 
     const [hidePassword, setHidePassword] = useState(true);
     const [hideConfirmPassword, setHideConfirmPassword] = useState(true);
@@ -83,6 +70,13 @@ export default function Signup({ navigation }) {
     const [passwordVerfy, setPasswordVerfy] = useState(false);
     const [confirmpasswordVerfy, setConfirmPasswordVerfy] = useState(false);
     const [confirmPassword, setConfirmPassword] = useState('');
+    const [phoneVerfy, setPhoneVerfy] = useState(false);
+    const [phone, setPhone] = useState('');
+
+    const [locationVerfy, setlocationVerfy] = useState(false);
+    const [location, setlocation] = useState('');
+
+
 
     function handleName(e) {
         const nameVar = e.nativeEvent.text;
@@ -92,6 +86,30 @@ export default function Signup({ navigation }) {
         if (nameVar.length > 1) {
             setName(nameVar);
             setNameVerfy(true);
+        }
+
+    }
+
+    function handlelocation(e) {
+        const locationVar = e.nativeEvent.text;
+        setlocation(locationVar);
+        setlocationVerfy(false);
+
+        if (locationVar.length > 1) {
+            setlocation(locationVar);
+            setlocationVerfy(true);
+        }
+
+    }
+
+    function handlePhone(e) {
+        const phoneVar = e.nativeEvent.text;
+        setPhone(phoneVar);
+        setPhoneVerfy(false);
+
+        if (phoneVar.length > 1) {
+            setPhone(phoneVar);
+            setPhoneVerfy(true);
         }
 
     }
@@ -145,18 +163,34 @@ export default function Signup({ navigation }) {
         }
 
     };
+    const handleSubmit = () => {
+        if (!gender) {
+            alert("Please select gender");
+            return;
+        }
+
+        // تابع معالجة البيانات هنا
+        console.log("Gender selected:", gender);
+    };
+
 
     // Join Api With FrontPage
 
-    const handleSignup = async (data) => {
+    const handleSignup = async (values) => {
         try {
-            console.log('Sending Signup Data:', data);
-            const response = await fetch('http://localhost:3000/auth/signup', {
+            const dataToSend = {
+                ...values,
+                dateOfBirth: dateOfBirth.toISOString(), // تحويل التاريخ إلى صيغة مناسبة
+                gender: gender, // إضافة قيمة الجنس
+                jobField: selectedJob, // إضافة مجال العمل
+            };
+            console.log('Sending Signup Data:', dataToSend);
+            const response = await fetch('http://192.168.1.239:3000/auth/signup', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(data),
+                body: JSON.stringify(dataToSend),
                 credentials: 'include',
             });
 
@@ -170,12 +204,12 @@ export default function Signup({ navigation }) {
             navigation.navigate('HomeScreen');
 
         } catch (error) {
-          console.error('Error during signup:', error);
+            console.error('Error during signup:', error);
         }
 
-      };
-      
-    
+    };
+
+
 
     return (
         <StyledContainer>
@@ -216,12 +250,25 @@ export default function Signup({ navigation }) {
                         </TouchableOpacity>
                     </View>
                     <Formik
-                        initialValues={{ fullName: '', email: '', password: '', confirmPassword: '', phoneNumber: '', location: '' }}
+                        initialValues={{ fullName: '', email: '', password: '', confirmPassword: '', gender: '', dateOfBirth: '', phoneNumber: '', location: '', yearsOfExperience: '', selectedJob: '' }}
                         onSubmit={(values) => {
+                            setValues({
+                                name: formikValues.fullName,
+                                email: formikValues.email,
+                                password: formikValues.password,
+                                confirmPassword: formikValues.confirmPassword,
+                                gender: formikValues.gender,
+                                dateOfBirth: formikValues.dateOfBirth,
+                                phone: formikValues.phoneNumber,
+                                address: formikValues.location,
+                                yearsOfExperience: formikValues.yearsOfExperience,
+                                selectedJob: formikValues.selectedJob
+                            });
                             console.log({ userType, ...values });
 
                         }}
                     >
+
                         {({ handleChange, handleBlur, handleSubmit, values }) => (
                             <StyledFormArea>
                                 {/* إدخال الاسم الكامل */}
@@ -232,8 +279,8 @@ export default function Signup({ navigation }) {
                                     placeholderTextColor={darkLight}
                                     onChangeText={handleChange('fullName')}
                                     onBlur={handleBlur('fullName')}
-                                    value={values.fullName}
                                     onChange={e => handleName(e)}
+                                    value={values.fullName}
                                     rightIcon22={
                                         name.length < 1 ? null : nameVerfy ? (
                                             <RightIcon2 style={{ top: 6 }} >
@@ -261,9 +308,9 @@ export default function Signup({ navigation }) {
                                     placeholderTextColor={darkLight}
                                     onChangeText={handleChange('email')}
                                     onBlur={handleBlur('email')}
-                                    value={values.email}
                                     keyboardType="email-address"
                                     onChange={e => handleemail(e)}
+                                    value={values.email}
                                     rightIcon22={
                                         email.length < 1 ? null : emailVerfy ? (
                                             <RightIcon2 style={{ top: 6 }} >
@@ -291,7 +338,6 @@ export default function Signup({ navigation }) {
                                     placeholderTextColor={darkLight}
                                     onChangeText={handleChange('password')}
                                     onBlur={handleBlur('password')}
-                                    value={values.password}
                                     secureTextEntry={hidePassword}
                                     placeholder="password"
                                     isPassword={true}
@@ -299,6 +345,7 @@ export default function Signup({ navigation }) {
                                     setHidePassword={setHidePassword}
 
                                     onChange={e => handlePassword(e)}
+                                    value={values.password}
                                     rightIcon22={
                                         password.length < 1 ? null : passwordVerfy ? (
                                             <RightIcon2 style={{ top: 6, right: 40 }} >
@@ -324,14 +371,13 @@ export default function Signup({ navigation }) {
                                     placeholderTextColor={darkLight}
                                     onChangeText={handleChange('confirmPassword')}
                                     onBlur={handleBlur('confirmPassword')}
-                                    value={values.confirmPassword}
                                     secureTextEntry={hideConfirmPassword}
                                     placeholder="confirm Password"
                                     isConfirmPassword={true}
                                     hideConfirmPassword={hideConfirmPassword}
                                     setHideConfirmPassword={setHideConfirmPassword}
                                     onChange={e => handleCinfirmPassword(e)}
-
+                                    value={values.confirmPassword}
                                     rightIcon22={
                                         confirmPassword.length < 1 ? null : confirmpasswordVerfy ? (
                                             <RightIcon2 style={{ top: 6, right: 40 }} >
@@ -355,8 +401,27 @@ export default function Signup({ navigation }) {
                                     placeholderTextColor={darkLight}
                                     onChangeText={handleChange('phoneNumber')}
                                     onBlur={handleBlur('phoneNumber')}
+                                    onChange={e => handlePhone(e)}
                                     value={values.phoneNumber}
+
+
+                                    rightIcon22={
+                                        phone.length < 10 ? null : phoneVerfy ? (
+                                            <RightIcon2 style={{ top: 6, right: 40 }} >
+                                                <Feather name="check-circle" color="green" size={20} />
+                                            </RightIcon2>
+                                        ) : (
+                                            <RightIcon2 style={{ top: 6, right: 40 }} >
+                                                <Feather name="x-circle" color="red" size={20} />
+                                            </RightIcon2>
+                                        )}
                                 />
+                                {errorMessage2 ? (
+                                    <Text style={styles.error}>{errorMessage2}</Text>
+                                ) : (
+                                    <Text style={styles.success}>{successMassage2}</Text>
+                                )}
+
 
                                 <Text style={labelStyle}>Location</Text>
                                 <MyTextInput
@@ -364,8 +429,26 @@ export default function Signup({ navigation }) {
                                     placeholderTextColor={darkLight}
                                     onChangeText={handleChange('location')}
                                     onBlur={handleBlur('location')}
+                                    onChange={e => handlelocation(e)}
                                     value={values.location}
+
+                                    rightIcon22={
+                                        location.length < 10 ? null : locationVerfy ? (
+                                            <RightIcon2 style={{ top: 6, right: 40 }} >
+                                                <Feather name="check-circle" color="green" size={20} />
+                                            </RightIcon2>
+                                        ) : (
+                                            <RightIcon2 style={{ top: 6, right: 40 }} >
+                                                <Feather name="x-circle" color="red" size={20} />
+                                            </RightIcon2>
+                                        )}
                                 />
+                                {errorMessage2 ? (
+                                    <Text style={styles.error}>{errorMessage2}</Text>
+                                ) : (
+                                    <Text style={styles.success}>{successMassage2}</Text>
+                                )}
+
 
                                 {/* عرض حقل عدد سنوات الخبرة إذا كان المستخدم "Senior" */}
                                 {userType === 'Senior' && (
@@ -390,11 +473,11 @@ export default function Signup({ navigation }) {
                                         onChange={(date) => setDateOfBirth(date)}
                                         dateFormat="yyyy-MM-dd"
                                         className="date-picker"
-
                                     />
                                 ) : (
                                     <TouchableOpacity
-                                        onPress={() => setIsDatePickerVisible(true)}
+                                        onPress={() => setIsDatePickerVisible(true)
+                                        }
                                         style={{
                                             border: 2,  /* الحدود */
                                             borderWidth: 1,
@@ -407,6 +490,7 @@ export default function Signup({ navigation }) {
                                         }}
                                     >
                                         <Text style={{ color: black }}>{dateOfBirth.toDateString()}</Text>
+                                        value={values.dateOfBirth}
                                     </TouchableOpacity>
                                 )}
 
@@ -450,6 +534,8 @@ export default function Signup({ navigation }) {
                                         }}
                                         onPress={() => setGender('Female')}
                                     >
+                                        value={values.gender}
+
                                         <Text style={{ color: gender === 'Female' ? primary : black, textAlign: 'center', fontWeight: 'bold' }}>Female</Text>
                                     </TouchableOpacity>
                                 </View>
@@ -489,13 +575,17 @@ export default function Signup({ navigation }) {
                                     </View>
                                 </View>
 
-
-                                {/* زر التسجيل */}
-                                <StyledButton onPress={() => { console.log('Button Pressed'); handleSignup(values); }}>
+                                <StyledButton onPress={() => {
+                                    const finalValues = {
+                                        ...values,
+                                        dateOfBirth: dateOfBirth, // إضافة قيمة التاريخ
+                                        gender: gender, // إضافة قيمة الجنس
+                                        jobField: selectedJob, // إضافة مجال العمل
+                                    };
+                                    console.log('Button Pressed'); handleSignup(values);
+                                }}>
                                     <ButtonText>Sign Up as {userType}</ButtonText>
                                 </StyledButton>
-
-
 
 
                                 {/* زر الانتقال لتسجيل الدخول */}
@@ -557,7 +647,7 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         paddingLeft: 10,
         fontSize: 16,
-    }, 
+    },
     error: {
         color: 'red',
         fontSize: 12,
