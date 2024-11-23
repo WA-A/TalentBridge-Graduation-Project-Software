@@ -7,6 +7,7 @@ import Login from './screens/Login';
 import Signup from './screens/Signup';
 import WelcomeScreen from './screens/WelcomeScreen';
 import HomeScreen from './screens/HomeScreen';
+import ProfilePage from './screens/ProfilePage.js';
 import AddPostScreen from './screens/AddPostScreen';
 import { NightModeProvider } from './screens/NightModeContext'; // Import the provider
 import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView, Animated } from 'react-native';
@@ -60,10 +61,18 @@ export default function App() {
                         component={HomeScreen}
                         options={{ headerShown: false }}
                     />
-                    
+                    <Stack.Screen
+                        name="ProfilePage"
+                        component={ProfilePage}
+                        options={{ headerShown: false }}
+                    />
                     <Stack.Screen 
                     name="ProjectsSeniorPage" 
-                    component={ProjectsSeniorPage} />
+                    component={ProjectsSeniorPage}
+                    options={{ headerShown: false }}
+                     />
+
+
                     </Stack.Navigator>
                 
             </NavigationContainer>
