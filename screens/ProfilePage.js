@@ -39,6 +39,21 @@ const ProfilePage = () => {
         extrapolate: 'clamp',
     });
 
+
+    const [schoolName, setSchoolName] = useState('Najah');
+  const [degree, setDegree] = useState('BS');
+  const [fieldOfStudy, setFieldOfStudy] = useState('CE');
+ 
+
+  const handleSubmit = () => {
+    // هنا يمكنك معالجة البيانات أو إرسالها إلى الخادم
+    console.log({
+      schoolName,
+      degree,
+      fieldOfStudy,
+     
+    });
+  };
     return (
         <View style={{ flex: 1 }}>
             <View style={{
@@ -86,7 +101,7 @@ const ProfilePage = () => {
                 height: 60, // ارتفاع الجزء البنفسجي
               }}>
            {/* صورة البروفايل */}
-           <TouchableOpacity onPress={() => nav.navigate('Profile')} style={{ position: 'absolute', top: 20, left: 20 }}>
+           <TouchableOpacity  style={{ position: 'absolute', top: 20, left: 20}}>
     <View style={{
         width: 80, // حجم الدائرة
         height: 80, // حجم الدائرة
@@ -101,45 +116,11 @@ const ProfilePage = () => {
                 width: '100%',  // تأكد من تغطية المساحة الكاملة
                 height: '100%', // تأكد من تغطية المساحة الكاملة
                 objectFit: 'cover', // التأكد من ملاءمة الصورة داخل الدائرة
+              
             }}
             resizeMode="cover" // لتغطية الخلفية بالكامل
         />
     </View>
-
-        {/* النصوص تحت الصورة */}
-    {/* النصوص تحت الصورة */}
-    <View style={{ marginTop: 20, alignItems: 'flex-start', marginLeft: 1 }}>
-        {/* Full Name */}
-        <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#000', marginBottom: 10 }}>
-            Full Name
-        </Text>
-
-        {/* UserName */}
-        <Text style={{ fontSize: 18, fontWeight: '500', color: '#000', marginBottom: 10 }}>
-            UserName
-        </Text>
-
-        {/* Bio */}
-        <Text style={{ fontSize: 18, fontWeight: '500', color: '##000', marginBottom: 10 }}>
-            Bio
-        </Text>
-
-        {/* Location */}
-        <Text style={{ fontSize: 15, color: '##000', marginBottom: 10 }}>
-            Location
-        </Text>
-
-        {/* About */}
-        <Text style={{ fontSize: 20, fontWeight: 'bold', color: '##000', marginBottom: 5 }}>
-            About
-        </Text>
-
-        {/* About Paragraph */}
-        <Text style={{ fontSize: 15, color: '#000' }}>
-            This is a sample about paragraph. It gives additional information about the user.
-        </Text>
-
-        </View>
 
 </TouchableOpacity>
 
@@ -153,51 +134,110 @@ const ProfilePage = () => {
 
 
                        {/* Main Content */}
-               <Animated.ScrollView
-                style={{
-                    flex: 1,
-                    backgroundColor: isNightMode ? "#000" : primary,
-                }}
-                contentContainerStyle={{
-                    flexGrow: 1,
-                    justifyContent: 'flex-start',
-                    alignItems: 'center',
-                    paddingVertical: 10,
-                    marginTop: Platform.OS === 'web' ? 50 : 0,
-                    marginBottom: Platform.OS === 'web' ? 50 : 0,
-                }}
-                onScroll={Animated.event(
-                    [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-                    { useNativeDriver: false }
-                )}
-                scrollEventThrottle={16}
-            >
-             
+                       <View style={{ flex: 1 }}>
+     
+      {/* Animated.ScrollView - يحتوي على النصوص والأزرار */}
+      <Animated.ScrollView
+        style={{
+          flex: 1,
+          backgroundColor: "#FFFFFF", // تغيير الخلفية إلى الأبيض
+        }}
+        contentContainerStyle={{
+          flexGrow: 1,
+          paddingVertical: 20,
+          paddingHorizontal: 20,
+        }}
+      >
+        {/* النصوص تحت الصورة */}
+        <View style={{ marginTop: 60,padding: 60, alignItems: 'flex-start'}}>
+          <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#000', marginBottom: 10 }}>
+            Full Name
+          </Text>
 
+          <Text style={{ fontSize: 18, fontWeight: '500', color: '#000', marginBottom: 10 }}>
+            UserName
+          </Text>
 
+          <Text style={{ fontSize: 18, fontWeight: '500', color: '#000', marginBottom: 10 }}>
+            Bio
+          </Text>
 
+          <Text style={{ fontSize: 12, color: '#000', marginBottom: 10 }}>
+            Location
+          </Text>
 
+          <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#000', marginBottom: 5 }}>
+            About
+          </Text>
 
+          <Text style={{ fontSize: 12, color: '#000' }}>
+            This is a sample about paragraph. It gives additional information about the user.
+          </Text>
+        </View>
 
+        {/* أزرار البوستات والتعليقات */}
+        <View style={{
+          flexDirection: 'row',
+          justifyContent: 'center',
+          width: '100%',
+          marginTop: 30,
+          marginBottom: 20, // إضافة مساحة أسفل الأزرار
+        }}>
+          {/* زر البوستات */}
+          <TouchableOpacity 
+            onPress={() => console.log('Go to Posts')} // فعّل الحدث المناسب
+            style={{
+              backgroundColor: '#D1CFE9',
+              padding: 15, 
+              borderRadius: 25, 
+              flexDirection: 'row', 
+              alignItems: 'center', 
+              justifyContent: 'center',
+              width: '40%', 
+              marginHorizontal: 10,
+              shadowColor: '#000', 
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.2,
+              shadowRadius: 5,
+            }}
+          >
+            <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#000' }}>
+              Posts
+            </Text>
+          </TouchableOpacity>
 
-
-
-
-             </Animated.ScrollView>
-
-
-
-
-
-
-
-
-
-
-
-
+          {/* زر التعليقات */}
+          <TouchableOpacity 
+            onPress={() => console.log('Go to Comments')} // فعّل الحدث المناسب
+            style={{
+              backgroundColor: '#D1CFE9',
+              padding: 15, 
+              borderRadius: 25, 
+              flexDirection: 'row', 
+              alignItems: 'center', 
+              justifyContent: 'center',
+              width: '40%', 
+              marginHorizontal: 10,
+              shadowColor: '#000', 
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.2,
+              shadowRadius: 5,
+            }}
+          >
+            <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#000' }}>
+              Comments
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </Animated.ScrollView>
     </View>
-    )
+
+    
+    </View>
+    );
 };
+
+
+
 
 export default ProfilePage;
