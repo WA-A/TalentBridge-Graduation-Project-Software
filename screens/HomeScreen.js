@@ -230,7 +230,7 @@ const HomeScreen = () => {
                 <TouchableOpacity onPress={() => nav.navigate('ProjectsSeniorPage')}>
                     <Ionicons name="folder" size={25} color="#000" />
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => nav.navigate('Profile')}>
+                <TouchableOpacity onPress={() => nav.navigate('ProfilePage')}>
                     <Image
                         source={require('./../assets/img1.jpeg')}
                         style={{
