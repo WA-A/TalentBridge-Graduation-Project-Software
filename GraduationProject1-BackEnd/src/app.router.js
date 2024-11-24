@@ -6,6 +6,8 @@ import PostRouter from './modules/Post/Post.Router.js'
 import CommentRouter from './modules/Comment/Comment.Router.js'
 import ChatRouter from "./modules/Chat/Chat.Router.js"
 import cors from 'cors';
+import dotenv from 'dotenv';
+dotenv.config(); // تحميل متغيرات البيئة
 
 
 const Appinit = (app,express)=>{

@@ -23,12 +23,12 @@ const { brand, darkLight, fifthColor, black, secondary, fourhColor, primary } = 
 export default function Signup({ navigation }) {
     const [userType, setUserType] = useState('Junior');
     const [gender, setGender] = useState('');
-    const [dateOfBirth, setDateOfBirth] = useState(new Date());
+    const [BirthDate, setDateOfBirth] = useState(new Date());
     const [isDatePickerVisible, setIsDatePickerVisible] = useState(false);
 
     // التعامل مع التاريخ على الموبايل
     const handleDateConfirm = (event, date) => {
-        setDateOfBirth(date || dateOfBirth);
+        setDateOfBirth(date || BirthDate);
         setIsDatePickerVisible(false);
     };
     const jobFields = [
@@ -69,12 +69,12 @@ export default function Signup({ navigation }) {
     const [password, setpassword] = useState('');
     const [passwordVerfy, setPasswordVerfy] = useState(false);
     const [confirmpasswordVerfy, setConfirmPasswordVerfy] = useState(false);
-    const [confirmPassword, setConfirmPassword] = useState('');
+    const [ConfirmPassword, setConfirmPassword] = useState('');
     const [phoneVerfy, setPhoneVerfy] = useState(false);
     const [phone, setPhone] = useState('');
 
     const [locationVerfy, setlocationVerfy] = useState(false);
-    const [location, setlocation] = useState('');
+    const [Location, setlocation] = useState('');
 
 
 
@@ -180,12 +180,12 @@ export default function Signup({ navigation }) {
         try {
             const dataToSend = {
                 ...values,
-                dateOfBirth: dateOfBirth.toISOString(), // تحويل التاريخ إلى صيغة مناسبة
-                gender: gender, // إضافة قيمة الجنس
-                jobField: selectedJob, // إضافة مجال العمل
+                BirthDate: BirthDate.toISOString(), // تحويل التاريخ إلى صيغة مناسبة
+                Gender: gender, // إضافة قيمة الجنس
+                Field: selectedJob, // إضافة مجال العمل
             };
             console.log('Sending Signup Data:', dataToSend);
-            const response = await fetch('http://192.168.1.239:3000/auth/signup', {
+            const response = await fetch('http://localhost:3000/auth/signup', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -250,19 +250,19 @@ export default function Signup({ navigation }) {
                         </TouchableOpacity>
                     </View>
                     <Formik
-                        initialValues={{ fullName: '', email: '', password: '', confirmPassword: '', gender: '', dateOfBirth: '', phoneNumber: '', location: '', yearsOfExperience: '', selectedJob: '' }}
+                        initialValues={{ FullName: '', Email: '', Password: '', ConfirmPassword: '', Gender: '', BirthDate: '', PhoneNumber: '', Location: '', YearsOfExperience: '', Field: '' }}
                         onSubmit={(values) => {
                             setValues({
-                                name: formikValues.fullName,
-                                email: formikValues.email,
-                                password: formikValues.password,
-                                confirmPassword: formikValues.confirmPassword,
-                                gender: formikValues.gender,
-                                dateOfBirth: formikValues.dateOfBirth,
-                                phone: formikValues.phoneNumber,
-                                address: formikValues.location,
-                                yearsOfExperience: formikValues.yearsOfExperience,
-                                selectedJob: formikValues.selectedJob
+                                FullName: formikValues.FullName,
+                                Email: formikValues.Email,
+                                Password: formikValues.Password,
+                                ConfirmPassword: formikValues.ConfirmPassword,
+                                Gender: formikValues.Gender,
+                                BirthDate: formikValues.BirthDate,
+                                PhoneNumber: formikValues.PhoneNumber,
+                                Address: formikValues.Location,
+                                YearsOfExperience: formikValues.YearsOfExperience,
+                                Field: formikValues.Field
                             });
                             console.log({ userType, ...values });
 
@@ -277,10 +277,10 @@ export default function Signup({ navigation }) {
                                     icon="user"
                                     placeholder="Name"
                                     placeholderTextColor={darkLight}
-                                    onChangeText={handleChange('fullName')}
-                                    onBlur={handleBlur('fullName')}
+                                    onChangeText={handleChange('FullName')}
+                                    onBlur={handleBlur('FullName')}
                                     onChange={e => handleName(e)}
-                                    value={values.fullName}
+                                    value={values.FullName}
                                     rightIcon22={
                                         name.length < 1 ? null : nameVerfy ? (
                                             <RightIcon2 style={{ top: 6 }} >
@@ -306,11 +306,11 @@ export default function Signup({ navigation }) {
                                     icon="envelope-o"
                                     placeholder="example12@gmail.com"
                                     placeholderTextColor={darkLight}
-                                    onChangeText={handleChange('email')}
-                                    onBlur={handleBlur('email')}
+                                    onChangeText={handleChange('Email')}
+                                    onBlur={handleBlur('Email')}
                                     keyboardType="email-address"
                                     onChange={e => handleemail(e)}
-                                    value={values.email}
+                                    value={values.Email}
                                     rightIcon22={
                                         email.length < 1 ? null : emailVerfy ? (
                                             <RightIcon2 style={{ top: 6 }} >
@@ -336,8 +336,8 @@ export default function Signup({ navigation }) {
                                 <MyTextInput
                                     icon="lock"
                                     placeholderTextColor={darkLight}
-                                    onChangeText={handleChange('password')}
-                                    onBlur={handleBlur('password')}
+                                    onChangeText={handleChange('Password')}
+                                    onBlur={handleBlur('Password')}
                                     secureTextEntry={hidePassword}
                                     placeholder="password"
                                     isPassword={true}
@@ -345,7 +345,7 @@ export default function Signup({ navigation }) {
                                     setHidePassword={setHidePassword}
 
                                     onChange={e => handlePassword(e)}
-                                    value={values.password}
+                                    value={values.Password}
                                     rightIcon22={
                                         password.length < 1 ? null : passwordVerfy ? (
                                             <RightIcon2 style={{ top: 6, right: 40 }} >
@@ -369,17 +369,17 @@ export default function Signup({ navigation }) {
                                 <MyTextInput
                                     icon="lock"
                                     placeholderTextColor={darkLight}
-                                    onChangeText={handleChange('confirmPassword')}
-                                    onBlur={handleBlur('confirmPassword')}
+                                    onChangeText={handleChange('ConfirmPassword')}
+                                    onBlur={handleBlur('ConfirmPassword')}
                                     secureTextEntry={hideConfirmPassword}
                                     placeholder="confirm Password"
                                     isConfirmPassword={true}
                                     hideConfirmPassword={hideConfirmPassword}
                                     setHideConfirmPassword={setHideConfirmPassword}
                                     onChange={e => handleCinfirmPassword(e)}
-                                    value={values.confirmPassword}
+                                    value={values.ConfirmPassword}
                                     rightIcon22={
-                                        confirmPassword.length < 1 ? null : confirmpasswordVerfy ? (
+                                        ConfirmPassword.length < 1 ? null : confirmpasswordVerfy ? (
                                             <RightIcon2 style={{ top: 6, right: 40 }} >
                                                 <Feather name="check-circle" color="green" size={20} />
                                             </RightIcon2>
@@ -399,10 +399,10 @@ export default function Signup({ navigation }) {
                                 <MyTextInput
                                     icon="phone"
                                     placeholderTextColor={darkLight}
-                                    onChangeText={handleChange('phoneNumber')}
-                                    onBlur={handleBlur('phoneNumber')}
+                                    onChangeText={handleChange('PhoneNumber')}
+                                    onBlur={handleBlur('PhoneNumber')}
                                     onChange={e => handlePhone(e)}
-                                    value={values.phoneNumber}
+                                    value={values.PhoneNumber}
 
 
                                     rightIcon22={
@@ -427,13 +427,13 @@ export default function Signup({ navigation }) {
                                 <MyTextInput
                                     icon="home"
                                     placeholderTextColor={darkLight}
-                                    onChangeText={handleChange('location')}
-                                    onBlur={handleBlur('location')}
+                                    onChangeText={handleChange('Location')}
+                                    onBlur={handleBlur('Location')}
                                     onChange={e => handlelocation(e)}
-                                    value={values.location}
+                                    value={values.Location}
 
                                     rightIcon22={
-                                        location.length < 10 ? null : locationVerfy ? (
+                                        Location.length < 10 ? null : locationVerfy ? (
                                             <RightIcon2 style={{ top: 6, right: 40 }} >
                                                 <Feather name="check-circle" color="green" size={20} />
                                             </RightIcon2>
@@ -459,7 +459,7 @@ export default function Signup({ navigation }) {
                                             placeholderTextColor={darkLight}
                                             onChangeText={handleChange('yearsOfExperience')}
                                             onBlur={handleBlur('yearsOfExperience')}
-                                            value={values.yearsOfExperience}
+                                            value={values.YearsOfExperience}
                                             keyboardType="numeric"
                                         />
                                     </>
@@ -469,7 +469,7 @@ export default function Signup({ navigation }) {
                                 <Text style={labelStyle}>Date of Birth</Text>
                                 {Platform.OS === 'web' ? (
                                     <DatePicker
-                                        selected={dateOfBirth}
+                                        selected={BirthDate}
                                         onChange={(date) => setDateOfBirth(date)}
                                         dateFormat="yyyy-MM-dd"
                                         className="date-picker"
@@ -489,14 +489,14 @@ export default function Signup({ navigation }) {
 
                                         }}
                                     >
-                                        <Text style={{ color: black }}>{dateOfBirth.toDateString()}</Text>
-                                        value={values.dateOfBirth}
+                                        <Text style={{ color: black }}>{BirthDate.toDateString()}</Text>
+                                        value={values.BirthDate}
                                     </TouchableOpacity>
                                 )}
 
                                 {isDatePickerVisible && (
                                     <DateTimePickerModal
-                                        value={dateOfBirth}
+                                        value={BirthDate}
                                         mode="date"
                                         display="default"
                                         onChange={handleDateConfirm}
@@ -534,7 +534,7 @@ export default function Signup({ navigation }) {
                                         }}
                                         onPress={() => setGender('Female')}
                                     >
-                                        value={values.gender}
+                                        value={values.Gender}
 
                                         <Text style={{ color: gender === 'Female' ? primary : black, textAlign: 'center', fontWeight: 'bold' }}>Female</Text>
                                     </TouchableOpacity>
@@ -578,13 +578,13 @@ export default function Signup({ navigation }) {
                                 <StyledButton onPress={() => {
                                     const finalValues = {
                                         ...values,
-                                        dateOfBirth: dateOfBirth, // إضافة قيمة التاريخ
-                                        gender: gender, // إضافة قيمة الجنس
-                                        jobField: selectedJob, // إضافة مجال العمل
+                                        BirthDate: BirthDate, // إضافة قيمة التاريخ
+                                        Gender: gender, // إضافة قيمة الجنس
+                                        Field: selectedJob, // إضافة مجال العمل
                                     };
                                     console.log('Button Pressed'); handleSignup(values);
                                 }}>
-                                    <ButtonText>Sign Up as {userType}</ButtonText>
+                                    <ButtonText>Sign Up as</ButtonText>
                                 </StyledButton>
 
 

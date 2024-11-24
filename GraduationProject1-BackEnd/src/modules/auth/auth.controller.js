@@ -19,8 +19,6 @@ export const SignUp = async (req, res) => {
         return res.status(400).json({ message: "Password is required" });
     }
     const HashedPassword = bcrypt.hashSync(Password, parseInt(process.env.SALTROUND));
-     YearsofExperience = req.body.YearsofExperience || null;
-     Field = req.body.Field || null;    
      try {
         const CreateUser = await UserModel.create({ FullName, Email, Password: HashedPassword, ConfirmPassword, Gender, BirthDate, PhoneNumber, Location, YearsofExperience, Field });
         const token = jwt.sign({ Email }, process.env.CONFIRM_EMAILTOKEN);
@@ -30,7 +28,6 @@ export const SignUp = async (req, res) => {
         return res.status(500).json({ message: "Server error", error });
     }
     
-
 }
 
 
