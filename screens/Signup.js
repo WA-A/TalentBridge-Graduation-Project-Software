@@ -533,11 +533,11 @@ export default function Signup({ navigation }) {
                                             width: '50%'
                                         }}
                                         onPress={() => setGender('Female')}
-                                    >
                                         value={values.Gender}
+                                    >
 
                                         <Text style={{ color: gender === 'Female' ? primary : black, textAlign: 'center', fontWeight: 'bold' }}>Female</Text>
-                                    </TouchableOpacity>
+                                        </TouchableOpacity>
                                 </View>
 
 
