@@ -89,7 +89,7 @@ const AddPostScreen = () => {
                 </TouchableOpacity>
 
 
-                <TouchableOpacity onPress={() => nav.navigate('AddProject')}>
+                <TouchableOpacity onPress={() => nav.navigate('ProjectsSeniorPage')}>
                     <Ionicons name="add-circle" size={28} color="#000" />
                 </TouchableOpacity>
                 <TouchableOpacity onPress={() => nav.navigate('HomeScreen')}>
