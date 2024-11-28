@@ -30,7 +30,7 @@ const projects = [
     { id: '4', title: 'Delta Data', description: 'Data Science Analysis' },
 ];
 
-const ProjectsSeniorPage = () => {
+export default function  ProjectsSeniorPage ({ navigation, route }) {
     const nav = useNavigation();
     const { isNightMode, toggleNightMode } = useContext(NightModeContext);
     const [modalVisible, setModalVisible] = useState(false);
@@ -208,4 +208,3 @@ const styles = StyleSheet.create({
     },
 });
 
-export default ProjectsSeniorPage;

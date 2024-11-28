@@ -80,8 +80,6 @@ export const DeleteProjectBySenior = async (req, res) => {
     const { Field } = req.body; 
     const CreatedBySenior = req.user._id; 
     console.log("Field parameter received:", Field);
-    
-    
     if (!Field) {
         return res.status(400).json({ message: "Field parameter is required." });
     }

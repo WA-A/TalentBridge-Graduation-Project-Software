@@ -16,10 +16,4 @@ router.patch('/sendcode',AsyncHandler(AuthController.SendCode)); //,Validation(s
 router.patch('/forgotpassword',AsyncHandler(AuthController.ForgotPassword)); //,Validation(schema.ForgetPasswordSchema)
 //router.get('/confirmemail/:token',AuthController.ConfirmEmail);
 
-
-
-
-
-
-
 export default router

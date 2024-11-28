@@ -32,27 +32,44 @@ export const SignUp = async (req, res) => {
 
 
 export const SignIn = async (req, res) => {
+    console.log('Received data:', req.body);
     const { Email, Password } = req.body;
 
-    const user = await UserModel.findOne({ Email });
+    try {
+        // البحث عن المستخدم بالبريد الإلكتروني
+        const user = await UserModel.findOne({ Email });
 
-    if (!user) {
-        return res.status(400).json({ message: " Invalid data" });
+        if (!user) {
+            return res.status(400).json({ message: "The entered email is invalid, try again!" });
+        }
 
+        // التحقق من كلمة المرور
+        const Match = await bcrypt.compare(Password, user.Password);
+
+        if (!Match) {
+            return res.status(400).json({ message: "Wrong password, try again!" });
+        }
+
+        // إنشاء التوكن
+        const Token = jwt.sign({ id: user._id, role: user.Role }, process.env.LOGINSIG);
+
+        // إزالة كلمة المرور وحقول غير مرغوب بها قبل إرسال بيانات المستخدم
+        const userData = user.toObject();
+        delete userData.Password;
+        delete userData.ConfirmPassword;
+
+        // إعادة الاستجابة مع البيانات
+        return res.status(200).json({ 
+            message: "Success", 
+            Token, 
+            user: userData 
+        });
+    } catch (error) {
+        console.error("Error during SignIn:", error);
+        return res.status(500).json({ message: "Server error", error });
     }
+};
 
-    const Match = bcrypt.compare(Password, user.Password);
-
-
-    if (!Match) {
-        return res.status(400).json({ message: " worng password" });
-
-    }
-
-    const Token = jwt.sign({ id: user._id, role: user.Role }, process.env.LOGINSIG);
-    return res.status(200).json({ message: " success", Token });
-
-}
 
 
 export const SendCode = async (req, res) => {

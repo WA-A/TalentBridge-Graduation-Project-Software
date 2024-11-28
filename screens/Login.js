@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Text, View, TouchableOpacity, Animated } from 'react-native';
+import { Text, View, TouchableOpacity, Animated, Alert,Platform} from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { AnimatedCircles, useLineEffect} from './../compnent/Animation'
+import { AnimatedCircles, useLineEffect } from './../compnent/Animation'
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
@@ -24,11 +24,12 @@ import {
     StyledLine,
     Circle1,
     Circle2,
-    
+
 } from './../compnent/Style';
 //icon 
-import { FontAwesome, Ionicons, AntDesign
-    ,FontAwesome6, MaterialCommunityIcons,FontAwesome5Brands
+import {
+    FontAwesome, Ionicons, AntDesign
+    , FontAwesome6, MaterialCommunityIcons, FontAwesome5Brands
 } from '@expo/vector-icons';
 
 //formik
@@ -36,7 +37,7 @@ import { Formik } from 'formik';
 import styled from 'styled-components/native';
 
 //color
-const { brand, darkLight,careysPink,firstColor,secColor,thirdColor,fourhColor,fifthColor ,primary,tertiary} = Colors;
+const { brand, darkLight, careysPink, firstColor, secColor, thirdColor, fourhColor, fifthColor, primary, tertiary } = Colors;
 
 const TypingEffect = () => {
     const [text, setText] = useState('');
@@ -92,45 +93,61 @@ export default function Login({ navigation }) {
                 }),
             ]).start(() => slideInOut());
         };
-        slideInOut(); 
+        slideInOut();
     }, [slideAnim]);
 
     const translateX = slideAnim.interpolate({
         inputRange: [0, 1],
         outputRange: [300, 0], // 300 تعني بداية الحركة من خارج الشاشة
     });
-
-
-    // Join API With Front
-    const handleLogin = async (values) => {
+    
+      const handleLogin = async (values) => {
         try {
-            const response = await fetch('http://localhost:3000/auth/signin', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(values),
-            });
+          const dataToSend = {
+            ...values,
+          };
+          console.log('Sending login Data:', dataToSend);
     
-            // إذا كانت الاستجابة ناجحة
-            if (response.ok) {
-                const data = await response.json();
-                console.log('Login Success:', data);
-                // إضافة منطق لتوجيه المستخدم إلى الصفحة التالية بعد النجاح
-            } else {
-                // إذا فشل الطلب (مثلاً خطأ 400 أو 500)
-                const errorData = await response.json();
-                console.log('Login failed:', errorData);
-                alert('Login failed: ' + errorData.message);
-            }
+          // تحديد عنوان الخادم بناءً على المنصة
+          const baseUrl = Platform.OS === 'web' 
+            ? 'http://localhost:3000' 
+            : 'http://192.168.1.239:3000'; // عنوان IP الشبكة المحلية للجوال
+    
+          const response = await fetch(`${baseUrl}/auth/signin`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(dataToSend),
+          });
+    
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Something went wrong');
+          }
+    
+          const result = await response.json();
+          console.log('User login successfully:', result);
+          const userField = result.user.Field;
+          console.log('Field:', userField);
+    
+          // حفظ التوكين في AsyncStorage
+          if (result.Token) {
+            await AsyncStorage.setItem('userToken', result.Token); // تخزين التوكين محليًا
+            console.log('Token saved successfully');
+          } else {
+            console.warn('No token found in response');
+          }
+    
+          // الانتقال إلى الصفحة الرئيسية
+          navigation.navigate('HomeScreen', { userField });
         } catch (error) {
-            // في حالة حدوث خطأ آخر
-            console.log('Login failed:', error.message);
-            alert('An error occurred: ' + error.message);
+          console.error('Login error:', error);
+          Alert.alert('Login Failed', error.message);
         }
-    };
+      };
     
-    
+
     return (
         <StyledContainer>
             <StatusBar style="dark" />
@@ -144,39 +161,39 @@ export default function Login({ navigation }) {
 
             <InnerContainer>
                 <PageLogo resizeMode="cover" source={require('./../assets/Talent_Bridge_logo_with_black_border3.png')} />
-                <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 5 }}>Account Login</Text>     
+                <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 5 }}>Account Login</Text>
                 <Formik
-                    initialValues={{ email: '', password: '' }}
+                    initialValues={{ Email: '', Password: '' }}
                     onSubmit={handleLogin}
                 >
                     {({ handleChange, handleBlur, handleSubmit, values }) => (
-                       <StyledFormArea>
-                       <MyTextInput
-                           icon="envelope-o"
-                           placeholder="Email"
-                           placeholderTextColor={darkLight}
-                           onChangeText={handleChange('email')}
-                           onBlur={handleBlur('email')}
-                           value={values.email}
-                           keyboardType="email-address"
-                       />
-                       <MyTextInput
-                           icon="lock"
-                           placeholder="Password"
-                           placeholderTextColor={darkLight}
-                           onChangeText={handleChange('password')}
-                           onBlur={handleBlur('password')}
-                           value={values.password}
-                           secureTextEntry={hidePassword}
-                           isPassword={true}
-                           hidePassword={hidePassword}
-                           setHidePassword={setHidePassword}
-                       />
-                       <StyledButton onPress={handleSubmit}>
-                           <ButtonText>Login</ButtonText>
-                       </StyledButton>
-                 
-                   
+                        <StyledFormArea>
+                            <MyTextInput
+                                icon="envelope-o"
+                                placeholder="Email"
+                                placeholderTextColor={darkLight}
+                                onChangeText={handleChange('Email')}
+                                onBlur={handleBlur('Email')}
+                                value={values.Email}
+                                keyboardType="Email-address"
+                            />
+                            <MyTextInput
+                                icon="lock"
+                                placeholder="Password"
+                                placeholderTextColor={darkLight}
+                                onChangeText={handleChange('Password')}
+                                onBlur={handleBlur('Password')}
+                                value={values.Password}
+                                secureTextEntry={hidePassword}
+                                isPassword={true}
+                                hidePassword={hidePassword}
+                                setHidePassword={setHidePassword}
+                            />
+                            <StyledButton onPress={handleSubmit}>
+                                <ButtonText>Login</ButtonText>
+                            </StyledButton>
+
+
 
                             <TouchableOpacity >
                                 <Text style={{ color: brand, fontWeight: 'bold', textAlign: 'center', marginBottom: 20, marginTop: 20 }}>
@@ -223,7 +240,8 @@ export default function Login({ navigation }) {
                 </Formik>
             </InnerContainer>
         </StyledContainer>
-    )};
+    )
+};
 
 const MyTextInput = ({ label, icon, isPassword, hidePassword, setHidePassword, ...props }) => {
     return (
@@ -239,15 +257,15 @@ const MyTextInput = ({ label, icon, isPassword, hidePassword, setHidePassword, .
                 </RightIcon>
             )}
 
-            
+
         </View>
     );
 };
 const styles = {
     iconContainer: {
-        width:150,
-        height:50,
-        borderRadius: 15, 
+        width: 150,
+        height: 50,
+        borderRadius: 15,
         marginHorizontal: 5, // تباعد بين الأيقونات
         alignItems: 'center', // محاذاة الأيقونة في الوسط
         justifyContent: 'center', // محاذاة الأيقونة في الوسط
@@ -264,11 +282,11 @@ const styles = {
         flexDirection: 'row'
 
     },
-      circleBackground: {
+    circleBackground: {
         width: 27, // العرض والارتفاع لجعل الدائرة متساوية
         height: 27,
         borderRadius: 35, // نصف العرض أو الارتفاع لجعل الشكل دائري
-        backgroundColor:brand, // لون الخلفية للدائرة
+        backgroundColor: brand, // لون الخلفية للدائرة
         alignItems: 'center', // محاذاة الأيقونة في الوسط
         justifyContent: 'center', // محاذاة الأيقونة في الوسط
     },
