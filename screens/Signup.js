@@ -794,5 +794,6 @@ const styles = StyleSheet.create({
     },
     textMopile: {
         fontSize: 20, marginTop: 45, marginLeft: 220, color: primary
+        
     }
 });
