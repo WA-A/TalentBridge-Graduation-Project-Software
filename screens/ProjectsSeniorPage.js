@@ -30,7 +30,7 @@ const projects = [
     { id: '4', title: 'Delta Data', description: 'Data Science Analysis' },
 ];
 
-const ProjectsSeniorPage = () => {
+export default function  ProjectsSeniorPage ({ navigation, route }) {
     const nav = useNavigation();
     const { isNightMode, toggleNightMode } = useContext(NightModeContext);
     const [modalVisible, setModalVisible] = useState(false);
@@ -129,7 +129,7 @@ const ProjectsSeniorPage = () => {
                 <TouchableOpacity onPress={toggleNightMode}>
                     <Ionicons name="settings" size={25} color="#000" />
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => nav.navigate('Profile')}>
+                <TouchableOpacity onPress={() => nav.navigate('ProfilePage')}>
                     <Image
                         source={require('./../assets/img1.jpeg')}
                         style={{
@@ -208,4 +208,3 @@ const styles = StyleSheet.create({
     },
 });
 
-export default ProjectsSeniorPage;

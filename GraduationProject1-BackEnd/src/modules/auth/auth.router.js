@@ -1,6 +1,6 @@
 import { Router } from "express";
 const router = Router({caseSensitive:true});
-import * as AuthController from './Auth.controller.js';
+import * as AuthController from './auth.controller.js';
 import { CheckEmail } from "../../MiddleWare/CheckEmail.js";
 import { AsyncHandler } from "../../../utls/CatchError.js";
 import { Validation } from "../../MiddleWare/Validation.js";
@@ -15,11 +15,5 @@ router.post('/signin',AsyncHandler(AuthController.SignIn)); //,Validation(schema
 router.patch('/sendcode',AsyncHandler(AuthController.SendCode)); //,Validation(schema.SendCodeSchema)
 router.patch('/forgotpassword',AsyncHandler(AuthController.ForgotPassword)); //,Validation(schema.ForgetPasswordSchema)
 //router.get('/confirmemail/:token',AuthController.ConfirmEmail);
-
-
-
-
-
-
 
 export default router

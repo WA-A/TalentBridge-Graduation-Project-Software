@@ -28,6 +28,10 @@ const ProjectsSchema = new Schema({
     enum: ['Open', 'In Progress', 'Completed'],
     default: 'Open',
   },
+  DurationInMounths: {
+    type: Number,
+    required: true, 
+  },
   created_at: {
     type: Date,
     default: Date.now,

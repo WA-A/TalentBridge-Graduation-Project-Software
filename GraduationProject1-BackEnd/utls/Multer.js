@@ -17,8 +17,8 @@ function fileUpload(customValue = []){
 
         //     filename:  (req, file, cb)=>{
         //         cb(null,Date.now()+Math.random()+"_"+file.originalname) // controll to name file when reguest the same file
-        //       // Date -> return time in server
-        //       // 2- use libary nanoid
+               // Date -> return time in server
+               // 2- use libary nanoid
         //     }
          }
     );

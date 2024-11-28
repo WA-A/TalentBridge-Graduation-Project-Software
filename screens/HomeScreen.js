@@ -1,6 +1,7 @@
 import React, { useState, useContext } from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView, Animated, Button, Alert, Platform, } from 'react-native';
-import { Ionicons, Feather, FontAwesome5, EvilIcons, FontAwesome } from '@expo/vector-icons';
+import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView, Animated, Button, Alert, Platform,TouchableWithoutFeedback,Keyboard } from 'react-native';
+import { Ionicons, Feather, FontAwesome5, EvilIcons, FontAwesome,Entypo
+} from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { Dimensions } from 'react-native';
 import { useFonts } from 'expo-font';
@@ -21,30 +22,74 @@ import {
     Interaction,
     InteractionText,
 } from './../compnent/Style'
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+// Color constants
 // Color constants
 const { secondary, primary, careysPink, darkLight, fourhColor, tertiary, fifthColor } = Colors;
 const { width } = Dimensions.get('window');
 
-const HomeScreen = () => {
+export default function HomeScreen({ navigation, route }) {
+    const { userField } = route.params || {};
     const nav = useNavigation();
     const { isNightMode, toggleNightMode } = useContext(NightModeContext);
     const [scrollY] = useState(new Animated.Value(0));
-
-    // Load custom fonts
-
 
     const bottomBarTranslate = scrollY.interpolate({
         inputRange: [0, 50],
         outputRange: [0, 100], // 100 to move it off-screen
         extrapolate: 'clamp',
     });
+    const [isMenuVisible, setMenuVisible] = useState(false); // For the menu visibility
+
+
+const handleLogout = async () => {
+  setMenuVisible(false); // إغلاق القائمة بعد الضغط على "تسجيل الخروج"
+
+  if (Platform.OS === 'web') {
+    // إذا كان على الويب، يتم تنفيذ تسجيل الخروج مباشرة
+    try {
+        await AsyncStorage.removeItem('userToken');
+        console.log('User logged out successfully');
+        // العودة إلى شاشة تسجيل الدخول بعد الخروج
+        navigation.navigate('WelcomeScreen');
+    } catch (error) {
+      console.error('Error during logout:', error);
+    }
+  } else {
+    // عرض رسالة التأكيد على الجوال
+    Alert.alert('Logout', 'Are you sure you want to log out?', [
+      { text: 'Cancel', style: 'cancel' }, // إذا تم الضغط على "إلغاء"
+      { 
+        text: 'Logout', 
+        onPress: async () => {
+          try {
+            // مسح التوكن من AsyncStorage
+            await AsyncStorage.removeItem('userToken');
+            console.log('User logged out successfully');
+            // العودة إلى شاشة تسجيل الدخول بعد الخروج
+            navigation.navigate('WelcomeScreen');
+          } catch (error) {
+            console.error('Error during logout:', error);
+          }
+        },
+      },
+    ]);
+  }
+};
+
+
+    const handlePressOutside = () => {
+        if (isMenuVisible) {
+            setMenuVisible(false); // Close the menu when touched outside
+        }
+    };
 
     return (
+        <TouchableWithoutFeedback onPress={handlePressOutside}> 
         <View style={{ flex: 1 }}>
-            <View style={{
-                height: 20, backgroundColor: isNightMode ? "#000" : secondary,
+        <View style={{ height: 20, backgroundColor: isNightMode ? "#000" : secondary }} />
 
-            }} />
 
             {/* Header */}
             <View style={{
@@ -136,27 +181,30 @@ const HomeScreen = () => {
 
                                 } : {
                                     backgroundColor: isNightMode ? "#454545" : secondary,
-                                    width: '100%',
+                                    width: '95%',
                                     borderRadius: 10,
-                                    padding: 15,
+                                    margin:10
                                 }}
                             >
-                                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                <View style={{ flexDirection: 'row', alignItems: 'center', padding: 10,   }}>
                                     <Image
                                         source={require('./../assets/img1.jpeg')}
                                         style={{
-                                            width: Platform.OS === 'web' ? 80 : 50,  // تعديل حجم الصورة للويب
-                                            height: Platform.OS === 'web' ? 80 : 50, // تعديل حجم الصورة للويب
+                                            width: Platform.OS === 'web' ? 80 : 40,  // تعديل حجم الصورة للويب
+                                            height: Platform.OS === 'web' ? 80 : 40, // تعديل حجم الصورة للويب
                                             borderRadius: Platform.OS === 'web' ? 40 : 25, // تعديل شكل الصورة
                                             marginRight: 10,
+                                            marginTop: 10,
                                             objectFit: 'cover', // التأكد من ملاءمة الصورة
+                                            borderWidth :1,
+                                            bottom:3
                                         }}
                                     />
                                     <View>
                                         <Text style={{ color: isNightMode ? primary : '#000', fontWeight: 'bold', fontSize: 16 }}>
                                             Sama Abosair
                                         </Text>
-                                        <Text style={{ color: darkLight, fontSize: 12 }}>
+                                        <Text style={{ color: darkLight, fontSize: 12 ,}}>
                                             4 hours ago
                                         </Text>
                                     </View>
@@ -168,28 +216,27 @@ const HomeScreen = () => {
                                     source={require('./../assets/img1.jpeg')}
                                     style={{
                                         width: Platform.OS === 'web' ? '90%' : '100%',
-
-                                        height: Platform.OS === 'web' ? 500 : 340,
-                                        borderRadius: 10,
+                                        height: Platform.OS === 'web' ? 500 : 320,
                                         objectFit: 'fill',  // التأكد من تغطية الصورة بشكل مناسب
                                         alignSelf: 'center', // توسيط الصورة بدون التأثير على العناصر الأخرى
 
                                     }}
                                 />
-                                <View style={{ flexDirection: 'row', justifyContent: 'space-around', paddingTop: 15 }}>
-                                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                        <Ionicons
+                                <View style={{ flexDirection: 'row', justifyContent: 'space-around', paddingTop: 7 }}>
+
+                                    <Interaction>
+                                  <Ionicons
                                             style={{
                                                 color: isNightMode ? secondary : 'rgba(0, 0, 0, 0.2)',
                                             }}
                                             name="heart-circle"
                                             size={25}
                                         />
-                                        <Text style={{ color: isNightMode ? primary : '#000', marginLeft: 5 }}>
+                                        <InteractionText style={{ color: isNightMode ? primary : '#000' }}>
                                             Like
-                                        </Text>
-                                    </View>
-                                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                        </InteractionText>
+                                        </Interaction>
+                                        <Interaction>
                                         <Ionicons
                                             style={{
                                                 color: isNightMode ? secondary : 'rgba(0, 0, 0, 0.2)',
@@ -197,11 +244,11 @@ const HomeScreen = () => {
                                             name="chatbubbles"
                                             size={23}
                                         />
-                                        <Text style={{ color: isNightMode ? primary : '#000', marginLeft: 5 }}>
+                                          <InteractionText  style={{ color: isNightMode ? primary : '#000'}}> 
                                             Comment
-                                        </Text>
-                                    </View>
-                                </View>
+                                        </InteractionText>
+                                      </Interaction>
+                                      </View>
                             </View>
                         </View>
                     ))}
@@ -213,7 +260,7 @@ const HomeScreen = () => {
             <Animated.View
                 style={{
                     transform: [{ translateY: bottomBarTranslate }],
-                    backgroundColor: isNightMode ? "#454545" : secondary,
+                    backgroundColor: isNightMode ?  "#454545":secondary,
                     flexDirection: 'row',
                     justifyContent: 'space-around',
                     padding: 10,
@@ -221,38 +268,68 @@ const HomeScreen = () => {
                     position: Platform.OS === 'web' ? 'fixed' : 'absolute', // إذا كان الويب، يبقى ثابت
                     bottom: 0,
                     width: '100%',
-                    zIndex: 10, // لضمان ظهور شريط التنقل فوق المحتوى
+                    zIndex: 10, 
                 }}
             >
-                <TouchableOpacity onPress={toggleNightMode}>
-                    <Ionicons name="settings" size={25} color="#000" />
+              <TouchableOpacity onPress={() => setMenuVisible(true)}>
+                    <Ionicons name="settings" size={25} color ='#000'/>
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => nav.navigate('ProjectsSeniorPage')}>
-                    <Ionicons name="folder" size={25} color="#000" />
+                <TouchableOpacity onPress={() =>navigation.navigate('ProjectsSeniorPage', { userField }) }  >
+                    <Ionicons name="folder" size={25} color ='#000' />
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => nav.navigate('Profile')}>
+                <TouchableOpacity onPress={() => nav.navigate('ProfilePage')}>
                     <Image
                         source={require('./../assets/img1.jpeg')}
                         style={{
-                            width: 30,
-                            height: 30,
+                            width: 33,
+                            height: 33,
                             borderRadius: 30,
-                            borderColor: tertiary,
-                            borderWidth: 1
+                            borderColor:isNightMode ? '#000' : '#000',
+                            borderWidth: 2,
+                            bottom:3
                         }}
                     />
                 </TouchableOpacity>
+                
                 <TouchableOpacity onPress={() => nav.navigate('AddPostScreen')}>
-                    <Ionicons name="add-circle" size={28} color="#000" />
+                    <Ionicons name="add-circle" size={28} color ='#000'/>
                 </TouchableOpacity>
                 <TouchableOpacity onPress={() => nav.navigate('HomeScreen')}>
-                    <Ionicons name="home" size={25} color="#000" />
+                    <Ionicons name="home" size={25} color ='#000' />
                 </TouchableOpacity>
             </Animated.View>
 
 
+            {/* Menu */}
+            {isMenuVisible && (
+                <View style={{
+                    position: Platform.OS === 'web' ? 'fixed' : 'absolute', // إذا كان الويب، يبقى ثابت
+left: 10, backgroundColor: 'white', padding: 10, borderRadius: 5, zIndex: 20,bottom:50,width:150,borderColor:fourhColor,borderWidth:1
+                }}>
+                
+                <View style={{
+                flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between'
+
+            }}>
+                <Entypo name="log-out" size={25} color={careysPink} style={{}} />
+                    <TouchableOpacity onPress={handleLogout}>
+                        <Text style={{ fontSize: 16, padding: 10,marginRight:40 }}>Logout</Text>
+                    </TouchableOpacity>
+                    </View>
+                        
+                <View style={{
+                flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between'
+
+            }}>
+                    <Ionicons name="close-circle" size={25}  color={careysPink} style={{right:2}} />
+                    <TouchableOpacity onPress={() => setMenuVisible(false)}>
+                        <Text style={{ fontSize: 16, padding: 10 ,marginRight:40}}>Cancel</Text>
+                    </TouchableOpacity>
+                    </View>
+                </View>
+            )}
         </View>
-    );
+    </TouchableWithoutFeedback>);
+
 };
 
-export default HomeScreen;

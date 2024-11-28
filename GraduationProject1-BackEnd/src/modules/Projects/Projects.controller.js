@@ -3,11 +3,11 @@ import ProjectsModel from "../../Model/ProjectsModel.js";
 
 // Create Project By Senior
 export const CreateProject = async(req,res)=>{
-    const {ProjectName,Description,RequiredSkills,Field} = req.body;
+    const {ProjectName,Description,RequiredSkills,Field,DurationInMounths} = req.body;
     const CreatedBySenior = req.user._id;
     
 
-    const project = await ProjectsModel.create({ProjectName,Description,RequiredSkills,Field,CreatedBySenior});
+    const project = await ProjectsModel.create({ProjectName,Description,RequiredSkills,Field,CreatedBySenior,DurationInMounths});
     
     return res.status(200).json({message:project});
 }
@@ -33,7 +33,7 @@ export const GetProjectsBySenior = async (req, res) => {
     const CreatedBySenior = req.user._id; 
 
   
-    const { ProjectName, Description, RequiredSkills } = req.body;
+    const { ProjectName, Description, RequiredSkills,DurationInMounths } = req.body;
 
     const updatedProject = await ProjectsModel.findByIdAndUpdate(
         { _id: ProjectId, CreatedBySenior },
@@ -41,7 +41,8 @@ export const GetProjectsBySenior = async (req, res) => {
             $set: {
                 ProjectName, 
                 Description, 
-                RequiredSkills 
+                RequiredSkills,
+                DurationInMounths
             } 
         },
         { new: true } 
@@ -80,8 +81,6 @@ export const DeleteProjectBySenior = async (req, res) => {
     const { Field } = req.body; 
     const CreatedBySenior = req.user._id; 
     console.log("Field parameter received:", Field);
-    
-    
     if (!Field) {
         return res.status(400).json({ message: "Field parameter is required." });
     }

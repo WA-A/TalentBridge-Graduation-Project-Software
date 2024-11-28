@@ -1,4 +1,4 @@
-import React from 'react';
+import React , { useState, useEffect } from 'react';
 import { View, Text, Image, TouchableOpacity } from 'react-native';
 import {
   ButtonText,
@@ -21,6 +21,8 @@ const { brand,fifthColor,secondary,primary } = Colors; import { Dimensions } fro
 const { width } = Dimensions.get('window');
 
 const WelcomeScreen = ({ navigation }) => {
+
+
   return (
     <View style={{ flex: 1, justifyContent: 'space-between', backgroundColor: primary}}>
       {/* Navbar */}

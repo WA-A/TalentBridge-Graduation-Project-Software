@@ -10,8 +10,7 @@ export const Colors = {
     tertiary: "#334664",
     darkLight: "#9EABCB",
     brand: "#C99FA9",
-    careysPink: "#C99FA9",
-    wildBlueYonder: "#9EABCB",
+    careysPink: "#F7A8B8",
     firstColor:"#F7F1EF",
     secColor:"#DACACB",
     thirdColor:"#D2C6C7",
@@ -275,16 +274,23 @@ export const labelStyle = {
 
 };
 
+export const labelStyleWep = {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: black, 
+    left:10 ,
+
+};
 
 export const Card = styled.View`
 width: 100%;
 border-radius: 10px;
-
 `;
 export const ContainerCard = styled.View`
 flex: 1;
 align-items: center;
 padding: 5px;
+
 `;
 
 export const UserInfo =styled.View`
@@ -343,7 +349,7 @@ export const Interaction = styled.TouchableOpacity`
 flex-direction: row;
 justify-content: center;
 border-radius: 5px;
-padding: 2px 5px;
+padding: 10px 5px;
 `;
 
 export const InteractionText = styled.Text`
