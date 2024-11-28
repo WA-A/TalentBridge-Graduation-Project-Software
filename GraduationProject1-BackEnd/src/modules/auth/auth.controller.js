@@ -16,12 +16,11 @@ export const SignUp = async (req, res) => {
     if (!Password) {
         return res.status(400).json({ message: "Password is required" });
     }
-    const user = await UserModel.findOne({ Email });
-
-    if (user) {
-        const error = new Error("this email is already exists");
-        error.statusCode = 400;
-        throw error;
+    const user = await UserModel.findOne({Email});
+    
+    if(user){
+        return next(new Error ("Email already exists"));
+        
     }
     const HashedPassword = bcrypt.hashSync(Password, parseInt(process.env.SALTROUND));
 
@@ -57,29 +56,24 @@ export const SignIn = async (req, res) => {
     const { Email, Password } = req.body;
 
     try {
-        // البحث عن المستخدم بالبريد الإلكتروني
         const user = await UserModel.findOne({ Email });
 
         if (!user) {
             return res.status(400).json({ message: "The entered email is invalid, try again!" });
         }
 
-        // التحقق من كلمة المرور
         const Match = await bcrypt.compare(Password, user.Password);
 
         if (!Match) {
             return res.status(400).json({ message: "Wrong password, try again!" });
         }
 
-        // إنشاء التوكن
         const Token = jwt.sign({ id: user._id, role: user.Role }, process.env.LOGINSIG);
 
-        // إزالة كلمة المرور وحقول غير مرغوب بها قبل إرسال بيانات المستخدم
         const userData = user.toObject();
         delete userData.Password;
         delete userData.ConfirmPassword;
 
-        // إعادة الاستجابة مع البيانات
         return res.status(200).json({
             message: "Success",
             Token,
@@ -102,7 +96,7 @@ export const SendCode = async (req, res) => {
         return res.status(400).json({ message: " email not found" });
     }
 
-    //await SendEmail(Email,`Reset Password`,`<h2> code is ${code}</h2>`)
+    await SendEmail(Email,`Reset Password`,`<h2> code is ${Code}</h2>`)
 
     return res.status(200).json({ message: " success", user });
 
@@ -130,11 +124,5 @@ export const ForgotPassword = async (req, res) => {
 
 }
 
-export const ConfirmEmail = async (req, res) => {
-    const token = req.params.token;
-    const decoded = jwt.verify(token, process.env.CONFIRM_EMAILTOKEN);
-    await UserModel.findOneAndUpdate({ Email: decoded.Email }, { ConfirmEmail: true });
-    return res.status(200).json({ message: "success" });
 
-}
 

@@ -1,22 +1,32 @@
 import nodemailer from "nodemailer";
 
+export async function SendEmail(to, subject, html) {
+    try {
+        const transporter = nodemailer.createTransport({
+            host: "smtp.gmail.com",
+            port: 587,
+            secure: false,
+            auth: {
+                user: process.env.EmailSender,
+                pass: process.env.PassSender,
+            },
+            tls: {
+                rejectUnauthorized: false,
+            },
+            connectionTimeout: 10000,
+        });
 
-export async function SendEmail(to,subject,html){
-    const transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: {
-            user: process.env.EmailSender,
-            pass: process.env.PassSender,
-        },
-      });
+        const info = await transporter.sendMail({
+            from: `Wasan Email <${process.env.EmailSender}>`,
+            to,
+            subject,
+            html,
+        });
 
-
-      const info = await transporter.sendMail({
-        from: `Wasan Email <${process.env.emailSender}>`, // sender address
-        to , // list of receivers
-        subject,  // Subject line
-        html,  // html body
-      });
-
-      return info;
+        console.log("Email sent: ", info.messageId);
+        return info;
+    } catch (error) {
+        console.error("Error sending email: ", error.message);
+        throw error;
+    }
 }
