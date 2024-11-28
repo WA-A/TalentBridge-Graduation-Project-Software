@@ -30,10 +30,8 @@ app.options('*', cors(corsOptions));
 
 // إعداد Middleware لإضافة ترويسات (Headers) بشكل صريح
 app.use((req, res, next) => {
-  console.log('Request Headers:', req.headers);
   const origin = req.headers.origin;
   if (allowedOrigins.includes(origin)) {
-    console.log(`orgin ${origin}`);
     res.setHeader('Access-Control-Allow-Origin', origin);
   }
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');

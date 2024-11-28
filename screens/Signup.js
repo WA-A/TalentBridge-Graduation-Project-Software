@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, Platform, ScrollView, StyleSheet } from '
 import DateTimePickerModal from '@react-native-community/datetimepicker';  // للموبايل
 import { StatusBar } from 'expo-status-bar';
 import { Formik } from 'formik';
-import { Feather, FontAwesome, Ionicons, Error } from '@expo/vector-icons';
+import { Feather, FontAwesome, Ionicons, Entypo } from '@expo/vector-icons';
 import { Picker } from '@react-native-picker/picker'
 import { Colors, StyledContainer, InnerContainer, PageLogo, StyledFormArea, StyledButton, ButtonText, StyledTextInputSignUp, LeftIcon, labelStyle, RightIcon, RightIcon2 } from './../compnent/Style';
 import axios from 'axios';
@@ -18,7 +18,7 @@ if (Platform.OS === 'web') {
 }
 
 // الألوان
-const { brand, darkLight, fifthColor, black, secondary, fourhColor, primary } = Colors;
+const { brand, darkLight, fifthColor, black, secondary, fourhColor, primary, careysPink } = Colors;
 
 export default function Signup({ navigation }) {
     const [userType, setUserType] = useState('Junior');
@@ -59,12 +59,10 @@ export default function Signup({ navigation }) {
     const [errorMessage, setErrorMessage] = useState('');
     const [errorMessage2, setErrorMessage2] = useState('');
     const [errorMessage3, setErrorMessage3] = useState('');
-    const [errorMessage4, setErrorMessage4] = useState('');
 
     const [successMassage, setSuccessMassage] = useState('');
     const [successMassage2, setSuccessMassage2] = useState('');
     const [successMassage3, setSuccessMassage3] = useState('');
-    const [successMassage4, setSuccessMassage4] = useState('');
 
     //verify
 
@@ -86,6 +84,7 @@ export default function Signup({ navigation }) {
 
     const [expVerfy, setExpVerfy] = useState(false);
     const [exp, setexp] = useState('');
+    const [isMenuVisible, setMenuVisible] = useState(false); // For the menu visibility
 
 
 
@@ -99,26 +98,26 @@ export default function Signup({ navigation }) {
             setNameVerfy(true);
         }
 
-    } 
+    }
 
-    function handleExp (e){
+    function handleExp(e) {
         const expNum = e.nativeEvent.text;
+        setexp(expNum);
+        setExpVerfy(false);
+
+        if (/^([0-9]|[1-6][0-9]|70)$/.test(expNum)) {
             setexp(expNum);
-            setExpVerfy(false);
-    
-           if (/^([0-9]|[1-6][0-9]|70)$/.test(expNum)) {
-                setexp(expNum);
-                setExpVerfy(true);
-            }
+            setExpVerfy(true);
+        }
     }
 
     function handlelocation(e) {
         const locationVar = e.nativeEvent.text;
-        
+
         setlocation(locationVar);
         setlocationVerfy(false);
 
-        if (/^[A-Za-z\s]+$/.test(locationVar)){
+        if (/^[A-Za-z\s]+$/.test(locationVar)) {
 
             setlocation(locationVar);
             setlocationVerfy(true);
@@ -126,7 +125,7 @@ export default function Signup({ navigation }) {
 
     }
 
- 
+
 
     function handleemail(e) {
         const emailVar = e.nativeEvent.text;
@@ -178,18 +177,18 @@ export default function Signup({ navigation }) {
     };
 
 
-    function handelPhonNumber (e){
-       const phonNumber = e.nativeEvent.text;
-      
-       setPhone(phoneVerfy);
-       setPhoneVerfy(false);
-    
-       if (/^\+([1-9]{1}[0-9]{1,3})?([0-9]{4,14})$/.test(phonNumber) && phonNumber.length < 15) // تحقق من الصيغة العامة للرقم
-    {
-        setPhone(phonNumber);
-        setPhoneVerfy(true);
-    }
-       
+    function handelPhonNumber(e) {
+        const phonNumber = e.nativeEvent.text;
+
+        setPhone(phoneVerfy);
+        setPhoneVerfy(false);
+
+        if (/^\+([1-9]{1}[0-9]{1,3})?([0-9]{4,14})$/.test(phonNumber) && phonNumber.length < 15) // تحقق من الصيغة العامة للرقم
+        {
+            setPhone(phonNumber);
+            setPhoneVerfy(true);
+        }
+
     }
     const handleSubmit = () => {
         if (!gender) {
@@ -211,6 +210,7 @@ export default function Signup({ navigation }) {
                 BirthDate: BirthDate.toISOString(), // تحويل التاريخ إلى صيغة مناسبة
                 Gender: gender, // إضافة قيمة الجنس
                 Field: selectedJob, // إضافة مجال العمل
+                Role: userType,
             };
             console.log('Sending Signup Data:', dataToSend);
 
@@ -228,22 +228,26 @@ export default function Signup({ navigation }) {
 
             if (!response.ok) {
                 const errorData = await response.json();
+                // في حال وجود خطأ من السيرفر (مثل "Email already exists")
+                setErrorMessage3(errorData.message || 'Something went wrong'); // تخزين رسالة الخطأ
                 throw new Error(errorData.message || 'Something went wrong');
             }
 
             const result = await response.json();
             console.log('User registered successfully:', result);
-            navigation.navigate('HomeScreen');
+            navigation.navigate('HomeScreen'); // الانتقال إلى الشاشة الرئيسية عند النجاح
 
         } catch (error) {
-            console.error('Error during signup:', error);
+            setemailVerfy(false); // إعادة تعيين التحقق من الإيميل إلى false عند الخطأ
+            console.error('Error:', error.message); // عرض الخطأ في وحدة التحكم
         }
-
     };
 
 
 
+
     return (
+
         <StyledContainer>
             <StatusBar style="dark" />
 
@@ -361,8 +365,6 @@ export default function Signup({ navigation }) {
                                             Enter Proper Email Address.</Text>
                                 }
 
-
-
                                 {/* إدخال كلمة المرور */}
                                 <Text style={labelStyle}>Password</Text>
                                 <MyTextInput
@@ -437,7 +439,7 @@ export default function Signup({ navigation }) {
                                     onChange={e => handelPhonNumber(e)}
                                     value={values.PhoneNumber}
                                     rightIcon22={
-                                       phone.length < 1 ? null : phoneVerfy  ? (
+                                        phone.length < 1 ? null : phoneVerfy ? (
                                             <RightIcon2 style={{ top: 6 }} >
                                                 <Feather name="check-circle" color="green" size={20} />
                                             </RightIcon2>
@@ -455,13 +457,13 @@ export default function Signup({ navigation }) {
                                 }
 
 
-                                <Text style= {labelStyle}>Location</Text>
+                                <Text style={labelStyle}>Location</Text>
                                 <MyTextInput
                                     icon="home"
                                     placeholderTextColor={darkLight}
                                     onChangeText={handleChange('Location')}
                                     onBlur={handleBlur('Location')}
-                                    placeholder= "Loacation"
+                                    placeholder="Loacation"
                                     onChange={e => handlelocation(e)}
                                     value={values.Location}
 
@@ -477,9 +479,9 @@ export default function Signup({ navigation }) {
                                         )}
                                 />
                                 {
-                                   Location.length < 1 ? null : locationVerfy ? null :
+                                    Location.length < 1 ? null : locationVerfy ? null :
                                         <Text style={{ marginLeft: 20, marginTop: -20, marginBottom: 10, color: 'red', fontWeight: 'bold' }}>
-                                           Not Valid Location</Text>
+                                            Not Valid Location</Text>
                                 }
 
 
@@ -492,29 +494,29 @@ export default function Signup({ navigation }) {
                                         <MyTextInput
                                             icon="briefcase"
                                             placeholderTextColor={darkLight}
-                                            placeholder = "Years Number"
+                                            placeholder="Years Number"
                                             onChangeText={handleChange('YearsOfExperience')}
                                             onBlur={handleBlur('YearsOfExperience')}
                                             value={Number(values.YearsOfExperience)}
                                             keyboardType="numeric"
-                                            onChange = {e =>handleExp(e)}
+                                            onChange={e => handleExp(e)}
                                             rightIcon22={
-                                       exp.length < 1 ? null : expVerfy ? (
-                                            <RightIcon2 style={{ top: 6 }} >
-                                                <Feather name="check-circle" color="green" size={20} />
-                                            </RightIcon2>
-                                        ) : (
-                                            <RightIcon2 style={{ top: 6 }} >
-                                                <Feather name="x-circle" color="red" size={20} />
-                                            </RightIcon2>
-                                        )}
-                                />
-                                {
-                                  exp.length < 1 ? null : expVerfy ? null :
-                                        <Text style={{ marginLeft: 20, marginTop: -20, marginBottom: 10, color: 'red', fontWeight: 'bold' }}>
-                                          Select number from 0 to 40</Text>
-                                }
-                                        
+                                                exp.length < 1 ? null : expVerfy ? (
+                                                    <RightIcon2 style={{ top: 6 }} >
+                                                        <Feather name="check-circle" color="green" size={20} />
+                                                    </RightIcon2>
+                                                ) : (
+                                                    <RightIcon2 style={{ top: 6 }} >
+                                                        <Feather name="x-circle" color="red" size={20} />
+                                                    </RightIcon2>
+                                                )}
+                                        />
+                                        {
+                                            exp.length < 1 ? null : expVerfy ? null :
+                                                <Text style={{ marginLeft: 20, marginTop: -20, marginBottom: 10, color: 'red', fontWeight: 'bold' }}>
+                                                    Select number from 0 to 40</Text>
+                                        }
+
 
 
                                     </>
@@ -588,7 +590,7 @@ export default function Signup({ navigation }) {
                                         }}
                                         onPress={() => setGender('Female')}
                                         value={values.Gender}
-//
+                                    //
                                     >
 
                                         <Text style={{ color: gender === 'Female' ? primary : black, textAlign: 'center', fontWeight: 'bold' }}>Female</Text>
@@ -628,19 +630,65 @@ export default function Signup({ navigation }) {
                                                 </Picker>
                                             )}
                                         </View>
+
+
+
+                                        {isMenuVisible && (
+                                            <View style={[
+                                                Platform.OS === 'web' ? styles.webStyle : styles.mobileStyle
+                                            ]}>
+                                                <View>
+                                                    <Text style={{
+                                                        fontSize: 20,
+                                                        fontWeight: 'bold',
+                                                        color: primary
+                                                    }} >
+                                                        {errorMessage3 ? errorMessage3 : "You should Enter Valid Data to sign up!"}
+                                                    </Text>
+
+
+                                                    <View style={{
+                                                        flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between'
+
+                                                    }}>
+                                                        <TouchableOpacity style={{ color: careysPink }} onPress={() => setMenuVisible(false)}>
+                                                            <Text style={[Platform.OS === 'web' ? styles.textWp : styles.textMopile]}>Cancel</Text>
+                                                        </TouchableOpacity>
+                                                    </View>
+                                                </View>
+                                            </View>
+                                        )}
+
                                     </View>
                                 </View>
 
-                                <StyledButton onPress={() => {
-                                    const finalValues = {
-                                        ...values,
-                                        BirthDate: BirthDate, // إضافة قيمة التاريخ
-                                        Gender: gender, // إضافة قيمة الجنس
-                                        Field: selectedJob, // إضافة مجال العمل
-                                    };
-                                    console.log('Button Pressed'); handleSignup(values);
-                                }}>
-                                    <ButtonText>Sign Up as a{userType}</ButtonText>
+
+                                <StyledButton
+                                    onPress={() => {
+                                        if (!nameVerfy || !emailVerfy || !passwordVerfy || !confirmpasswordVerfy || !gender || !phoneVerfy || !locationVerfy) {
+
+                                            setMenuVisible(true)
+                                            return; // إيقاف العملية إذا لم يتم التحقق
+
+                                        }
+                                        if (!name || !email || !password || !ConfirmPassword || !gender || !phone || !Location) {
+
+                                            setMenuVisible(true)
+                                            return;
+                                        }
+
+                                        const finalValues = {
+                                            ...values,
+                                            BirthDate: BirthDate, // إضافة قيمة التاريخ
+                                            Gender: gender, // إضافة قيمة الجنس
+                                            Field: selectedJob, // إضافة مجال العمل
+                                        };
+
+                                        console.log('Button Pressed');
+                                        handleSignup(finalValues);
+                                    }}
+                                >
+                                    <ButtonText>Sign Up as a  {userType}</ButtonText>
                                 </StyledButton>
 
 
@@ -663,8 +711,8 @@ const MyTextInput = ({ icon, rightIcon22, isPassword, hidePassword, setHidePassw
     return (
         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 20, justifyContent: 'center' }}>
             <LeftIcon>
-                <FontAwesome name={icon} size={20} color={fifthColor} style={{ marginBottom: Platform.OS === 'web' ? 10 : 20 }} 
- />
+                <FontAwesome name={icon} size={20} color={fifthColor} style={{ marginBottom: Platform.OS === 'web' ? 10 : 20 }}
+                />
             </LeftIcon>
             <StyledTextInputSignUp {...props} style={{ width: '100%' }} />
             {rightIcon22}
@@ -714,5 +762,37 @@ const styles = StyleSheet.create({
         color: 'green',
         fontSize: 12, marginLeft: 20, marginTop: -15, marginBottom: 10, fontWeight: 'bold'
     },
-
+    webStyle: {
+        position: 'fixed',  // تحديد الموضع كـ "ثابت" في الصفحة
+        top: '100%',         // تحديد الموضع من الأعلى إلى 50% من الشاشة
+        left: '50%',        // تحديد الموضع من اليسار إلى 50% من الشاشة
+        transform: 'translate(-50%, 0%)',  // تحريك العنصر إلى المنتصف بشكل دقيق عموديًا وأفقيًا
+        width: '30%',
+        backgroundColor: black,
+        borderRadius: 5,
+        zIndex: 20,
+        borderColor: fourhColor,  // استبدل هذا باللون الذي تريده
+        borderWidth: 3,
+        height: '20%',
+        justifyContent: 'center',
+        alignItems: 'center'
+    },
+    mobileStyle: {
+        position: 'absolute', // إذا كان الجوال، سيكون موضعه مطلقًا
+        bottom: 200,
+        width: '100%',
+        padding: 10,
+        backgroundColor: black,
+        borderRadius: 5,
+        zIndex: 20,
+        borderColor: fourhColor, // استبدل 'yourColor' باللون الذي تريده
+        borderWidth: 3,
+        height: '265%',
+    },
+    textWp: {
+        fontSize: 20, marginTop: 60, marginLeft: 350, color: primary
+    },
+    textMopile: {
+        fontSize: 20, marginTop: 45, marginLeft: 220, color: primary
+    }
 });
