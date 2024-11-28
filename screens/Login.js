@@ -135,12 +135,11 @@ export default function Login({ navigation }) {
           if (result.Token) {
             await AsyncStorage.setItem('userToken', result.Token); // تخزين التوكين محليًا
             console.log('Token saved successfully');
+            navigation.navigate('HomeScreen', { userField });
           } else {
             console.warn('No token found in response');
           }
     
-          // الانتقال إلى الصفحة الرئيسية
-          navigation.navigate('HomeScreen', { userField });
         } catch (error) {
           console.error('Login error:', error);
           Alert.alert('Login Failed', error.message);

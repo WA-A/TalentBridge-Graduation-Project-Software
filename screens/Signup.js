@@ -8,6 +8,7 @@ import { Picker } from '@react-native-picker/picker'
 import { Colors, StyledContainer, InnerContainer, PageLogo, StyledFormArea, StyledButton, ButtonText, StyledTextInputSignUp, LeftIcon, labelStyle, RightIcon, RightIcon2 } from './../compnent/Style';
 import axios from 'axios';
 import { useNavigation } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // استيراد مكتبة DatePicker فقط للويب
 let DatePicker;
@@ -201,47 +202,66 @@ export default function Signup({ navigation }) {
     };
 
 
-    // Join Api With FrontPage
-
+    // Join Api With FrontPage 
     const handleSignup = async (values) => {
         try {
             const dataToSend = {
                 ...values,
-                BirthDate: BirthDate.toISOString(), // تحويل التاريخ إلى صيغة مناسبة
-                Gender: gender, // إضافة قيمة الجنس
-                Field: selectedJob, // إضافة مجال العمل
+                BirthDate: BirthDate.toISOString(), // تأكد أن BirthDate متوافقة مع التنسيق المناسب
+                Gender: gender,
+                Field: selectedJob,
                 Role: userType,
             };
-            console.log('Sending Signup Data:', dataToSend);
 
+            console.log('Sending Signup Data :', dataToSend);
+
+            // تحديد عنوان السيرفر بناءً على النظام الأساسي (web أو mobile)
             const baseUrl = Platform.OS === 'web'
                 ? 'http://localhost:3000'
-                : 'http://192.168.1.239:3000'; // عنوان IP الشبكة المحلية للجوال
+                : 'http://192.168.1.239:3000'; // استخدم IP جهازك المحلي
 
+            // إرسال البيانات باستخدام fetch
             const response = await fetch(`${baseUrl}/auth/signup`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(dataToSend),
+                body: JSON.stringify(dataToSend), // إرسال البيانات كـ JSON
             });
 
+            // التعامل مع الأخطاء في حالة عدم استجابة 200 OK
             if (!response.ok) {
                 const errorData = await response.json();
-                // في حال وجود خطأ من السيرفر (مثل "Email already exists")
-                setErrorMessage3(errorData.message || 'Something went wrong'); // تخزين رسالة الخطأ
-                throw new Error(errorData.message || 'Something went wrong');
+                if (response.status === 409) {
+                    setErrorMessage3('This email already exists');
+                    setMenuVisible(true);
+                } else {
+                    setErrorMessage3('Something went wrong');
+                    setMenuVisible(true);
+                }
+                return; // تأكد من عدم الاستمرار عند حدوث خطأ
             }
 
+            // إذا كانت الاستجابة ناجحة
             const result = await response.json();
             console.log('User registered successfully:', result);
-            navigation.navigate('HomeScreen'); // الانتقال إلى الشاشة الرئيسية عند النجاح
+            if (result.token) {
+                await AsyncStorage.setItem('userToken', result.token); // تخزين التوكين محليًا
+                console.log('Token saved successfully');
+                navigation.navigate('HomeScreen');  // انتقل إلى الشاشة المطلوبة بعد النجاح
+            } else {
+                console.warn('No token found in response');
+            }
 
         } catch (error) {
-            setemailVerfy(false); // إعادة تعيين التحقق من الإيميل إلى false عند الخطأ
-            console.error('Error:', error.message); // عرض الخطأ في وحدة التحكم
+            console.error('Error in Signup Process:', error.message);
+            setErrorMessage3('An unexpected error occurred');
+            setMenuVisible(true);
+
         }
     };
+
+
 
 
 
@@ -763,20 +783,22 @@ const styles = StyleSheet.create({
         fontSize: 12, marginLeft: 20, marginTop: -15, marginBottom: 10, fontWeight: 'bold'
     },
     webStyle: {
-        position: 'fixed',  // تحديد الموضع كـ "ثابت" في الصفحة
-        top: '100%',         // تحديد الموضع من الأعلى إلى 50% من الشاشة
-        left: '50%',        // تحديد الموضع من اليسار إلى 50% من الشاشة
-        transform: 'translate(-50%, 0%)',  // تحريك العنصر إلى المنتصف بشكل دقيق عموديًا وأفقيًا
-        width: '30%',
-        backgroundColor: black,
-        borderRadius: 5,
-        zIndex: 20,
-        borderColor: fourhColor,  // استبدل هذا باللون الذي تريده
-        borderWidth: 3,
-        height: '20%',
-        justifyContent: 'center',
-        alignItems: 'center'
-    },
+        position: 'fixed',   // العنصر سيبقى مثبتًا في مكانه بالنسبة للشاشة
+        top: '90%',  // على سبيل المثال
+        left: '50%',         // تحديد العنصر ليكون في منتصف الشاشة أفقيًا
+        transform: 'translate(-50%, -50%)', // تحريك العنصر بشكل دقيق للمنتصف
+        width: '30%',        // تحديد عرض العنصر
+        height: '20%',       // تحديد ارتفاع العنصر
+        backgroundColor: 'black', // تعيين اللون الخلفي
+        borderRadius: 5,     // إضافة حدود مدورة
+        zIndex: 9999,        // التأكد من أن العنصر فوق باقي العناصر
+        borderColor: 'fourhColor', // استبدال هذا باللون الذي تريده
+        borderWidth: 3,      // تحديد عرض الحدود
+        display: 'flex',     // تمكين Flexbox داخل العنصر
+        justifyContent: 'center', // محاذاة المحتوى عموديًا
+        alignItems: 'center' // محاذاة المحتوى أفقيًا
+    }
+    ,
     mobileStyle: {
         position: 'absolute', // إذا كان الجوال، سيكون موضعه مطلقًا
         bottom: 200,
