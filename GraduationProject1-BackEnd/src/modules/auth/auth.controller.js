@@ -18,13 +18,14 @@ export const SignUp = async (req, res) => {
     }
     
     const HashedPassword = bcrypt.hashSync(Password, parseInt(process.env.SALTROUND));
+    const HashedConfirmPassword = bcrypt.hashSync(ConfirmPassword, parseInt(process.env.SALTROUND)); 
 
     try {
 
 
         if (YearsOfExperience > 0) {
             const YearsofExperienceN = parseInt(YearsOfExperience);
-            const CreateUser = await UserModel.create({ FullName, Email, Password: HashedPassword, ConfirmPassword, Gender, Role, BirthDate, PhoneNumber, Location, YearsOfExperience: YearsofExperienceN, Field });
+            const CreateUser = await UserModel.create({ FullName, Email, Password: HashedPassword, ConfirmPassword:HashedConfirmPassword, Gender, Role, BirthDate, PhoneNumber, Location, YearsOfExperience: YearsofExperienceN, Field });
             const token = jwt.sign({ Email }, process.env.CONFIRM_EMAILTOKEN);
             return res.status(201).json({ message: "success", user: CreateUser, token: token });
         }
@@ -138,10 +139,12 @@ export const ChangePassword = async (req, res) => {
     }
 
     try {
-        const hashedPassword = bcrypt.hashSync(NewPassword, parseInt(process.env.SALTROUND));
-        
-        user.Password = hashedPassword;
+        const HashedPassword = bcrypt.hashSync(NewPassword, parseInt(process.env.SALTROUND));
+        const HashedConfirmNewPassword = bcrypt.hashSync(ConfirmNewPassword, parseInt(process.env.SALTROUND)); 
 
+        
+        user.Password = HashedPassword;
+        user.ConfirmPassword = HashedConfirmNewPassword;
         await user.save();
 
         return res.status(200).json({ message: "Password updated successfully" });
