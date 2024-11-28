@@ -16,12 +16,7 @@ export const SignUp = async (req, res) => {
     if (!Password) {
         return res.status(400).json({ message: "Password is required" });
     }
-    const user = await UserModel.findOne({Email});
     
-    if(user){
-        return next(new Error ("Email already exists"));
-        
-    }
     const HashedPassword = bcrypt.hashSync(Password, parseInt(process.env.SALTROUND));
 
     try {
@@ -124,5 +119,36 @@ export const ForgotPassword = async (req, res) => {
 
 }
 
+
+export const ChangePassword = async (req, res) => {
+    const { Email, NewPassword, ConfirmNewPassword } = req.body;
+
+    if (NewPassword !== ConfirmNewPassword) {
+        return res.status(400).json({ message: "New passwords do not match" });
+    }
+
+    if (!NewPassword) {
+        return res.status(400).json({ message: "Password is required" });
+    }
+
+    const user = await UserModel.findOne({ Email });
+
+    if (!user) {
+        return res.status(404).json({ message: "User not found" });
+    }
+
+    try {
+        const hashedPassword = bcrypt.hashSync(NewPassword, parseInt(process.env.SALTROUND));
+        
+        user.Password = hashedPassword;
+
+        await user.save();
+
+        return res.status(200).json({ message: "Password updated successfully" });
+    } catch (error) {
+        console.error("Error during password update:", error);
+        return res.status(500).json({ message: "Server error", error });
+    }
+};
 
 

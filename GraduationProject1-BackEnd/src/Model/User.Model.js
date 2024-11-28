@@ -16,9 +16,8 @@ const UserSchema = new Schema({
    Email: {
       type: String,
       unique: true,
-      required: true, // أضف هذا السطر
+      required: true, 
    },
-
    Password: {
       type: String,
       required: true
@@ -66,6 +65,13 @@ const UserSchema = new Schema({
    SendCode: {
       type: String,
       default: null,
+   },
+   NewPassword: {
+      type: String,
+   },
+   ConfirmNewPassword: {
+      type: String,
+      default: false
    },
    Field: {
       type: String,
