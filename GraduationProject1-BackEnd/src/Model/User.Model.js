@@ -67,11 +67,6 @@ const UserSchema = new Schema({
       type: String,
       default: null,
    },
-   ConfirmEmail: {
-      type: Boolean,
-      default: false,
-   },
-
    Field: {
       type: String,
       enum: [
