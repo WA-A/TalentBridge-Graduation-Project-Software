@@ -5,9 +5,9 @@ export const CheckEmail = async (req, res, next) => {
     const user = await UserModel.findOne({ Email });
 
     if (user) {
-        //return res.status(409).json({message:" email already exits"});
+        return res.status(409).json({message:" email already exits"});
 
-        return next(new Error(`email already exits`, 409));
+       // return next(new Error(`email already exits`, 409));
 
     }
     next();
