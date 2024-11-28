@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, Platform, ScrollView, StyleSheet } from '
 import DateTimePickerModal from '@react-native-community/datetimepicker';  // للموبايل
 import { StatusBar } from 'expo-status-bar';
 import { Formik } from 'formik';
-import { Feather, FontAwesome, Ionicons, Error } from '@expo/vector-icons';
+import { Feather, FontAwesome, Ionicons, Entypo } from '@expo/vector-icons';
 import { Picker } from '@react-native-picker/picker'
 import { Colors, StyledContainer, InnerContainer, PageLogo, StyledFormArea, StyledButton, ButtonText, StyledTextInputSignUp, LeftIcon, labelStyle, RightIcon, RightIcon2 } from './../compnent/Style';
 import axios from 'axios';
@@ -18,17 +18,17 @@ if (Platform.OS === 'web') {
 }
 
 // الألوان
-const { brand, darkLight, fifthColor, black, secondary, fourhColor, primary } = Colors;
+const { brand, darkLight, fifthColor, black, secondary, fourhColor, primary, careysPink } = Colors;
 
 export default function Signup({ navigation }) {
     const [userType, setUserType] = useState('Junior');
     const [gender, setGender] = useState('');
-    const [dateOfBirth, setDateOfBirth] = useState(new Date());
+    const [BirthDate, setDateOfBirth] = useState(new Date());
     const [isDatePickerVisible, setIsDatePickerVisible] = useState(false);
 
     // التعامل مع التاريخ على الموبايل
     const handleDateConfirm = (event, date) => {
-        setDateOfBirth(date || dateOfBirth);
+        setDateOfBirth(date || BirthDate);
         setIsDatePickerVisible(false);
     };
     const jobFields = [
@@ -46,18 +46,28 @@ export default function Signup({ navigation }) {
         { label: 'Graphic Design', value: 'Graphic Design' }
     ];
 
+    const [values, setValues] = useState({
+        FullName: '', Email: '', Password: '', ConfirmPassword: '', Gender: '', BirthDate: '', PhoneNumber: '', Location: '', YearsofExperience: '', Field: '',
+    });
 
 
     const [selectedJob, setSelectedJob] = useState('Software Engineer');
+
     const [hidePassword, setHidePassword] = useState(true);
     const [hideConfirmPassword, setHideConfirmPassword] = useState(true);
 
     const [errorMessage, setErrorMessage] = useState('');
     const [errorMessage2, setErrorMessage2] = useState('');
+    const [errorMessage3, setErrorMessage3] = useState('');
 
     const [successMassage, setSuccessMassage] = useState('');
     const [successMassage2, setSuccessMassage2] = useState('');
+    const [successMassage3, setSuccessMassage3] = useState('');
+
     //verify
+
+
+
     const [name, setName] = useState('');
     const [nameVerfy, setNameVerfy] = useState(false);
     const [email, setEmail] = useState('');
@@ -65,7 +75,18 @@ export default function Signup({ navigation }) {
     const [password, setpassword] = useState('');
     const [passwordVerfy, setPasswordVerfy] = useState(false);
     const [confirmpasswordVerfy, setConfirmPasswordVerfy] = useState(false);
-    const [confirmPassword, setConfirmPassword] = useState('');
+    const [ConfirmPassword, setConfirmPassword] = useState('');
+    const [phoneVerfy, setPhoneVerfy] = useState(false);
+    const [phone, setPhone] = useState('');
+
+    const [locationVerfy, setlocationVerfy] = useState(false);
+    const [Location, setlocation] = useState('');
+
+    const [expVerfy, setExpVerfy] = useState(false);
+    const [exp, setexp] = useState('');
+    const [isMenuVisible, setMenuVisible] = useState(false); // For the menu visibility
+
+
 
     function handleName(e) {
         const nameVar = e.nativeEvent.text;
@@ -78,6 +99,33 @@ export default function Signup({ navigation }) {
         }
 
     }
+
+    function handleExp(e) {
+        const expNum = e.nativeEvent.text;
+        setexp(expNum);
+        setExpVerfy(false);
+
+        if (/^([0-9]|[1-6][0-9]|70)$/.test(expNum)) {
+            setexp(expNum);
+            setExpVerfy(true);
+        }
+    }
+
+    function handlelocation(e) {
+        const locationVar = e.nativeEvent.text;
+
+        setlocation(locationVar);
+        setlocationVerfy(false);
+
+        if (/^[A-Za-z\s]+$/.test(locationVar)) {
+
+            setlocation(locationVar);
+            setlocationVerfy(true);
+        }
+
+    }
+
+
 
     function handleemail(e) {
         const emailVar = e.nativeEvent.text;
@@ -114,7 +162,6 @@ export default function Signup({ navigation }) {
     }
 
     function handleCinfirmPassword(e) {
-        console.log("password:", password);
         const ConfirmPassVar = e.nativeEvent.text;
         setConfirmPassword(ConfirmPassVar);
         setConfirmPasswordVerfy(false);
@@ -129,41 +176,78 @@ export default function Signup({ navigation }) {
 
     };
 
+
+    function handelPhonNumber(e) {
+        const phonNumber = e.nativeEvent.text;
+
+        setPhone(phoneVerfy);
+        setPhoneVerfy(false);
+
+        if (/^\+([1-9]{1}[0-9]{1,3})?([0-9]{4,14})$/.test(phonNumber) && phonNumber.length < 15) // تحقق من الصيغة العامة للرقم
+        {
+            setPhone(phonNumber);
+            setPhoneVerfy(true);
+        }
+
+    }
+    const handleSubmit = () => {
+        if (!gender) {
+            alert("Please select gender");
+            return;
+        }
+
+        // تابع معالجة البيانات هنا
+        console.log("Gender selected:", gender);
+    };
+
+
     // Join Api With FrontPage
 
-    const handleSignup = async (data) => {
+    const handleSignup = async (values) => {
         try {
-            console.log('Sending Signup Data:', data);
-            const response = await fetch('http://localhost:3000/auth/signup', {
+            const dataToSend = {
+                ...values,
+                BirthDate: BirthDate.toISOString(), // تحويل التاريخ إلى صيغة مناسبة
+                Gender: gender, // إضافة قيمة الجنس
+                Field: selectedJob, // إضافة مجال العمل
+                Role: userType,
+            };
+            console.log('Sending Signup Data:', dataToSend);
+
+            const baseUrl = Platform.OS === 'web'
+                ? 'http://localhost:3000'
+                : 'http://192.168.1.239:3000'; // عنوان IP الشبكة المحلية للجوال
+
+            const response = await fetch(`${baseUrl}/auth/signup`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(data),
-                credentials: 'include',
+                body: JSON.stringify(dataToSend),
             });
 
             if (!response.ok) {
                 const errorData = await response.json();
+                // في حال وجود خطأ من السيرفر (مثل "Email already exists")
+                setErrorMessage3(errorData.message || 'Something went wrong'); // تخزين رسالة الخطأ
                 throw new Error(errorData.message || 'Something went wrong');
             }
 
             const result = await response.json();
             console.log('User registered successfully:', result);
-            navigation.navigate('HomeScreen');
+            navigation.navigate('HomeScreen'); // الانتقال إلى الشاشة الرئيسية عند النجاح
+
         } catch (error) {
-            console.error('Error during signup:', error.message);
+            setemailVerfy(false); // إعادة تعيين التحقق من الإيميل إلى false عند الخطأ
+            console.error('Error:', error.message); // عرض الخطأ في وحدة التحكم
         }
     };
 
 
 
 
-
-
-
-
     return (
+
         <StyledContainer>
             <StatusBar style="dark" />
 
@@ -202,12 +286,25 @@ export default function Signup({ navigation }) {
                         </TouchableOpacity>
                     </View>
                     <Formik
-                        initialValues={{ email: '', password: '', confirmPassword: '', fullName: '', username: '', phoneNumber: '', location: '' }}
+                        initialValues={{ FullName: '', Email: '', Password: '', ConfirmPassword: '', Gender: '', BirthDate: '', PhoneNumber: '', Location: '', YearsOfExperience: '', Field: '' }}
                         onSubmit={(values) => {
+                            setValues({
+                                FullName: formikValues.FullName,
+                                Email: formikValues.Email,
+                                Password: formikValues.Password,
+                                ConfirmPassword: formikValues.ConfirmPassword,
+                                Gender: formikValues.Gender,
+                                BirthDate: formikValues.BirthDate,
+                                PhoneNumber: formikValues.PhoneNumber,
+                                Address: formikValues.Location,
+                                YearsOfExperience: formikValues.YearsOfExperience,
+                                Field: formikValues.Field
+                            });
                             console.log({ userType, ...values });
 
                         }}
                     >
+
                         {({ handleChange, handleBlur, handleSubmit, values }) => (
                             <StyledFormArea>
                                 {/* إدخال الاسم الكامل */}
@@ -216,10 +313,10 @@ export default function Signup({ navigation }) {
                                     icon="user"
                                     placeholder="Name"
                                     placeholderTextColor={darkLight}
-                                    onChangeText={handleChange('fullName')}
-                                    onBlur={handleBlur('fullName')}
-                                    value={values.fullName}
+                                    onChangeText={handleChange('FullName')}
+                                    onBlur={handleBlur('FullName')}
                                     onChange={e => handleName(e)}
+                                    value={values.FullName}
                                     rightIcon22={
                                         name.length < 1 ? null : nameVerfy ? (
                                             <RightIcon2 style={{ top: 6 }} >
@@ -245,11 +342,11 @@ export default function Signup({ navigation }) {
                                     icon="envelope-o"
                                     placeholder="example12@gmail.com"
                                     placeholderTextColor={darkLight}
-                                    onChangeText={handleChange('email')}
-                                    onBlur={handleBlur('email')}
-                                    value={values.email}
+                                    onChangeText={handleChange('Email')}
+                                    onBlur={handleBlur('Email')}
                                     keyboardType="email-address"
                                     onChange={e => handleemail(e)}
+                                    value={values.Email}
                                     rightIcon22={
                                         email.length < 1 ? null : emailVerfy ? (
                                             <RightIcon2 style={{ top: 6 }} >
@@ -268,16 +365,13 @@ export default function Signup({ navigation }) {
                                             Enter Proper Email Address.</Text>
                                 }
 
-
-
                                 {/* إدخال كلمة المرور */}
                                 <Text style={labelStyle}>Password</Text>
                                 <MyTextInput
                                     icon="lock"
                                     placeholderTextColor={darkLight}
-                                    onChangeText={handleChange('password')}
-                                    onBlur={handleBlur('password')}
-                                    value={values.password}
+                                    onChangeText={handleChange('Password')}
+                                    onBlur={handleBlur('Password')}
                                     secureTextEntry={hidePassword}
                                     placeholder="password"
                                     isPassword={true}
@@ -285,6 +379,7 @@ export default function Signup({ navigation }) {
                                     setHidePassword={setHidePassword}
 
                                     onChange={e => handlePassword(e)}
+                                    value={values.Password}
                                     rightIcon22={
                                         password.length < 1 ? null : passwordVerfy ? (
                                             <RightIcon2 style={{ top: 6, right: 40 }} >
@@ -308,18 +403,17 @@ export default function Signup({ navigation }) {
                                 <MyTextInput
                                     icon="lock"
                                     placeholderTextColor={darkLight}
-                                    onChangeText={handleChange('confirmPassword')}
-                                    onBlur={handleBlur('confirmPassword')}
-                                    value={values.confirmPassword}
+                                    onChangeText={handleChange('ConfirmPassword')}
+                                    onBlur={handleBlur('ConfirmPassword')}
                                     secureTextEntry={hideConfirmPassword}
                                     placeholder="confirm Password"
                                     isConfirmPassword={true}
                                     hideConfirmPassword={hideConfirmPassword}
                                     setHideConfirmPassword={setHideConfirmPassword}
                                     onChange={e => handleCinfirmPassword(e)}
-
+                                    value={values.ConfirmPassword}
                                     rightIcon22={
-                                        confirmPassword.length < 1 ? null : confirmpasswordVerfy ? (
+                                        ConfirmPassword.length < 1 ? null : confirmpasswordVerfy ? (
                                             <RightIcon2 style={{ top: 6, right: 40 }} >
                                                 <Feather name="check-circle" color="green" size={20} />
                                             </RightIcon2>
@@ -339,19 +433,59 @@ export default function Signup({ navigation }) {
                                 <MyTextInput
                                     icon="phone"
                                     placeholderTextColor={darkLight}
-                                    onChangeText={handleChange('phoneNumber')}
-                                    onBlur={handleBlur('phoneNumber')}
-                                    value={values.phoneNumber}
+                                    onChangeText={handleChange('PhoneNumber')}
+                                    placeholder="+ 972"
+                                    onBlur={handleBlur('PhoneNumber')}
+                                    onChange={e => handelPhonNumber(e)}
+                                    value={values.PhoneNumber}
+                                    rightIcon22={
+                                        phone.length < 1 ? null : phoneVerfy ? (
+                                            <RightIcon2 style={{ top: 6 }} >
+                                                <Feather name="check-circle" color="green" size={20} />
+                                            </RightIcon2>
+                                        ) : (
+                                            <RightIcon2 style={{ top: 6 }} >
+                                                <Feather name="x-circle" color="red" size={20} />
+                                            </RightIcon2>
+                                        )}
+
                                 />
+                                {
+                                    phone.length < 1 ? null : phoneVerfy ? null :
+                                        <Text style={{ marginLeft: 20, marginTop: -20, marginBottom: 10, color: 'red', fontWeight: 'bold' }}>
+                                            Enter A valid Number!.</Text>
+                                }
+
 
                                 <Text style={labelStyle}>Location</Text>
                                 <MyTextInput
                                     icon="home"
                                     placeholderTextColor={darkLight}
-                                    onChangeText={handleChange('location')}
-                                    onBlur={handleBlur('location')}
-                                    value={values.location}
+                                    onChangeText={handleChange('Location')}
+                                    onBlur={handleBlur('Location')}
+                                    placeholder="Loacation"
+                                    onChange={e => handlelocation(e)}
+                                    value={values.Location}
+
+                                    rightIcon22={
+                                        Location.length < 1 ? null : locationVerfy ? (
+                                            <RightIcon2 style={{ top: 6 }} >
+                                                <Feather name="check-circle" color="green" size={20} />
+                                            </RightIcon2>
+                                        ) : (
+                                            <RightIcon2 style={{ top: 6 }} >
+                                                <Feather name="x-circle" color="red" size={20} />
+                                            </RightIcon2>
+                                        )}
                                 />
+                                {
+                                    Location.length < 1 ? null : locationVerfy ? null :
+                                        <Text style={{ marginLeft: 20, marginTop: -20, marginBottom: 10, color: 'red', fontWeight: 'bold' }}>
+                                            Not Valid Location</Text>
+                                }
+
+
+
 
                                 {/* عرض حقل عدد سنوات الخبرة إذا كان المستخدم "Senior" */}
                                 {userType === 'Senior' && (
@@ -360,11 +494,31 @@ export default function Signup({ navigation }) {
                                         <MyTextInput
                                             icon="briefcase"
                                             placeholderTextColor={darkLight}
-                                            onChangeText={handleChange('yearsOfExperience')}
-                                            onBlur={handleBlur('yearsOfExperience')}
-                                            value={values.yearsOfExperience}
+                                            placeholder="Years Number"
+                                            onChangeText={handleChange('YearsOfExperience')}
+                                            onBlur={handleBlur('YearsOfExperience')}
+                                            value={Number(values.YearsOfExperience)}
                                             keyboardType="numeric"
+                                            onChange={e => handleExp(e)}
+                                            rightIcon22={
+                                                exp.length < 1 ? null : expVerfy ? (
+                                                    <RightIcon2 style={{ top: 6 }} >
+                                                        <Feather name="check-circle" color="green" size={20} />
+                                                    </RightIcon2>
+                                                ) : (
+                                                    <RightIcon2 style={{ top: 6 }} >
+                                                        <Feather name="x-circle" color="red" size={20} />
+                                                    </RightIcon2>
+                                                )}
                                         />
+                                        {
+                                            exp.length < 1 ? null : expVerfy ? null :
+                                                <Text style={{ marginLeft: 20, marginTop: -20, marginBottom: 10, color: 'red', fontWeight: 'bold' }}>
+                                                    Select number from 0 to 40</Text>
+                                        }
+
+
+
                                     </>
                                 )}
 
@@ -372,15 +526,15 @@ export default function Signup({ navigation }) {
                                 <Text style={labelStyle}>Date of Birth</Text>
                                 {Platform.OS === 'web' ? (
                                     <DatePicker
-                                        selected={dateOfBirth}
+                                        selected={BirthDate}
                                         onChange={(date) => setDateOfBirth(date)}
                                         dateFormat="yyyy-MM-dd"
                                         className="date-picker"
-
                                     />
                                 ) : (
                                     <TouchableOpacity
-                                        onPress={() => setIsDatePickerVisible(true)}
+                                        onPress={() => setIsDatePickerVisible(true)
+                                        }
                                         style={{
                                             border: 2,  /* الحدود */
                                             borderWidth: 1,
@@ -392,13 +546,13 @@ export default function Signup({ navigation }) {
 
                                         }}
                                     >
-                                        <Text style={{ color: black }}>{dateOfBirth.toDateString()}</Text>
+                                        <Text style={{ color: black }}>{BirthDate.toDateString()}</Text>
                                     </TouchableOpacity>
                                 )}
 
                                 {isDatePickerVisible && (
                                     <DateTimePickerModal
-                                        value={dateOfBirth}
+                                        value={BirthDate}
                                         mode="date"
                                         display="default"
                                         onChange={handleDateConfirm}
@@ -435,9 +589,13 @@ export default function Signup({ navigation }) {
                                             width: '50%'
                                         }}
                                         onPress={() => setGender('Female')}
+                                        value={values.Gender}
+                                    //
                                     >
+
                                         <Text style={{ color: gender === 'Female' ? primary : black, textAlign: 'center', fontWeight: 'bold' }}>Female</Text>
                                     </TouchableOpacity>
+
                                 </View>
 
 
@@ -472,16 +630,66 @@ export default function Signup({ navigation }) {
                                                 </Picker>
                                             )}
                                         </View>
+
+
+
+                                        {isMenuVisible && (
+                                            <View style={[
+                                                Platform.OS === 'web' ? styles.webStyle : styles.mobileStyle
+                                            ]}>
+                                                <View>
+                                                    <Text style={{
+                                                        fontSize: 20,
+                                                        fontWeight: 'bold',
+                                                        color: primary
+                                                    }} >
+                                                        {errorMessage3 ? errorMessage3 : "You should Enter Valid Data to sign up!"}
+                                                    </Text>
+
+
+                                                    <View style={{
+                                                        flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between'
+
+                                                    }}>
+                                                        <TouchableOpacity style={{ color: careysPink }} onPress={() => setMenuVisible(false)}>
+                                                            <Text style={[Platform.OS === 'web' ? styles.textWp : styles.textMopile]}>Cancel</Text>
+                                                        </TouchableOpacity>
+                                                    </View>
+                                                </View>
+                                            </View>
+                                        )}
+
                                     </View>
                                 </View>
 
 
-                                {/* زر التسجيل */}
-                                <StyledButton onPress={() => { console.log('Button Pressed'); handleSignup(values); }}>
-                                    <ButtonText>Sign Up as {userType}</ButtonText>
+                                <StyledButton
+                                    onPress={() => {
+                                        if (!nameVerfy || !emailVerfy || !passwordVerfy || !confirmpasswordVerfy || !gender || !phoneVerfy || !locationVerfy) {
+
+                                            setMenuVisible(true)
+                                            return; // إيقاف العملية إذا لم يتم التحقق
+
+                                        }
+                                        if (!name || !email || !password || !ConfirmPassword || !gender || !phone || !Location) {
+
+                                            setMenuVisible(true)
+                                            return;
+                                        }
+
+                                        const finalValues = {
+                                            ...values,
+                                            BirthDate: BirthDate, // إضافة قيمة التاريخ
+                                            Gender: gender, // إضافة قيمة الجنس
+                                            Field: selectedJob, // إضافة مجال العمل
+                                        };
+
+                                        console.log('Button Pressed');
+                                        handleSignup(finalValues);
+                                    }}
+                                >
+                                    <ButtonText>Sign Up as a  {userType}</ButtonText>
                                 </StyledButton>
-
-
 
 
                                 {/* زر الانتقال لتسجيل الدخول */}
@@ -496,14 +704,15 @@ export default function Signup({ navigation }) {
             </ScrollView>
         </StyledContainer>
     );
-}
 
+}
 // مكون الإدخال الخاص
 const MyTextInput = ({ icon, rightIcon22, isPassword, hidePassword, setHidePassword, isConfirmPassword, hideConfirmPassword, setHideConfirmPassword, ...props }) => {
     return (
         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 20, justifyContent: 'center' }}>
             <LeftIcon>
-                <FontAwesome name={icon} size={20} color={fifthColor} marginBottom={20} />
+                <FontAwesome name={icon} size={20} color={fifthColor} style={{ marginBottom: Platform.OS === 'web' ? 10 : 20 }}
+                />
             </LeftIcon>
             <StyledTextInputSignUp {...props} style={{ width: '100%' }} />
             {rightIcon22}
@@ -543,7 +752,8 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         paddingLeft: 10,
         fontSize: 16,
-    }, error: {
+    },
+    error: {
         color: 'red',
         fontSize: 12,
         marginLeft: 20, marginTop: -15, marginBottom: 10, fontWeight: 'bold'
@@ -552,5 +762,37 @@ const styles = StyleSheet.create({
         color: 'green',
         fontSize: 12, marginLeft: 20, marginTop: -15, marginBottom: 10, fontWeight: 'bold'
     },
-
+    webStyle: {
+        position: 'fixed',  // تحديد الموضع كـ "ثابت" في الصفحة
+        top: '100%',         // تحديد الموضع من الأعلى إلى 50% من الشاشة
+        left: '50%',        // تحديد الموضع من اليسار إلى 50% من الشاشة
+        transform: 'translate(-50%, 0%)',  // تحريك العنصر إلى المنتصف بشكل دقيق عموديًا وأفقيًا
+        width: '30%',
+        backgroundColor: black,
+        borderRadius: 5,
+        zIndex: 20,
+        borderColor: fourhColor,  // استبدل هذا باللون الذي تريده
+        borderWidth: 3,
+        height: '20%',
+        justifyContent: 'center',
+        alignItems: 'center'
+    },
+    mobileStyle: {
+        position: 'absolute', // إذا كان الجوال، سيكون موضعه مطلقًا
+        bottom: 200,
+        width: '100%',
+        padding: 10,
+        backgroundColor: black,
+        borderRadius: 5,
+        zIndex: 20,
+        borderColor: fourhColor, // استبدل 'yourColor' باللون الذي تريده
+        borderWidth: 3,
+        height: '265%',
+    },
+    textWp: {
+        fontSize: 20, marginTop: 60, marginLeft: 350, color: primary
+    },
+    textMopile: {
+        fontSize: 20, marginTop: 45, marginLeft: 220, color: primary
+    }
 });
