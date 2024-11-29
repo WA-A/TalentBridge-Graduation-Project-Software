@@ -2,6 +2,8 @@ import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import Appinit from './src/app.router.js';
+import session from 'express-session';
+import passport from './src/modules/Auth/GoogleAuth.js';
 
 dotenv.config();
 const app = express();
@@ -39,6 +41,15 @@ app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   next();
 });
+
+// Config Google Session
+app.use(session({
+  secret: process.env.SESSION_SECRET ,
+  resave: false,
+  saveUninitialized: true,
+}));
+
+app.use(passport.initialize());
 
 // تهيئة الرواتر
 Appinit(app, express);
