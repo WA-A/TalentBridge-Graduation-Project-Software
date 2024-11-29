@@ -6,6 +6,7 @@ import { AsyncHandler } from "../../../utls/CatchError.js";
 import { Validation } from "../../MiddleWare/Validation.js";
 import * as schema from './Auth.Validation.js';
 import { auth } from "../../MiddleWare/auth.js";
+import passport from "./GoogleAuth.js"
 
 
 
@@ -16,4 +17,10 @@ router.patch('/sendcode',AuthController.SendCode); //,Validation(schema.SendCode
 router.patch('/forgotpassword',AsyncHandler(AuthController.ForgotPassword)); //,Validation(schema.ForgetPasswordSchema)
 router.patch('/changepassword',AuthController.ChangePassword); 
 
+
+//  Google OAuth
+router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+router.get('/google/callback', passport.authenticate('google', { failureRedirect: '/' }), (req, res) => {
+  res.redirect('/profile'); // Go Profile after sign success
+});
 export default router
