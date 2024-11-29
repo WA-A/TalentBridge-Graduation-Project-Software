@@ -9,6 +9,9 @@ import WelcomeScreen from './screens/WelcomeScreen';
 import HomeScreen from './screens/HomeScreen';
 import ProfilePage from './screens/ProfilePage.js';
 import AddPostScreen from './screens/AddPostScreen';
+import ForgotPassword from './screens/ForgotPassword.js';
+import ResetPassword from './screens/ResetPassword.js';
+import EnterCode from './screens/EnterCode.js';
 import { NightModeProvider } from './screens/NightModeContext'; // Import the provider
 import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView, Animated } from 'react-native';
 import { useFonts } from 'expo-font';
@@ -72,6 +75,12 @@ export default function App() {
                     options={{ headerShown: false }}
                      />
 
+<Stack.Screen name="ForgotPassword" component={ForgotPassword}                     options={{ headerShown: false }}
+ />
+<Stack.Screen name="EnterCode" component={EnterCode}                     options={{ headerShown: false }}
+ />
+<Stack.Screen name="ResetPassword" component={ResetPassword}                     options={{ headerShown: false }}
+ />
 
                     </Stack.Navigator>
                 

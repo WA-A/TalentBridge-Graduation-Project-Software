@@ -68,23 +68,24 @@ export const SignIn = async (req, res) => {
 
 
 export const SendCode = async (req, res) => {
-    const { Email } = req.body;
+    const { Email } = req.body;  // تأكد من أن هذا الحقل يتوافق مع اسم الحقل الذي يرسله React Native
+    console.log("Sending code to email:", Email);  // التصحيح هنا
     const Code = customAlphabet('1234567890abcdef', 4)();
     const user = await UserModel.findOneAndUpdate({ Email }, { SendCode: Code }, { new: true });
 
     if (!user) {
-        return res.status(400).json({ message: " email not found" });
-    }
+        console.log("User not found with email:", Email); 
+        return res.status(400).json({ message: "Email not found" });
+    }    
 
-    await SendEmail(Email,`Reset Password`,`<h2> code is ${Code}</h2>`)
+    await SendEmail(Email, `Reset Password`, `<h2>Code is ${Code}</h2>`);
+    return res.status(200).json({ message: "Success", user });
+};
 
-    return res.status(200).json({ message: " success", user });
-
-}
 
 
 export const ForgotPassword = async (req, res) => {
-    const { Email, Password, code } = req.body;
+    const { Email,code } = req.body;
     const user = await UserModel.findOne({ Email });
     if (!user) {
         return res.status(404).json({ message: "user not found" });
@@ -95,14 +96,10 @@ export const ForgotPassword = async (req, res) => {
         return res.status(404).json({ message: "invalid code" });
     }
 
-    const password = bcrypt.hash(Password, parseInt(process.env.SALTROUND));
-
-    await user.save();
-
     return res.status(200).json({ message: " success" });
 
 
-}
+};
 
 
 export const ChangePassword = async (req, res) => {
