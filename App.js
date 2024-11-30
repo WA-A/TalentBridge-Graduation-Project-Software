@@ -17,7 +17,7 @@ import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView, Animated }
 import { useFonts } from 'expo-font';
 import ProjectsSeniorPage from './screens/ProjectsSeniorPage.js'
 import ProjectsJuniorPage from './screens/ProjectsJuniorPage.js'
-import AddProjects from './screens/AddProjects';
+import AddProjectsPage from './screens/AddProjectsPage';
 const Stack = createStackNavigator();
 
 export default function App() {
@@ -78,7 +78,7 @@ export default function App() {
                      />
                      <Stack.Screen 
                     name="AddProjects" 
-                    component={AddProjects}
+                    component={AddProjectsPage}
                     options={{ headerShown: false }}
                      />
                       <Stack.Screen 
