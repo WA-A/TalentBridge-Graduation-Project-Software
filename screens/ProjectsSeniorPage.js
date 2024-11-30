@@ -138,7 +138,7 @@ export default function  ProjectsSeniorPage ({ navigation, route }) {
                         }}
                     />
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => nav.navigate('AddProjectScreen')}>
+                <TouchableOpacity onPress={() => nav.navigate('AddProjects')}>
                     <Ionicons name="create-outline" size={28} color="#000" />
                 </TouchableOpacity>
                 <TouchableOpacity onPress={() => nav.navigate('HomeScreen')}>

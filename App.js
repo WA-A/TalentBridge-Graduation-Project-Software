@@ -13,6 +13,7 @@ import { NightModeProvider } from './screens/NightModeContext'; // Import the pr
 import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView, Animated } from 'react-native';
 import { useFonts } from 'expo-font';
 import ProjectsSeniorPage from './screens/ProjectsSeniorPage.js'
+import AddProjects from './screens/AddProjects';
 const Stack = createStackNavigator();
 
 export default function App() {
@@ -69,6 +70,11 @@ export default function App() {
                     <Stack.Screen 
                     name="ProjectsSeniorPage" 
                     component={ProjectsSeniorPage}
+                    options={{ headerShown: false }}
+                     />
+                     <Stack.Screen 
+                    name="AddProjects" 
+                    component={AddProjects}
                     options={{ headerShown: false }}
                      />
 
