@@ -63,7 +63,6 @@ export default function Signup({ navigation }) {
 
     const [successMassage, setSuccessMassage] = useState('');
     const [successMassage2, setSuccessMassage2] = useState('');
-    const [successMassage3, setSuccessMassage3] = useState('');
 
     //verify
 
@@ -789,10 +788,10 @@ const styles = StyleSheet.create({
         transform: 'translate(-50%, -50%)', // تحريك العنصر بشكل دقيق للمنتصف
         width: '30%',        // تحديد عرض العنصر
         height: '20%',       // تحديد ارتفاع العنصر
-        backgroundColor: 'black', // تعيين اللون الخلفي
+        backgroundColor: black, // تعيين اللون الخلفي
         borderRadius: 5,     // إضافة حدود مدورة
         zIndex: 9999,        // التأكد من أن العنصر فوق باقي العناصر
-        borderColor: 'fourhColor', // استبدال هذا باللون الذي تريده
+        borderColor: fourhColor, // استبدال هذا باللون الذي تريده
         borderWidth: 3,      // تحديد عرض الحدود
         display: 'flex',     // تمكين Flexbox داخل العنصر
         justifyContent: 'center', // محاذاة المحتوى عموديًا

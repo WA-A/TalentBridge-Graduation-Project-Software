@@ -37,7 +37,7 @@ import { Formik } from 'formik';
 import styled from 'styled-components/native';
 
 //color
-const { brand, darkLight, careysPink, firstColor, secColor, thirdColor, fourhColor, fifthColor, primary, tertiary } = Colors;
+const { brand, darkLight, careysPink,black,fourhColor,primary, tertiary } = Colors;
 
 const TypingEffect = () => {
     const [text, setText] = useState('');
@@ -79,6 +79,8 @@ const TypingEffect = () => {
     );
 };
 export default function Login({ navigation }) {
+    const [isMenuVisible, setMenuVisible] = useState(false); // For the menu visibility
+    const [errorMessage3, setErrorMessage3] = useState('');
     const lineWidth = useLineEffect(); // الحصول على القيمة المتحركة للعرض
     const [hidePassword, setHidePassword] = useState(true);
     const slideAnim = useRef(new Animated.Value(0)).current;
@@ -100,6 +102,7 @@ export default function Login({ navigation }) {
         inputRange: [0, 1],
         outputRange: [300, 0], // 300 تعني بداية الحركة من خارج الشاشة
     });
+    
     
       const handleLogin = async (values) => {
         try {
@@ -141,8 +144,8 @@ export default function Login({ navigation }) {
           }
     
         } catch (error) {
-          console.error('Login error:', error);
-          Alert.alert('Login Failed', error.message);
+            setMenuVisible(true);
+            setErrorMessage3( error.message);
         }
       };
     
@@ -188,13 +191,39 @@ export default function Login({ navigation }) {
                                 hidePassword={hidePassword}
                                 setHidePassword={setHidePassword}
                             />
+                            
+                            {isMenuVisible && (
+                                            <View style={[
+                                                Platform.OS === 'web' ? styles.webStyle : styles.mobileStyle
+                                            ]}>
+                                                <View>
+                                                    <Text style={{
+                                                        fontSize: 20,
+                                                        fontWeight: 'bold',
+                                                        color: primary
+                                                    }} >
+                                                        {errorMessage3 ? errorMessage3 : "You should Enter Valid Data to sign up!"}
+                                                    </Text>
+
+
+                                                    <View style={{
+                                                        flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between'
+
+                                                    }}>
+                                                        <TouchableOpacity style={{ color: careysPink }} onPress={() => setMenuVisible(false)}>
+                                                            <Text style={[Platform.OS === 'web' ? styles.textWp : styles.textMopile]}>Cancel</Text>
+                                                        </TouchableOpacity>
+                                                    </View>
+                                                </View>
+                                            </View>
+                                        )}
                             <StyledButton onPress={handleSubmit}>
                                 <ButtonText>Login</ButtonText>
                             </StyledButton>
 
 
 
-                            <TouchableOpacity >
+                            <TouchableOpacity  onPress={() => navigation.navigate('ForgotPassword')}>
                                 <Text style={{ color: brand, fontWeight: 'bold', textAlign: 'center', marginBottom: 20, marginTop: 20 }}>
                                     Forgot Password?
                                 </Text>
@@ -230,7 +259,7 @@ export default function Login({ navigation }) {
                             </View>
 
                             <View>
-                                <TouchableOpacity onPress={() => navigation.navigate('HomeScreen')}>
+                                <TouchableOpacity onPress={() => navigation.navigate('ResetPassword')}>
                                     <Text style={{ color: darkLight, margin: 20 }}>Home after login</Text>
                                 </TouchableOpacity>
                             </View>
@@ -289,4 +318,40 @@ const styles = {
         alignItems: 'center', // محاذاة الأيقونة في الوسط
         justifyContent: 'center', // محاذاة الأيقونة في الوسط
     },
+    webStyle: {
+        position: 'fixed',   // العنصر سيبقى مثبتًا في مكانه بالنسبة للشاشة
+        top: '50%',  // على سبيل المثال
+        left: '50%',         // تحديد العنصر ليكون في منتصف الشاشة أفقيًا
+        transform: 'translate(-50%, -50%)', // تحريك العنصر بشكل دقيق للمنتصف
+        width: '30%',        // تحديد عرض العنصر
+        height: '20%',       // تحديد ارتفاع العنصر
+        backgroundColor: black, // تعيين اللون الخلفي
+        borderRadius: 5,     // إضافة حدود مدورة
+        zIndex: 9999,        // التأكد من أن العنصر فوق باقي العناصر
+        borderColor: fourhColor, // استبدال هذا باللون الذي تريده
+        borderWidth: 3,      // تحديد عرض الحدود
+        display: 'flex',     // تمكين Flexbox داخل العنصر
+        justifyContent: 'center', // محاذاة المحتوى عموديًا
+        alignItems: 'center' // محاذاة المحتوى أفقيًا
+    }
+    ,
+    mobileStyle: {
+        position: 'absolute', // إذا كان الجوال، سيكون موضعه مطلقًا
+        bottom: 200,
+        width: '100%',
+        padding: 10,
+        backgroundColor: black,
+        borderRadius: 5,
+        zIndex: 20,
+        borderColor: fourhColor, // استبدل 'yourColor' باللون الذي تريده
+        borderWidth: 3,
+        height: '32%',
+    },
+    textWp: {
+        fontSize: 20, marginTop: 60, marginLeft: 350, color: primary
+    },
+    textMopile: {
+        fontSize: 20, marginTop: 50, marginLeft: 220, color: primary
+        
+    }
 };
