@@ -32,6 +32,9 @@ const ProjectsSchema = new Schema({
     type: Number,
     required: true, 
   },
+  PositionRole:
+    [{ type: String }]
+  ,
   created_at: {
     type: Date,
     default: Date.now,
