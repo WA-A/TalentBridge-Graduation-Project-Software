@@ -16,6 +16,7 @@ import { NightModeProvider } from './screens/NightModeContext'; // Import the pr
 import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView, Animated } from 'react-native';
 import { useFonts } from 'expo-font';
 import ProjectsSeniorPage from './screens/ProjectsSeniorPage.js'
+import ProjectsJuniorPage from './screens/ProjectsJuniorPage.js'
 import AddProjects from './screens/AddProjects';
 const Stack = createStackNavigator();
 
@@ -80,16 +81,27 @@ export default function App() {
                     component={AddProjects}
                     options={{ headerShown: false }}
                      />
-
-<Stack.Screen name="ForgotPassword" component={ForgotPassword}                     
+                      <Stack.Screen 
+                    name="ProjectsJuniorPage" 
+                    component={ProjectsJuniorPage}
+                    options={{ headerShown: false }}
+                     />
+                     <Stack.Screen name="ForgotPassword" 
+                      component={ForgotPassword}                     
+                      options={{ headerShown: false }}
+                       />
+                        
+<Stack.Screen name="EnterCode"
+ component={EnterCode}                     
 options={{ headerShown: false }}
  />
-<Stack.Screen name="EnterCode" component={EnterCode}                     
-options={{ headerShown: false }}
- />
-<Stack.Screen name="ResetPassword" component={ResetPassword}                    
+<Stack.Screen name="ResetPassword" 
+component={ResetPassword}                    
  options={{ headerShown: false }}
  />
+
+
+
 
                     </Stack.Navigator>
                 
