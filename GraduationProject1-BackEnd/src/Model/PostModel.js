@@ -1,10 +1,6 @@
 import { Schema, Types, model } from 'mongoose';
 
 const PostSchema = new Schema({
-    Title: {
-        type: String,
-        required: true,
-    },
     Body: {
         type: String,
         required: true,

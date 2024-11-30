@@ -5,8 +5,8 @@ import PostModel from './../../Model/PostModel.js';
 // Create Own Post
 export const CreatePost = async (req, res, next) => {
     try {
-        const { Title, Body } = req.body;
-        if (!Title || !Body) {
+        const { Body } = req.body;
+        if ( !Body) {
             return next(new Error("Title and Body are required."));
         }
 
@@ -28,7 +28,6 @@ export const CreatePost = async (req, res, next) => {
         const ProfileImage = req.user.profileImage;
 
         const Post = await PostModel.create({
-            Title,
             Body,
             Images: images,
             Videos: videos,
@@ -53,7 +52,7 @@ export const CreatePost = async (req, res, next) => {
 export const UpdatePost = async (req, res, next) => {
     try {
         const { postId } = req.params; 
-        const { Title, Body } = req.body;
+        const {  Body } = req.body;
         const UserId = req.user._id;
 
         // Find the existing post by ID
@@ -68,7 +67,6 @@ export const UpdatePost = async (req, res, next) => {
         }
 
         // Update Title and Body if provided
-        if (Title) post.Title = Title;
         if (Body) post.Body = Body;
 
         // Handle images if provided
