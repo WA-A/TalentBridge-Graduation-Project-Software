@@ -69,17 +69,26 @@ export default function EnterCode({ navigation,route }) {
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
             <Text style={{ fontSize: 18, marginBottom: 20 }}>Enter the code that was sent to your email</Text>
            
-         <View> <StyledTextInput 
-           style={{
-                  width: 300
-                }}
-                placeholder="Code"
-                value={code}
-                onChangeText={(text) => setCode(text)}
-            />
-              <LeftIcon>
-                <FontAwesome name="envelope-o" size={25} color={Colors.fifthColor} />
-            </LeftIcon></View>  
+            <View style={{ position: 'relative', width: 300 }}>
+  <StyledTextInput 
+    style={{
+      paddingLeft: 50, // توفير مساحة للأيقونة داخل الحقل
+    }}
+    placeholder="Code"
+    value={code}
+    onChangeText={(text) => setCode(text)}
+  />
+  <LeftIcon
+    style={{
+      position: 'absolute',
+      left: 10, // المسافة من اليسار
+      top: '35%', // لضمان أن تكون الأيقونة في المنتصف
+      transform: [{ translateY: -12.5 }], // لضبط المحاذاة العمودية
+    }}
+  >
+    <FontAwesome name="envelope-o" size={25} color={Colors.fifthColor} />
+  </LeftIcon>
+</View>
             <TouchableOpacity
                 style={{
                     backgroundColor: brand,

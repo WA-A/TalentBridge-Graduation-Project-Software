@@ -399,16 +399,6 @@ export default function Signup({ navigation }) {
 
                                     onChange={e => handlePassword(e)}
                                     value={values.Password}
-                                    rightIcon22={
-                                        password.length < 1 ? null : passwordVerfy ? (
-                                            <RightIcon2 style={{ top: 6, right: 40 }} >
-                                                <Feather name="check-circle" color="green" size={20} />
-                                            </RightIcon2>
-                                        ) : (
-                                            <RightIcon2 style={{ top: 6, right: 40 }} >
-                                                <Feather name="x-circle" color="red" size={20} />
-                                            </RightIcon2>
-                                        )}
 
                                 />
                                 {errorMessage ? (
@@ -431,16 +421,7 @@ export default function Signup({ navigation }) {
                                     setHideConfirmPassword={setHideConfirmPassword}
                                     onChange={e => handleCinfirmPassword(e)}
                                     value={values.ConfirmPassword}
-                                    rightIcon22={
-                                        ConfirmPassword.length < 1 ? null : confirmpasswordVerfy ? (
-                                            <RightIcon2 style={{ top: 6, right: 40 }} >
-                                                <Feather name="check-circle" color="green" size={20} />
-                                            </RightIcon2>
-                                        ) : (
-                                            <RightIcon2 style={{ top: 6, right: 40 }} >
-                                                <Feather name="x-circle" color="red" size={20} />
-                                            </RightIcon2>
-                                        )}
+
                                 />
                                 {errorMessage2 ? (
                                     <Text style={styles.error}>{errorMessage2}</Text>
@@ -649,38 +630,35 @@ export default function Signup({ navigation }) {
                                                 </Picker>
                                             )}
                                         </View>
-
-
-
-                                        {isMenuVisible && (
-                                            <View style={[
-                                                Platform.OS === 'web' ? styles.webStyle : styles.mobileStyle
-                                            ]}>
-                                                <View>
-                                                    <Text style={{
-                                                        fontSize: 20,
-                                                        fontWeight: 'bold',
-                                                        color: primary
-                                                    }} >
-                                                        {errorMessage3 ? errorMessage3 : "You should Enter Valid Data to sign up!"}
-                                                    </Text>
-
-
-                                                    <View style={{
-                                                        flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between'
-
-                                                    }}>
-                                                        <TouchableOpacity style={{ color: careysPink }} onPress={() => setMenuVisible(false)}>
-                                                            <Text style={[Platform.OS === 'web' ? styles.textWp : styles.textMopile]}>Cancel</Text>
-                                                        </TouchableOpacity>
-                                                    </View>
-                                                </View>
-                                            </View>
-                                        )}
-
                                     </View>
                                 </View>
 
+
+                                {isMenuVisible && (
+                                    <View style={[
+                                        Platform.OS === 'web' ? styles.webStyle : styles.mobileStyle
+                                    ]}>
+                                        <View>
+                                            <Text style={{
+                                                fontSize: 20,
+                                                fontWeight: 'bold',
+                                                color: primary
+                                            }} >
+                                                {errorMessage3 ? errorMessage3 : "You should Enter Valid Data to sign up!"}
+                                            </Text>
+
+
+                                            <View style={{
+                                                flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between'
+
+                                            }}>
+                                                <TouchableOpacity style={{ color: careysPink }} onPress={() => setMenuVisible(false)}>
+                                                    <Text style={[Platform.OS === 'web' ? styles.textWp : styles.textMopile]}>Cancel</Text>
+                                                </TouchableOpacity>
+                                            </View>
+                                        </View>
+                                    </View>
+                                )}
 
                                 <StyledButton
                                     onPress={() => {
@@ -737,14 +715,27 @@ const MyTextInput = ({ icon, rightIcon22, isPassword, hidePassword, setHidePassw
             {rightIcon22}
 
             {isPassword && (
-                <RightIcon style={{ top: 6 }} onPress={() => setHidePassword(!hidePassword)}>
-                    <Ionicons name={hidePassword ? "eye-off" : "eye"} size={25} color={darkLight} />
+                <RightIcon onPress={() => {
+                    console.log("Password visibility toggled:", !hidePassword); // Debugging line
+                    setHidePassword(!hidePassword);
+                }}>
+                    {Platform.OS === 'web' ? (''
+                    ) : (
+                        <Ionicons name={hidePassword ? "eye-off" : "eye"} size={25} color="black" />
+                    )}
                 </RightIcon>
             )}
             {isConfirmPassword && (
-                <RightIcon style={{ top: 6 }} onPress={() => setHideConfirmPassword(!hideConfirmPassword)}>
-                    <Ionicons name={hideConfirmPassword ? "eye-off" : "eye"} size={25} color={darkLight} />
+                <RightIcon onPress={() => {
+                    console.log("Password visibility toggled:", !hideConfirmPassword); // Debugging line
+                    setHideConfirmPassword(!hideConfirmPassword);
+                }}>
+                    {Platform.OS === 'web' ? (''
+                    ) : (
+                        <Ionicons name={hideConfirmPassword ? "eye-off" : "eye"} size={25} color={darkLight} />
+                    )}
                 </RightIcon>
+
             )}
 
         </View>
@@ -800,7 +791,6 @@ const styles = StyleSheet.create({
     ,
     mobileStyle: {
         position: 'absolute', // إذا كان الجوال، سيكون موضعه مطلقًا
-        bottom: 200,
         width: '100%',
         padding: 10,
         backgroundColor: black,
@@ -808,13 +798,14 @@ const styles = StyleSheet.create({
         zIndex: 20,
         borderColor: fourhColor, // استبدل 'yourColor' باللون الذي تريده
         borderWidth: 3,
-        height: '265%',
+        height: '15%',
+        marginTop: 450,
     },
     textWp: {
         fontSize: 20, marginTop: 60, marginLeft: 350, color: primary
     },
     textMopile: {
         fontSize: 20, marginTop: 45, marginLeft: 220, color: primary
-        
+
     }
 });

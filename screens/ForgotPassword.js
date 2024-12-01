@@ -1,9 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Text, View, TouchableOpacity, Animated, Alert,Platform,TextInput} from 'react-native';
-import { StatusBar } from 'expo-status-bar';
-import { AnimatedCircles, useLineEffect } from './../compnent/Animation'
 import axios from 'axios';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
     StyledContainer,
     InnerContainer,
@@ -29,7 +26,7 @@ import {
 import {
     FontAwesome
 } from '@expo/vector-icons';
-const { brand, darkLight, careysPink,black,fourhColor,primary, tertiary } = Colors;
+const { brand} = Colors;
 
 export default function ForgotPassword({ navigation }) {
     const [email, setEmail] = useState('');
@@ -67,19 +64,28 @@ export default function ForgotPassword({ navigation }) {
 
     return (
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-            <Text style={{ fontSize: 18, marginBottom: 20 }}>Enter you'r email address: </Text>
-           
-         <View> <StyledTextInput 
-           style={{
-                  width: 300
-                }}
-                placeholder="Email"
-                value={email}
-                onChangeText={(text) => setEmail(text)}
-            />
-              <LeftIcon>
-                <FontAwesome name="envelope-o" size={25} color={Colors.fifthColor} />
-            </LeftIcon></View>  
+                <Text style={{ fontSize: 18, marginBottom: 20 }}>Enter you'r email address: </Text>
+                <View style={{ position: 'relative', width: 300 }}>
+  <StyledTextInput 
+    style={{
+      paddingLeft: 50, // توفير مساحة للأيقونة داخل الحقل
+    }}
+    placeholder="Email"
+    value={email}
+    onChangeText={(text) => setEmail(text)}
+  />
+  <LeftIcon
+    style={{
+      position: 'absolute',
+      left: 10, // المسافة من اليسار
+      top: '35%', // لضمان أن تكون الأيقونة في المنتصف
+      transform: [{ translateY: -12.5 }], // لضبط المحاذاة العمودية
+    }}
+  >
+    <FontAwesome name="envelope-o" size={25} color={Colors.fifthColor} />
+  </LeftIcon>
+</View>
+
             <TouchableOpacity
                 style={{
                     backgroundColor: brand,

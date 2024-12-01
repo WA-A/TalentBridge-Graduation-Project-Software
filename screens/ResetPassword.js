@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Text, View, TouchableOpacity, Animated, Alert,Platform} from 'react-native';
+import { View, Text, TouchableOpacity, Platform, ScrollView, StyleSheet,Alert } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { AnimatedCircles, useLineEffect } from './../compnent/Animation'
 import axios from 'axios';
@@ -35,6 +35,7 @@ import styled from 'styled-components/native';
 const { brand, darkLight, careysPink,black,fourhColor,primary, tertiary,fifthColor } = Colors;
 
 export default function ResetPassword({ route, navigation }) {
+
     const [password, setpassword] = useState('');
     const [ConfirmPassword, setConfirmPassword] = useState('');
     const [hidePassword, setHidePassword] = useState(true);
@@ -46,6 +47,7 @@ export default function ResetPassword({ route, navigation }) {
     const [errorMessage, setErrorMessage] = useState('');
     const [hideConfirmPassword, setHideConfirmPassword] = useState(true);
     const [isMenuVisible, setMenuVisible] = useState(false); // For the menu visibility
+    const [errorMessage3, setErrorMessage3] = useState('');
 
     function handleCinfirmPassword(e) {
         const ConfirmPassVar = e.nativeEvent.text;
@@ -121,12 +123,13 @@ export default function ResetPassword({ route, navigation }) {
     return (
         <StyledContainer>
         <InnerContainer>
-                <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 5 }}>Reset Password</Text>
-                <Formik                     initialValues={{Password: '', ConfirmPassword: ''}}
+                <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 40,marginTop:100 }}>Reset Password</Text>
+                <Formik initialValues={{Password: '', ConfirmPassword: ''}}
 
                  onSubmit={handleResetPassword}>
                     {({ handleChange, handleBlur, handleSubmit, values }) => (
                         <StyledFormArea>
+
                         <Text style={labelStyle}>Password</Text>
                                 <MyTextInput
                                     icon="lock"
@@ -138,21 +141,15 @@ export default function ResetPassword({ route, navigation }) {
                                     isPassword={true}
                                     hidePassword={hidePassword}
                                     setHidePassword={setHidePassword}
-
                                     onChange={e => handlePassword(e)}
                                     value={values.Password}
-                                    rightIcon22={
-                                        password.length < 1 ? null : passwordVerfy ? (
-                                            <RightIcon2 style={{ top: 6, right: 40 }} >
-                                                <Feather name="check-circle" color="green" size={20} />
-                                            </RightIcon2>
-                                        ) : (
-                                            <RightIcon2 style={{ top: 6, right: 40 }} >
-                                                <Feather name="x-circle" color="red" size={20} />
-                                            </RightIcon2>
-                                        )}
-
-                                />
+                                   
+                                        />
+                                {errorMessage ? (
+                                    <Text style={styles.error}>{errorMessage}</Text>
+                                ) : (
+                                    <Text style={styles.success}>{successMassage}</Text>
+                                )}
                             
                                 {/* إدخال تأكيد كلمة المرور */}
                                 <Text style={labelStyle}>Confirm Password</Text>
@@ -168,25 +165,20 @@ export default function ResetPassword({ route, navigation }) {
                                     setHideConfirmPassword={setHideConfirmPassword}
                                     onChange={e => handleCinfirmPassword(e)}
                                     value={values.ConfirmPassword}
-                                    rightIcon22={
-                                        ConfirmPassword.length < 1 ? null : confirmpasswordVerfy ? (
-                                            <RightIcon2 style={{ top: 6, right: 40 }} >
-                                                <Feather name="check-circle" color="green" size={20} />
-                                            </RightIcon2>
-                                        ) : (
-                                            <RightIcon2 style={{ top: 6, right: 40 }} >
-                                                <Feather name="x-circle" color="red" size={20} />
-                                            </RightIcon2>
-                                        )}
+
                                 />
-                               
+                                 {errorMessage2 ? (
+                                    <Text style={styles.error}>{errorMessage2}</Text>
+                                ) : (
+                                    <Text style={styles.success}>{successMassage2}</Text>
+                                )}
                             {isMenuVisible && (
                                             <View style={[
                                                 Platform.OS === 'web' ? styles.webStyle : styles.mobileStyle
                                             ]}>
                                                 <View>
                                                     <Text style={{
-                                                        fontSize: 20,
+                                                        fontSize: 17,
                                                         fontWeight: 'bold',
                                                         color: primary
                                                     }} >
@@ -205,17 +197,49 @@ export default function ResetPassword({ route, navigation }) {
                                                 </View>
                                             </View>
                                         )}
-                            <StyledButton onPress={handleSubmit}>
-                                <ButtonText>Reset Password</ButtonText>
-                            </StyledButton>
-                        )   </StyledFormArea>
 
-                )} 
-                 </Formik>
-            </InnerContainer>
+                                        <StyledButton
+  onPress={() => {
+    // التحقق من الحقول المطلوبة
+    if (!values.Password || !values.ConfirmPassword) {
+      setErrorMessage3('Both fields are required!');
+      setMenuVisible(true);
+      return;
+    }
+
+    // التحقق من صحة المدخلات
+    if (!passwordVerfy || !confirmpasswordVerfy) {
+      setErrorMessage3('Passwords do not match or are invalid!');
+      setMenuVisible(true);
+      return;
+    }
+
+    // إذا كان كل شيء صحيحًا
+    setErrorMessage3(''); // مسح رسالة الخطأ
+    setMenuVisible(false);
+
+    // استدعاء handleSubmit
+    handleSubmit();
+  }}
+>
+  <ButtonText>Reset Password</ButtonText>
+</StyledButton>
+                        
+
+                        </StyledFormArea>
+                    )} 
+                </Formik>
+                </InnerContainer>
         </StyledContainer>
-    )
-};
+ );
+
+}
+
+
+
+
+
+
 const MyTextInput = ({ icon, rightIcon22, isPassword, hidePassword, setHidePassword, isConfirmPassword, hideConfirmPassword, setHideConfirmPassword, ...props }) => {
     return (
         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 20, justifyContent: 'center' }}>
@@ -227,22 +251,37 @@ const MyTextInput = ({ icon, rightIcon22, isPassword, hidePassword, setHidePassw
             {rightIcon22}
 
             {isPassword && (
-                <RightIcon style={{ top: 6 }} onPress={() => setHidePassword(!hidePassword)}>
-                    <Ionicons name={hidePassword ? "eye-off" : "eye"} size={25} color={darkLight} />
+                <RightIcon onPress={() => {
+                    console.log("Password visibility toggled:", !hidePassword); // Debugging line
+                    setHidePassword(!hidePassword);
+                }}>
+                    {Platform.OS === 'web' ? (''
+                    ) : (
+                        <Ionicons name={hidePassword ? "eye-off" : "eye"} size={25} color="black" />
+                    )}
                 </RightIcon>
             )}
             {isConfirmPassword && (
-                <RightIcon style={{ top: 6 }} onPress={() => setHideConfirmPassword(!hideConfirmPassword)}>
-                    <Ionicons name={hideConfirmPassword ? "eye-off" : "eye"} size={25} color={darkLight} />
+                <RightIcon onPress={() => {
+                    console.log("Password visibility toggled:", !hideConfirmPassword); // Debugging line
+                    setHideConfirmPassword(!hideConfirmPassword);
+                }}>
+                    {Platform.OS === 'web' ? (''
+                    ) : (
+                        <Ionicons name={hideConfirmPassword ? "eye-off" : "eye"} size={25} color={darkLight} />
+                    )}
                 </RightIcon>
             )}
 
         </View>
-    );
+    )
+};
 
 
 
-const styles = {
+
+
+const styles = StyleSheet.create({
     iconContainer: {
         width: 150,
         height: 50,
@@ -290,7 +329,6 @@ const styles = {
     ,
     mobileStyle: {
         position: 'absolute', // إذا كان الجوال، سيكون موضعه مطلقًا
-        bottom: 200,
         width: '100%',
         padding: 10,
         backgroundColor: black,
@@ -298,13 +336,22 @@ const styles = {
         zIndex: 20,
         borderColor: fourhColor, // استبدل 'yourColor' باللون الذي تريده
         borderWidth: 3,
-        height: '32%',
+        height: '50%',
+        marginTop:200, 
     },
     textWp: {
         fontSize: 20, marginTop: 60, marginLeft: 350, color: primary
     },
     textMopile: {
         fontSize: 20, marginTop: 50, marginLeft: 220, color: primary
+    },error: {
+        color: 'red',
+        fontSize: 12,
+        marginLeft: 20, marginTop: -15, marginBottom: 10, fontWeight: 'bold'
+    },
+    success: {
+        color: 'green',
+        fontSize: 12, marginLeft: 20, marginTop: -15, marginBottom: 10, fontWeight: 'bold'
+    },
         
-    }}
-};
+    });

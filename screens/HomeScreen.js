@@ -1,5 +1,5 @@
-import React, { useState, useContext } from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView, Animated, Button, Alert, Platform,TouchableWithoutFeedback,Keyboard } from 'react-native';
+import React, { useState, useContext,useRef,useEffect } from 'react';
+import { View, Text, Image,TextInput,TouchableOpacity, StyleSheet, ScrollView, Animated, Button, Alert, Platform,TouchableWithoutFeedback,Keyboard, FlatList,KeyboardAvoidingView,flatListRef} from 'react-native';
 import { Ionicons, Feather, FontAwesome5, EvilIcons, FontAwesome,Entypo
 } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
@@ -30,6 +30,49 @@ const { secondary, primary, careysPink, darkLight, fourhColor, tertiary, fifthCo
 const { width } = Dimensions.get('window');
 
 export default function HomeScreen({ navigation, route }) {
+
+
+  const [isSidebarVisible, setIsSidebarVisible] = useState(false);
+  const [selectedPerson, setSelectedPerson] = useState(null);  // لتحديد الشخص المختار
+  const [newMessage, setNewMessage] = useState("");
+  const [messages, setMessages] = useState([]);
+
+  const toggleSidebar = () => {
+    setIsSidebarVisible(!isSidebarVisible); // تبديل حالة الشريط الجانبي
+  };
+
+  const sendMessage = () => {
+    if (newMessage.trim()) {
+      setMessages([...messages, { id: Math.random().toString(), text: newMessage, sender: 'user' }]);
+      setNewMessage('');
+    }
+  };
+
+  const peopleList = [
+    { id: '1', name: 'Person 1' },
+    { id: '2', name: 'Person 2' },
+    { id: '3', name: 'Person 3' },
+    { id: '4', name: 'Person 4' },
+    { id: '5', name: 'Person 5' },
+    { id: '6', name: 'Person 6' },
+    { id: '7', name: 'Person 7' },
+    { id: '8', name: 'Person 8' },
+    { id: '9', name: 'Person 9' },
+    { id: '10', name: 'Person 10' },
+    { id: '11', name: 'Person 11' },
+    { id: '12', name: 'Person 12' },
+    { id: '13', name: 'Person 13' },
+    { id: '14', name: 'Person 14' },
+    { id: '15', name: 'Person 15' },
+
+  ];
+
+  const postsList = [
+    { id: '1', title: 'Post 1', content: 'This is the content of Post 1.' },
+    { id: '2', title: 'Post 2', content: 'This is the content of Post 2.' },
+    { id: '3', title: 'Post 3', content: 'This is the content of Post 3.' },
+  ];
+
     const { userField } = route.params || {};
     const nav = useNavigation();
     const { isNightMode, toggleNightMode } = useContext(NightModeContext);
@@ -79,6 +122,10 @@ const handleLogout = async () => {
 };
 
 
+
+
+
+
     const handlePressOutside = () => {
         if (isMenuVisible) {
             setMenuVisible(false); // Close the menu when touched outside
@@ -105,7 +152,7 @@ const handleLogout = async () => {
                     Talent Bridge
                 </Text>
 
-                <TouchableOpacity onPress={() => nav.navigate('Chat')}>
+                <TouchableOpacity onPress={toggleSidebar}>
                     <EvilIcons name="sc-telegram" size={39} color={careysPink} style={{ position: 'absolute', top: -20, left: 10 }} />
                     <EvilIcons name="sc-telegram" size={37} color={darkLight} style={{ position: 'absolute', top: -20, left: 10 }} />
                 </TouchableOpacity>
@@ -137,123 +184,193 @@ const handleLogout = async () => {
                 </TouchableOpacity>
             </View>
 
+  {/* الشريط الجانبي */}
+  <View style={{ flexDirection: 'row', flex: 1 }}>
+  {/* الشريط الجانبي */}
+  {Platform.OS === 'web' && isSidebarVisible && (
+    <View style={{
+      position: 'fixed', // تثبيت القائمة
+      width: '30%',  // تخصيص العرض بالنسبة للشريط الجانبي
+      height: '100%',
+      backgroundColor: isNightMode ? '#333' : '#fff',
+      padding: 10,
+      zIndex: 5,
+      borderRightWidth: 1,
+      borderColor: '#ccc',
+      overflow: 'auto',  // لمنع المحتوى من الخروج خارج الشريط الجانبي
+      paddingVertical: 10,
+      marginTop: Platform.OS === 'web' ? 80 : 0,
+      marginBottom: Platform.OS === 'web' ? 80 : 0,
+      overflowY: 'scroll', // إضافة شريط التمرير العمودي داخل القائمة
+     transform: `translateY(0)`, // تحريك القائمة من الأعلى
+      transition: 'transform 0.5s ease', // إضافة انتقال ناعم لتحريك القائمة
+    }}>
+      <Text style={{ color: isNightMode ? '#fff' : '#000', fontSize: 18, marginBottom: 10 }}>الأشخاص</Text>
+      <FlatList
+        data={peopleList}
+        renderItem={({ item }) => (
+          <TouchableOpacity onPress={() => setSelectedPerson(item)} style={{
+            padding: 10,
+            borderBottomWidth: 1,
+            borderBottomColor: '#ccc',
+          }}>
+            <Text style={{ color: isNightMode ? '#fff' : '#000' }}>{item.name}</Text>
+          </TouchableOpacity>
+        )}
+        keyExtractor={(item) => item.id}
+      />
+    </View>
+  )}
 
-
-            {/* Main Content */}
-            <Animated.ScrollView
+  {/* المحتوى الرئيسي (المنشورات) */}
+  <Animated.ScrollView
+    style={{
+      flex: 1,
+      backgroundColor: isNightMode ? "#000" : primary,
+      marginLeft: Platform.OS === 'web' && isSidebarVisible ? '0%' : 0,  // تحديد المسافة في حالة وجود الشريط الجانبي
+    }}
+    contentContainerStyle={{
+      flexGrow: 1,
+      justifyContent: 'flex-start',
+      alignItems: 'center',
+      paddingVertical: 10,
+      marginTop: Platform.OS === 'web' ? 50 : 0,
+      marginBottom: Platform.OS === 'web' ? 50 : 0,
+    }}
+    onScroll={Animated.event(
+      [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+      { useNativeDriver: false }
+    )}
+    scrollEventThrottle={16}
+  >
+    {Array(5)
+      .fill()
+      .map((_, index) => (
+        <View
+          key={index}
+          className={Platform.OS === 'web' ? 'container-card' : ''}  // استخدام className للويب فقط
+          style={Platform.OS === 'web' 
+      ? (isSidebarVisible ? { marginTop: 30, width: '50%',marginLeft: '35%' 
+      } : { marginTop: 30, width: '50%' }) 
+      : { width: '100%', alignItems: 'center', marginBottom: 10 }} 
+       // عرض المنشورات في الموبايل أو بدون الشريط الجانبي  // تعديل الحجم في الويب
+        >
+          <View
+            className={Platform.OS === 'web' ? 'card' : ''}  // استخدام className للويب فقط
+            style={Platform.OS === 'web' ? {
+              backgroundColor: secondary,
+              padding: 10,
+              borderRadius: 15,
+              width: '100%',
+              boxShadow: '0 4px 10px rgba(0,0,0,0.1)',  // إضافة تأثير الظل في الويب
+              backgroundColor: isNightMode ? "#454545" : secondary,
+            } : {
+              backgroundColor: isNightMode ? "#454545" : secondary,
+              width: '95%',
+              borderRadius: 10,
+              margin:10
+            }}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center', padding: 10 }}>
+              <Image
+                source={require('./../assets/img1.jpeg')}
                 style={{
-                    flex: 1,
-                    backgroundColor: isNightMode ? "#000" : primary,
+                  width: Platform.OS === 'web' ? 80 : 40,  // تعديل حجم الصورة للويب
+                  height: Platform.OS === 'web' ? 80 : 40, // تعديل حجم الصورة للويب
+                  borderRadius: Platform.OS === 'web' ? 40 : 25, // تعديل شكل الصورة
+                  marginRight: 10,
+                  marginTop: 10,
+                  objectFit: 'cover', // التأكد من ملاءمة الصورة
+                  borderWidth :1,
+                  bottom:3
                 }}
-                contentContainerStyle={{
-                    flexGrow: 1,
-                    justifyContent: 'flex-start',
-                    alignItems: 'center',
-                    paddingVertical: 10,
-                    marginTop: Platform.OS === 'web' ? 50 : 0,
-                    marginBottom: Platform.OS === 'web' ? 50 : 0,
-                }}
-                onScroll={Animated.event(
-                    [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-                    { useNativeDriver: false }
+              />
+              <View>
+                <Text style={{ color: isNightMode ? primary : '#000', fontWeight: 'bold', fontSize: 16 }}>
+                  Sama Abosair
+                </Text>
+                <Text style={{ color: darkLight, fontSize: 12 }}>
+                  4 hours ago
+                </Text>
+              </View>
+            </View>
+            <Text style={{ color: isNightMode ? primary : '#000', padding: 15 }}>
+              Hello This is a test post
+            </Text>
+            <Image
+              source={require('./../assets/img1.jpeg')}
+              style={{
+                width: Platform.OS === 'web' ? '90%' : '100%',
+                height: Platform.OS === 'web' ? 500 : 320,
+                objectFit: 'fill',  // التأكد من تغطية الصورة بشكل مناسب
+                alignSelf: 'center', // توسيط الصورة بدون التأثير على العناصر الأخرى
+              }}
+            />
+            <View style={{ flexDirection: 'row', justifyContent: 'space-around', paddingTop: 7 }}>
+              <Interaction>
+                <Ionicons
+                  style={{
+                    color: isNightMode ? secondary : 'rgba(0, 0, 0, 0.2)',
+                  }}
+                  name="heart-circle"
+                  size={25}
+                />
+                <InteractionText style={{ color: isNightMode ? primary : '#000' }}>
+                  Like
+                </InteractionText>
+              </Interaction>
+              <Interaction>
+                <Ionicons
+                  style={{
+                    color: isNightMode ? secondary : 'rgba(0, 0, 0, 0.2)',
+                  }}
+                  name="chatbubbles"
+                  size={23}
+                />
+                <InteractionText style={{ color: isNightMode ? primary : '#000' }}> 
+                  Comment
+                </InteractionText>
+              </Interaction>
+            </View>
+          </View>
+        </View>
+      ))}
+
+  </Animated.ScrollView>
+</View>
+
+    {/* إخفاء جزئية الرسائل في الموبايل */}
+    {/*Platform.OS == 'web' && (
+        <KeyboardAvoidingView
+            style={styles.container}
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
+            <FlatList
+                ref={flatListRef}
+                data={messages}
+                renderItem={({ item }) => (
+                    <View style={item.sender === 'user' ? styles.userMessage : styles.otherMessage}>
+                        <Text style={styles.messageText}>{item.text}</Text>
+                    </View>
                 )}
-                scrollEventThrottle={16}
-            >
-                {Array(5)
-                    .fill()
-                    .map((_, index) => (
-                        <View
-                            key={index}
-                            className={Platform.OS === 'web' ? 'container-card' : ''}  // استخدام className للويب فقط
-                            style={Platform.OS === 'web' ? {
-                                marginTop: 30, width: '50%'
-                            } : { width: '100%', alignItems: 'center', marginBottom: 10 }}  // تعديل الحجم في الويب
-                        >
-                            <View
-                                className={Platform.OS === 'web' ? 'card' : ''}  // استخدام className للويب فقط
-                                style={Platform.OS === 'web' ? {
-                                    backgroundColor: secondary,
-                                    padding: 10,  // زيادة الحجم في الويب
-                                    borderRadius: 15,
-                                    width: '100%',
-                                    boxShadow: '0 4px 10px rgba(0,0,0,0.1)' // إضافة تأثير الظل في الويب
-                                    , backgroundColor: isNightMode ? "#454545" : secondary,
+                keyExtractor={(item) => item.id}
+                inverted // تجعل الرسائل الأحدث في الأسفل
+                style={styles.messagesList}
+            />
 
-                                } : {
-                                    backgroundColor: isNightMode ? "#454545" : secondary,
-                                    width: '95%',
-                                    borderRadius: 10,
-                                    margin:10
-                                }}
-                            >
-                                <View style={{ flexDirection: 'row', alignItems: 'center', padding: 10,   }}>
-                                    <Image
-                                        source={require('./../assets/img1.jpeg')}
-                                        style={{
-                                            width: Platform.OS === 'web' ? 80 : 40,  // تعديل حجم الصورة للويب
-                                            height: Platform.OS === 'web' ? 80 : 40, // تعديل حجم الصورة للويب
-                                            borderRadius: Platform.OS === 'web' ? 40 : 25, // تعديل شكل الصورة
-                                            marginRight: 10,
-                                            marginTop: 10,
-                                            objectFit: 'cover', // التأكد من ملاءمة الصورة
-                                            borderWidth :1,
-                                            bottom:3
-                                        }}
-                                    />
-                                    <View>
-                                        <Text style={{ color: isNightMode ? primary : '#000', fontWeight: 'bold', fontSize: 16 }}>
-                                            Sama Abosair
-                                        </Text>
-                                        <Text style={{ color: darkLight, fontSize: 12 ,}}>
-                                            4 hours ago
-                                        </Text>
-                                    </View>
-                                </View>
-                                <Text style={{ color: isNightMode ? primary : '#000', padding: 15 }}>
-                                    Hello This is a test post
-                                </Text>
-                                <Image
-                                    source={require('./../assets/img1.jpeg')}
-                                    style={{
-                                        width: Platform.OS === 'web' ? '90%' : '100%',
-                                        height: Platform.OS === 'web' ? 500 : 320,
-                                        objectFit: 'fill',  // التأكد من تغطية الصورة بشكل مناسب
-                                        alignSelf: 'center', // توسيط الصورة بدون التأثير على العناصر الأخرى
-
-                                    }}
-                                />
-                                <View style={{ flexDirection: 'row', justifyContent: 'space-around', paddingTop: 7 }}>
-
-                                    <Interaction>
-                                  <Ionicons
-                                            style={{
-                                                color: isNightMode ? secondary : 'rgba(0, 0, 0, 0.2)',
-                                            }}
-                                            name="heart-circle"
-                                            size={25}
-                                        />
-                                        <InteractionText style={{ color: isNightMode ? primary : '#000' }}>
-                                            Like
-                                        </InteractionText>
-                                        </Interaction>
-                                        <Interaction>
-                                        <Ionicons
-                                            style={{
-                                                color: isNightMode ? secondary : 'rgba(0, 0, 0, 0.2)',
-                                            }}
-                                            name="chatbubbles"
-                                            size={23}
-                                        />
-                                          <InteractionText  style={{ color: isNightMode ? primary : '#000'}}> 
-                                            Comment
-                                        </InteractionText>
-                                      </Interaction>
-                                      </View>
-                            </View>
-                        </View>
-                    ))}
-            </Animated.ScrollView>
-
+            <View style={styles.inputContainer}>
+                <TextInput
+                    style={styles.input}
+                    placeholder="اكتب رسالتك..."
+                    value={newMessage}
+                    onChangeText={setNewMessage}
+                />
+                <TouchableOpacity onPress={sendMessage} style={styles.sendButton}>
+                    <Text style={styles.sendButtonText}>إرسال</Text>
+                </TouchableOpacity>
+            </View>
+        </KeyboardAvoidingView>
+    )*/}
 
 
             {/* Bottom Navigation Bar */}
@@ -333,3 +450,60 @@ left: 10, backgroundColor: 'white', padding: 10, borderRadius: 5, zIndex: 20,bot
 
 };
 
+const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      justifyContent: 'space-between',
+    },
+    messagesList: {
+      padding: 10,
+    },
+    userMessage: {
+      alignSelf: 'flex-end',
+      backgroundColor: '#0078D4',
+      padding: 10,
+      borderRadius: 10,
+      marginBottom: 10,
+      maxWidth: '75%',
+    },
+    otherMessage: {
+      alignSelf: 'flex-start',
+      backgroundColor: '#E4E6EB',
+      padding: 10,
+      borderRadius: 10,
+      marginBottom: 10,
+      maxWidth: '75%',
+    },
+    messageText: {
+      color: '#fff',
+      fontSize: 16,
+    },
+    inputContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      padding: 10,
+      borderTopWidth: 1,
+      borderColor: '#ddd',
+      backgroundColor: '#fff',
+    },
+    input: {
+      flex: 1,
+      height: 40,
+      borderColor: '#ddd',
+      borderWidth: 1,
+      borderRadius: 20,
+      paddingHorizontal: 15,
+      marginRight: 10,
+    },
+    sendButton: {
+      backgroundColor: '#0078D4',
+      paddingVertical: 10,
+      paddingHorizontal: 20,
+      borderRadius: 20,
+    },
+    sendButtonText: {
+      color: '#fff',
+      fontSize: 16,
+    },
+  });
+  

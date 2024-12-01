@@ -141,9 +141,8 @@ export const LeftIcon = styled.View`
 // تعريف RightIcon
 export const RightIcon = styled.TouchableOpacity`
     right: 12px;
-    top: 15px;
+    top: 6px;
     position: absolute;
-    z-index: 1;
     align-items: center;
     justify-content: center;
     height: 40px;  
