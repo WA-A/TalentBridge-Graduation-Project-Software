@@ -6,6 +6,7 @@ import { useFonts } from 'expo-font';
 import { NightModeContext } from './NightModeContext';
 import { Colors } from './../compnent/Style';
 import { Card,UserInfoText, UserName, ContainerCard, PostText, UserInfo, ButtonText, StyledButton} from './../compnent/Style.js'
+import { TextInput } from 'react-native-gesture-handler';
 const { tertiary, firstColor, secColor,fifthColor,secondary, primary, darkLight, fourhColor, careysPink} = Colors;
 const fields = [
     'IT',
@@ -33,8 +34,11 @@ const projects = [
 export default function  ProjectsSeniorPage ({ navigation, route }) {
     const nav = useNavigation();
     const { isNightMode, toggleNightMode } = useContext(NightModeContext);
-    const [modalVisible, setModalVisible] = useState(false);
+    const [selectFieldModalVisible, setSelectFieldModalVisible] = useState(false); // للتحكم في ظهور موديل Select Field
+    const [applyNowModalVisible, setApplyNowModalVisible] = useState(false); // للتحكم في ظهور موديل Apply Now    
     const [selectedField, setSelectedField] = useState('');
+    const [NumberOfTrain ,setNumberOfTrain] = useState('');
+    const [ProfileLink ,setProfileLink] = useState('');
 
     let [fontsLoaded] = useFonts({
         'Updock-Regular': require('./../compnent/fonts/Updock-Regular.ttf'),
@@ -47,9 +51,15 @@ export default function  ProjectsSeniorPage ({ navigation, route }) {
     }
 
     const handleFieldSelect = (field) => {
-        setSelectedField(field);
-        setModalVisible(false);
+        selectFieldModalVisible(field);
+        setSelectFieldModalVisible(false);
     };
+
+    const handleApplyNow = () => {
+      setNumberOfTrain();
+      setProfileLink();
+      setApplyNowModalVisible(true);
+  };
 
     return (
         <View style={{ flex: 1, backgroundColor: isNightMode ? darkLight : '#FFF' }}>
@@ -81,9 +91,43 @@ export default function  ProjectsSeniorPage ({ navigation, route }) {
                 <TouchableOpacity onPress={() => nav.navigate('Search')}>
                     <Ionicons name="search" size={25} color="#000" />
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => setModalVisible(true)}>
-                    <Text style={{ color: "#000", fontSize: 18 }}>{selectedField || "Select Field"}</Text>
-                </TouchableOpacity>
+                <TouchableOpacity onPress={() => setSelectFieldModalVisible(true)}>
+  <Text style={{ color: "#000", fontSize: 18 }}>
+    {selectedField || "Select Field"}
+  </Text>
+
+  <Modal
+    animationType="slide"
+    transparent={true}
+    visible={selectFieldModalVisible}
+    onRequestClose={() => setSelectFieldModalVisible(false)}
+  >
+    <View style={styles.modalContainer}>
+      <View style={styles.modalContent}>
+        <FlatList
+          data={fields}
+          keyExtractor={(item) => item}
+          renderItem={({ item }) => (
+            <TouchableOpacity 
+              onPress={() => handleFieldSelect(item)} 
+              style={styles.fieldItem}
+            >
+              <Text style={styles.fieldText}>{item}</Text>
+            </TouchableOpacity>
+          )}
+        />
+        <TouchableOpacity 
+          onPress={() => setSelectFieldModalVisible(false)} 
+          style={styles.closeButton}
+        >
+          <Text style={styles.closeButtonText}>Close</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  </Modal>
+</TouchableOpacity>
+
+
             </View>
 
             {/* Projects List in Center */}
@@ -133,9 +177,39 @@ export default function  ProjectsSeniorPage ({ navigation, route }) {
             <Text style={{ color: darkLight }}>{project.Status || 'N/A'}</Text>
           </View>
 
-          <TouchableOpacity style={styles.styledButton}>
-            <Text style={styles.buttonText}>Apply Now</Text>
-          </TouchableOpacity>
+          <TouchableOpacity onPress={() => setApplyNowModalVisible(true)} style={styles.styledButton}>
+    <Text style={styles.buttonText}>Apply Now</Text>
+    <Modal
+        transparent={true}
+        visible={applyNowModalVisible}
+        onRequestClose={() => setApplyNowModalVisible(false)}
+    >
+        <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+                <TouchableOpacity style={styles.input}>
+                    <TextInput
+                        style={styles.inputField}
+                        placeholder="Number Of Train"
+                        value={NumberOfTrain}
+                        onChangeText={setNumberOfTrain}
+                    />
+                    <TextInput
+                        style={styles.inputField}
+                        placeholder="Profile Link"
+                        value={ProfileLink}
+                        onChangeText={setProfileLink}
+                    />
+                </TouchableOpacity>
+
+                <TouchableOpacity onPress={() => setApplyNowModalVisible(false)} style={styles.closeButton}>
+                    <Text style={styles.closeButtonText}>Close</Text>
+                </TouchableOpacity>
+            </View>
+        </View>
+    </Modal>
+</TouchableOpacity>
+
+
         </Card>
       ))}
     </View>
@@ -144,35 +218,7 @@ export default function  ProjectsSeniorPage ({ navigation, route }) {
   )}
 </ScrollView>
 
-
-
-
-
-
-            <Modal
-                animationType="slide"
-                transparent={true}
-                visible={modalVisible}
-                onRequestClose={() => setModalVisible(false)}
-            >
-                <View style={styles.modalContainer}>
-                    <View style={styles.modalContent}>
-                        <FlatList
-                            data={fields}
-                            keyExtractor={(item) => item}
-                            renderItem={({ item }) => (
-                                <TouchableOpacity onPress={() => handleFieldSelect(item)} style={styles.fieldItem}>
-                                    <Text style={styles.fieldText}>{item}</Text>
-                                </TouchableOpacity>
-                            )}
-                        />
-                        <TouchableOpacity onPress={() => setModalVisible(false)} style={styles.closeButton}>
-                            <Text style={styles.closeButtonText}>Close</Text>
-                        </TouchableOpacity>
-                    </View>
-                </View>
-            </Modal>
-
+            
             {/* Bottom Navigation Bar */}
             <View style={{
                 backgroundColor: isNightMode ? "#454545" : secondary,
@@ -203,6 +249,65 @@ export default function  ProjectsSeniorPage ({ navigation, route }) {
 };
 
 const styles = StyleSheet.create({
+styledButton: {
+  backgroundColor: fifthColor,  // لون خلفية الزر
+  paddingVertical: 12,  // زيادة الحشو ليصبح الزر أكبر
+  paddingHorizontal: 20,
+  borderRadius: 8,  // زوايا دائرية للزر
+  alignItems: 'center',  // محاذاة النص في الوسط
+  justifyContent: 'center',  // محاذاة النص في الوسط
+  marginTop: 20,  // مسافة فوق الزر
+},
+
+buttonText: {
+  color: '#fff',  // لون النص الأبيض
+  fontSize: 18,  // حجم النص
+  fontWeight: 'bold',  // جعل النص عريضًا
+},
+
+modalContainer: {
+  flex: 1,
+  justifyContent: 'center',
+  alignItems: 'center',
+  backgroundColor: 'rgba(0, 0, 0, 0.5)',  // خلفية مظلمة خفيفة
+},
+
+modalContent: {
+  width: '80%',  // جعل المودال أصغر في العرض
+  backgroundColor: '#fff',  // خلفية بيضاء
+  padding: 20,
+  borderRadius: 10,  // زوايا دائرية للمودال
+  alignItems: 'center',
+},
+
+input: {
+  width: '100%',
+},
+
+inputField: {
+  height: 45,
+  fontSize: 16,
+  color: '#333',
+  paddingHorizontal: 10,
+  marginBottom: 20,
+  borderWidth: 1,  // إضافة حدود حول الحقول
+  borderColor: '#ccc',  // لون الحدود
+  borderRadius: 5,  // زوايا دائرية
+},
+
+closeButton: {
+  marginTop: 10,
+  backgroundColor: careysPink,  // لون زر الإغلاق
+  paddingVertical: 10,
+  paddingHorizontal: 20,
+  borderRadius: 8,
+},
+
+closeButtonText: {
+  color: '#fff',  // لون النص الأبيض
+  fontSize: 16,
+  fontWeight: 'bold',
+},
     card: {
         width: '48%', // يجعل الكروت بحجم أصغر وتكون بجانب بعضها
         marginBottom: 15, // المسافة بين الكروت
@@ -229,31 +334,9 @@ const styles = StyleSheet.create({
         textAlign: 'center', // تأكيد توسيط النص داخل الكارد
         marginBottom: 10,
       },
-      styledButton: {
-        backgroundColor: '#7C7692', // درجة البنفسجي الغامق
-        padding: 10,
-        borderRadius: 5,
-        marginTop: 10,
-      },
-      buttonText: {
-        color: '#fff', // نص الزر باللون الأبيض
-        textAlign: 'center',
-      },
     container: {
         padding: 10,
         backgroundColor: '#FFF',
-      },
-      modalContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-      },
-      modalContent: {
-        width: '80%',
-        backgroundColor: 'white',
-        borderRadius: 10,
-        padding: 20,
       },
     fieldItem: {
         padding: 15,
@@ -262,17 +345,6 @@ const styles = StyleSheet.create({
     },
     fieldText: {
         fontSize: 18,
-    },
-    closeButton: {
-        marginTop: 20,
-        alignItems: 'center',
-        backgroundColor: careysPink,
-        padding: 10,
-        borderRadius: 5,
-    },
-    closeButtonText: {
-        color: 'white',
-        fontSize: 16,
     },
       projectsContainer: {
       padding: 10,

@@ -1,12 +1,18 @@
 import mongoose, { Schema, model } from 'mongoose';
 
 
-const ApplicationSchema = new Schema({
+const ApplicationTrainSchema = new Schema({
    ProfileLink: {
       type: String,
       required: true,
    },
    NumberOfTrain: {
+      type: String,
+   },
+   Email:{
+      type: String,
+   },
+   PhoneNumber:{
       type: String,
    },
    IsDeleted: { 
@@ -20,10 +26,9 @@ const ApplicationSchema = new Schema({
          'Accepted',
          'Rejected',
       ],
-      required: true
+      required: true,
+      default:'Pending'
    },
-   createdBy:{type:Types.ObjectId,ref:'Application'},
-   updatedBy:{type:Types.ObjectId,ref:'Application'},
 },
 
    {
@@ -32,5 +37,5 @@ const ApplicationSchema = new Schema({
 );
 
 
-const AplicationModel = model('Application', ApplicationSchema);
-export default AplicationModel;
+const ApplicationTrainModel = model('ApplicationTrain', ApplicationTrainSchema);
+export default ApplicationTrainModel;
