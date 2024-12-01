@@ -12,11 +12,29 @@ import AddPostScreen from './screens/AddPostScreen';
 import ForgotPassword from './screens/ForgotPassword.js';
 import ResetPassword from './screens/ResetPassword.js';
 import EnterCode from './screens/EnterCode.js';
+import {Platform } from 'react-native';
 import { NightModeProvider } from './screens/NightModeContext'; // Import the provider
-import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView, Animated } from 'react-native';
+import { View, Text } from 'react-native';
 import { useFonts } from 'expo-font';
 import ProjectsSeniorPage from './screens/ProjectsSeniorPage.js'
 const Stack = createStackNavigator();
+
+const linking = Platform.OS === 'web' ? {
+    prefixes: ['http://localhost:8081'], // أو عنوان السيرفر الخاص بك
+    config: {
+        screens: {
+            SplashScreen: '',
+            Login: 'auth/signin',
+            HomeScreen: 'home',
+            ProfilePage: 'profile',
+            AddPostScreen: 'add-post',
+            ForgotPassword: 'forgot-password',
+            ResetPassword: 'reset-password',
+            EnterCode: 'enter-code',
+          },
+      
+    },
+  } : {};
 
 export default function App() {
     let [fontsLoaded] = useFonts({
@@ -32,10 +50,11 @@ export default function App() {
     return (
         // Wrap the entire NavigationContainer with NightModeProvider
         <NightModeProvider>
-            <NavigationContainer>
+            <NavigationContainer linking={linking}>
                 <Stack.Navigator initialRouteName="SplashScreen">
                     <Stack.Screen
                         name="SplashScreen"
+
                         component={SplashScreen}
                         options={{ headerShown: false }}
                     />

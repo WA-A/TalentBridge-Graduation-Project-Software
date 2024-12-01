@@ -27,62 +27,20 @@ import {
 
 } from './../compnent/Style';
 //icon 
-import {
-    FontAwesome, Ionicons, AntDesign
-    , FontAwesome6, MaterialCommunityIcons, FontAwesome5Brands
-} from '@expo/vector-icons';
+
+import { FontAwesome,Ionicons } from '@expo/vector-icons';
 
 //formik
 import { Formik } from 'formik';
-import styled from 'styled-components/native';
 
 //color
 const { brand, darkLight, careysPink,black,fourhColor,primary, tertiary } = Colors;
 
-const TypingEffect = () => {
-    const [text, setText] = useState('');
-    const fullText = "Account Login"; // النص المراد كتابته
-    const [index, setIndex] = useState(0);
-    const animationValue = useRef(new Animated.Value(0)).current; // لإعداد الأنيميشن
-
-    useEffect(() => {
-        // عند بدء المؤثر
-        const interval = setInterval(() => {
-            if (index < fullText.length) {
-                setText((prev) => prev + fullText[index]);
-                setIndex((prev) => prev + 1);
-            } else {
-                clearInterval(interval); // إيقاف المؤثر عند نهاية النص
-
-                // تشغيل أنيميشن اختفاء النص لليسار
-                Animated.timing(animationValue, {
-                    duration: 2000, // مدة الحركة بالمللي ثانية
-                    useNativeDriver: true,
-                }).start(() => {
-                    // إعادة تعيين النص بعد انتهاء الأنيميشن
-                    setText('');
-                    setIndex(0);
-                    animationValue.setValue(0); // إعادة موضع النص لبدء المؤثر من جديد
-                });
-            }
-        }, 200); // فترة كتابة الحرف بالمللي ثانية
-
-        return () => clearInterval(interval); // تنظيف المؤثر عند إلغاء المكون
-    }, [index]);
-
-    return (
-        <Animated.View style={{ transform: [{ translateX: animationValue }] }}>
-            <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 5 }}>
-                {text}
-            </Text>
-        </Animated.View>
-    );
-};
 export default function Login({ navigation }) {
     const [isMenuVisible, setMenuVisible] = useState(false); // For the menu visibility
     const [errorMessage3, setErrorMessage3] = useState('');
     const lineWidth = useLineEffect(); // الحصول على القيمة المتحركة للعرض
-    const [hidePassword, setHidePassword] = useState(true);
+    const [hidePassword1, setHidePassword1] = useState(true);
     const slideAnim = useRef(new Animated.Value(0)).current;
 
     useEffect(() => {
@@ -186,10 +144,10 @@ export default function Login({ navigation }) {
                                 onChangeText={handleChange('Password')}
                                 onBlur={handleBlur('Password')}
                                 value={values.Password}
-                                secureTextEntry={hidePassword}
-                                isPassword={true}
-                                hidePassword={hidePassword}
-                                setHidePassword={setHidePassword}
+                                secureTextEntry={hidePassword1}
+                                isPassword1={true}
+                                hidePassword1={hidePassword1}
+                                setHidePassword1={setHidePassword1}
                             />
                             
                             {isMenuVisible && (
@@ -271,24 +229,32 @@ export default function Login({ navigation }) {
     )
 };
 
-const MyTextInput = ({ label, icon, isPassword, hidePassword, setHidePassword, ...props }) => {
+const MyTextInput = ({ label, icon, isPassword1, hidePassword1, setHidePassword1, ...props }) => {
     return (
         <View style={{ marginBottom: 15 }}>
             <LeftIcon>
                 <FontAwesome name={icon} size={25} color={Colors.fifthColor} />
             </LeftIcon>
-            {/*  <StyleInputLable>{label}</StyleInputLable> */}
+            {/* Ensure StyledTextInput is only rendered for password field */}
             <StyledTextInput {...props} />
-            {isPassword && (
-                <RightIcon onPress={() => setHidePassword(!hidePassword)}>
-                    <Ionicons name={hidePassword ? "eye-off" : "eye"} size={25} color={darkLight} />
-                </RightIcon>
+            
+            {/* Conditionally render the eye icon for password fields */}
+            {isPassword1 && (
+                <RightIcon onPress={() => {
+    console.log("Password visibility toggled:", !hidePassword1); // Debugging line
+    setHidePassword1(!hidePassword1);
+}}>
+  {Platform.OS === 'web' ? (''
+      ) : (
+        <Ionicons name={hidePassword1 ? "eye-off" : "eye"} size={25} color="black" />
+      )}
+</RightIcon>
+
             )}
-
-
         </View>
     );
 };
+
 const styles = {
     iconContainer: {
         width: 150,
