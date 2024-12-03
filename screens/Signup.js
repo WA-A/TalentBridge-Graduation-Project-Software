@@ -10,7 +10,7 @@ import axios from 'axios';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// استيراد مكتبة DatePicker فقط للويب
+// استيراد مكتبة DatePicker  فقط للويب
 let DatePicker;
 if (Platform.OS === 'web') {
     DatePicker = require('react-datepicker').default;
