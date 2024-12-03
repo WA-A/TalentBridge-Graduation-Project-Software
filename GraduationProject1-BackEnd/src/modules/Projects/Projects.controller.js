@@ -3,11 +3,11 @@ import ProjectsModel from "../../Model/ProjectsModel.js";
 
 // Create Project By Senior
 export const CreateProject = async(req,res)=>{
-    const {ProjectName,Description,RequiredSkills,Field,DurationInMounths,PositionRole} = req.body;
+    const {ProjectName,Description,RequiredSkills,Field,DurationInMounths,PositionRole,WorkLoaction} = req.body;
     const CreatedBySenior = req.user._id;
     
 
-    const project = await ProjectsModel.create({ProjectName,Description,RequiredSkills,Field,CreatedBySenior,DurationInMounths,PositionRole});
+    const project = await ProjectsModel.create({ProjectName,Description,RequiredSkills,Field,CreatedBySenior,DurationInMounths,PositionRole,WorkLoaction});
     
     return res.status(200).json({message:project});
 }
@@ -33,7 +33,7 @@ export const GetProjectsBySenior = async (req, res) => {
     const CreatedBySenior = req.user._id; 
 
   
-    const { ProjectName, Description, RequiredSkills,DurationInMounths,PositionRole } = req.body;
+    const { ProjectName, Description, RequiredSkills,DurationInMounths,PositionRole,WorkLoaction } = req.body;
 
     const updatedProject = await ProjectsModel.findByIdAndUpdate(
         { _id: ProjectId, CreatedBySenior },
@@ -43,7 +43,8 @@ export const GetProjectsBySenior = async (req, res) => {
                 Description, 
                 RequiredSkills,
                 DurationInMounths,
-                PositionRole
+                PositionRole,
+                WorkLoaction
             } 
         },
         { new: true } 

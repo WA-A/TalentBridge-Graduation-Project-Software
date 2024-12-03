@@ -35,6 +35,10 @@ const ProjectsSchema = new Schema({
   PositionRole:
     [{ type: String }]
   ,
+  WorkLoaction:{
+    type: String,
+    default: 'Remotely'
+  },
   created_at: {
     type: Date,
     default: Date.now,

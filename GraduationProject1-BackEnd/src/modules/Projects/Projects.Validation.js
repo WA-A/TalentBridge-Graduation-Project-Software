@@ -7,6 +7,7 @@ export const CreateProjectSchema = Joi.object({
     Field: Joi.string().required(),
     DurationInMounths:Joi.number().required(),
     PositionRole:Joi.array().items(Joi.string()).required(),
+    WorkLoaction:Joi.string(),
 
 });
 
@@ -17,6 +18,7 @@ export const UpdateProjectSchema = Joi.object({
     DurationInMounths:Joi.number().required(),
     ProjectId: Joi.string().required(),
     PositionRole:Joi.array().items(Joi.string()).required(),
+    WorkLoaction:Joi.string(),
 
 
 });
