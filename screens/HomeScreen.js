@@ -31,9 +31,10 @@ const { width } = Dimensions.get('window');
 
 export default function HomeScreen({ navigation, route }) {
 
+  const [isFocused, setIsFocused] = useState(false);
 
   const [isSidebarVisible, setIsSidebarVisible] = useState(false);
-  const [selectedPerson, setSelectedPerson] = useState(null);  // لتحديد الشخص المختار
+  const [selectedPeople, setSelectedPeople] = useState([]); // الأشخاص الذين يتم فتح شات معهم
   const [newMessage, setNewMessage] = useState("");
   const [messages, setMessages] = useState([]);
 
@@ -41,11 +42,34 @@ export default function HomeScreen({ navigation, route }) {
     setIsSidebarVisible(!isSidebarVisible); // تبديل حالة الشريط الجانبي
   };
 
-  const sendMessage = () => {
-    if (newMessage.trim()) {
-      setMessages([...messages, { id: Math.random().toString(), text: newMessage, sender: 'user' }]);
-      setNewMessage('');
-    }
+  const handleMessageChange = (personId, text) => {
+    setNewMessage(prevState => ({
+      ...prevState,
+      [personId]: text, // تحديث النص المدخل في شات هذا الشخص
+    }));
+  };
+  
+  const sendMessage = (personId) => {
+    setMessages(prevMessages => ({
+      ...prevMessages,
+      [personId]: [
+        ...(prevMessages[personId] || []),
+        { sender: 'أنت', text: newMessage[personId] },
+      ],
+    }));
+  
+    setNewMessage(prevState => ({
+      ...prevState,
+      [personId]: '', // مسح النص المدخل بعد الإرسال
+    }));
+  };
+  const handleSelectedPerson = (item) => {
+    setSelectedPeople((prevSelectedPeople) => {
+      if (!prevSelectedPeople.some(person => person.id === item.id)) {
+        return [...prevSelectedPeople, item];
+      }
+      return prevSelectedPeople;
+    });
   };
 
   const peopleList = [
@@ -64,14 +88,13 @@ export default function HomeScreen({ navigation, route }) {
     { id: '13', name: 'Person 13' },
     { id: '14', name: 'Person 14' },
     { id: '15', name: 'Person 15' },
-
+    { id: '16', name: 'Person 16' },
+    { id: '17', name: 'Person 17' },
+    { id: '18', name: 'Person 18' },
+    { id: '19', name: 'Person 19' },
   ];
 
-  const postsList = [
-    { id: '1', title: 'Post 1', content: 'This is the content of Post 1.' },
-    { id: '2', title: 'Post 2', content: 'This is the content of Post 2.' },
-    { id: '3', title: 'Post 3', content: 'This is the content of Post 3.' },
-  ];
+
 
     const { userField } = route.params || {};
     const nav = useNavigation();
@@ -200,16 +223,16 @@ const handleLogout = async () => {
       overflow: 'auto',  // لمنع المحتوى من الخروج خارج الشريط الجانبي
       paddingVertical: 10,
       marginTop: Platform.OS === 'web' ? 80 : 0,
-      marginBottom: Platform.OS === 'web' ? 80 : 0,
-      overflowY: 'scroll', // إضافة شريط التمرير العمودي داخل القائمة
-     transform: `translateY(0)`, // تحريك القائمة من الأعلى
-      transition: 'transform 0.5s ease', // إضافة انتقال ناعم لتحريك القائمة
+      height: `calc(100vh - 0px - 150px)`, // تخصيص الارتفاع ليأخذ بعين الاعتبار الشريط العلوي والسفلي
+      overflowY : 'auto', // السماح بالتمرير العمودي
     }}>
-      <Text style={{ color: isNightMode ? '#fff' : '#000', fontSize: 18, marginBottom: 10 }}>الأشخاص</Text>
+      <Text style={{ color: isNightMode ? '#fff' : '#000', fontSize: 18, marginBottom: 10 }}>Freind List</Text>
       <FlatList
         data={peopleList}
         renderItem={({ item }) => (
-          <TouchableOpacity onPress={() => setSelectedPerson(item)} style={{
+          <TouchableOpacity key={item.id} onPress={() => handleSelectedPerson(item)
+          }
+           style={{
             padding: 10,
             borderBottomWidth: 1,
             borderBottomColor: '#ccc',
@@ -222,6 +245,25 @@ const handleLogout = async () => {
     </View>
   )}
 
+
+  {/*////chat}
+  
+    <View
+  style={{
+    marginLeft: '30%', // المسافة لتجنب تداخل الشات مع القائمة
+    width: '10%', // عرض الشات
+    padding: 10,
+    display: selectedPerson ? 'flex' : 'none',  // عرض الشات فقط عندما يتم اختيار شخص
+    zIndex: 40,
+  }}
+>
+  <Text style={{ fontSize: 24, fontWeight: 'bold', marginBottom: 20 }}>
+    دردشات   
+  </Text>
+  
+  {/* عرض المحادثة مع الشخص المحدد */}
+
+ 
   {/* المحتوى الرئيسي (المنشورات) */}
   <Animated.ScrollView
     style={{
@@ -234,7 +276,7 @@ const handleLogout = async () => {
       justifyContent: 'flex-start',
       alignItems: 'center',
       paddingVertical: 10,
-      marginTop: Platform.OS === 'web' ? 50 : 0,
+      marginTop: Platform.OS === 'web' ? 80 : 0,
       marginBottom: Platform.OS === 'web' ? 50 : 0,
     }}
     onScroll={Animated.event(
@@ -243,6 +285,7 @@ const handleLogout = async () => {
     )}
     scrollEventThrottle={16}
   >
+          <Text style={{ fontSize: 24, fontWeight: 'bold' }}>المنشورات</Text>
     {Array(5)
       .fill()
       .map((_, index) => (
@@ -335,42 +378,149 @@ const handleLogout = async () => {
           </View>
         </View>
       ))}
-
   </Animated.ScrollView>
+
+  <View
+  style={{
+    position: 'fixed',
+    left: 0,
+    right: 0,
+    bottom: 45,
+    backgroundColor: 'transparent',
+    padding: 10,
+    marginLeft: Platform.OS === 'web' && isSidebarVisible ? '30%' : 0,
+  }}
+>
+  <ScrollView
+    horizontal
+    contentContainerStyle={{
+      flexDirection: 'row',
+      paddingHorizontal: 10,
+    }}
+  >
+    {selectedPeople.map((person) => (
+      <View
+        key={person.id}
+        style={{
+          width: 300,
+          height: 400,
+          marginHorizontal: 5,
+          padding: 0,
+          borderRadius: 10,
+          overflow: 'hidden',
+          borderWidth: 1,
+          borderColor: '#ccc',
+          backgroundColor: isNightMode ? '#444' : '#f9f9f9',
+        }}
+      >
+        {/* الشريط العلوي (الهيدر) */}
+        <View
+          style={{
+            backgroundColor: '#3b5998',
+            paddingVertical: 10,
+            paddingHorizontal: 15,
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            borderBottomWidth: 2,
+            borderBottomColor: isNightMode ? '#222' : '#ccc',
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.3,
+            shadowRadius: 3,
+            elevation: 4,
+          }}
+        >
+          <Text style={{ fontWeight: 'bold', fontSize: 16, color: 'white' }}>
+            دردشة مع {person.name}
+          </Text>
+          <TouchableOpacity
+            onPress={() =>
+              setSelectedPeople((prevSelectedPeople) =>
+                prevSelectedPeople.filter((p) => p.id !== person.id)
+              )
+            }
+          >
+            <FontAwesome name="close" size={20} color="white" />
+          </TouchableOpacity>
+        </View>
+
+        {/* الرسائل */}
+        <ScrollView
+          style={{ flex: 1, padding: 10 }}
+          contentContainerStyle={{ paddingBottom: 10 }}
+        >
+          {(messages[person.id] || []).map((msg, idx) => (
+            <View
+              key={idx}
+              style={{
+                alignSelf: msg.sender === 'أنت' ? 'flex-end' : 'flex-start',
+                backgroundColor: msg.sender === 'أنت' ? '#dcf8c6' : '#f0f0f0',
+                padding: 8,
+                borderRadius: 10,
+                marginBottom: 5,
+                maxWidth: '75%',
+              }}
+            >
+              <Text style={{ fontSize: 14 }}>{msg.text}</Text>
+            </View>
+          ))}
+        </ScrollView>
+
+        {/* منطقة الإدخال */}
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            padding: 5,
+            backgroundColor: isNightMode ? '#333' : '#fff',
+          }}
+        >
+          <ScrollView
+            style={{
+              maxHeight: 80, // الحد الأقصى لطول النص
+              flex: 1,
+              borderRadius:20,
+              padding: 5,
+              backgroundColor: isNightMode ?  '#333' : secondary,
+              
+            }}
+          >
+          <TextInput
+  style={{
+    flex: 1,
+    fontSize: 14,
+    lineHeight: 20,padding:5,
+    color: isNightMode ? '#fff' : '#000',
+    borderWidth: 0, // إزالة الحدود
+    outlineWidth: 0, // إزالة الحدود عند التركيز (أحيانًا يكون في بعض المتصفحات)
+  }}
+  multiline
+  placeholder="Write Massage..."
+  placeholderTextColor="#888"  // تغيير لون النص عند عدم الكتابة
+  value={newMessage[person.id] || ''}
+   onChangeText={(text) => handleMessageChange(person.id, text)}
+/>
+
+          </ScrollView>
+
+          {/* زر الإرسال بجانب حقل النص */}
+          <TouchableOpacity
+            onPress={() => sendMessage(person.id)}
+          >
+            <Ionicons
+              name="send" size={20} color= "fifthColor" style={{  marginLeft: 10,
+                padding: 10,}}/>
+          </TouchableOpacity>
+        </View>
+      </View>
+    ))}
+  </ScrollView>
 </View>
 
-    {/* إخفاء جزئية الرسائل في الموبايل */}
-    {/*Platform.OS == 'web' && (
-        <KeyboardAvoidingView
-            style={styles.container}
-            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        >
-            <FlatList
-                ref={flatListRef}
-                data={messages}
-                renderItem={({ item }) => (
-                    <View style={item.sender === 'user' ? styles.userMessage : styles.otherMessage}>
-                        <Text style={styles.messageText}>{item.text}</Text>
-                    </View>
-                )}
-                keyExtractor={(item) => item.id}
-                inverted // تجعل الرسائل الأحدث في الأسفل
-                style={styles.messagesList}
-            />
 
-            <View style={styles.inputContainer}>
-                <TextInput
-                    style={styles.input}
-                    placeholder="اكتب رسالتك..."
-                    value={newMessage}
-                    onChangeText={setNewMessage}
-                />
-                <TouchableOpacity onPress={sendMessage} style={styles.sendButton}>
-                    <Text style={styles.sendButtonText}>إرسال</Text>
-                </TouchableOpacity>
-            </View>
-        </KeyboardAvoidingView>
-    )*/}
+</View>
+  
 
 
             {/* Bottom Navigation Bar */}
@@ -451,59 +601,7 @@ left: 10, backgroundColor: 'white', padding: 10, borderRadius: 5, zIndex: 20,bot
 };
 
 const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-      justifyContent: 'space-between',
-    },
-    messagesList: {
-      padding: 10,
-    },
-    userMessage: {
-      alignSelf: 'flex-end',
-      backgroundColor: '#0078D4',
-      padding: 10,
-      borderRadius: 10,
-      marginBottom: 10,
-      maxWidth: '75%',
-    },
-    otherMessage: {
-      alignSelf: 'flex-start',
-      backgroundColor: '#E4E6EB',
-      padding: 10,
-      borderRadius: 10,
-      marginBottom: 10,
-      maxWidth: '75%',
-    },
-    messageText: {
-      color: '#fff',
-      fontSize: 16,
-    },
-    inputContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      padding: 10,
-      borderTopWidth: 1,
-      borderColor: '#ddd',
-      backgroundColor: '#fff',
-    },
-    input: {
-      flex: 1,
-      height: 40,
-      borderColor: '#ddd',
-      borderWidth: 1,
-      borderRadius: 20,
-      paddingHorizontal: 15,
-      marginRight: 10,
-    },
-    sendButton: {
-      backgroundColor: '#0078D4',
-      paddingVertical: 10,
-      paddingHorizontal: 20,
-      borderRadius: 20,
-    },
-    sendButtonText: {
-      color: '#fff',
-      fontSize: 16,
-    },
-  });
+  
+});
+ 
   

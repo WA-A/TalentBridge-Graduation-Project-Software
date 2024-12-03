@@ -12,7 +12,7 @@ import {
     StatusBarHeight,
     StyledFormArea,
     SubTitle,
-    LeftIcon,
+    LeftIcon,   
     ButtonText,
     StyledButton,
     StyleInputLable,
@@ -28,7 +28,7 @@ import {
 } from './../compnent/Style';
 //icon 
 
-import { FontAwesome,Ionicons } from '@expo/vector-icons';
+import { FontAwesome,Ionicons }  from '@expo/vector-icons';
 
 //formik
 import { Formik } from 'formik';
@@ -217,7 +217,7 @@ export default function Login({ navigation }) {
                             </View>
 
                             <View>
-                                <TouchableOpacity onPress={() => navigation.navigate('ResetPassword')}>
+                                <TouchableOpacity onPress={() => navigation.navigate('HomeScreen')}>
                                     <Text style={{ color: darkLight, margin: 20 }}>Home after login</Text>
                                 </TouchableOpacity>
                             </View>
@@ -240,8 +240,7 @@ const MyTextInput = ({ label, icon, isPassword1, hidePassword1, setHidePassword1
             
             {/* Conditionally render the eye icon for password fields */}
             {isPassword1 && (
-                <RightIcon onPress={() => {
-    console.log("Password visibility toggled:", !hidePassword1); // Debugging line
+                <RightIcon style={{ marginTop: 5 }} onPress={() => {
     setHidePassword1(!hidePassword1);
 }}>
   {Platform.OS === 'web' ? (''
