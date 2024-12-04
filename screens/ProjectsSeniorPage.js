@@ -245,6 +245,7 @@ export default function  ProjectsSeniorPage ({ navigation, route }) {
                 </TouchableOpacity>
             </View>
         </View>
+        
     );
 };
 

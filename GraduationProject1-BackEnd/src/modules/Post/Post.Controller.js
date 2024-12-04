@@ -159,27 +159,34 @@ export const GetUserPosts = async (req, res, next) => {
 
 export const GetAllPosts = async (req, res, next) => {
     try {
-        // Fetch all posts and populate the UserId field with ProfileImage
         const posts = await PostModel.find()
-            .populate('UserId', 'ProfileImage');
+            .populate('UserId', 'ProfilePicture');
 
-        // Check if there are any posts
         if (!posts || posts.length === 0) {
             return res.status(404).json({ message: "No posts found." });
         }
 
-        // Add profile image to each post
-        const postsWithProfileImage = posts.map(post => ({
-            ...post.toObject(), // Convert to plain object to avoid Mongoose document issues
-            ProfileImage: post.UserId.ProfileImage // Add ProfileImage from the populated UserId
-        }));
+        const postsWithProfilePicture = posts.map(post => {
+            // تحقق إذا كان UserId موجودًا وإذا كان يحتوي على ProfilePicture
+            const profilePicture = post.UserId && post.UserId.ProfilePicture
+                ? post.UserId.ProfilePicture
+                : '../../../../assets/face.jpg';  // استخدم صورة بروفايل افتراضية إذا لم تكن موجودة
+            return {
+                ...post.toObject(),
+                ProfilePicture: profilePicture
+            };
+        });
 
-        return res.status(200).json({ message: "Posts retrieved successfully", posts: postsWithProfileImage });
+        return res.status(200).json({ message: "Posts retrieved successfully", posts: postsWithProfilePicture });
     } catch (error) {
         console.error("Error retrieving posts:", error);
         return next(error);
     }
 };
+
+
+
+
 
 
 
