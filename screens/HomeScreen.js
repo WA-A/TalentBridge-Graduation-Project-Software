@@ -145,15 +145,47 @@ const handleLogout = async () => {
 };
 
 
-
-
-
-
     const handlePressOutside = () => {
         if (isMenuVisible) {
             setMenuVisible(false); // Close the menu when touched outside
         }
     };
+
+
+    const handleGetAllPosts = async (values) => {
+        try {
+          const dataToSend = {
+            ...values,
+          };
+          console.log('Sending Posts Data:', dataToSend);
+    
+          // تحديد عنوان الخادم بناءً على المنصة
+          const baseUrl = Platform.OS === 'web' 
+            ? 'http://localhost:3000' 
+            : 'http://192.168.1.239:3000'; // عنوان IP الشبكة المحلية للجوال
+    
+          const response = await fetch(`${baseUrl}/post/createpost`, {
+            method: 'Get',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(dataToSend),
+          });
+    
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Something went wrong');
+          }
+    
+          const result = await response.json();
+          console.log('Show All Posts successfully:', result);
+    
+    
+        } catch (error) {
+            setMenuVisible(true);
+            setErrorMessage3( error.message);
+        }
+      };
 
     return (
         <TouchableWithoutFeedback onPress={handlePressOutside}> 

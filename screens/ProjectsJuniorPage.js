@@ -34,8 +34,8 @@ const projects = [
 export default function  ProjectsJuniorPage ({ navigation, route }) {
     const nav = useNavigation();
     const { isNightMode, toggleNightMode } = useContext(NightModeContext);
-    const [selectFieldModalVisible, setSelectFieldModalVisible] = useState(false); // للتحكم في ظهور موديل Select Field
-    const [applyNowModalVisible, setApplyNowModalVisible] = useState(false); // للتحكم في ظهور موديل Apply Now    
+    const [selectFieldModalVisible, setSelectFieldModalVisible] = useState(false); 
+    const [applyNowModalVisible, setApplyNowModalVisible] = useState(false);  
     const [selectedField, setSelectedField] = useState('');
     const [NumberOfTrain ,setNumberOfTrain] = useState('');
     const [ProfileLink ,setProfileLink] = useState('');
