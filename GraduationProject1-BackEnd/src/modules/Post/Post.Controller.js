@@ -7,7 +7,7 @@ export const CreatePost = async (req, res, next) => {
     try {
         const { Body } = req.body;
         if ( !Body) {
-            return next(new Error("Title and Body are required."));
+            return next(new Error(" Body are required."));
         }
 
         const UserId = req.user._id; 
@@ -116,8 +116,6 @@ export const UpdatePost = async (req, res, next) => {
 };
 
 
-
-
 // Get Own Posts
 
 export const GetUserPosts = async (req, res, next) => {
@@ -153,8 +151,6 @@ export const GetUserPosts = async (req, res, next) => {
 };
 
 
-
-
 // Get All Posts
 
 export const GetAllPosts = async (req, res, next) => {
@@ -183,12 +179,6 @@ export const GetAllPosts = async (req, res, next) => {
         return next(error);
     }
 };
-
-
-
-
-
-
 
 
 // Delete Own Post

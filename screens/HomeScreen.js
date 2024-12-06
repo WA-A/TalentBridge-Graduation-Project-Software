@@ -1,12 +1,12 @@
 import React, { useState, useContext,useRef,useEffect } from 'react';
 import { View, Text, Image,TextInput,TouchableOpacity, StyleSheet, ScrollView, Animated, Button, Alert, Platform,TouchableWithoutFeedback,Keyboard, FlatList,KeyboardAvoidingView,flatListRef} from 'react-native';
-import { Ionicons, Feather, FontAwesome5, EvilIcons, FontAwesome,Entypo
-} from '@expo/vector-icons';
+import { Ionicons, Feather, FontAwesome5, EvilIcons, FontAwesome,Entypo} from '@expo/vector-icons';
+import { Video as RNVideo } from 'react-native-video'; 
 import { useNavigation } from '@react-navigation/native';
 import { Dimensions } from 'react-native';
 import { useFonts } from 'expo-font';
 import { NightModeContext } from './NightModeContext';
-import './../compnent/webCardStyle.css'
+import './../compnent/webCardStyle.css';
 import {
     Colors,
     Card,
@@ -23,16 +23,18 @@ import {
     InteractionText,
 } from './../compnent/Style'
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Video } from 'react-native-video';
 
 // Color constants
 // Color constants
 const { secondary, primary, careysPink, darkLight, fourhColor, tertiary, fifthColor } = Colors;
 const { width } = Dimensions.get('window');
 
-export default function HomeScreen({ navigation, route }) {
+export default function HomeScreen({ navigation, route}) {
 
   const [isFocused, setIsFocused] = useState(false);
-
+  const [posts, setPosts] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isSidebarVisible, setIsSidebarVisible] = useState(false);
   const [selectedPeople, setSelectedPeople] = useState([]); // الأشخاص الذين يتم فتح شات معهم
   const [newMessage, setNewMessage] = useState("");
@@ -152,46 +154,56 @@ const handleLogout = async () => {
     };
 
 
-    const handleGetAllPosts = async (values) => {
-        try {
-          const dataToSend = {
-            ...values,
-          };
-          console.log('Sending Posts Data:', dataToSend);
-    
-          // تحديد عنوان الخادم بناءً على المنصة
-          const baseUrl = Platform.OS === 'web' 
-            ? 'http://localhost:3000' 
-            : 'http://192.168.1.239:3000'; // عنوان IP الشبكة المحلية للجوال
-    
-          const response = await fetch(`${baseUrl}/post/createpost`, {
-            method: 'Get',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(dataToSend),
-          });
-    
-          if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || 'Something went wrong');
-          }
-    
-          const result = await response.json();
-          console.log('Show All Posts successfully:', result);
-    
-    
-        } catch (error) {
-            setMenuVisible(true);
-            setErrorMessage3( error.message);
+   
+
+    const handleGetAllPosts = async () => {
+      try {
+        const token = await AsyncStorage.getItem('userToken');
+        if (!token) {
+          throw new Error('No token found');
         }
-      };
+    
+        const baseUrl = Platform.OS === 'web'
+          ? 'http://localhost:3000'
+          : 'http://192.168.1.239:3000';
+    
+        const response = await fetch(`${baseUrl}/post/getallpost`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+    
+        if (!response.ok) {
+          throw new Error('Failed to fetch posts');
+        }
+    
+        const result = await response.json();
+    
+        if (Array.isArray(result.posts)) {
+          setPosts(result.posts);
+        } else {
+          console.error('Received data is not an array', result);
+        }
+    
+        setIsLoading(false);
+      } catch (error) {
+        console.error('Error fetching posts:', error);
+        setIsLoading(false);
+      }
+    };
+    
+    
+    useEffect(() => {
+      handleGetAllPosts();
+    }, []);
+
 
     return (
         <TouchableWithoutFeedback onPress={handlePressOutside}> 
         <View style={{ flex: 1 }}>
         <View style={{ height: 20, backgroundColor: isNightMode ? "#000" : secondary }} />
-
 
             {/* Header */}
             <View style={{
@@ -317,99 +329,127 @@ const handleLogout = async () => {
     )}
     scrollEventThrottle={16}
   >
-          <Text style={{ fontSize: 24, fontWeight: 'bold' }}>المنشورات</Text>
-    {Array(5)
-      .fill()
-      .map((_, index) => (
-        <View
-          key={index}
-          className={Platform.OS === 'web' ? 'container-card' : ''}  // استخدام className للويب فقط
-          style={Platform.OS === 'web' 
-      ? (isSidebarVisible ? { marginTop: 30, width: '50%',marginLeft: '35%' 
-      } : { marginTop: 30, width: '50%' }) 
-      : { width: '100%', alignItems: 'center', marginBottom: 10 }} 
-       // عرض المنشورات في الموبايل أو بدون الشريط الجانبي  // تعديل الحجم في الويب
-        >
-          <View
-            className={Platform.OS === 'web' ? 'card' : ''}  // استخدام className للويب فقط
-            style={Platform.OS === 'web' ? {
+  <Text style={{ fontSize: 24, fontWeight: 'bold' }}>Posts</Text>
+  
+  {posts && posts.posts && Array.isArray(posts.posts) && posts.posts.map((post, index) => (
+  <View
+    key={index}
+    className={Platform.OS === 'web' ? 'container-card' : ''}
+    style={
+      Platform.OS === 'web'
+        ? isSidebarVisible
+          ? { marginTop: 30, width: '50%', marginLeft: '35%' }
+          : { marginTop: 30, width: '50%' }
+        : { width: '100%', alignItems: 'center', marginBottom: 10 }
+    }
+  >
+    <View
+      className={Platform.OS === 'web' ? 'card' : ''}
+      style={
+        Platform.OS === 'web'
+          ? {
               backgroundColor: secondary,
               padding: 10,
               borderRadius: 15,
               width: '100%',
-              boxShadow: '0 4px 10px rgba(0,0,0,0.1)',  // إضافة تأثير الظل في الويب
-              backgroundColor: isNightMode ? "#454545" : secondary,
-            } : {
-              backgroundColor: isNightMode ? "#454545" : secondary,
+              boxShadow: '0 4px 10px rgba(0,0,0,0.1)',
+              backgroundColor: isNightMode ? '#454545' : secondary,
+            }
+          : {
+              backgroundColor: isNightMode ? '#454545' : secondary,
               width: '95%',
               borderRadius: 10,
-              margin:10
-            }}
-          >
-            <View style={{ flexDirection: 'row', alignItems: 'center', padding: 10 }}>
-              <Image
-                source={require('./../assets/img1.jpeg')}
-                style={{
-                  width: Platform.OS === 'web' ? 80 : 40,  // تعديل حجم الصورة للويب
-                  height: Platform.OS === 'web' ? 80 : 40, // تعديل حجم الصورة للويب
-                  borderRadius: Platform.OS === 'web' ? 40 : 25, // تعديل شكل الصورة
-                  marginRight: 10,
-                  marginTop: 10,
-                  objectFit: 'cover', // التأكد من ملاءمة الصورة
-                  borderWidth :1,
-                  bottom:3
-                }}
-              />
-              <View>
-                <Text style={{ color: isNightMode ? primary : '#000', fontWeight: 'bold', fontSize: 16 }}>
-                  Sama Abosair
-                </Text>
-                <Text style={{ color: darkLight, fontSize: 12 }}>
-                  4 hours ago
-                </Text>
-              </View>
-            </View>
-            <Text style={{ color: isNightMode ? primary : '#000', padding: 15 }}>
-              Hello This is a test post
-            </Text>
-            <Image
-              source={require('./../assets/img1.jpeg')}
-              style={{
-                width: Platform.OS === 'web' ? '90%' : '100%',
-                height: Platform.OS === 'web' ? 500 : 320,
-                objectFit: 'fill',  // التأكد من تغطية الصورة بشكل مناسب
-                alignSelf: 'center', // توسيط الصورة بدون التأثير على العناصر الأخرى
-              }}
-            />
-            <View style={{ flexDirection: 'row', justifyContent: 'space-around', paddingTop: 7 }}>
-              <Interaction>
-                <Ionicons
-                  style={{
-                    color: isNightMode ? secondary : 'rgba(0, 0, 0, 0.2)',
-                  }}
-                  name="heart-circle"
-                  size={25}
-                />
-                <InteractionText style={{ color: isNightMode ? primary : '#000' }}>
-                  Like
-                </InteractionText>
-              </Interaction>
-              <Interaction>
-                <Ionicons
-                  style={{
-                    color: isNightMode ? secondary : 'rgba(0, 0, 0, 0.2)',
-                  }}
-                  name="chatbubbles"
-                  size={23}
-                />
-                <InteractionText style={{ color: isNightMode ? primary : '#000' }}> 
-                  Comment
-                </InteractionText>
-              </Interaction>
-            </View>
-          </View>
+              margin: 10,
+            }
+      }
+    >
+      <View style={{ flexDirection: 'row', alignItems: 'center', padding: 10 }}>
+        <Image
+          source={{ uri: post.ProfilePicture }} // صورة المستخدم من البيانات
+          style={{
+            width: Platform.OS === 'web' ? 80 : 40,
+            height: Platform.OS === 'web' ? 80 : 40,
+            borderRadius: Platform.OS === 'web' ? 40 : 25,
+            marginRight: 10,
+            marginTop: 10,
+            objectFit: 'cover',
+            borderWidth: 1,
+            bottom: 3,
+          }}
+        />
+        <View>
+          <Text style={{ color: isNightMode ? primary : '#000', fontWeight: 'bold', fontSize: 16 }}>
+            UserId {/* أو استخدم حقل آخر إذا كان لديك */}
+          </Text>
+          <Text style={{ color: darkLight, fontSize: 12 }}>
+            {new Date(post.createdAt).toLocaleString()} {/* استخدام تاريخ المنشور */}
+          </Text>
         </View>
-      ))}
+      </View>
+
+     {/* <Text style={{ color: isNightMode ? primary : '#000', padding: 15 }}>{post.Title}</Text>  عرض العنوان */}
+      <Text style={{ color: isNightMode ? primary : '#000', padding: 15 }}>{post.Body}</Text> {/* عرض النص */}
+
+      {/* عرض الصور إذا كانت موجودة */}
+      {post.Images && post.Images.length > 0 && (
+        <Image
+          source={{ uri: post.Images[0].secure_url }} // عرض أول صورة من Images
+          style={{
+            width: Platform.OS === 'web' ? '90%' : '100%',
+            height: Platform.OS === 'web' ? 500 : 320,
+            objectFit: 'fill',
+            alignSelf: 'center',
+          }}
+        />
+      )}
+      {post.Videos && post.Videos.length > 0 && (
+  <RNVideo
+    source={{ uri: post.Videos[0].secure_url }} 
+    style={{
+      width: Platform.OS === 'web' ? '90%' : '100%',
+      height: Platform.OS === 'web' ? 500 : 320,
+      alignSelf: 'center',
+    }}
+    controls
+  />
+)}
+
+{post.Files && post.Files.length > 0 && (
+  <View style={{ alignItems: 'center', marginVertical: 10 }}>
+    <Text style={{ fontWeight: 'bold' }}>File:</Text>
+    <TouchableOpacity onPress={() => { /* هنا يمكن أن تضيف أكشن لتحميل أو فتح الملف */ }}>
+      <Text style={{ color: 'blue' }}>Click to open/download file</Text>
+    </TouchableOpacity>
+  </View>
+)}
+
+      <View style={{ flexDirection: 'row', justifyContent: 'space-around', paddingTop: 7 }}>
+        <Interaction>
+          <Ionicons
+            style={{
+              color: isNightMode ? secondary : 'rgba(0, 0, 0, 0.2)',
+            }}
+            name="heart-circle"
+            size={25}
+          />
+          <InteractionText style={{ color: isNightMode ? primary : '#000' }}>Like</InteractionText>
+        </Interaction>
+        <Interaction>
+          <Ionicons
+            style={{
+              color: isNightMode ? secondary : 'rgba(0, 0, 0, 0.2)',
+            }}
+            name="chatbubbles"
+            size={23}
+          />
+          <InteractionText style={{ color: isNightMode ? primary : '#000' }}>Comment</InteractionText>
+        </Interaction>
+      </View>
+    </View>
+  </View>
+))}
+
+
   </Animated.ScrollView>
 
   <View
