@@ -2,7 +2,7 @@ import multer from 'multer';
 
 
 export const FileValue = {
-    image: ['image/jpeg','image/png','image/webp'],
+    image: ['image/jpeg','image/png','image/webp','image/jpg'],
     file:['application/pdf'],
     video: ['video/mp4', 'video/x-msvideo', 'video/x-matroska'],
 }

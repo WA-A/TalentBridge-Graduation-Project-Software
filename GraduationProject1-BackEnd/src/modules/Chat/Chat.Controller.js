@@ -1,5 +1,6 @@
 import ChatModel from "../../Model/ChatModel.js";
 import cloudinary from './../../../utls/Cloudinary.js';
+import UserModel from "../../Model/User.Model.js";
 import fs from 'fs';
 
 
@@ -179,6 +180,7 @@ export const GetAllChats = async (req, res) => {
 
 
 export const GetChatMessages = async (req, res, next) => {
+    console.log("sama")
     try {
         const { ChatId } = req.params;
 
@@ -412,5 +414,50 @@ export const SearchMessages = async (req, res, next) => {
     } catch (error) {
         console.error("Error searching messages:", error);
         return next(error);
+    }
+};
+
+// دالة جلب بيانات المستخدمين في الشات
+export const GetChatUsers = async (req, res) => {
+    try {
+        const loggedInUserId = req.user.id; // ID المستخدم الحالي من الـ JWT أو الطلب
+         console.log(loggedInUserId);
+ 
+        // البحث عن جميع الدردشات الخاصة بالمستخدم
+        const chats = await ChatModel.find({
+            users: loggedInUserId
+        });
+
+        if (chats.length === 0) {
+            return res.status(404).json({ message: "No chats found for this user." });
+        }
+
+        // استخراج جميع معرفات المستخدمين في هذه الدردشات
+        const userIds = new Set(); // Set لضمان عدم التكرار
+        chats.forEach(chat => {
+            chat.users.forEach(userId => {
+                if (userId.toString() !== loggedInUserId) {
+                    userIds.add(userId.toString()); // تجاهل معرف المستخدم الحالي
+                }
+            });
+        });
+
+        // التأكد من وجود مستخدمين
+        if (userIds.size === 0) {
+            return res.status(404).json({ message: "No other users found in chats." });
+        }
+
+        // جلب بيانات المستخدمين
+        const users = await UserModel.find({
+            _id: { $in: Array.from(userIds) } // جلب فقط المستخدمين الموجودين في الدردشات
+        }).select("FullName PictureProfile _id"); // استرجاع الاسم الكامل والصورة والمعرف فقط
+
+        return res.status(200).json({
+            message: "Chat users retrieved successfully",
+            users,
+        });
+    } catch (error) {
+        console.error("Error fetching chat users:", error);
+        return res.status(500).json({ message: error.message });
     }
 };

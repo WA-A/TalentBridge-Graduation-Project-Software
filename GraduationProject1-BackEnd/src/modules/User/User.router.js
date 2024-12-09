@@ -8,11 +8,14 @@ import { Validation } from "../../MiddleWare/Validation.js";
 import * as schema from './User.Validation.js';
 
 
+//router.post('/createprofile',Validation(schema.CreateProfileSchema),auth(EndPoints.CreateProfile),fileUpload(FileValue.image).single('PictureProfile'),UserController.CreateProfile);
 
-router.post('/createprofile',auth(EndPoints.CreateProfile),fileUpload(FileValue.image).single('PictureProfile'),UserController.CreateProfile);
-router.patch('/updateprofile',auth(EndPoints.CreateProfile),fileUpload(FileValue.image).single('PictureProfile'),UserController.UpdateProfile);
-router.get('/viewownprofile',auth(EndPoints.CreateProfile),UserController.ViewOwnProfile);
-router.get('/viewotherprofile/:userId',auth(EndPoints.CreateProfile),UserController.ViewOtherProfile);
-router.get ('/test',UserController.test);
+
+router.post('/createprofile', auth(EndPoints.CreateProfile), fileUpload(FileValue.image).single('PictureProfile'), UserController.CreateProfile);
+router.patch('/updateprofile', Validation(schema.UpdateProfileSchema), auth(EndPoints.CreateProfile), fileUpload(FileValue.image).single('PictureProfile'), UserController.UpdateProfile);
+router.get('/viewownprofile', auth(EndPoints.CreateProfile), UserController.ViewOwnProfile);
+router.get('/viewotherprofile/:userId', auth(EndPoints.CreateProfile), UserController.ViewOtherProfile);
+router.get('/test', UserController.test);
+
 
 export default router
