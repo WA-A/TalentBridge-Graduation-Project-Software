@@ -97,14 +97,25 @@ export const UpdateProfile = async (req, res, next) => {
 //  View Own Profile
 export const ViewOwnProfile = async (req, res) => {
     try {
-        const user = await UserModel.findById(req.user.id);
+        console.log('Authenticated user:', req.user);
+
+        const user = await UserModel.findById(req.user.id).select('-Password -ConfirmPassword');
         if (!user) return res.status(404).json({ message: "User not found" });
 
-        res.status(200).json(user);
+        res.status(200).json({
+            FullName: user.FullName,
+            UserName: user.UserName,
+            Bio: user.Bio,
+            Location: user.Location,
+            PictureProfile: user.PictureProfile,
+            About: user.About,
+        });
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        console.error('Error fetching user profile:', error.message);
+        res.status(500).json({ message: "Server error", error: error.message });
     }
 };
+
 
 
 // View Other People's Profiles

@@ -5,9 +5,10 @@ import ProjectRouter from './modules/Projects/Projects.router.js'
 import PostRouter from './modules/Post/Post.Router.js'
 import CommentRouter from './modules/Comment/Comment.Router.js'
 import ChatRouter from "./modules/Chat/Chat.Router.js"
+import ApplicationTrainRouter from "./modules/Application/Application.router.js"
 import cors from 'cors';
 import dotenv from 'dotenv';
-dotenv.config(); // تحميل متغيرات البيئة
+dotenv.config(); 
 
 
 const Appinit = (app,express)=>{
@@ -20,6 +21,8 @@ const Appinit = (app,express)=>{
     app.use('/post',PostRouter);
     app.use('/comment',CommentRouter);
     app.use('/chat',ChatRouter);
+    app.use('/applicationtrain',ApplicationTrainRouter);
+
 
 
 

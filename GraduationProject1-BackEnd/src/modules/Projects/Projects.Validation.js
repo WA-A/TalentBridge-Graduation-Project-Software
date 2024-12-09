@@ -5,7 +5,15 @@ export const CreateProjectSchema = Joi.object({
     Description: Joi.string().required(),
     RequiredSkills: Joi.array().items(Joi.string()).required(),
     Field: Joi.string().required(),
-    DurationInMounths:Joi.number().required()
+    DurationInMounths:Joi.number().required(),
+    PositionRole:Joi.array().items(Joi.string()).required(),
+    WorkLoaction:Joi.string(),
+    Benefits:Joi.string(),
+        Price:Joi.string(),
+        ProjectFile:Joi.array().items(Joi.object({
+            secure_url: Joi.string().uri().required(),
+            public_id: Joi.string().required(),
+        })).optional(),
 });
 
 export const UpdateProjectSchema = Joi.object({
@@ -13,7 +21,15 @@ export const UpdateProjectSchema = Joi.object({
     Description: Joi.string().optional(),
     RequiredSkills: Joi.array().items(Joi.string()).optional(),
     DurationInMounths:Joi.number().required(),
-    ProjectId: Joi.string().required()
+    ProjectId: Joi.string().required(),
+    PositionRole:Joi.array().items(Joi.string()).required(),
+    WorkLoaction:Joi.string(),
+    Benefits:Joi.string(),
+        Price:Joi.string(),
+        ProjectFile:Joi.array().items(Joi.object({
+            secure_url: Joi.string().uri().required(),
+            public_id: Joi.string().required(),
+        })).optional(),
 
 });
 

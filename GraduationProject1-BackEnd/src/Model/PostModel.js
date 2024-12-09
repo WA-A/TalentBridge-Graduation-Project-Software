@@ -1,10 +1,6 @@
 import { Schema, Types, model } from 'mongoose';
 
 const PostSchema = new Schema({
-    Title: {
-        type: String,
-        required: true,
-    },
     Body: {
         type: String,
         required: true,
@@ -32,7 +28,7 @@ const PostSchema = new Schema({
         ref: 'User',
         required: true,
     },
-    ProfileImage: {
+    ProfilePicture: {
         type: String,
         required: true,
     },
@@ -44,6 +40,11 @@ const PostSchema = new Schema({
     ],
 }, {
     timestamps: true,
+});
+
+// Adding a virtual field to calculate time difference since post creation
+PostSchema.virtual('timeAgo').get(function () {
+    return moment(this.createdAt).fromNow(); // `fromNow` gives relative time (e.g., "5 minutes ago")
 });
 
 const PostModel = model('Post', PostSchema);

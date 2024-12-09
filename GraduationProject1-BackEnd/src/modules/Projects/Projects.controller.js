@@ -2,16 +2,53 @@ import ProjectsModel from "../../Model/ProjectsModel.js";
 
 
 // Create Project By Senior
-export const CreateProject = async(req,res)=>{
-    const {ProjectName,Description,RequiredSkills,Field,DurationInMounths} = req.body;
-    const CreatedBySenior = req.user._id;
-    
+export const CreateProject = async (req, res) => {
+    try {
+      const {
+        ProjectName,
+        Description,
+        RequiredSkills,
+        Field,
+        DurationInMounths,
+        PositionRole,
+        WorkLoaction,
+        Benefits,
+        Price,
+      } = req.body;
+  
+      console.log("Uploaded files:", req.files); 
+  
+      const FileProject = req.files['FileProject'] ? req.files['FileProject'].map(file => file.path) : [];
 
-    const project = await ProjectsModel.create({ProjectName,Description,RequiredSkills,Field,CreatedBySenior,DurationInMounths});
-    
-    return res.status(200).json({message:project});
-}
+      
 
+      console.log("FileProject paths:", FileProject);  
+  
+      const CreatedBySenior = req.user._id;
+  
+      const project = await ProjectsModel.create({
+        ProjectName,
+        Description,
+        RequiredSkills,
+        Field,
+        CreatedBySenior,
+        DurationInMounths,
+        PositionRole,
+        WorkLoaction,
+        Benefits,
+        Price,
+        FileProject:FileProject
+      });
+  
+      return res.status(201).json({ message: 'Project created successfully', project });
+    } catch (error) {
+      console.error("Error creating project:", error);
+      return res.status(500).json({ message: 'Error creating project', error: error.message });
+    }
+  };
+  
+  
+  
 //  View Own Project Created
 export const GetProjectsBySenior = async (req, res) => {
     
@@ -29,32 +66,47 @@ export const GetProjectsBySenior = async (req, res) => {
  
  // Edit Own Project Created
  export const UpdateProjectBySenior = async (req, res) => {
-    const { ProjectId } = req.params; 
-    const CreatedBySenior = req.user._id; 
+    try {
+        const { ProjectId } = req.params; 
+        const CreatedBySenior = req.user._id; 
 
-  
-    const { ProjectName, Description, RequiredSkills,DurationInMounths } = req.body;
+        const { ProjectName, Description, RequiredSkills, DurationInMounths, PositionRole, WorkLoaction, Benefits, Price } = req.body;
 
-    const updatedProject = await ProjectsModel.findByIdAndUpdate(
-        { _id: ProjectId, CreatedBySenior },
-        { 
-            $set: {
-                ProjectName, 
-                Description, 
-                RequiredSkills,
-                DurationInMounths
-            } 
-        },
-        { new: true } 
-    );
+        const updatedProject = await ProjectsModel.findByIdAndUpdate(
+            { _id: ProjectId, CreatedBySenior },
+            { 
+                $set: {
+                    ProjectName, 
+                    Description, 
+                    RequiredSkills,
+                    DurationInMounths,
+                    PositionRole,
+                    WorkLoaction,
+                    Benefits,
+                    Price,
+                } 
+            },
+            { new: true } 
+        );
+        if (req.files && req.files['FileProject']) {
+            const filePaths = req.files['FileProject'].map(file => file.path);
+            updatedProject.FileProject = filePaths;
+        }
 
-   
-    if (!updatedProject) {
-        return res.status(404).json({ message: "Project not found or you are not authorized to modify this project." });
+        if (!updatedProject) {
+            return res.status(404).json({ message: "Project not found or you are not authorized to modify this project." });
+        }
+
+        await updatedProject.save();
+
+        return res.status(200).json({ message: "Project updated successfully", project: updatedProject });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: "Error updating project", error: error.message });
     }
-
-    return res.status(200).json({ message: "Project updated successfully", project: updatedProject });
 };
+
+
 
 // Delete Own Project Created
 export const DeleteProjectBySenior = async (req, res) => {

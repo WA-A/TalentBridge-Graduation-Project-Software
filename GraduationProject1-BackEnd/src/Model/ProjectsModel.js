@@ -32,6 +32,27 @@ const ProjectsSchema = new Schema({
     type: Number,
     required: true, 
   },
+  PositionRole:
+    [{ type: String }]
+  ,
+  WorkLoaction:{
+    type: String,
+    default: 'Remotely'
+  },
+  Benefits: {  
+    type: String,  
+    required: true,  
+    trim: true,      
+  },
+  FileProject:[
+    {
+        type:Object,
+        required: false,
+    }
+],
+Price:{
+  type: String,
+},
   created_at: {
     type: Date,
     default: Date.now,
