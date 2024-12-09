@@ -9,7 +9,8 @@ export const test = async (req, res) => {
 // Create Own Profile
 export const CreateProfile = async (req, res) => {
     try {
-
+        console.log("Body:", req.body);
+        console.log("File:", req.file);
         const { About, Bio, UserName } = req.body;
         const authuser = req.user;
 
@@ -126,6 +127,7 @@ export const ViewOtherProfile = async (req, res) => {
 };
 
 
+//get data of user to chat
 
 
 
