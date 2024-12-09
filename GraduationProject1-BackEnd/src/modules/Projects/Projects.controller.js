@@ -26,7 +26,6 @@ export const CreateProject = async (req, res) => {
   
       const CreatedBySenior = req.user._id;
   
-      // إنشاء المشروع
       const project = await ProjectsModel.create({
         ProjectName,
         Description,

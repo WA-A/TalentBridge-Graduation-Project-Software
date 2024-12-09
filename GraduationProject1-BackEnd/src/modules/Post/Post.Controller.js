@@ -6,12 +6,13 @@ import PostModel from './../../Model/PostModel.js';
 export const CreatePost = async (req, res, next) => {
     try {
         const { Body } = req.body;
-        if ( !Body) {
-            return next(new Error(" Body are required."));
+        if (!Body) {
+            return next(new Error("Body is required."));
         }
 
-        const UserId = req.user._id; 
+        const UserId = req.user._id;
 
+        // رفع الصور والفيديوهات والملفات
         const images = req.files['images'] ? await Promise.all(req.files['images'].map(async (file) => {
             const { secure_url, public_id } = await cloudinary.uploader.upload(file.path, { folder: `GraduationProject1-Software/Post/${UserId}` });
             return { secure_url, public_id };
@@ -22,18 +23,18 @@ export const CreatePost = async (req, res, next) => {
             return { secure_url, public_id };
         })) : [];
 
-        const files = req.files['files'] ? req.files['files'].map(file => file.path) : []; 
+        const files = req.files['files'] ? req.files['files'].map(file => file.path) : [];
 
-        // Ensure the ProfileImage is coming from the user object
-        const ProfileImage = req.user.profileImage;
-
+        // الآن التأكد من الـ ProfilePicture:
+        const ProfilePicture = req.user.profileImage || '../../../../assets/face.jpg';  // استخدم صورة بروفايل افتراضية إذا لم تكن موجودة
+        
         const Post = await PostModel.create({
             Body,
             Images: images,
             Videos: videos,
             Files: files,
             UserId,
-            ProfileImage,  // Using the ProfileImage from req.user
+            ProfilePicture,  // إضافة صورة البروفايل
         });
 
         if (!Post) {
@@ -46,6 +47,7 @@ export const CreatePost = async (req, res, next) => {
         return next(error);
     }
 };
+
 
 
 // Update Own Post
@@ -120,35 +122,38 @@ export const UpdatePost = async (req, res, next) => {
 
 export const GetUserPosts = async (req, res, next) => {
     try {
-        const userId = req.params.userId;
+        const userId = req.user.id; // الحصول على ID اليوزر الذي قام بتسجيل الدخول من التوكن
 
-        // Validate the userId
         if (!userId) {
             return res.status(400).json({ message: "User ID is required." });
         }
 
-        // Fetch posts for the specified user and populate the UserId field with ProfileImage
+        // Fetch posts for the currently logged-in user and populate the UserId field with ProfileImage
         const posts = await PostModel.find({ UserId: userId })
-            .populate('UserId', 'ProfileImage');
+            .populate('UserId', 'ProfilePicture'); // Populate the ProfilePicture from the UserId
 
         if (!posts || posts.length === 0) {
             return res.status(404).json({ message: "No posts found for this user." });
         }
 
-        // Add profile image to each post
-        const postsWithProfileImage = posts.map(post => {
+        // Add profile image to each post if necessary
+        const postsWithProfilePicture = posts.map(post => {
+            const profilePicture = post.UserId && post.UserId.ProfilePicture
+                ? post.UserId.ProfilePicture
+                : '../../../../assets/face.jpg';  // Default profile picture if not available
             return {
-                ...post.toObject(), // Convert to plain object
-                ProfileImage: post.UserId.ProfileImage // Add ProfileImage from populated UserId
+                ...post.toObject(),
+                ProfilePicture: profilePicture
             };
         });
 
-        return res.status(200).json({ message: "Posts retrieved successfully", posts: postsWithProfileImage });
+        return res.status(200).json({ message: "Posts retrieved successfully", posts: postsWithProfilePicture });
     } catch (error) {
         console.error("Error retrieving posts:", error);
         return next(error);
     }
 };
+
 
 
 // Get All Posts

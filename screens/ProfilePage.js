@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useEffect,useState, useContext } from 'react';
 import { View, Text, Image, TouchableOpacity,TextInput, StyleSheet, FlatList,ScrollView, Animated, Button, Alert, Platform, } from 'react-native';
 import { Ionicons, Feather, FontAwesome5, EvilIcons, FontAwesome } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
@@ -8,6 +8,7 @@ import { NightModeContext } from './NightModeContext';
 import './../compnent/webCardStyle.css'
 import * as ImagePicker from 'expo-image-picker';
 import { Linking } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
     Colors,
     Card,
@@ -33,7 +34,8 @@ const ProfilePage = () => {
     const [scrollY] = useState(new Animated.Value(0));
     const [uploadType, setUploadType] = useState('link'); // "link" أو "image"
     const [image, setImage] = useState(null); // لتخزين الصورة
-  
+    const [showPosts, setShowPosts] = useState(false);
+    
     // وظيفة اختيار الصورة
     const pickImage = async () => {
       let result = await ImagePicker.launchImageLibraryAsync({
@@ -77,8 +79,12 @@ const ProfilePage = () => {
     const [UniversityName, setUniversityName] = useState('Najah');
   const [Degree, setDegree] = useState('BS');
   const [FieldOfStudy, setFieldOfStudy] = useState('CE');
- 
 
+  const [profileData, setProfileData] = useState(null); // حالة لتخزين بيانات البروفايل
+  const [bio, setBio] = useState(''); // لتخزين التعديل على Bio
+  const [about, setAbout] = useState(''); // لتخزين التعديل على About
+  const [isLoading, setIsLoading] = useState(true);
+  const [ownpost,setOwnpost]= useState(null);
   const handleSubmit = () => {
     // هنا يمكنك معالجة البيانات أو إرسالها إلى الخادم
     console.log({
@@ -88,6 +94,95 @@ const ProfilePage = () => {
      
     });
   };
+
+  const handleCreateProfile = async (values) => {
+    try {
+        const dataToSend = {
+          ...values,
+        };
+        console.log('Sending login Data:', dataToSend);
+
+      const token = await AsyncStorage.getItem('userToken');
+      if (!token) throw new Error('No token found');
+  
+      const baseUrl = Platform.OS === 'web'
+        ? 'http://localhost:3000'
+        : 'http://192.168.1.239:3000';
+  
+      const response = await fetch(`${baseUrl}/user/createprofile`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+  
+      if (!response.ok) throw new Error('Failed to fetch profile');
+  
+      const result = await response.json();
+      console.log('Profile data:', result); 
+  
+      setProfileData(result);
+      setIsLoading(false);
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+      setIsLoading(false);
+    }
+  };
+   
+    
+
+  useEffect(() => {
+    handleCreateProfile(); 
+  }, []);
+
+  if (isLoading) {
+    return <Text>Loading...</Text>; 
+  }
+
+  if (!profileData) {
+    return <Text>No profile data available</Text>; 
+  }
+
+
+  const handelGetUserPosts = async () => {
+    try {
+      const token = await AsyncStorage.getItem('userToken');
+      if (!token) throw new Error('No token found');
+  
+      const baseUrl = Platform.OS === 'web'
+        ? 'http://localhost:3000'
+        : 'http://192.168.1.239:3000';
+  
+      const response = await fetch(`${baseUrl}/post/getpost`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Wasan__${token}`,
+        },
+      });
+  
+      if (!response.ok) throw new Error('Failed to fetch posts');
+  
+      const result = await response.json();
+      console.log('User posts:', result);
+  
+      if (result.posts && result.posts.length > 0) {
+        setOwnpost(result.posts);
+      } else {
+        console.log('No posts found for this user');
+        setOwnpost([]);  
+      }
+  
+      setIsLoading(false);
+    } catch (error) {
+      console.error('Error fetching user posts:', error);
+      setIsLoading(false);
+    }
+  };
+  
+  
+
     return (
         <View style={{ flex: 1 }}>
             <View style={{
@@ -135,28 +230,31 @@ const ProfilePage = () => {
                 height: 60, // ارتفاع الجزء البنفسجي
               }}>
            {/* صورة البروفايل */}
-           <TouchableOpacity  style={{ position: 'absolute', top: 20, left: 20}}>
-    <View style={{
-        width: 80, // حجم الدائرة
-        height: 80, // حجم الدائرة
-        borderRadius: 40, // الشكل الدائري
-        overflow: 'hidden', // يجعل الصورة داخل الشكل الدائري
-        borderColor: '#000', // لون الإطار
-        borderWidth: 2, // عرض الإطار
-    }}>
-        <Image 
-            source={require('./../assets/img3.jpg')}
-            style={{
-                width: '100%',  // تأكد من تغطية المساحة الكاملة
-                height: '100%', // تأكد من تغطية المساحة الكاملة
-                objectFit: 'cover', // التأكد من ملاءمة الصورة داخل الدائرة
-              
-            }}
-            resizeMode="cover" // لتغطية الخلفية بالكامل
+           
+           <TouchableOpacity style={{ position: 'absolute', top: 20, left: 20 }} onPress={pickImage}>
+      <View
+        style={{
+          width: 80, // حجم الدائرة
+          height: 80, // حجم الدائرة
+          borderRadius: 40, // الشكل الدائري
+          overflow: 'hidden', // يجعل الصورة داخل الشكل الدائري
+          borderColor: '#000', // لون الإطار
+          borderWidth: 2, // عرض الإطار
+        }}
+      >
+        <Image
+          source={{
+            uri: image || profileData?.PictureProfile?.secure_url || 'https://via.placeholder.com/80', // استخدام الصورة المختارة أو صورة بروفايل أو صورة افتراضية
+          }}
+          style={{
+            width: '100%', // تأكد من تغطية المساحة الكاملة
+            height: '100%', // تأكد من تغطية المساحة الكاملة
+          }}
+          resizeMode="cover" // لتغطية الخلفية بالكامل
         />
-    </View>
+      </View>
+    </TouchableOpacity>
 
-</TouchableOpacity>
 
 
     {/* أيقونة الإشعارات */}
@@ -230,87 +328,226 @@ const ProfilePage = () => {
           paddingHorizontal: 20,
         }}
       >
-        {/* النصوص تحت الصورة */}
-        <View style={{ marginTop: 60,padding: 60, alignItems: 'flex-start'}}>
-          <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#000', marginBottom: 10 }}>
-            Full Name
-          </Text>
+        
+       
+      {/* النصوص تحت الصورة */}
+      
+        <View style={{ marginTop: 60, padding: 60, alignItems: 'flex-start' }}>
+        <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#000', marginBottom: 10 }}>
+          {profileData.FullName}
+        </Text>
+        <Text style={{ fontSize: 18, fontWeight: '500', color: '#000', marginBottom: 10 }}>
+          {profileData.UserName}
+        </Text>
 
-          <Text style={{ fontSize: 18, fontWeight: '500', color: '#000', marginBottom: 10 }}>
-            UserName
-          </Text>
+        <TextInput style={{ fontSize: 18, fontWeight: '500', color: '#000', marginBottom: 10 }}>
+          {profileData.Bio}
+        </TextInput>
 
-          <Text style={{ fontSize: 18, fontWeight: '500', color: '#000', marginBottom: 10 }}>
-            Bio
-          </Text>
+        <Text style={{ fontSize: 12, color: '#000', marginBottom: 10 }}>
+          {profileData.Location}
+        </Text>
 
-          <Text style={{ fontSize: 12, color: '#000', marginBottom: 10 }}>
-            Location
-          </Text>
+        <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#000', marginBottom: 5 }}>
+          About
+        </Text>
 
-          <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#000', marginBottom: 5 }}>
-            About
-          </Text>
-
-          <Text style={{ fontSize: 12, color: '#000' }}>
-            This is a sample about paragraph. It gives additional information about the user.
-          </Text>
+        <TextInput style={{ fontSize: 12, color: '#000' }}>
+          {profileData.About}
+        </TextInput>
         </View>
 
         {/* أزرار البوستات والتعليقات */}
-        <View style={{
-          flexDirection: 'row',
-          justifyContent: 'center',
-          width: '100%',
-          marginTop: 30,
-          marginBottom: 20, // إضافة مساحة أسفل الأزرار
-        }}>
-          {/* زر البوستات */}
-          <TouchableOpacity 
-            onPress={() => console.log('Go to Posts')} // فعّل الحدث المناسب
-            style={{
-              backgroundColor: '#C99FA9',
-              padding: 15, 
-              borderRadius: 25, 
-              flexDirection: 'row', 
-              alignItems: 'center', 
-              justifyContent: 'center',
-              width: '40%', 
-              marginHorizontal: 10,
-              shadowColor: '#000', 
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.2,
-              shadowRadius: 5,
-            }}
-          >
-            <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#000' }}>
-              Posts
-            </Text>
-          </TouchableOpacity>
+        <View
+  style={{
+    flexDirection: 'row',
+    flexWrap: 'wrap', // السماح بالتفاف العناصر
+    justifyContent: 'center',
+    width: '100%',
+    marginTop: 30,
+    marginBottom: 20,
+  }}
+>
+  {/* زر الرسائل */}
+  <TouchableOpacity
+    onPress={() => console.log('Go to Messages')}
+    style={{
+      backgroundColor: '#C99FA9',
+      padding: 15,
+      borderRadius: 25,
+      alignItems: 'center',
+      justifyContent: 'center',
+      width: '45%', // عرض الزر 45% لتوفير مساحة للزر الآخر
+      margin: 10, // إضافة مسافة بين الأزرار
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.2,
+      shadowRadius: 5,
+    }}
+  >
+    <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#000' }}>Message</Text>
+  </TouchableOpacity>
 
-          {/* زر التعليقات */}
-          <TouchableOpacity 
-            onPress={() => console.log('Go to Comments')} // فعّل الحدث المناسب
+  {/* زر الطلبات */}
+  <TouchableOpacity
+    onPress={() => console.log('Go to Connect')}
+    style={{
+      backgroundColor: '#C99FA9',
+      padding: 15,
+      borderRadius: 25,
+      alignItems: 'center',
+      justifyContent: 'center',
+      width: '45%',
+      margin: 10,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.2,
+      shadowRadius: 5,
+    }}
+  >
+    <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#000' }}>Connect</Text>
+  </TouchableOpacity>
+
+  {/* زر البوستات */}
+  {/* زر Posts */}
+  <TouchableOpacity
+        onPress={handelGetUserPosts} // استدعاء الدالة عند الضغط على الزر
+        style={{
+          backgroundColor: '#C99FA9',
+          padding: 15,
+          borderRadius: 25,
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: '45%',
+          margin: 10,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.2,
+          shadowRadius: 5,
+        }}
+      >
+        <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#000' }}>Posts</Text>
+      </TouchableOpacity>
+
+      {/* عرض مؤشر تحميل عند جلب البيانات */}
+      {isLoading && <ActivityIndicator size="large" color="#C99FA9" />}
+
+      {/* عرض البوستات إذا كانت الحالة showPosts تساوي true */}
+      {showPosts && ownpost && Array.isArray(ownpost) && ownpost.length > 0 ? (
+        ownpost.map((post, index) => (
+          <View
+            key={index}
             style={{
-              backgroundColor: '#C99FA9',
-              padding: 15, 
-              borderRadius: 25, 
-              flexDirection: 'row', 
-              alignItems: 'center', 
-              justifyContent: 'center',
-              width: '40%', 
-              marginHorizontal: 10,
-              shadowColor: '#000', 
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.2,
-              shadowRadius: 5,
+              backgroundColor: '#f9f9f9',
+              padding: 15,
+              borderRadius: 10,
+              margin: 10,
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 1 },
+              shadowOpacity: 0.1,
+              shadowRadius: 3,
             }}
           >
-            <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#000' }}>
-              Comments
-            </Text>
-          </TouchableOpacity>
-        </View>
+            <Text style={{ fontWeight: 'bold', marginBottom: 5 }}>{post.UserId}</Text>
+            <Text>{post.Body}</Text>
+            {post.Images && post.Images.length > 0 && (
+              <Image
+                source={{ uri: post.Images[0].secure_url }}
+                style={{ width: '100%', height: 200, marginTop: 10 }}
+              />
+            )}
+          </View>
+        ))
+      ) : showPosts && !isLoading ? (
+        <Text>No posts available.</Text>
+      ) : null}
+
+      {/* عرض البوستات إذا كانت الحالة true */}
+      {showPosts && ownpost && Array.isArray(ownpost) && ownpost.length > 0 ? (
+        ownpost.map((post, index) => (
+          <View
+            key={index}
+            style={
+              Platform.OS === 'web'
+                ? {
+                    marginTop: 30,
+                    width: isSidebarVisible ? '50%' : '50%',
+                    marginLeft: isSidebarVisible ? '35%' : 0,
+                  }
+                : { width: '100%', alignItems: 'center', marginBottom: 10 }
+            }
+          >
+            <View
+              style={{
+                backgroundColor: isNightMode ? '#454545' : secondary,
+                padding: 10,
+                borderRadius: 15,
+                width: '95%',
+                boxShadow: Platform.OS === 'web' ? '0 4px 10px rgba(0,0,0,0.1)' : undefined,
+                margin: 10,
+              }}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center', padding: 10 }}>
+                <Image
+                  source={{ uri: post.ProfilePicture }}
+                  style={{
+                    width: Platform.OS === 'web' ? 80 : 40,
+                    height: Platform.OS === 'web' ? 80 : 40,
+                    borderRadius: Platform.OS === 'web' ? 40 : 25,
+                    marginRight: 10,
+                    objectFit: 'cover',
+                  }}
+                />
+                <View>
+                  <Text style={{ color: isNightMode ? primary : '#000', fontWeight: 'bold', fontSize: 16 }}>
+                    {post.UserId}
+                  </Text>
+                  <Text style={{ color: darkLight, fontSize: 12 }}>
+                    {new Date(post.createdAt).toLocaleString()}
+                  </Text>
+                </View>
+              </View>
+
+              <Text style={{ color: isNightMode ? primary : '#000', padding: 15 }}>{post.Body}</Text>
+
+              {post.Images && post.Images.length > 0 && (
+                <Image
+                  source={{ uri: post.Images[0].secure_url }}
+                  style={{
+                    width: Platform.OS === 'web' ? '90%' : '100%',
+                    height: Platform.OS === 'web' ? 500 : 320,
+                    alignSelf: 'center',
+                  }}
+                />
+              )}
+            </View>
+          </View>
+        ))
+      ) : (
+        showPosts && <Text>No posts available.</Text> // عرض رسالة في حال عدم وجود بوستات
+      )}
+          
+  {/* زر التعليقات */}
+  <TouchableOpacity
+    onPress={() => console.log('Go to Comments')}
+    style={{
+      backgroundColor: '#C99FA9',
+      padding: 15,
+      borderRadius: 25,
+      alignItems: 'center',
+      justifyContent: 'center',
+      width: '45%',
+      margin: 10,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.2,
+      shadowRadius: 5,
+    }}
+  >
+    <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#000' }}>Comments</Text>
+  </TouchableOpacity>
+</View>
+
 
                   
 
