@@ -159,6 +159,7 @@ const handleLogout = async () => {
     const handleGetAllPosts = async () => {
       try {
         const token = await AsyncStorage.getItem('userToken');
+        console.log('Token:', token); 
         if (!token) {
           throw new Error('No token found');
         }
@@ -167,25 +168,29 @@ const handleLogout = async () => {
           ? 'http://localhost:3000'
           : 'http://192.168.1.239:3000';
     
-        const response = await fetch(`${baseUrl}/post/getallpost`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-          },
-        });
+          const response = await fetch(`${baseUrl}/post/getallpost`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Wasan__${token}`,
+            },
+          });
+          
+          console.log('Response:', response); 
+          
+          if (!response.ok) {
+            throw new Error('Failed to fetch posts');
+          }
+          
+          const data = await response.json();
+          console.log('Fetched posts:', data);
     
-        if (!response.ok) {
-          throw new Error('Failed to fetch posts');
-        }
-    
-        const result = await response.json();
-    
-        if (Array.isArray(result.posts)) {
-          setPosts(result.posts);
-        } else {
-          console.error('Received data is not an array', result);
-        }
+          if (Array.isArray(data.posts) && data.posts.length > 0) {
+            setPosts(data.posts);
+          } else {
+            console.error('No posts found or data is not an array', data);
+          }
+          
     
         setIsLoading(false);
       } catch (error) {
@@ -193,6 +198,7 @@ const handleLogout = async () => {
         setIsLoading(false);
       }
     };
+    
     
     
     useEffect(() => {
@@ -331,41 +337,28 @@ const handleLogout = async () => {
   >
   <Text style={{ fontSize: 24, fontWeight: 'bold' }}>Posts</Text>
   
-  {posts && posts.posts && Array.isArray(posts.posts) && posts.posts.map((post, index) => (
+  {posts && Array.isArray(posts.posts) && posts.posts.map((post, index) => (
   <View
     key={index}
-    className={Platform.OS === 'web' ? 'container-card' : ''}
-    style={
-      Platform.OS === 'web'
-        ? isSidebarVisible
-          ? { marginTop: 30, width: '50%', marginLeft: '35%' }
-          : { marginTop: 30, width: '50%' }
-        : { width: '100%', alignItems: 'center', marginBottom: 10 }
-    }
+    style={{
+      width: Platform.OS === 'web' ? '50%' : '100%',
+      alignItems: 'center',
+      marginBottom: 10,
+      backgroundColor: isNightMode ? '#454545' : secondary,
+    }}
   >
     <View
-      className={Platform.OS === 'web' ? 'card' : ''}
-      style={
-        Platform.OS === 'web'
-          ? {
-              backgroundColor: secondary,
-              padding: 10,
-              borderRadius: 15,
-              width: '100%',
-              boxShadow: '0 4px 10px rgba(0,0,0,0.1)',
-              backgroundColor: isNightMode ? '#454545' : secondary,
-            }
-          : {
-              backgroundColor: isNightMode ? '#454545' : secondary,
-              width: '95%',
-              borderRadius: 10,
-              margin: 10,
-            }
-      }
+      style={{
+        backgroundColor: isNightMode ? '#454545' : secondary,
+        width: '95%',
+        borderRadius: 10,
+        margin: 10,
+        padding: 10,
+      }}
     >
       <View style={{ flexDirection: 'row', alignItems: 'center', padding: 10 }}>
         <Image
-          source={{ uri: post.ProfilePicture }} // صورة المستخدم من البيانات
+          source={{ uri: post.ProfilePicture }}
           style={{
             width: Platform.OS === 'web' ? 80 : 40,
             height: Platform.OS === 'web' ? 80 : 40,
@@ -379,21 +372,23 @@ const handleLogout = async () => {
         />
         <View>
           <Text style={{ color: isNightMode ? primary : '#000', fontWeight: 'bold', fontSize: 16 }}>
-            UserId {/* أو استخدم حقل آخر إذا كان لديك */}
+            {post.UserId}
           </Text>
           <Text style={{ color: darkLight, fontSize: 12 }}>
-            {new Date(post.createdAt).toLocaleString()} {/* استخدام تاريخ المنشور */}
+            {new Date(post.createdAt).toLocaleString()}
           </Text>
         </View>
       </View>
 
-     {/* <Text style={{ color: isNightMode ? primary : '#000', padding: 15 }}>{post.Title}</Text>  عرض العنوان */}
-      <Text style={{ color: isNightMode ? primary : '#000', padding: 15 }}>{post.Body}</Text> {/* عرض النص */}
+      <Text style={{ color: isNightMode ? primary : '#000', padding: 15 }}>
+        {post.Body}
+      </Text>
 
       {/* عرض الصور إذا كانت موجودة */}
-      {post.Images && post.Images.length > 0 && (
+      {post.Images && post.Images.length > 0 && post.Images.map((image, idx) => (
         <Image
-          source={{ uri: post.Images[0].secure_url }} // عرض أول صورة من Images
+          key={idx}
+          source={{ uri: image.secure_url }}
           style={{
             width: Platform.OS === 'web' ? '90%' : '100%',
             height: Platform.OS === 'web' ? 500 : 320,
@@ -401,27 +396,38 @@ const handleLogout = async () => {
             alignSelf: 'center',
           }}
         />
-      )}
-      {post.Videos && post.Videos.length > 0 && (
-  <RNVideo
-    source={{ uri: post.Videos[0].secure_url }} 
-    style={{
-      width: Platform.OS === 'web' ? '90%' : '100%',
-      height: Platform.OS === 'web' ? 500 : 320,
-      alignSelf: 'center',
-    }}
-    controls
-  />
-)}
+      ))}
 
-{post.Files && post.Files.length > 0 && (
-  <View style={{ alignItems: 'center', marginVertical: 10 }}>
-    <Text style={{ fontWeight: 'bold' }}>File:</Text>
-    <TouchableOpacity onPress={() => { /* هنا يمكن أن تضيف أكشن لتحميل أو فتح الملف */ }}>
-      <Text style={{ color: 'blue' }}>Click to open/download file</Text>
-    </TouchableOpacity>
-  </View>
-)}
+      {/* عرض الفيديوهات إذا كانت موجودة */}
+      {post.Videos && post.Videos.length > 0 && post.Videos.map((video, idx) => (
+        <RNVideo
+          key={idx}
+          source={{ uri: video.secure_url }}
+          style={{
+            width: Platform.OS === 'web' ? '90%' : '100%',
+            height: Platform.OS === 'web' ? 500 : 320,
+            alignSelf: 'center',
+          }}
+          controls
+        />
+      ))}
+
+      {/* عرض الملفات إذا كانت موجودة */}
+      {post.Files && post.Files.length > 0 && (
+        <View style={{ alignItems: 'center', marginVertical: 10 }}>
+          <Text style={{ fontWeight: 'bold' }}>File:</Text>
+          {post.Files.map((file, index) => (
+            <TouchableOpacity
+              key={index}
+              onPress={() => Linking.openURL(file.secure_url)}
+            >
+              <Text style={{ color: 'blue' }}>
+                {file.name || 'Click to open/download file'}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
 
       <View style={{ flexDirection: 'row', justifyContent: 'space-around', paddingTop: 7 }}>
         <Interaction>
@@ -448,6 +454,8 @@ const handleLogout = async () => {
     </View>
   </View>
 ))}
+
+
 
 
   </Animated.ScrollView>

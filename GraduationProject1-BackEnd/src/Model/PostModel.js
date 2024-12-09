@@ -28,7 +28,7 @@ const PostSchema = new Schema({
         ref: 'User',
         required: true,
     },
-    ProfileImage: {
+    ProfilePicture: {
         type: String,
         required: true,
     },
