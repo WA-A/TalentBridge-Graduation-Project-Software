@@ -14,6 +14,7 @@ export const CreateProject = async (req, res) => {
         WorkLoaction,
         Benefits,
         Price,
+        
       } = req.body;
   
       console.log("Uploaded files:", req.files); 

@@ -142,3 +142,27 @@ export const DeleteComment = async (req, res, next) => {
 };
 
 
+// Get All Own Comments 
+export const GetAllOwnComments = async (req, res, next) => {
+    try {
+        const userId = req.user._id; 
+
+        const comments = await CommentModel.find({ UserId: userId }).populate('PostId', 'Body'); 
+
+        const formattedComments = comments.map(comment => ({
+            _id: comment._id,
+            Text: comment.Text,
+            Images: comment.Images,
+            Videos: comment.Videos,
+            Files: comment.Files,
+            PostId: comment.PostId, 
+            createdAt: comment.createdAt,
+            updatedAt: comment.updatedAt,
+        }));
+
+        return res.status(200).json({ message: "Comments retrieved successfully", comments: formattedComments });
+    } catch (error) {
+        console.error("Error retrieving user's comments:", error);
+        return next(error);
+    }
+};
