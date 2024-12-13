@@ -429,7 +429,7 @@ const fetchFriends = async () => {
   }
   const data = await response.json();
   console.log('Friends:',data );
-    setFriends(data.users); // تخزين قائمة الأصدقاء
+    setFriends(data.users); 
   } catch (error) {
     console.error('Error fetching friends:', error);
 }

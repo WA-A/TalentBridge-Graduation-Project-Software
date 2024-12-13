@@ -1,11 +1,12 @@
 import React, { useState ,useContext} from 'react';
-import {View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
+import {View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet,Button,Platform } from 'react-native';
 import { Ionicons, Feather, FontAwesome5, EvilIcons,FontAwesome6 } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { Dimensions } from 'react-native';
 import { useFonts } from 'expo-font';
 import { NightModeProvider, NightModeContext } from './NightModeContext';
-
+import * as DocumentPicker from 'expo-document-picker';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
     StyledContainer,
     InnerContainer,
@@ -43,7 +44,9 @@ const AddProjectsPage = () => {
     const [field, setField] = useState('');
     const [duration, setDuration] = useState('');
     const [positionRole, setPositionRole] = useState('');
-
+    const [WorkLocation, setWorkLocation] = useState('');
+    const [Benefits, setBenefits] = useState('');
+    const [Price, setPrice] = useState('');
         
     const nav = useNavigation();
     let [fontsLoaded] = useFonts({
@@ -54,21 +57,14 @@ const AddProjectsPage = () => {
         return <View><Text>Loading...</Text></View>; // Optionally show a loading indicator
     }
     const { isNightMode, toggleNightMode } = useContext(NightModeContext);
-         
+      
+    
+      
 
-    const handleAddProject = () => {
-        // Handle adding the project here
-        // You may want to call an API to save the project in your backend
-        console.log({
-            projectName,
-            description,
-            requiredSkills,
-            field,
-            status,
-            duration,
-            positionRole
-        });
-    };
+  
+    
+    
+    
 
 
     return (
@@ -158,6 +154,51 @@ const AddProjectsPage = () => {
                     />
                 </View>
 
+                <View style={styles.inputContainer}>
+                    <Text style={styles.label}>Work Location</Text>
+                    <TextInput
+                        style={styles.input}
+                        value={WorkLocation}
+                        onChangeText={setWorkLocation}
+                        placeholder="Enter Work Location"
+                    />
+                </View>
+
+                <View style={styles.inputContainer}>
+                    <Text style={styles.label}>Benefits</Text>
+                    <TextInput
+                        style={styles.input}
+                        value={Benefits}
+                        onChangeText={setBenefits}
+                        placeholder="Enter Benefits"
+                    />
+                </View>
+
+                <View style={styles.inputContainer}>
+                    <Text style={styles.label}>Price</Text>
+                    <TextInput
+                        style={styles.input}
+                        value={Price}
+                        onChangeText={setPrice}
+                        placeholder="Enter Price"
+                    />
+                </View>
+
+                <View style={styles.container}>
+            <Text style={styles.label}>File Project</Text>
+            <TouchableOpacity style={styles.fileButton} onPress={handleFilePicker}>
+                <Text style={styles.submitText}>Select File</Text>
+            </TouchableOpacity>
+            {selectedFile && (
+                <View style={styles.fileDetails}>
+                    <Text>File Name: {selectedFile[0]?.name}</Text>
+                    <Text>File Type: {selectedFile[0]?.type}</Text>
+                    <Text>File Size: {selectedFile[0]?.size} bytes</Text>
+                </View>
+            )}
+        </View>
+
+
                 <TouchableOpacity style={styles.submitButton} onPress={handleAddProject}>
                     <Text style={styles.submitText}>Add Project</Text>
                 </TouchableOpacity>
@@ -226,7 +267,7 @@ const styles = StyleSheet.create({
         input: {
             height: 40,
             fontSize: 16,
-            color: fourhColor,
+            color: "#000",
             paddingHorizontal: 10,
         },
         submitButton: {
@@ -236,6 +277,7 @@ const styles = StyleSheet.create({
             alignItems: 'center',
             marginVertical: 20,
         },
+
         submitText: {
             fontSize: 18,
             fontWeight: 'bold',
@@ -247,6 +289,16 @@ const styles = StyleSheet.create({
             padding: 20,
             backgroundColor: secondary,
             elevation: 3,
+        },
+            fileDetails: {
+                marginTop: 10,
+            },
+       fileButton: {
+            backgroundColor: careysPink,
+            paddingVertical: 15,
+            borderRadius: 8,
+            alignItems: 'center',
+            marginVertical: 20,
         },
 
 });
