@@ -7,7 +7,7 @@ import { Validation } from "../../MiddleWare/Validation.js";
 import * as schema from './Auth.Validation.js';
 
 import { auth } from "../../MiddleWare/auth.js";
-import passport from "./GoogleAuth.js"
+import passport from "../auth/GoogleAuth.js"
 
 
 

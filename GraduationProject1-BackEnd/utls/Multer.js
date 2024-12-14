@@ -8,7 +8,6 @@ export const FileValue = {
 }
 
 function fileUpload(customValue = []){
-    
     const storage = multer.diskStorage(
          {
         //     destination:(req,res,cb)=>{ // cb is function call back
@@ -24,7 +23,9 @@ function fileUpload(customValue = []){
     );
 
     function fileFilter (req, file, cb) {
+
          if (customValue.includes(file.mimetype)){
+
         cb(null,true);
      }
      else{
@@ -33,6 +34,7 @@ function fileUpload(customValue = []){
     
        }
        const upload = multer ({fileFilter,storage});
+
        return upload;
 }
 

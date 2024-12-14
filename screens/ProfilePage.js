@@ -1,6 +1,7 @@
 import React, { useEffect,useState, useContext } from 'react';
-import { View, Text, Image, TouchableOpacity,TextInput, StyleSheet, FlatList,ScrollView, Animated, Button, Alert, Platform, } from 'react-native';
-import { Ionicons, Feather, FontAwesome5, EvilIcons, FontAwesome } from '@expo/vector-icons';
+import { View, Text, Image, TouchableOpacity,TextInput, StyleSheet, FlatList,ScrollView, Animated, Button, Alert, Platform } from 'react-native';
+import { Ionicons, Feather, FontAwesome5, EvilIcons, FontAwesome,MaterialIcons
+} from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { Dimensions } from 'react-native';
 import { useFonts } from 'expo-font';
@@ -9,6 +10,8 @@ import './../compnent/webCardStyle.css'
 import * as ImagePicker from 'expo-image-picker';
 import { Linking } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import io from 'socket.io-client';
+import Modal from 'react-native-modal';
 import {
     Colors,
     Card,
@@ -23,32 +26,25 @@ import {
     ReactionOfPost,
     Interaction,
     InteractionText,
-} from './../compnent/Style'
+} from '../compnent/Style'
+import { use } from 'react';
 // Color constants
-const { secondary, primary, careysPink, darkLight, fourhColor, tertiary, fifthColor } = Colors;
-const { width } = Dimensions.get('window');
+const { secondary, primary, careysPink, darkLight, fourhColor, tertiary, fifthColor,firstColor } = Colors;
+const { width, height } = Dimensions.get('window');
 
-const ProfilePage = () => {
+
+export default function ProfilePage ({ navigation}) {
+
     const nav = useNavigation();
     const { isNightMode, toggleNightMode } = useContext(NightModeContext);
     const [scrollY] = useState(new Animated.Value(0));
     const [uploadType, setUploadType] = useState('link'); // "link" أو "image"
     const [image, setImage] = useState(null); // لتخزين الصورة
     const [showPosts, setShowPosts] = useState(false);
+
+
     
-    // وظيفة اختيار الصورة
-    const pickImage = async () => {
-      let result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [4, 3],
-        quality: 1,
-      });
-    
-      if (!result.canceled) {
-        setImage(result.uri);
-      }
-    }; 
+  
 
 
     const [skill, setSkill] = useState(''); // لتخزين المهارة الحالية
@@ -83,58 +79,417 @@ const ProfilePage = () => {
   const [profileData, setProfileData] = useState(null); // حالة لتخزين بيانات البروفايل
   const [bio, setBio] = useState(''); // لتخزين التعديل على Bio
   const [about, setAbout] = useState(''); // لتخزين التعديل على About
+  const [profileImage,setProfileimage]=useState('');
+  const [CoverImage,setCoverimage]=useState('');
+  const [location,setLocation]= useState('');
+  const [FullName,setFullName]=useState('');
+  const [userName,seUserName]= useState('');
+  const [role,setRole]= useState('');
+  const [creativeDegree,setCreativeDegree]= useState('');
+
   const [isLoading, setIsLoading] = useState(true);
   const [ownpost,setOwnpost]= useState(null);
-  const handleSubmit = () => {
-    // هنا يمكنك معالجة البيانات أو إرسالها إلى الخادم
-    console.log({
-      SchoolName,
-      Degree,
-      FieldOfStudy,
-     
-    });
+  
+  const socket = io('http://192.168.1.239:3000'); // السيرفر المحلي
+
+  //forEditAndCreat
+  const [newFullName,setNewFullName]=useState('');
+  const [newuserName,setNewUserName]= useState('');
+  const [newprofileImage,setnewProfileImage] = useState(null);
+  const [newcoverImage, setnewCoverImage] = useState(null);
+  const [newbio, setnewBio] = useState('');
+  const [newlocation, setnewLocation] = useState('');
+  const [newabout, setnewAbout] = useState('');
+  const [isModalVisible, setIsModalVisible] = useState(false); // متغير لحالة المودال
+  const [cancelled,setIsCancled]=useState(false);
+
+  const cancleEdit = ()=>{
+    setnewProfileImage(profileImage);
+    setnewCoverImage(CoverImage);
+    setnewAbout(about);
+    setnewBio(bio);
+    setnewLocation(location);
+    setNewFullName(FullName);
+    setNewUserName(userName);
+    setIsCancled(true);
+    setIsModalVisible(false)  
+  };
+  const pickImage = async (type) => {
+    try {
+      // طلب إذن الوصول إلى مكتبة الصور
+      let permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (permissionResult.granted === false) {
+        Alert.alert('Permission required', 'You need to grant permission to access the gallery.');
+        return;
+      }
+      let result ;
+      // إطلاق نافذة لاختيار الصورة
+      if (type === 'profile') {
+
+       result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect: [4, 5],
+        quality: 1,
+      });
+    }
+    if (type === 'cover') {
+
+     result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect: [9, 7],
+        quality: 1,
+      });
+    }
+      console.log(result);
+      // إذا تم اختيار صورة
+      if (!result.canceled) {
+        if (type === 'profile') {
+         setnewProfileImage(result.assets[0].uri); // تعيين صورة البروفايل
+        } 
+        else {
+          setnewCoverImage(result.assets[0].uri); // تعيين صورة الغلاف
+        }
+      } 
+    } catch (error) {
+      console.log('Error picking image: ', error);
+    }
   };
 
-  const handleCreateProfile = async (values) => {
-    try {
-        const dataToSend = {
-          ...values,
-        };
-        console.log('Sending login Data:', dataToSend);
+  const base64ToBlob = (base64Data, contentType = 'image/jpeg') => {
+    const byteCharacters = atob(base64Data.split(',')[1]);
+    const byteArrays = [];
+  
+    for (let offset = 0; offset < byteCharacters.length; offset += 512) {
+      const slice = byteCharacters.slice(offset, offset + 512);
+      const byteNumbers = new Array(slice.length);
+      for (let i = 0; i < slice.length; i++) {
+        byteNumbers[i] = slice.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      byteArrays.push(byteArray);
+    }
+  
+    return new Blob(byteArrays, { type: contentType });
+  };
+  
 
+  
+
+
+// دالة فتح وإغلاق المودال
+const toggleModal = () => {
+  setIsModalVisible(!isModalVisible);
+};
+
+  const baseUrl = Platform.OS === 'web' 
+? 'http://localhost:3000' 
+: 'http://192.168.1.239:3000'; // عنوان IP الشبكة المحلية للجوال
+
+
+
+
+
+ //////////////////////////////SEARCH //////////////////////////////////
+
+ const [searchQuery, setSearchQuery] = useState('');
+   
+
+ /////////////////////////////////////////////////////////////////
+
+
+
+  const handleViewProfile = async () => {
+    console.log("sama");
+     try {
+       const token = await AsyncStorage.getItem('userToken'); // الحصول على التوكن من التخزين
+       console.log(token);
+       if (!token) {
+         console.error('Token not found');
+         return;
+     }
+    
+     const response = await fetch(`${baseUrl}/User/ViewOwnProfile`, {
+       method: 'GET',
+         headers: {
+             'Content-Type': 'application/json',
+             'Authorization': `Wasan__${token}`, // تأكد من كتابة التوكن بالشكل الصحيح
+         },
+       });
+   
+       if (!response.ok) {
+         throw new Error(`HTTP error! status: ${response.status}`);
+     }
+     const data = await response.json();
+     console.log('ProfileData:',data );
+     setProfileData(data); 
+     setFullName(data.FullName);
+     seUserName(data.UserName);
+     setAbout(data.About);
+     setBio(data.Bio);
+     setLocation(data.Location);
+     setProfileimage(data.PictureProfile?.secure_url || '');
+     setCoverimage(data.CoverImage?.secure_url || '');
+     setnewProfileImage(profileImage);
+     setnewCoverImage(CoverImage);
+     setnewAbout(about);
+     setnewBio(bio);
+     setnewLocation(location);
+     setNewFullName(FullName);
+     setNewUserName(userName);
+     setSearchQuery(data.FullName);
+     socket.emit('profileUpdated', data.user); // إرسال التحديث للسيرفر
+
+     console.log("Hi",FullName, bio, about, userName, location, CoverImage, profileImage);
+     
+     } catch (error) {
+       console.error('Error fetching ProfileData:', error);
+   }
+   finally {
+     setIsLoading(false);
+   }
+  };
+
+
+  const handleUpdateProfile = async (values) => {
+    try {
       const token = await AsyncStorage.getItem('userToken');
-      if (!token) throw new Error('No token found');
+      if (!token) {
+        console.error('Token not found');
+        return;
+      }
   
-      const baseUrl = Platform.OS === 'web'
-        ? 'http://localhost:3000'
-        : 'http://192.168.1.239:3000';
+      // إعداد البيانات باستخدام FormData
+      const formData = new FormData();
   
+      // إضافة الحقول النصية
+      formData.append('Bio', newbio);
+      formData.append('Location', newlocation);
+      formData.append('About', newabout);
+      formData.append('UserName', newuserName);
+  
+      // إضافة صورة البروفايل إذا كانت موجودة
+      if (newprofileImage) {
+        if (Platform.OS === 'web') {
+          // استخدام Blob للويب
+          const profileBlob = base64ToBlob(newprofileImage, 'image/jpeg');
+          formData.append('PictureProfile', profileBlob, 'profile.jpg');
+        } else {
+          // استخدام uri للموبايل
+          formData.append('PictureProfile', {
+            uri: newprofileImage,
+            type: 'image/jpeg',
+            name: 'profile.jpg',
+          });
+        }
+      }
+  
+      // إضافة صورة الغلاف
+      if (newcoverImage) {
+        if (Platform.OS === 'web') {
+          // استخدام Blob للويب
+          const coverBlob = base64ToBlob(newcoverImage, 'image/jpeg');
+          formData.append('CoverImage', coverBlob, 'cover.jpg');
+        } else {
+          // استخدام uri للموبايل
+          formData.append('CoverImage', {
+            uri: newcoverImage,
+            type: 'image/jpeg',
+            name: 'cover.jpg',
+          });
+        }
+      }
+  
+      console.log('Sending updated profile data:', formData);
+  
+      const response = await fetch(`${baseUrl}/user/updateprofile`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Wasan__${token}`,
+        },
+        body: formData, // إرسال البيانات كـ FormData
+      });
+  
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Something went wrong');
+      }
+  
+      const data = await response.json();
+      console.log('User profile updated successfully:', data);
+  
+      // تحديث البيانات في الواجهة الأمامية
+      setAbout(data.user.About);
+      seUserName(data.user.UserName);
+      setBio(data.user.Bio);
+      setLocation(data.user.Location);
+      setProfileimage(data.user.PictureProfile?.secure_url || '');
+      setCoverimage(data.user.CoverImage?.secure_url || '');
+      console.log('User profile updated successfully:', data);
+      Alert.alert('Profile updated successfully.');
+  
+      // إرسال التحديث عبر socket بعد نجاح التحديث
+      socket.emit('profileUpdated', data.user); // إرسال التحديث للسيرفر
+  
+    } catch (error) {
+      console.error('Error updating profile:', error.message);
+      setMenuVisible(true);
+    }
+  };
+
+  const handleCreateProfile = async () => {
+    try {
+      const token = await AsyncStorage.getItem('userToken');
+      if (!token) {
+        console.error('Token not found');
+        return;
+      }
+  
+      // إعداد البيانات باستخدام FormData
+      const formData = new FormData();
+  
+      formData.append('About', newabout);
+      formData.append('Bio', newbio);
+      formData.append('UserName', newuserName);
+     // إضافة صورة البروفايل إذا كانت موجودة
+     if (newprofileImage) {
+      if (Platform.OS === 'web') {
+        // استخدام Blob للويب
+        const profileBlob = base64ToBlob(newprofileImage, 'image/jpeg');
+        formData.append('PictureProfile', profileBlob, 'profile.jpg');
+      } else {
+        // استخدام uri للموبايل
+        formData.append('PictureProfile', {
+          uri: newprofileImage,
+          type: 'image/jpeg',
+          name: 'profile.jpg',
+        });
+      }
+    }
+
+    // إضافة صورة الغلاف
+    if (newcoverImage) {
+      if (Platform.OS === 'web') {
+        // استخدام Blob للويب
+        const coverBlob = base64ToBlob(newcoverImage, 'image/jpeg');
+        formData.append('CoverImage', coverBlob, 'cover.jpg');
+      } else {
+        // استخدام uri للموبايل
+        formData.append('CoverImage', {
+          uri: newcoverImage,
+          type: 'image/jpeg',
+          name: 'cover.jpg',
+        });
+      }
+    }
+      // إرسال الطلب إلى الـ Backend
       const response = await fetch(`${baseUrl}/user/createprofile`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+          'Authorization': `Wasan__${token}`,
+        },
+        body: formData, // إرسال البيانات كـ FormData
+      });
+  
+  
+      // التحقق من نجاح الاستجابة
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Something went wrong');
+      }
+  
+      // جلب البيانات المسترجعة من السيرفر
+      const data = await response.json();  
+      // تحديث الحالة أو التنقل إلى صفحة أخرى بعد نجاح العملية
+      setAbout(data.user.About);
+      seUserName(data.user.UserName);
+      setBio(data.user.Bio);
+      setLocation(data.user.Location);
+      setProfileimage(data.user.PictureProfile?.secure_url || '');
+      setCoverimage(data.user.CoverImage?.secure_url || '');
+      console.log('User profile Created successfully:', data);
+      Alert.alert('Profile Created successfully.');
+
+          // إرسال التحديث عبر socket بعد نجاح التحديث
+          socket.emit('profileUpdated', data.user); 
+
+    } catch (error) {
+      console.error('Error creating profile:', error.message);
+    }
+  };
+  
+   ////////////////////////////Call Creat and Update ////////////////////////////////////
+   const handleProfile = async () => {
+    try {
+      const token = await AsyncStorage.getItem('userToken');
+      if (!token) {
+        console.error('Token not found');
+        return;
+      }
+  
+      // جلب بيانات المستخدم الحالية من السيرفر
+      const response = await fetch(`${baseUrl}/user/ViewOwnProfile`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Wasan__${token}`,
         },
       });
   
-      if (!response.ok) throw new Error('Failed to fetch profile');
+      if (!response.ok) {
+        throw new Error('Failed to fetch user profile');
+      }
   
-      const result = await response.json();
-      console.log('Profile data:', result); 
+      const userData = await response.json();
   
-      setProfileData(result);
-      setIsLoading(false);
+      // التحقق مما إذا كانت هناك بيانات موجودة
+      const hasProfileData = userData.About || userData.Bio || userData.PictureProfile || userData.CoverImage || userData.UserName;
+  
+      if (hasProfileData) {
+        // إذا كانت هناك بيانات، استدعِ دالة التحديث
+        await handleUpdateProfile();
+      } else {
+        // إذا لم تكن هناك بيانات، استدعِ دالة الإنشاء
+        await handleCreateProfile();
+      }
+  
     } catch (error) {
-      console.error('Error fetching profile:', error);
-      setIsLoading(false);
+      console.error('Error handling profile:', error.message);
     }
   };
-   
-    
+  
 
-  useEffect(() => {
-    handleCreateProfile(); 
-  }, []);
+  
+  const requestPermission = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      alert('Permission to access the media library is required!');
+    }
+  };
+useEffect(() => {
+  handleViewProfile(); 
+  requestPermission();
+  socket.on('profileUpdated', (updatedUserData) => {
+    console.log('Profile updated:', updatedUserData);
+  
+    // تحقق من أن البيانات ليست null أو undefined
+    if (updatedUserData) {
+      setFullName(updatedUserData.FullName || '');
+      seUserName(updatedUserData.UserName || '');
+      setAbout(updatedUserData.About || '');
+      setBio(updatedUserData.Bio || '');
+      setLocation(updatedUserData.Location || '');
+      setProfileimage(updatedUserData.PictureProfile?.secure_url || '');
+      setCoverimage(updatedUserData.CoverImage?.secure_url || '');
+    } else {
+      console.log('there is no update');
+    }
+  });
+        return () => {
+          // تنظيف الاستماع عند مغادرة الصفحة أو مكون آخر
+          socket.off('profileUpdated');
+        };
+}, [FullName, bio, about, userName, location, CoverImage, profileImage]);
 
   if (isLoading) {
     return <Text>Loading...</Text>; 
@@ -186,176 +541,328 @@ const ProfilePage = () => {
     return (
         <View style={{ flex: 1 }}>
             <View style={{
-                height: 20, backgroundColor: isNightMode ? "#000" : secondary,
+                height: Platform.OS === 'web' ? 50 : 20, backgroundColor: isNightMode ? "#000" : secondary
 
-            }} />
+            }}/>     
+      {Platform.OS === 'web' ? (
+  <View style={{
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 10,
+    paddingVertical: 10,
+    backgroundColor: isNightMode ? "#000" : secondary,
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 10
+  }}>
 
-            {/* Header */}
-            <View style={{
-                flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 10, paddingVertical: 10, backgroundColor: isNightMode ? "#000" : secondary,
-                position: Platform.OS === 'web' ? 'fixed' : ' ',
-                top: 0,
-                left: 0,
-                right: 0,
-                zIndex: 10,
+    {/* زر الإعدادات وزر المشاريع */}
+    <View style={{ flexDirection: 'row', alignItems: 'center',left: '10%',
+ }}>
+  <TouchableOpacity onPress={() => nav.navigate('HomeScreen')} style={{ marginRight: 100, marginLeft: 80}}>
+        <Ionicons name="home" size={20} color= {isNightMode ? primary : "#000"} />
+      </TouchableOpacity>
+    
 
-            }}>
-                <Text style={{ fontFamily: 'Updock-Regular', fontSize: 30, position: 'absolute', left: 0, right: 0, textAlign: 'center', color: isNightMode ? primary : "#000" }}>
-                    Talent Bridge
-                </Text>
+      <TouchableOpacity onPress={() => nav.navigate('ProjectsSeniorPage')} style={{ marginRight: 100 }}>
+        <Ionicons name="folder" size={20} color= {isNightMode ? primary : "#000"} />
+      </TouchableOpacity>
+      <TouchableOpacity onPress={() => nav.navigate('AddPostScreen')} style={{ marginRight:100 }}>
+        <Ionicons name="add-circle" size={25} color= {isNightMode ? primary : "#000"} />
+      </TouchableOpacity>
 
-                <TouchableOpacity onPress={() => nav.navigate('Chat')}>
-                    <EvilIcons name="sc-telegram" size={39} color={careysPink} style={{ position: 'absolute', top: -20, left: 10 }} />
-                    <EvilIcons name="sc-telegram" size={37} color={darkLight} style={{ position: 'absolute', top: -20, left: 10 }} />
-                </TouchableOpacity>
+      
 
+      <TouchableOpacity onPress={() => nav.navigate('Chat')} style={{ marginRight:100}}>
+        <EvilIcons name="sc-telegram" size={30} color= {isNightMode ? primary : "#000"} />
+      </TouchableOpacity>
 
-                <TouchableOpacity onPress={toggleNightMode}>
-                    <View style={{ position: 'relative', width: 50, height: 50 }}>
-                        <Ionicons name={isNightMode ? "sunny" : "moon"} size={25} color={darkLight} style={{ position: 'absolute', top: 9, right: 20 }} />
-                        <Ionicons name="cloud" size={30.7} color={isNightMode ? "#000" : secondary} style={{ position: 'absolute', top: 8.7, left: -12 }} />
-                        <Ionicons name="cloud" size={27} color={careysPink} style={{ position: 'absolute', top: 11, left: -11 }} />
-                    </View>
-                </TouchableOpacity>
-            </View>
-
-            {/* Icon Navigation */}
-            <View style={{
-                 flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 10, paddingVertical: 10, backgroundColor: fourhColor, elevation: 3
-                 , position: Platform.OS === 'web' ? 'fixed' : ' ',
-                 zIndex: 10, width: '100%',
-                 top: Platform.OS === 'web' ? 55 : ' ',
-                 marginBottom: Platform.OS === 'web' ? 20 : ' ',
-                 width: '100%',
-                height: 60, // ارتفاع الجزء البنفسجي
-              }}>
-           {/* صورة البروفايل */}
-           
-           <TouchableOpacity style={{ position: 'absolute', top: 20, left: 20 }} onPress={pickImage}>
-      <View
-        style={{
-          width: 80, // حجم الدائرة
-          height: 80, // حجم الدائرة
-          borderRadius: 40, // الشكل الدائري
-          overflow: 'hidden', // يجعل الصورة داخل الشكل الدائري
-          borderColor: '#000', // لون الإطار
-          borderWidth: 2, // عرض الإطار
-        }}
-      >
-        <Image
-          source={{
-            uri: image || profileData?.PictureProfile?.secure_url || 'https://via.placeholder.com/80', // استخدام الصورة المختارة أو صورة بروفايل أو صورة افتراضية
-          }}
-          style={{
-            width: '100%', // تأكد من تغطية المساحة الكاملة
-            height: '100%', // تأكد من تغطية المساحة الكاملة
-          }}
-          resizeMode="cover" // لتغطية الخلفية بالكامل
-        />
-      </View>
+      <TouchableOpacity style={{marginRight: 100 }}
+    onPress={() => nav.navigate('notifications')}>
+            <Ionicons  name="notifications" size={20} color= {isNightMode ? primary : "#000"} />
     </TouchableOpacity>
+    <TouchableOpacity onPress={toggleNightMode} style={{ marginRight:100 }}>
+        <Ionicons name="settings" size={20} color= {isNightMode ? primary : "#000"} />
+      </TouchableOpacity>
+   
+    </View>
 
+    {/* عنوان التطبيق */}
+    <Text style={{
+      fontFamily: 'Updock-Regular',
+      fontSize: 30,
+      textAlign: 'center',
+      color: isNightMode ? primary : "#000",
+      position: 'absolute',
+      left: 45,
+      //transform: [{ translateX: -75 }] // لضبط النص في المنتصف
+    }}>
+      Talent Bridge
+    </Text>
 
+    {/* مربع البحث */}
+    <View style={{ flexDirection: 'row', alignItems: 'center', marginLeft: 80 }}>
+      <Ionicons name="search" size={20} color= {isNightMode ? primary : "#000"} style={{ marginRight: 5 }} />
+      <TextInput
+        style={{
+          height: 30,
+          borderColor: '#000',
+          borderWidth: 1,
+          paddingLeft: 5,
+          borderRadius: 15,
+          padding: 10,
+          width: 300,
+          color:  isNightMode ? '#FFF' : '#000',
+          backgroundColor: isNightMode ? '#5E5A5A' : '#fff'
+        }}
+        placeholder="Search.."
+        placeholderTextColor={isNightMode ? '#fff' : '#888'}
+        value={searchQuery}            // تعيين قيمة البحث
+        onChangeText={setSearchQuery}  // تحديث قيمة البحث عند الكتابة
+      />
+    </View>
+  </View>
+) 
+:(
+<>
+  <View style={{
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: 10, paddingVertical: 10, backgroundColor: isNightMode ? "#000" : secondary,
+    position: Platform.OS === 'web' ? 'fixed' : 'relative', top: 0, left: 0, right: 0, zIndex: 10,
+  }}>
+
+    <Text style={{ fontFamily: 'Updock-Regular', fontSize: 30, position: 'absolute', left: 0, right: 0, textAlign: 'center', color: isNightMode ? primary : "#000" }}>
+      Talent Bridge
+    </Text>
+
+    <TouchableOpacity onPress={() => nav.navigate('Chat')}>
+      <EvilIcons name="sc-telegram" size={39} color={careysPink} style={{ position: 'absolute', top: -20, left: 10 }} />
+      <EvilIcons name="sc-telegram" size={37} color={darkLight} style={{ position: 'absolute', top: -20, left: 10 }} />
+    </TouchableOpacity>
 
     {/* أيقونة الإشعارات */}
-    <TouchableOpacity onPress={() => nav.navigate('notifications')} style={{ position: 'absolute', top: 20, right: 20 }}>
-        <Ionicons name="notifications" size={25} color="#FFF" />
+    <TouchableOpacity style={{ position: 'relative', width: 50, height: 50 }}
+    onPress={() => nav.navigate('notifications')}>
+            <Ionicons style={{ position: 'absolute', top: 10, right: 18 }} name="notifications" size={27} color={darkLight} />
     </TouchableOpacity>
-
-   {/* أيقونة GitHub */}
-   {isEditing ? (
-                // عرض حقل الإدخال
-                <View style={{ position: 'absolute', top: 60, right: 20, flexDirection: 'row', alignItems: 'center' }}>
-                    <TextInput
-                        placeholder="Enter GitHub URL"
-                        value={githubLink}
-                        onChangeText={setGithubLink}
-                        style={{
-                            backgroundColor: '#f0f0f0',
-                            padding: 10,
-                            borderRadius: 5,
-                            width: 200,
-                            marginRight: 10,
-                        }}
-                    />
-                    <TouchableOpacity
-                        onPress={() => {
-                            if (githubLink) {
-                                setIsEditing(false); // إخفاء الإدخال
-                            } else {
-                                alert('Please enter a valid URL');
-                            }
-                        }}
-                        style={{
-                            backgroundColor: '#000',
-                            padding: 10,
-                            borderRadius: 5,
-                        }}>
-                        <Text style={{ color: '#fff' }}>Save</Text>
-                    </TouchableOpacity>
-                </View>
-            ) : (
-                // عرض أيقونة GitHub أو زر الرابط
-                <TouchableOpacity 
-                    onPress={() => {
-                        if (githubLink) {
-                            Linking.openURL(githubLink);
-                        } else {
-                            setIsEditing(true); // إظهار الإدخال إذا لم يتم إدخال الرابط
-                        }
-                    }}
-                    style={{ marginVertical:20 ,position: 'absolute', top: 60, right: 20,borderRadius:25 }}>
-                    <Ionicons name="logo-github" size={30} color="#000" />
-                </TouchableOpacity>
-            )}
-
-              </View>
-           
+  </View>
 
 
-                       {/* Main Content */}
-                       <View style={{ flex: 1 }}>
+  <View style={[styles.container, { backgroundColor: isNightMode ? '#2C2C2C' : '#f0f0f0' }]}>
+      <TouchableOpacity onPress={() => nav.goBack()} style={styles.backButton}>
+        <Ionicons name="arrow-back" size={24} color={isNightMode ? '#fff' : '#000'} />
+      </TouchableOpacity>
+      
+      <View style={[styles.searchBox, { backgroundColor: isNightMode ? '#5E5A5A' : '#fff' }]}>
+        <Ionicons name="search" size={20} color={isNightMode ? '#fff' : '#888'} style={styles.searchIcon} />
+        
+        <TextInput
+          style={[styles.inputSearch, { color: isNightMode ? '#fff' : '#000' }]}
+          placeholder="Search..."
+          placeholderTextColor={isNightMode ? '#ccc' : '#888'}
+          value={searchQuery}            // تعيين قيمة البحث
+          onChangeText={setSearchQuery}  // تحديث قيمة البحث عند الكتابة
+          returnKeyType="search"         // تحويل زر الإدخال في لوحة المفاتيح إلى زر بحث
+        //  onSubmitEditing={() => nav.navigate('SearchScreen',{searchQuery:searchQuery})} // تنفيذ البحث
+          onFocus={() => nav.navigate('SearchScreen',{searchQuery:searchQuery})}
+        />
+      </View>
+    </View>
+</>
+  )}
+
+
+   {/* Main Content */}
+              <View style={{ flex: 1 }}>
      
-      {/* Animated.ScrollView - يحتوي على النصوص والأزرار */}
-      <Animated.ScrollView
-        style={{
-          flex: 1,
-          backgroundColor: "#FFFFFF", // تغيير الخلفية إلى الأبيض
+     {/* Animated.ScrollView - يحتوي على النصوص والأزرار */}
+     <Animated.ScrollView
+       style={{
+         flex: 1,
+         margin : Platform.OS=== 'web'? 40:'',
+         borderRadius : Platform.OS === 'web'? 10 : 0 ,
+         backgroundColor: isNightMode ? Colors.black : Colors.primary
+       }}
+     >
+
+      
+<View style={{
+  flexDirection: 'column',
+  alignItems: 'center',
+  justifyContent: 'flex-start',
+  backgroundColor: 'white',
+  zIndex: 10,
+  width: '100%',backgroundColor: isNightMode ?  Colors.black : Colors.primary
+}}>
+
+  {/* صورة غلاف */}
+<View style={styles.coverImageContainer}>
+  {CoverImage ? (
+    <Image
+      source={{ uri: CoverImage }}
+      style={styles.coverImage}
+      resizeMode="cover"
+    />
+  ) : (
+    ''
+  )}
+  <View style={styles.coverImageOverlay} />
+</View>
+
+      {/* صورة البروفايل */}
+<View style={{ flexDirection: 'row', alignItems: 'center', width: '100%', padding: 10 }}>
+
+  {/* صورة البروفايل */}
+  <TouchableOpacity style={{ marginRight: 15,marginTop:-40}} onPress={pickImage}>
+    <View style={[styles.profileImageContainer, { borderColor: isNightMode ? Colors.primary : Colors.black }]}>
+      <Image
+        source={{
+          uri: profileImage || 'https://via.placeholder.com/80',
         }}
-        contentContainerStyle={{
-          flexGrow: 1,
-          paddingVertical: 20,
-          paddingHorizontal: 20,
-        }}
-      >
+        style={styles.profileImage}
+        resizeMode="cover"
+      />
+    </View>
+  </TouchableOpacity>
+
+  {/* حاوية النصوص (الاسم واسم المستخدم) */}
+  <View style={{ flex: 1, justifyContent: 'center',marginTop:-23 }}>
+    <Text 
+      style={{
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: isNightMode ? Colors.primary : Colors.black,
+        flexShrink: 1, // يسمح بتقليص النص إذا زاد عن المساحة المتاحة
+      }}
+      numberOfLines={1}
+      ellipsizeMode="tail"
+    >
+      {FullName || 'Full Name'}
+    </Text>
+
+    <Text 
+      style={{
+        fontSize: 14,
+        color: isNightMode ? Colors.fourhColor : Colors.fifthColor,
+        flexShrink: 1,fontWeight:'bold'
+      }}
+      numberOfLines={1}
+      ellipsizeMode="tail"
+    >
+      {'@'+userName || 'Username'}
+    </Text>
+  </View>
+
+  {/* أيقونة التعديل */}
+  <TouchableOpacity 
+  onPress={toggleModal}>
+  <MaterialIcons
+    style={{ marginTop: -23 }}
+    name="create"
+    size={25}
+    color={isNightMode ? Colors.primary : Colors.black}
+  />
+  </TouchableOpacity>
+
+</View>
+
+
+      {/* عرض أو تعديل رابط GitHub */}
+      {isEditing ? (
+        <View style={styles.githubEditWrapper}>
+          <TextInput
+            placeholder="Enter GitHub URL"
+            value={githubLink}
+            onChangeText={setGithubLink}
+            style={styles.githubInput}
+          />
+          <TouchableOpacity
+            onPress={() => {
+              if (githubLink) {
+                setIsEditing(false);
+              } else {
+                alert('Please enter a valid URL');
+              }
+            }}
+            style={styles.saveButton}>
+            <Text style={styles.saveButtonText}>Save</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <TouchableOpacity
+          onPress={() => {
+            if (githubLink) {
+              Linking.openURL(githubLink);
+            } else {
+              setIsEditing(true);
+            }
+          }}
+          style={styles.githubIcon}>
+          <Ionicons name="logo-github" size={30} color="#000" />
+        </TouchableOpacity>
+      )}
+    </View>
+    
+    <View style={[styles.divider,{height:3}]}/>
+
+
+         
         
        
       {/* النصوص تحت الصورة */}
       
-        <View style={{ marginTop: 60, padding: 60, alignItems: 'flex-start' }}>
-        <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#000', marginBottom: 10 }}>
-          {profileData.FullName}
-        </Text>
-        <Text style={{ fontSize: 18, fontWeight: '500', color: '#000', marginBottom: 10 }}>
-          {profileData.UserName}
-        </Text>
-
-        <TextInput style={{ fontSize: 18, fontWeight: '500', color: '#000', marginBottom: 10 }}>
-          {profileData.Bio}
-        </TextInput>
-
-        <Text style={{ fontSize: 12, color: '#000', marginBottom: 10 }}>
-          {profileData.Location}
-        </Text>
-
-        <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#000', marginBottom: 5 }}>
-          About
-        </Text>
-
-        <TextInput style={{ fontSize: 12, color: '#000' }}>
-          {profileData.About}
-        </TextInput>
+      {(bio || location || about) ? (
+  <View style={styles.bioWrapper}>
+    {/* قسم الـ Bio */}
+    {bio ? (
+      <>
+        <View style={styles.section}>
+          <Text style={[styles.bioTitle, { fontStyle: 'italic', color: isNightMode ? Colors.primary : Colors.black }]}>
+            Bio:
+          </Text>
+          <Text style={[styles.bioText, { color: isNightMode ? Colors.fourhColor : Colors.black }]}>
+            {bio}
+          </Text>
         </View>
+        <View style={styles.divider} />
+      </>
+    ) : null}
+
+    {/* قسم الموقع Location */}
+    {location ? (
+      <>
+        <View style={styles.section}>
+          <Text style={[styles.bioTitle, { fontStyle: 'italic', color: isNightMode ? Colors.primary : Colors.black }]}>
+            Location:
+          </Text>
+          <Text style={[styles.bioText, { color: isNightMode ? Colors.fourhColor : Colors.black }]}>
+            {location}
+          </Text>
+        </View>
+        <View style={styles.divider} />
+      </>
+    ) : null}
+
+    {/* قسم الـ About */}
+    {about ? (
+      <View style={styles.section}>
+        <Text style={[styles.bioTitle, { fontStyle: 'italic', color: isNightMode ? Colors.primary : Colors.black }]}>
+          About:
+        </Text>
+        <Text style={[styles.bioText, { color: isNightMode ? Colors.fourhColor : Colors.black }]}>
+          {about}
+        </Text>
+      </View>
+    ) : null}
+  </View>
+) : null}
+
+
+
+
 
         {/* أزرار البوستات والتعليقات */}
         <View
@@ -411,7 +918,7 @@ const ProfilePage = () => {
   {/* زر البوستات */}
   {/* زر Posts */}
   <TouchableOpacity
-        onPress={handelGetUserPosts} // استدعاء الدالة عند الضغط على الزر
+      //  onPress={handelGetUserPosts} // استدعاء الدالة عند الضغط على الزر
         style={{
           backgroundColor: '#C99FA9',
           padding: 15,
@@ -807,7 +1314,7 @@ const ProfilePage = () => {
             </View>
           </View>
 
-          <TouchableOpacity onPress={() => setModalVisible(true)}>
+          <TouchableOpacity>
                     <Text style={styles.input}>{ "Add Skills"}</Text>
                 </TouchableOpacity>
         </View>
@@ -835,7 +1342,7 @@ const ProfilePage = () => {
             </View>
           </View>
 
-          <TouchableOpacity onPress={() => setModalVisible(true)}>
+          <TouchableOpacity >
                     <Text style={styles.input}>{ "Add Language"}</Text>
                 </TouchableOpacity>
         </View>
@@ -879,10 +1386,166 @@ const ProfilePage = () => {
 
       </Animated.ScrollView>
     </View>
-                 
-              
+                
+
+    <Modal
+      isVisible={isModalVisible}
+      onBackdropPress={() => setIsModalVisible(false)}
+      style={{ justifyContent: 'flex-end', margin: 0}}
+    >
+      <View style={{
+        backgroundColor: isNightMode ? '#333' : '#fff', 
+        padding: 20, 
+        borderTopLeftRadius: 20, 
+        borderTopRightRadius: 20, 
+        height: '80%'
+      }}>
+        <ScrollView>
+          <Text style={{
+            fontSize: 24, 
+            fontWeight: 'bold', 
+            marginBottom: 20, 
+            color: isNightMode ? Colors.primary : Colors.black
+          }}>
+            Edit Profile
+          </Text>
+
+       {/* إدخال صورة البروفايل */}
+       <Text style={{ color: isNightMode ? Colors.primary : Colors.black }}>Profile Image:</Text>
+          <TouchableOpacity onPress={() => pickImage('profile')}>
+            <View style={{ marginVertical: 10 }}>
+              <Text style={{ color: isNightMode ? Colors.primary : Colors.black }}>
+                {profileImage ? 'Change Profile Image' : 'Choose Profile Image'}
+              </Text>
+              {newprofileImage && (
+                <Image 
+                  source={{ uri: newprofileImage}} 
+                  style={{
+                    width: 100, 
+                    height: 100, 
+                    borderRadius: 50, 
+                    marginVertical: 10 
+                  }} 
+                />
+              )}
+            </View>
+          </TouchableOpacity>
+        
+
+          <View style={{ borderBottomWidth: 1, borderBottomColor: isNightMode ? '#555' : '#ddd', marginVertical: 10 }} />
+
+    {/* إدخال صورة الغلاف */}
+    <Text style={{ color: isNightMode ? Colors.primary : Colors.black }}>Cover Image:</Text>
+          <TouchableOpacity onPress={() => pickImage('cover')}>
+            <View style={{ marginVertical: 10 }}>
+              <Text style={{ color: isNightMode ? Colors.primary : Colors.black }}>
+                {CoverImage ? 'Change Cover Image' : 'Choose Cover Image'}
+              </Text>
+              {newcoverImage && (
+                <Image 
+                  source={{ uri: newcoverImage }} 
+                  style={{
+                    width: '100%', 
+                    height: 200, 
+                    borderRadius: 10, 
+                    marginVertical: 10 
+                  }} 
+                />
+              )}
+            </View>
+          </TouchableOpacity>
+
+          <View style={{ borderBottomWidth: 1, borderBottomColor: isNightMode ? '#555' : '#ddd', marginVertical: 10 }} />
+               {/* إدخال الـ Bio */}
+               <Text style={{ color: isNightMode ? Colors.primary : Colors.black }}>User Name:</Text>
+          <TextInput
+            placeholder="Enter Bio"
+            value={newuserName}
+            onChangeText={setNewUserName}
+            style={{
+              borderWidth: 1, 
+              padding: 10, 
+              marginBottom: 10, 
+              color: isNightMode ? '#fff' : '#000', 
+              borderRadius: 5, 
+              backgroundColor: isNightMode ? '#555' : '#fff'
+            }}
+          />
+          <View style={{ borderBottomWidth: 1, borderBottomColor: isNightMode ? '#555' : '#ddd', marginVertical: 10 }} />
+          <View style={{ borderBottomWidth: 1, borderBottomColor: isNightMode ? '#555' : '#ddd', marginVertical: 10 }} />
+
+          {/* إدخال الـ Bio */}
+          <Text style={{ color: isNightMode ? Colors.primary : Colors.black }}>Bio:</Text>
+          <TextInput
+            placeholder="Enter Bio"
+            value={newbio}
+            onChangeText={setnewBio}
+            style={{
+              borderWidth: 1, 
+              padding: 10, 
+              marginBottom: 10, 
+              color: isNightMode ? '#fff' : '#000', 
+              borderRadius: 5, 
+              backgroundColor: isNightMode ? '#555' : '#fff'
+            }}
+          />
+          <View style={{ borderBottomWidth: 1, borderBottomColor: isNightMode ? '#555' : '#ddd', marginVertical: 10 }} />
+
+          {/* إدخال الموقع */}
+          <Text style={{ color: isNightMode ? Colors.primary : Colors.black }}>Location:</Text>
+          <TextInput
+            placeholder="Enter Location"
+            value={newlocation }
+            onChangeText={setnewLocation}
+            style={{
+              borderWidth: 1, 
+              padding: 10, 
+              marginBottom: 10, 
+              color: isNightMode ? '#fff' : '#000', 
+              borderRadius: 5, 
+              backgroundColor: isNightMode ? '#555' : '#fff'
+            }}
+          />
+          <View style={{ borderBottomWidth: 1, borderBottomColor: isNightMode ? '#555' : '#ddd', marginVertical: 10 }} />
+
+          {/* إدخال الـ About */}
+          <Text style={{ color: isNightMode ? Colors.primary : Colors.black }}>About:</Text>
+          <TextInput
+            placeholder="Enter About"
+            value={newabout}
+            onChangeText={setnewAbout}
+            style={{
+              borderWidth: 1, 
+              padding: 10, 
+              marginBottom: 10, 
+              color: isNightMode ? '#fff' : '#000', 
+              borderRadius: 5, 
+              backgroundColor: isNightMode ? '#555' : '#fff'
+            }}
+          />
+
+
+          <View style={{ borderBottomWidth: 1, borderBottomColor: isNightMode ? '#555' : '#ddd', marginVertical: 10 }} />
+        </ScrollView>
+
+        {/* أزرار الحفظ والإلغاء */}
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 20 }}>
+          <TouchableOpacity onPress={() => cancleEdit()} style={{ padding: 10 }}>
+            <Text style={{ color: 'red', fontSize: 16 }}>Cancel</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => { 
+            setIsModalVisible(false); 
+            handleProfile();
+            console.log('Profile saved');
+          }} style={{ padding: 10 }}>
+            <Text style={{ color: 'green', fontSize: 16 }}>Save</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
 
                       {/* Bottom Navigation Bar */}
+             {Platform.OS === 'web' ? (null) : (
             <Animated.View
                 style={{
                     transform: [{ translateY: bottomBarTranslate }],
@@ -905,8 +1568,9 @@ const ProfilePage = () => {
                 </TouchableOpacity>
                 <TouchableOpacity onPress={() => nav.navigate('ProfilePage')}>
                     <Image
-                        source={require('./../assets/img1.jpeg')}
-                        style={{
+          source={{
+            uri: profileImage || 'https://via.placeholder.com/80', // استخدام الصورة المختارة أو صورة بروفايل أو صورة افتراضية
+          }}                        style={{
                             width: 30,
                             height: 30,
                             borderRadius: 30,
@@ -922,7 +1586,8 @@ const ProfilePage = () => {
                     <Ionicons name="home" size={25} color="#000" />
                 </TouchableOpacity>
             </Animated.View>
-
+             )}
+    
 
         </View>
     );
@@ -931,6 +1596,7 @@ const ProfilePage = () => {
     
 
 const styles = StyleSheet.create({
+
   card: {
     backgroundColor: '#CAC5D8',
     padding: 20,
@@ -1029,6 +1695,183 @@ skillText: {
     color: '#555',
     marginBottom: 5,
 },
+coverImageContainer: {
+  width: '100%',
+  height: height * 0.3, // استخدام نسبة من حجم الشاشة
+  backgroundColor: '#f0f0f0',
+  position: 'relative',
+  justifyContent: 'center', // لتوسيط المحتوى عموديًا
+  alignItems: 'center',     // لتوسيط المحتوى أفقيًا
+},
+coverImagePlaceholder: {
+  width: '100%',
+  height: '100%',
+  justifyContent: 'center',
+  alignItems: 'center',
+},
+
+coverImagePlaceholderText: {
+  fontSize: 18,
+  color: '#888',
+  textAlign: 'center',
+},
+
+coverImage: {
+  width: '100%',
+  height: '100%',
+},
+
+coverImageOverlay: {
+  position: 'absolute',
+  bottom: 0,
+  left: 0,
+  right: 0,
+  height: 3,
+  backgroundColor:'black', // لون رمادي مع شفافية بسيطة
+},
+
+  profileImageWrapper: {
+    position: 'absolute',
+    right: width * 0.35, // تخصيص المسافة بناءً على ارتفاع الشاشة
+    top: height * -0.04, // تخصيص المسافة بناءً على ارتفاع الشاشة
+  },
+  fullName:{
+    right: width * 0.21, // تخصيص المسافة بناءً على ارتفاع الشاشة
+    top: height * -0.003, // تخصيص المسافة بناءً على ارتفاع الشاشة
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  userName:{
+    right: width * 0.21, // تخصيص المسافة بناءً على ارتفاع الشاشة
+    top: height * -0.01, // تخصيص المسافة بناءً على ارتفاع الشاشة
+    fontSize: 14,color:firstColor,fontWeight:'bold',
+  },
+  profileImageContainer: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    overflow: 'hidden',
+    borderWidth: 2,
+  },
+  profileImage: {
+    width: '100%',
+    height: '100%',
+  },
+  editIcon: {
+    position: 'absolute',
+    top: height * 0.25, // تعديل الموقع بناءً على ارتفاع الشاشة
+    right: 10,
+    borderRadius: 25,
+    padding: 5,
+  },
+  githubEditWrapper: {
+    position: 'absolute',
+    top: height * 0.39, // تخصيص الموقع بناءً على الشاشة
+    right: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  githubInput: {
+    position: 'absolute',
+    backgroundColor: '#f0f0f0',
+    padding: 5,
+    borderRadius: 5,    
+    top: height * -0.02, // تعديل الموقع بناءً على ارتفاع الشاشة
+    right:width *0.22,
+    width: 150,height:30,
+    marginRight: 10,  height:30, 
+  },
+  saveButton: {
+    position: 'absolute',
+    backgroundColor: '#000',
+    padding: 5,    
+    top: height * -0.02, // تعديل الموقع بناءً على ارتفاع الشاشة
+    right:width *0.13,height:30,
+    borderRadius: 5,
+  },
+  saveButtonText: {
+    color: '#fff',
+  },
+  githubIcon: {
+    position: 'absolute',
+    top: height * 0.37, // تعديل الموقع بناءً على ارتفاع الشاشة
+    right:width *0.61,
+  },
+  bioWrapper: {
+    marginTop: 20,
+    alignItems: 'flex-start',
+    paddingHorizontal: 20,
+  },
+  bioTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginVertical: 5,
+  },
+  bioText: {
+    fontSize: 16,
+    color: '#000',
+    marginBottom: 10,
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)', // خلفية شفافة
+  },
+  modalContent: {
+    width: '80%',
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  bioWrapper: {
+    padding: 15,
+  },
+  section: {
+    marginBottom: 10,
+  },
+  bioTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 5,
+  },
+  bioText: {
+    fontSize: 16,
+    color: '#555',
+    lineHeight: 22,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#ddd',
+    marginVertical: 10,
+  },
+  container: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 10,
+  },
+  backButton: {
+    marginRight: 10,
+  },
+  searchBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    paddingHorizontal: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#ccc',
+  },
+  searchIcon: {
+    marginRight: 10,
+  },
+  inputSearch: {
+    flex: 1,
+    height: 40,
+    fontSize: 16,
+  },
 });
 
-export default ProfilePage;
+

@@ -10,7 +10,8 @@ export const test = async (req, res) => {
 export const CreateProfile = async (req, res) => {
     try {
         console.log("Body:", req.body);
-        console.log("File:", req.file);
+        console.log("Files:", req.files);
+
         const { About, Bio, UserName } = req.body;
         const authuser = req.user;
 
@@ -18,26 +19,41 @@ export const CreateProfile = async (req, res) => {
             return res.status(404).json({ message: "User not found" });
         }
 
-        if (!req.file) {
-            return res.status(400).json({ message: "No file uploaded" });
+        // التحقق من وجود الملفات المرفوعة
+        if (!req.files || (!req.files.PictureProfile && !req.files.CoverImage)) {
+            return res.status(400).json({ message: "No files uploaded" });
         }
 
+        // رفع صورة الملف الشخصي (PictureProfile) إذا كانت موجودة
+        let pictureProfileData = null;
+        if (req.files.PictureProfile) {
+            const { secure_url, public_id } = await Cloudinary.uploader.upload(req.files.PictureProfile[0].path, {
+                folder: `GraduationProject1-Software/Profile/${authuser._id}/PictureProfile`,
+            });
+            pictureProfileData = { secure_url, public_id };
+        }
 
-        const { secure_url, public_id } = await Cloudinary.uploader.upload(req.file.path, {
-            folder: `GraduationProject1-Software/Profile/${authuser._id}`,
-        });
+        // رفع صورة الغلاف (CoverImage) إذا كانت موجودة
+        let coverImageData = null;
+        if (req.files.CoverImage) {
+            const { secure_url, public_id } = await Cloudinary.uploader.upload(req.files.CoverImage[0].path, {
+                folder: `GraduationProject1-Software/Profile/${authuser._id}/CoverImage`,
+            });
+            coverImageData = { secure_url, public_id };
+        }
 
-
+        // إيجاد المستخدم في قاعدة البيانات
         const existingUser = await UserModel.findById(authuser._id);
         if (!existingUser) {
             return res.status(404).json({ message: "User not found" });
         }
 
-        existingUser.PictureProfile = { secure_url, public_id };
+        // تحديث البيانات
+        if (pictureProfileData) existingUser.PictureProfile = pictureProfileData;
+        if (coverImageData) existingUser.CoverImage = coverImageData;
         existingUser.About = About;
         existingUser.Bio = Bio;
         existingUser.UserName = UserName;
-
         await existingUser.save();
 
         return res.status(200).json({
@@ -50,11 +66,10 @@ export const CreateProfile = async (req, res) => {
     }
 };
 
-
 // Update Own Profile
 export const UpdateProfile = async (req, res, next) => {
     try {
-        const { About, Bio, UserName } = req.body;
+        const { About, Bio, UserName,Location } = req.body;
         const authUser = req.user;
 
 
@@ -69,18 +84,27 @@ export const UpdateProfile = async (req, res, next) => {
         }
 
         let profileImage = existingUser.PictureProfile;
-        if (req.file) {
-            const { secure_url, public_id } = await Cloudinary.uploader.upload(req.file.path, {
+        if (req.files && req.files['PictureProfile']) {
+            const { secure_url, public_id } = await Cloudinary.uploader.upload(req.files['PictureProfile'][0].path, {
                 folder: `GraduationProject1-Software/Profile/${authUser._id}`,
             });
-
             profileImage = { secure_url, public_id };
         }
 
+           // تحديث صورة الغلاف
+           let coverImage = existingUser.CoverImage;
+           if (req.files && req.files['CoverImage']) {
+            const { secure_url, public_id } = await Cloudinary.uploader.upload(req.files['CoverImage'][0].path, {
+                folder: `GraduationProject1-Software/Cover/${authUser._id}`,
+            });
+            coverImage = { secure_url, public_id };
+        }
         existingUser.About = About || existingUser.About;
         existingUser.Bio = Bio || existingUser.Bio;
         existingUser.PictureProfile = profileImage;
         existingUser.UserName = UserName || existingUser.UserName;
+        existingUser.Location = Location|| existingUser.UserName;
+        existingUser.CoverImage = coverImage;
 
         await existingUser.save();
 
@@ -93,6 +117,7 @@ export const UpdateProfile = async (req, res, next) => {
         return next(error);
     }
 };
+
 
 //  View Own Profile
 export const ViewOwnProfile = async (req, res) => {
@@ -109,6 +134,7 @@ export const ViewOwnProfile = async (req, res) => {
             Location: user.Location,
             PictureProfile: user.PictureProfile,
             About: user.About,
+            CoverImage:user.CoverImage,
         });
     } catch (error) {
         console.error('Error fetching user profile:', error.message);
@@ -137,6 +163,47 @@ export const ViewOtherProfile = async (req, res) => {
     }
 };
 
+
+// في ملف User.controller.js
+export const searchUsers = async (req, res) => {
+    try {
+      const { user } = req.params; // الحصول على قيمة الاستعلام من الـ URL parameters
+  
+      if (!user) {
+        return res.status(400).json({ message: "User parameter is required" });
+      }
+  
+      // البحث في قاعدة البيانات باستخدام الاستعلام
+      const users = await UserModel.find({
+        $or: [
+          { FullName: { $regex: user, $options: 'i' } },       // بحث عن الاسم الكامل (غير حساس لحالة الأحرف)
+          { UserName: { $regex: `^${user}$`, $options: 'i' } } // تطابق تام مع اسم المستخدم (غير حساس لحالة الأحرف)
+        ]
+      }).limit(10); // الحد من عدد النتائج
+  
+      if (users.length === 0) {
+        return res.status(404).json({ message: "No users found" });
+      }
+  
+      // تصفية النتائج لضمان عدم تكرار المستخدم نفسه
+      const uniqueUsers = [];
+      const seenIds = new Set();
+  
+      for (const user of users) {
+        if (!seenIds.has(user._id.toString())) {
+          seenIds.add(user._id.toString());
+          uniqueUsers.push(user);
+        }
+      }
+  
+      // إرسال النتائج للمستخدم
+      return res.status(200).json(uniqueUsers);
+    } catch (error) {
+      console.error("Error searching users:", error);
+      return res.status(500).json({ message: error.message });
+    }
+  };
+  
 
 //get data of user to chat
 

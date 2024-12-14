@@ -48,7 +48,7 @@ export const SignIn = async (req, res) => {
             return res.status(400).json({ message: "Wrong password, try again!" });
         }
 
-        const Token = jwt.sign({ id: user._id, role: user.Role }, process.env.LOGINSIG);
+        const token = jwt.sign({ id: user._id, role: user.Role }, process.env.LOGINSIG);
 
         const userData = user.toObject();
         delete userData.Password;
@@ -56,7 +56,7 @@ export const SignIn = async (req, res) => {
 
         return res.status(200).json({
             message: "Success",
-            Token,
+            token,
             user: userData
         });
     } catch (error) {

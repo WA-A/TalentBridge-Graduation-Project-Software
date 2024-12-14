@@ -19,6 +19,8 @@ import { useFonts } from 'expo-font';
 import ProjectsSeniorPage from './screens/ProjectsSeniorPage.js'
 import ProjectsJuniorPage from './screens/ProjectsJuniorPage.js'
 import AddProjectsPage from './screens/AddProjectsPage';
+import SearchScreen from './screens/SearchScreen.js';
+import ViewOtherProfile from './screens/ViewOtherProfile';
 const Stack = createStackNavigator();
 
 const linking = Platform.OS === 'web' ? {
@@ -33,6 +35,7 @@ const linking = Platform.OS === 'web' ? {
             ForgotPassword: 'forgot-password',
             ResetPassword: 'reset-password',
             EnterCode: 'enter-code',
+            WelcomeScreen: 'WelcomeScreen', 
           },
       
     },
@@ -109,7 +112,15 @@ export default function App() {
                       component={ForgotPassword}                     
                       options={{ headerShown: false }}
                        />
-                        
+                  <Stack.Screen name="SearchScreen"
+                   component={SearchScreen}
+                  options={{ headerShown: false }}
+                      />
+     <Stack.Screen name="ViewOtherProfile"
+                   component={ViewOtherProfile
+                   }
+                  options={{ headerShown: false }}
+                      />
 <Stack.Screen name="EnterCode"
  component={EnterCode}                     
 options={{ headerShown: false }}
