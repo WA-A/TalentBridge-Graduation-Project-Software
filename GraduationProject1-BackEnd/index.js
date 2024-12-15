@@ -1,15 +1,45 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
-import Appinit from './src/app.router.js';
+import { Server } from 'socket.io'; // استيراد Socket.IO بالطريقة الصحيحة
 import session from 'express-session';
-import passport from './src/modules/Auth/GoogleAuth.js';
+import passport from './src/modules/auth/GoogleAuth.js'; // المسار للموديل الخاص بـ Google Auth
+import Appinit from './src/app.router.js'; // المسار للرواتر الأساسي
 
 dotenv.config();
 const app = express();
 
-// إضافة هذه السطر قبل أي شيء آخر لتمكين معالجة JSON
-app.use(express.json()); // هذا يسمح للخادم بمعالجة JSON في الجسم
+// إعداد الخادم HTTP
+const server = app.listen(3000, () => {
+  console.log('Server is running on port 3000');
+});
+
+// إعداد Socket.IO مع CORS
+const io = new Server(server, {
+  cors: {
+    origin: ['http://localhost:8081', 'http://exp://192.168.1.239:8081'],  // السماح بالاتصال من هذه النطاقات
+    methods: ['GET', 'POST'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true,
+  }
+});
+
+// تعريف حدث الاتصال مع Socket.IO
+io.on('connection', (socket) => {
+  console.log('A user connected');
+    // استماع لحدث 'profileUpdated' الذي يرسل البيانات المحدثة
+    socket.on('profileUpdated', (updatedUserData) => {
+      console.log('User profile updated:', updatedUserData);
+  
+      // إرسال التحديثات إلى جميع المتصلين أو متصلين محددين حسب الحاجة
+      io.emit('profileUpdated', updatedUserData); // إرسال التحديثات لجميع المتصلين
+    });
+  
+  // أحداث أخرى يمكن إضافتها هنا
+  socket.on('disconnect', () => {
+    console.log('User disconnected');
+  });
+});
 
 // إعداد CORS مع دعم التطبيقات الموبايل والويب
 const allowedOrigins = ['http://localhost:8081', 'http://exp://192.168.1.239:8081'];
@@ -21,7 +51,7 @@ const corsOptions = {
       callback(new Error('Not allowed by CORS'));
     }
   },
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true,
 };
@@ -36,7 +66,7 @@ app.use((req, res, next) => {
   if (allowedOrigins.includes(origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin);
   }
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   next();
@@ -44,18 +74,13 @@ app.use((req, res, next) => {
 
 // Config Google Session
 app.use(session({
-  secret: process.env.SESSION_SECRET ,
+  secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: true,
 }));
 
+// تهيئة passport
 app.use(passport.initialize());
 
 // تهيئة الرواتر
 Appinit(app, express);
-
-// تشغيل الخادم
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});

@@ -40,7 +40,7 @@ export default function ForgotPassword({ navigation }) {
               : 'http://192.168.1.239:3000'; 
       
               const response = await fetch(`${baseUrl}/auth/sendcode`, {
-              method: 'patch',
+              method: 'PATCH',
               headers: {
                 'Content-Type': 'application/json',
               },

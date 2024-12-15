@@ -43,7 +43,7 @@ export default function EnterCode({ navigation,route }) {
               : 'http://192.168.1.239:3000'; 
       
               const response = await fetch(`${baseUrl}/auth/forgotpassword`, {
-              method: 'patch',
+              method: 'PATCH',
               headers: {
                 'Content-Type': 'application/json',
               },

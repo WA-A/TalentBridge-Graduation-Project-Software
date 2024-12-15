@@ -47,6 +47,9 @@ const UserSchema = new Schema({
    PictureProfile: {
       type: Object
    },
+   CoverImage: {
+      type: Object
+   },
    About: {
       type: String,
    },

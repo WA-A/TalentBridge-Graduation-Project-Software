@@ -88,15 +88,12 @@ export default function Login({ navigation }) {
           }
     
           const result = await response.json();
-          console.log('User login successfully:', result);
-          const userField = result.user.Field;
-          console.log('Field:', userField);
-    
+          console.log('User login successfully:', result);    
           // حفظ التوكين في AsyncStorage
-          if (result.Token) {
-            await AsyncStorage.setItem('userToken', result.Token); // تخزين التوكين محليًا
+          if (result.token) {
+            await AsyncStorage.setItem('userToken', result.token); // تخزين التوكين محليًا
             console.log('Token saved successfully');
-            navigation.navigate('HomeScreen', { userField });
+            navigation.navigate('HomeScreen');
           } else {
             console.warn('No token found in response');
           }

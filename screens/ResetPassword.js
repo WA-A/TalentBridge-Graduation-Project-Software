@@ -99,7 +99,7 @@ export default function ResetPassword({ route, navigation }) {
                   : 'http://192.168.1.239:3000'; 
           
                   const response = await fetch(`${baseUrl}/auth/changepassword`, {
-                  method: 'patch',
+                  method: 'PATCH',
                   headers: {
                     'Content-Type': 'application/json',
                   },
