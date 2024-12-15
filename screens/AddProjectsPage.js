@@ -38,12 +38,12 @@ const { width } = Dimensions.get('window');
 
 const AddProjectsPage = () => {
 
-    const [projectName, setProjectName] = useState('');
-    const [description, setDescription] = useState('');
-    const [requiredSkills, setRequiredSkills] = useState('');
-    const [field, setField] = useState('');
-    const [duration, setDuration] = useState('');
-    const [positionRole, setPositionRole] = useState('');
+    const [ProjectName, setProjectName] = useState('');
+    const [Description, setDescription] = useState('');
+    const [RequiredSkills, setRequiredSkills] = useState('');
+    const [Field, setField] = useState('');
+    const [DurationInMounths, setDurationInMounths] = useState('');
+    const [PositionRole, setPositionRole] = useState('');
     const [WorkLocation, setWorkLocation] = useState('');
     const [Benefits, setBenefits] = useState('');
     const [Price, setPrice] = useState('');
@@ -58,15 +58,89 @@ const AddProjectsPage = () => {
     }
     const { isNightMode, toggleNightMode } = useContext(NightModeContext);
       
-    
-      
+    const [selectedFile, setSelectedFile] = useState(null);
+    console.log('Selected File:', selectedFile);
 
-  
     
+    const handleFilePicker = async () => {
+        try {
+            const res = await DocumentPicker.getDocumentAsync({
+                type: '*/*',
+            });
     
+            if (res.type === 'success') {
+                setSelectedFile({
+                    uri: res.uri,
+                    name: res.name,
+                    mimeType: res.mimeType || 'application/pdf',
+                });
+                console.log('Selected file:', res);
+            } else {
+                console.log('File selection canceled.');
+            }
+        } catch (err) {
+            console.error('Error selecting file:', err);
+        }
+    };
+    
+    const handleAddProject = async () => {
+        try {
+            const token = await AsyncStorage.getItem('userToken');
+            if (!token) throw new Error('No token found');
+    
+            const baseUrl = Platform.OS === 'web'
+                ? 'http://localhost:3000'
+                : 'http://192.168.1.239:3000';
+    
+            const formData = new FormData();
+    
+            formData.append('ProjectName', ProjectName);
+            formData.append('Description', Description);
+            formData.append('RequiredSkills', RequiredSkills);
+            formData.append('Field', Field);
+            formData.append('DurationInMounths', DurationInMounths);
+            formData.append('PositionRole', PositionRole);
+            formData.append('WorkLocation', WorkLocation);
+            formData.append('Benefits', Benefits);
+            formData.append('Price', Price);
+    
+            if (selectedFile) {
+                const fileUri = selectedFile.uri.startsWith('file://')
+                    ? selectedFile.uri.replace('file://', '') 
+                    : selectedFile.uri;
+    
+                formData.append('FileProject', {
+                    uri: fileUri,
+                    name: selectedFile.name,
+                    type: selectedFile.mimeType || 'application/pdf',
+                });
+            }
+    
+            console.log('FormData before sending:', formData);
+    
+            const response = await fetch(`${baseUrl}/project/createproject`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Wasan__${token}`, 
+                },
+                body: formData,
+            });
     
 
-
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Something went wrong');
+            }
+    
+            const result = await response.json();
+            console.log('Add Project successfully:', result);
+        } catch (error) {
+            console.error('Error adding project:', error);
+        }
+    };
+    
+    
+    
     return (
         <View style={{ flex: 1, backgroundColor: secondary, paddingTop: 20 }}>
         {/* الشريط العلوي */}
@@ -96,7 +170,7 @@ const AddProjectsPage = () => {
                     <Text style={styles.label}>Project Name</Text>
                     <TextInput
                         style={styles.input}
-                        value={projectName}
+                        value={ProjectName}
                         onChangeText={setProjectName}
                         placeholder="Enter project name"
                     />
@@ -106,7 +180,7 @@ const AddProjectsPage = () => {
                     <Text style={styles.label}>Description</Text>
                     <TextInput
                         style={styles.input}
-                        value={description}
+                        value={Description}
                         onChangeText={setDescription}
                         placeholder="Enter project description"
                         multiline
@@ -117,7 +191,7 @@ const AddProjectsPage = () => {
                     <Text style={styles.label}>Required Skills</Text>
                     <TextInput
                         style={styles.input}
-                        value={requiredSkills}
+                        value={RequiredSkills}
                         onChangeText={setRequiredSkills}
                         placeholder="Enter required skills"
                     />
@@ -127,28 +201,28 @@ const AddProjectsPage = () => {
                     <Text style={styles.label}>Field</Text>
                     <TextInput
                         style={styles.input}
-                        value={field}
+                        value={Field}
                         onChangeText={setField}
                         placeholder="Enter project field"
                     />
                 </View>
 
+
                 <View style={styles.inputContainer}>
                     <Text style={styles.label}>Duration (Months)</Text>
                     <TextInput
                         style={styles.input}
-                        value={duration}
-                        onChangeText={setDuration}
-                        placeholder="Enter duration in months"
-                        keyboardType="numeric"
+                        value={DurationInMounths}
+                        onChangeText={setDurationInMounths}
+                         placeholder="Enter duration in months"
                     />
                 </View>
-
+             
                 <View style={styles.inputContainer}>
                     <Text style={styles.label}>Position Role</Text>
                     <TextInput
                         style={styles.input}
-                        value={positionRole}
+                        value={PositionRole}
                         onChangeText={setPositionRole}
                         placeholder="Enter position role"
                     />
@@ -190,12 +264,13 @@ const AddProjectsPage = () => {
                 <Text style={styles.submitText}>Select File</Text>
             </TouchableOpacity>
             {selectedFile && (
-                <View style={styles.fileDetails}>
-                    <Text>File Name: {selectedFile[0]?.name}</Text>
-                    <Text>File Type: {selectedFile[0]?.type}</Text>
-                    <Text>File Size: {selectedFile[0]?.size} bytes</Text>
-                </View>
-            )}
+    <View style={styles.fileDetails}>
+        <Text>File Name: {selectedFile.name}</Text>
+        <Text>File Type: {selectedFile.mimeType}</Text>
+        <Text>File URI: {selectedFile.uri}</Text>
+    </View>
+)}
+
         </View>
 
 
