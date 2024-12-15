@@ -25,7 +25,6 @@ export const CreatePost = async (req, res, next) => {
 
         const files = req.files['files'] ? req.files['files'].map(file => file.path) : [];
 
-        // الآن التأكد من الـ ProfilePicture:
         const ProfilePicture = req.user.profileImage || '../../../../assets/face.jpg';  // استخدم صورة بروفايل افتراضية إذا لم تكن موجودة
         
         const Post = await PostModel.create({
@@ -34,7 +33,7 @@ export const CreatePost = async (req, res, next) => {
             Videos: videos,
             Files: files,
             UserId,
-            ProfilePicture,  // إضافة صورة البروفايل
+            ProfilePicture,  
         });
 
         if (!Post) {

@@ -5,6 +5,8 @@ import ProjectRouter from './modules/Projects/Projects.router.js'
 import PostRouter from './modules/Post/Post.Router.js'
 import CommentRouter from './modules/Comment/Comment.Router.js'
 import ChatRouter from "./modules/Chat/Chat.Router.js"
+import ExternalApiRouter from "./../ExternalApi/ExternalApi.router.js"
+
 import ApplicationTrainRouter from "./modules/Application/Application.router.js"
 import cors from 'cors';
 import dotenv from 'dotenv';
@@ -21,6 +23,7 @@ const Appinit = (app,express)=>{
     app.use('/post',PostRouter);
     app.use('/comment',CommentRouter);
     app.use('/chat',ChatRouter);
+    app.use('/externalapi',ExternalApiRouter);
     app.use('/applicationtrain',ApplicationTrainRouter);
 
 
