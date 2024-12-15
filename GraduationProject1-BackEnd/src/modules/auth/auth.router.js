@@ -5,14 +5,8 @@ import { CheckEmail } from "../../MiddleWare/CheckEmail.js";
 import { AsyncHandler } from "../../../utls/CatchError.js";
 import { Validation } from "../../MiddleWare/Validation.js";
 import * as schema from './Auth.Validation.js';
-
 import { auth } from "../../MiddleWare/auth.js";
 import passport from "../auth/GoogleAuth.js"
-
-
-
-
-
 
 
 router.post('/signup',CheckEmail,AuthController.SignUp); //,Validation(schema.RegisterSchema)

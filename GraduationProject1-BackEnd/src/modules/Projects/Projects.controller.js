@@ -1,4 +1,5 @@
 import ProjectsModel from "../../Model/ProjectsModel.js";
+import cloudinary from '../../../utls/Cloudinary.js';
 
 
 // Create Project By Senior
@@ -18,14 +19,16 @@ export const CreateProject = async (req, res) => {
       } = req.body;
   
       console.log("Uploaded files:", req.files); 
+
+      const CreatedBySenior = req.user._id;
+
+      const FileProject = req.files['FileProject'] ? await Promise.all(req.files['FileProject'].map(async (file) => {
+        const { secure_url, public_id } = await cloudinary.uploader.upload(file.path, { folder: `GraduationProject1-Software/Prpject/FileProject/${CreatedBySenior}` });
+        return { secure_url, public_id };
+    })) : [];
   
-      const FileProject = req.files['FileProject'] ? req.files['FileProject'].map(file => file.path) : [];
-
-      
-
       console.log("FileProject paths:", FileProject);  
   
-      const CreatedBySenior = req.user._id;
   
       const project = await ProjectsModel.create({
         ProjectName,
