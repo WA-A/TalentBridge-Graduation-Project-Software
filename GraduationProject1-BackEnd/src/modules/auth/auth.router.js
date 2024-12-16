@@ -18,8 +18,15 @@ router.patch('/changepassword',AuthController.ChangePassword);
 
 
 //  Google OAuth
-router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
-router.get('/google/callback', passport.authenticate('google', { failureRedirect: '/' }), (req, res) => {
-  res.redirect('/profile'); // Go Profile after sign success
-});
+
+router.get('/google', passport.authenticate('google', { scope: ['profile', 'Email'] }));
+
+router.get('/google/callback',
+  passport.authenticate('google', { failureRedirect: '/' }),
+  (req, res) => {
+    res.redirect('/profile'); 
+  }
+);
+
+
 export default router

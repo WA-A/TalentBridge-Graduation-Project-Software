@@ -208,7 +208,18 @@ const AddPostScreen = () => {
           <Text style={{ marginVertical: 20 }}>
             {file.split('/').pop()}
           </Text>
-        )*/}
+        )
+        onPress={handleGoogleLogin} */}
+
+                            <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 20 }}>
+                                <TouchableOpacity style={{ alignItems: 'center' }}>
+                                <StyledButton   style={{ backgroundColor: brand, marginRight: 10}}>
+                                            <ButtonText>Add Post</ButtonText>
+                                          </StyledButton>
+                                </TouchableOpacity>
+                               
+                                
+                            </View>
       </InnerContainer>
     </StyledContainer>
 
