@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Text, View, TouchableOpacity, Animated, Alert,Platform} from 'react-native';
+import { Text, View, TouchableOpacity, Animated, Alert,Platform,Linking} from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { AnimatedCircles, useLineEffect } from './../compnent/Animation'
 import axios from 'axios';
@@ -104,7 +104,6 @@ export default function Login({ navigation }) {
         }
       };
     
-
     return (
         <StyledContainer>
             <StatusBar style="dark" />
@@ -176,7 +175,7 @@ export default function Login({ navigation }) {
                                 <ButtonText>Login</ButtonText>
                             </StyledButton>
 
-
+                           
 
                             <TouchableOpacity  onPress={() => navigation.navigate('ForgotPassword')}>
                                 <Text style={{ color: brand, fontWeight: 'bold', textAlign: 'center', marginBottom: 20, marginTop: 20 }}>
@@ -185,7 +184,7 @@ export default function Login({ navigation }) {
                             </TouchableOpacity>
 
                             <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 20 }}>
-                                <TouchableOpacity onPress={() => { /* تنفيذ تسجيل الدخول باستخدام Google */ }} style={{ alignItems: 'center' }}>
+                                <TouchableOpacity  style={{ alignItems: 'center' }}>  
                                     <View style={styles.iconContainer}>
                                         <View style={styles.circleBackground}>
                                             <FontAwesome name="google" size={17} color={primary} />
@@ -194,12 +193,7 @@ export default function Login({ navigation }) {
                                     </View>
                                 </TouchableOpacity>
 
-                                <TouchableOpacity onPress={() => { /* تنفيذ تسجيل الدخول باستخدام Facebook */ }} style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                    <View style={styles.iconContainer}>
-                                        <Ionicons name="logo-facebook" size={30} color="#4267B2" />
-                                        <Text style={{ marginLeft: 10, fontSize: 15, color: '#4267B2', fontWeight: 'bold' }}>Facebook</Text>
-                                    </View>
-                                </TouchableOpacity>
+                                
                             </View>
 
                             <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 20 }}>

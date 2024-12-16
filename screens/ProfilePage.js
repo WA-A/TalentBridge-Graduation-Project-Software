@@ -42,10 +42,11 @@ export default function ProfilePage ({ navigation}) {
     const [image, setImage] = useState(null); // لتخزين الصورة
     const [showPosts, setShowPosts] = useState(false);
 
+    const [languages, setLanguages] = useState([]);  // لتخزين اللغات المسترجعة من الـ API
+  const [selectedLanguages, setSelectedLanguages] = useState([]);  // لتخزين اللغات المختارة
+  const [modalVisible, setModalVisible] = useState(false);  // لإظهار/إخفاء النافذة المنبثقة
 
     
-  
-
 
     const [skill, setSkill] = useState(''); // لتخزين المهارة الحالية
     const [skillsList, setSkillsList] = useState([]); // قائمة المهارات
@@ -173,8 +174,6 @@ export default function ProfilePage ({ navigation}) {
   
     return new Blob(byteArrays, { type: contentType });
   };
-  
-
   
 
 
@@ -348,7 +347,7 @@ const toggleModal = () => {
   
       // إعداد البيانات باستخدام FormData
       const formData = new FormData();
-  
+
       formData.append('About', newabout);
       formData.append('Bio', newbio);
       formData.append('UserName', newuserName);
@@ -466,6 +465,92 @@ const toggleModal = () => {
       alert('Permission to access the media library is required!');
     }
   };
+
+  
+  // دالة لتحميل اللغات المختارة من AsyncStorage
+const loadSelectedLanguages = async () => {
+  try {
+    const savedLanguages = await AsyncStorage.getItem('selectedLanguages');
+    if (savedLanguages) {
+      setSelectedLanguages(JSON.parse(savedLanguages)); // تحميل اللغات المحفوظة
+    }
+  } catch (error) {
+    console.error('Error loading selected languages from AsyncStorage:', error);
+  }
+};
+
+// دالة لحفظ اللغات المختارة في AsyncStorage
+const saveSelectedLanguages = async (languages) => {
+  try {
+    await AsyncStorage.setItem('selectedLanguages', JSON.stringify(languages)); // حفظ البيانات
+  } catch (error) {
+    console.error('Error saving selected languages to AsyncStorage:', error);
+  }
+};
+
+// دالة لاسترجاع اللغات من الـ API
+const handleGetLanguages = async () => {
+  try {
+    const token = await AsyncStorage.getItem('userToken'); // استرجاع التوكن
+    if (!token) {
+      console.error('Token not found');
+      return;
+    }
+
+    const response = await fetch(`${baseUrl}/externalapi/getlanguages`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Wasan__${token}`, // تضمين التوكن في الهيدر
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json(); // إذا كان هناك خطأ في الرد
+      throw new Error(errorData.message || 'Failed to fetch languages');
+    }
+
+    const data = await response.json(); // تحويل الرد إلى JSON
+    setLanguages(data.languages); // تخزين اللغات في الحالة
+
+    // (اختياري) طباعة اللغات للتحقق أثناء التطوير
+    console.log('Fetched languages:', data.languages);
+  } catch (error) {
+    console.error('Error fetching languages:', error.message);
+  }
+};
+
+// دالة لإضافة أو إزالة اللغة المختارة
+const handleLanguageSelect = (language) => {
+  setSelectedLanguages((prevSelectedLanguages) => {
+    const newSelectedLanguages = prevSelectedLanguages.some((l) => l.id === language.id)
+      ? prevSelectedLanguages.filter((l) => l.id !== language.id) // إزالة اللغة إذا كانت موجودة
+      : [...prevSelectedLanguages, language]; // إضافة اللغة الجديدة
+    saveSelectedLanguages(newSelectedLanguages); // حفظ التغييرات في AsyncStorage
+    return newSelectedLanguages;
+  });
+};
+
+// دالة لحذف اللغة
+const handleDeleteLanguage = (languageId) => {
+  setSelectedLanguages((prevSelectedLanguages) => {
+    const updatedLanguages = prevSelectedLanguages.filter((l) => l.id !== languageId);
+    saveSelectedLanguages(updatedLanguages); // تحديث AsyncStorage
+    return updatedLanguages;
+  });
+};
+
+// دالة لفتح النافذة المنبثقة واسترجاع اللغات من API
+const handleOpenModal = () => {
+  handleGetLanguages(); // استرجاع اللغات
+  setModalVisible(true); // إظهار النافذة
+};
+
+// تحميل اللغات المختارة عند تحميل الصفحة
+useEffect(() => {
+  loadSelectedLanguages();
+}, []);
+
+
 useEffect(() => {
   handleViewProfile(); 
   requestPermission();
@@ -536,7 +621,11 @@ useEffect(() => {
     }
   };
   
-  
+
+
+
+
+ 
 
     return (
         <View style={{ flex: 1 }}>
@@ -1323,29 +1412,68 @@ useEffect(() => {
 
               {/* Add Language */}
               <View style={styles.card}>
-          <View style={styles.cardHeader}>
-            <Text style={styles.cardTitle}>Add Language</Text>
-            <View style={styles.actionButtons}>
-              <TouchableOpacity
-                onPress={() => console.log('Add Language')}
-                style={styles.smallButton}
-              >
-                <Text style={styles.smallButtonText}>Add</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-            onPress={() => console.log('Delete Language')}
-            style={styles.smallButton}
-          >
-            <Text style={styles.smallButtonText}>Delete</Text>
+      <View style={styles.cardHeader}>
+        <Text style={styles.cardTitle}>Add Language</Text>
+        <View style={styles.actionButtons}>
+          <TouchableOpacity onPress={handleOpenModal} style={styles.smallButton}>
+            <Text style={styles.smallButtonText}>Select Languages</Text>
           </TouchableOpacity>
-              
-            </View>
-          </View>
-
-          <TouchableOpacity >
-                    <Text style={styles.input}>{ "Add Language"}</Text>
-                </TouchableOpacity>
         </View>
+      </View>
+
+      {/* عرض اللغات المختارة */}
+      <View style={styles.selectedLanguagesContainer}>
+        {selectedLanguages.map((language, index) => (
+          <View style={[styles.languageItem, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}>
+  <Text style={styles.selectedLanguageText}>{language.name}</Text>
+  <TouchableOpacity
+    onPress={() => handleDeleteLanguage(language.id)} // حذف اللغة
+    style={styles.deleteButton}
+  >
+    <Text style={styles.deleteButtonText}>X</Text>
+  </TouchableOpacity>
+</View>
+
+        ))}
+      </View>
+
+      {/* النافذة المنبثقة لاختيار اللغات */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Select Languages</Text>
+
+            <FlatList
+              data={languages}
+              keyExtractor={(item) => item.id.toString()}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  onPress={() => handleLanguageSelect(item)} // اختيار اللغة
+                  style={styles.languageItem}
+                >
+                  <Text style={styles.languageName}>{item.name}</Text>
+                  {selectedLanguages.some((l) => l.id === item.id) && (
+                    <Text style={styles.selectedText}>Selected</Text>
+                  )}
+                </TouchableOpacity>
+              )}
+            />
+
+            <TouchableOpacity
+              onPress={() => setModalVisible(false)} // إغلاق النافذة
+              style={styles.closeButton}
+            >
+              <Text style={styles.closeButtonText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+    </View>
 
          {/* Add Recommendation */}
          <View style={styles.card}>
@@ -1596,7 +1724,6 @@ useEffect(() => {
     
 
 const styles = StyleSheet.create({
-
   card: {
     backgroundColor: '#CAC5D8',
     padding: 20,
@@ -1872,6 +1999,72 @@ coverImageOverlay: {
     height: 40,
     fontSize: 16,
   },
+  selectedLanguagesContainer: {
+    marginTop: 16,
+  },
+  selectedLanguageText: {
+    fontSize: 16,
+    color: '#000',
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    width: '80%',
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 8,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 16,
+  },
+  languageItem: {
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ddd',
+  },
+  languageName: {
+    fontSize: 16,
+  },
+  selectedText: {
+    color: 'green',
+    fontSize: 14,
+  },
+  closeButton: {
+    marginTop: 16,
+    backgroundColor: '#C99FA9',
+    padding: 8,
+    borderRadius: 4,
+    alignItems: 'center',
+  },
+  closeButtonText: {
+    color: '#fff',
+  },
+  deleteButton: {
+    backgroundColor: '#C99FA9',
+    paddingVertical: 5,
+    paddingHorizontal: 8,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+  },
+  
+  deleteButtonText: {
+    fontSize: 12,
+    color: '#FFF',
+    fontWeight: 'bold',
+  },
+  
+  
 });
 
 

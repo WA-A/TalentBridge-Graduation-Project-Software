@@ -74,13 +74,13 @@ app.use((req, res, next) => {
 
 // Config Google Session
 app.use(session({
-  secret: process.env.SESSION_SECRET,
+  secret: process.env.SESSION_SECRET || 'your-session-secret',
   resave: false,
   saveUninitialized: true,
 }));
-
-// تهيئة passport
 app.use(passport.initialize());
+app.use(passport.session());
+
 
 // تهيئة الرواتر
 Appinit(app, express);
