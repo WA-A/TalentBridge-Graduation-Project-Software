@@ -3,8 +3,8 @@ import jwt from 'jsonwebtoken';
 import { SendEmail } from "../../../utls/SendEmail.js";
 import { customAlphabet, nanoid } from 'nanoid';
 import UserModel from '../../Model/User.Model.js';
-
-
+import { SendNotification } from '../../../utls/SendNotfication.js';
+import Notification from '../../Model/Notfication.js';
 
 
 export const SignUp = async (req, res) => {
@@ -79,6 +79,7 @@ export const SendCode = async (req, res) => {
     }    
 
     await SendEmail(Email, `Reset Password`, `<h2>Code is ${Code}</h2>`);
+    await SendNotification("6748a0f4981726b143898388",Email, `Reset Password Notfication`, `<h2>Code is ${Code}</h2>`);
     return res.status(200).json({ message: "Success", user });
 };
 
