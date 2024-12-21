@@ -4,7 +4,7 @@ import { Ionicons, Feather, FontAwesome5, EvilIcons,FontAwesome6 } from '@expo/v
 import { useNavigation } from '@react-navigation/native';
 import { Dimensions } from 'react-native';
 import { useFonts } from 'expo-font';
-//import DocumentPicker from 'react-native-document-picker'; // لإختيار الملفات
+import * as DocumentPicker from 'expo-document-picker';
 import { launchImageLibrary } from 'react-native-image-picker'; // لإختيار الصور
 import { Video } from 'react-native-video'; // لإختيار الفيديوهات إذا كنت تريد عرض الفيديوهات
 
@@ -54,7 +54,7 @@ const AddPostScreen = () => {
     const [body, setBody] = useState('');
     const [uploadType, setUploadType] = useState('image'); // الافتراضي هو الصورة
     const [image, setImage] = useState(null);
-    //const [file, setFile] = useState(null);
+    const [file, setFile] = useState(null);
     const [video, setVideo] = useState(null);
     
   
@@ -68,22 +68,20 @@ const AddPostScreen = () => {
       });
     };
   
-    // const pickFile = async () => {
-    //   try {
-    //     const res = await DocumentPicker.pickSingle({
-    //       type: [DocumentPicker.types.allFiles],
-    //     });
-    //     setFile(res.uri);
-    //     setImage(null); // مسح الصورة والفيديو عند اختيار ملف
-    //     setVideo(null);
-    //   } catch (err) {
-    //     if (DocumentPicker.isCancel(err)) {
-    //       console.log('User cancelled the picker');
-    //     } else {
-    //       console.log('Unknown error:', err);
-    //     }
-    //   }
-    // };
+    const pickFile = async () => {
+      try {
+        const result = await DocumentPicker.getDocumentAsync({
+          type: '*/*', // جرب أنواع أخرى إذا لزم الأمر
+        });
+        if (result.type === 'success') {
+          setFile(result.uri);
+          console.log('File URI:', result.uri);
+        }
+      } catch (err) {
+        console.error('Error picking file:', err);
+      }
+    };
+    
   
     const pickVideo = () => {
       launchImageLibrary({ mediaType: 'video', quality: 1 }, response => {
@@ -187,11 +185,11 @@ const AddPostScreen = () => {
             <ButtonText>Choose Video</ButtonText>
           </StyledButton>
         )}
-        {/* {uploadType === 'file' && (
+         {uploadType === 'file' && (
           <StyledButton onPress={pickFile}>
             <ButtonText>Choose File</ButtonText>
           </StyledButton>
-        )} */}
+        )} 
 
         {/* Preview the uploaded content */}
         {image && <Image source={{ uri: image }} style={{ width: 200, height: 200, marginVertical: 20 }} />}
@@ -203,13 +201,13 @@ const AddPostScreen = () => {
             resizeMode="cover"
           />
         )}
-        {/* File preview
+        {/* File preview*/}
         {file && (
           <Text style={{ marginVertical: 20 }}>
             {file.split('/').pop()}
           </Text>
-        )
-        onPress={handleGoogleLogin} */}
+        )}
+         {/* onPress={handleGoogleLogin}  */}
 
                             <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 20 }}>
                                 <TouchableOpacity style={{ alignItems: 'center' }}>

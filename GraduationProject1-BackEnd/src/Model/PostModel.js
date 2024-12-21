@@ -38,6 +38,10 @@ const PostSchema = new Schema({
             ref: 'User'
         }
     ],
+    Category: {
+        type: String,
+        required: true,
+    },
 }, {
     timestamps: true,
 });
