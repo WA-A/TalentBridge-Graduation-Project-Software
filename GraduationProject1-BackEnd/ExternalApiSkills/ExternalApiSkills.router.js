@@ -7,6 +7,7 @@ const router = express.Router();
 // Api Skills
 router.get('/getskills',ExternalApiSkillsController.GetSkills);
 router.post('/addskills',auth(EndPoints.AddSkills),ExternalApiSkillsController.AddSkills);
+router.delete('/deleteskills',auth(EndPoints.AddSkills),ExternalApiSkillsController.DeleteSkill);
 
 
 
