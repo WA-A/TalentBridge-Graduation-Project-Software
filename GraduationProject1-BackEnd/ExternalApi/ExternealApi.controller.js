@@ -1,5 +1,6 @@
-// ملف الـ controller
-const languages = [
+import UserModel from '../src/Model/User.Model.js';
+
+const Languages = [
     { id: 1, name: "English", code: "en" },
     { id: 2, name: "Arabic", code: "ar" },
     { id: 3, name: "French", code: "fr" },
@@ -42,17 +43,83 @@ const languages = [
     { id: 40, name: "Serbian", code: "sr" }
 ];
 
+export const AddLanguages = async (req, res) => {
+    try {
+        if (!req.user) {
+            console.log("User not authorized: No token provided.");
+            return res.status(401).json({ message: "User not authorized. Please provide a valid token." });
+        }
+
+        const authUser = req.user;
+        const { LanguageId } = req.body;
+
+        if (!authUser || !LanguageId) {
+            console.log("Missing required fields: authUser or LanguageId.");
+            return res.status(400).json({ message: "User ID and Language ID are required." });
+        }
+
+        console.log("Request received:", { authUser, LanguageId });
+
+        const selectedLanguage = Languages.find(lang => lang.id === LanguageId);
+        if (!selectedLanguage) {
+            console.log("Language not found in predefined list.");
+            return res.status(404).json({ message: "Language not found." });
+        }
+
+        console.log("Selected language:", selectedLanguage);
+
+        if (!selectedLanguage.id || !selectedLanguage.name || !selectedLanguage.code) {
+            return res.status(400).json({ message: "Selected language is missing required fields." });
+        }
+
+        const user = await UserModel.findById(authUser);
+        if (!user) {
+            console.log("User not found in the database.");
+            return res.status(404).json({ message: "User not found." });
+        }
+
+        console.log("User found:", user);
+
+        const languageExists = user.Languages.some(lang => lang.id === selectedLanguage.id);
+        if (languageExists) {
+            console.log("Language already exists for user.");
+            return res.status(400).json({ message: "Language already added." });
+        }
+
+        user.Languages.push({
+            id: selectedLanguage.id,
+            name: selectedLanguage.name,
+            code: selectedLanguage.code
+        });
+
+        await user.save();
+
+        console.log("Language added successfully:", selectedLanguage);
+        return res.status(200).json({
+            message: "Language added successfully.",
+            languages: user.Languages
+        });
+
+    } catch (error) {
+        console.error("Error adding language: ", error);
+        return res.status(500).json({ message: "Internal Server Error." });
+    }
+};
+
 export const GetLanguages = (req, res) => {
     try {
         return res.status(200).json({
             message: "Languages fetched successfully",
-            languages: languages
+            languages: Languages
         });
     } catch (error) {
         console.error("Error fetching languages: ", error);
         return res.status(500).json({ message: "Internal Server Error" });
     }
 };
+
+
+
 
 const Skills = [
     { id: 1, name: "Python", code: "py" },
