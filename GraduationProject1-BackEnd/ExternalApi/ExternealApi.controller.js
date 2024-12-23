@@ -119,6 +119,52 @@ export const GetLanguages = (req, res) => {
 };
 
 
+export const DeleteLanguages = async (req, res) => {
+    try {
+        if (!req.user) {
+            console.log("User not authorized: No token provided.");
+            return res.status(401).json({ message: "User not authorized. Please provide a valid token." });
+        }
+
+        const authUser = req.user;
+        const { LanguageId } = req.body;
+
+        if (!authUser || !LanguageId) {
+            console.log("Missing required fields: authUser or LanguageId.");
+            return res.status(400).json({ message: "User ID and Language ID are required." });
+        }
+
+        console.log("Request received to delete language:", { authUser, LanguageId });
+
+        const user = await UserModel.findById(authUser);
+        if (!user) {
+            console.log("User not found in the database.");
+            return res.status(404).json({ message: "User not found." });
+        }
+
+        console.log("User found:", user);
+
+        const languageIndex = user.Languages.findIndex(lang => lang.id === LanguageId);
+        if (languageIndex === -1) {
+            console.log("Language not found in user's languages.");
+            return res.status(404).json({ message: "Language not found for the user." });
+        }
+
+        user.Languages.splice(languageIndex, 1);
+
+        await user.save();
+
+        console.log("Language deleted successfully. Remaining languages:", user.Languages);
+        return res.status(200).json({
+            message: "Language deleted successfully.",
+            languages: user.Languages
+        });
+
+    } catch (error) {
+        console.error("Error deleting language: ", error);
+        return res.status(500).json({ message: "Internal Server Error." });
+    }
+};
 
 
 const Skills = [

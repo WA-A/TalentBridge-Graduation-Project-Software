@@ -85,8 +85,8 @@ export default function ProfilePage ({ navigation}) {
       certificationImageData:'',
       certificationLinkData:'',
     });
-    const [languages, setLanguages] = useState([]);  // لتخزين اللغات المسترجعة من الـ API
-  const [selectedLanguages, setSelectedLanguages] = useState([]);  // لتخزين اللغات المختارة
+    const [languages, setLanguages] = useState([]); // قائمة اللغات من API
+  const [userLanguages, setUserLanguages] = useState([]); // قائمة لغات المستخدم
 
     const [newSkills,setNewSkills] = useState([]);
     const [newLanguage,setNewLanguage] = useState([]);
@@ -1174,7 +1174,7 @@ const formatDate = (dateString) => {
 
 
   
-  // دالة لتحميل اللغات المختارة من AsyncStorage
+  // دالة لتحميل اللغات المختارة من AsyncStorage (يمكنك الإبقاء عليها)
 const loadSelectedLanguages = async () => {
   try {
     const savedLanguages = await AsyncStorage.getItem('selectedLanguages');
@@ -1186,16 +1186,7 @@ const loadSelectedLanguages = async () => {
   }
 };
 
-// دالة لحفظ اللغات المختارة في AsyncStorage
-const saveSelectedLanguages = async (languages) => {
-  try {
-    await AsyncStorage.setItem('selectedLanguages', JSON.stringify(languages)); // حفظ البيانات
-  } catch (error) {
-    console.error('Error saving selected languages to AsyncStorage:', error);
-  }
-};
-
-// دالة لاسترجاع اللغات من الـ API
+// دالة لاسترجاع اللغات من الـ API (لعرضها فقط)
 const handleGetLanguages = async () => {
   try {
     const token = await AsyncStorage.getItem('userToken'); // استرجاع التوكن
@@ -1217,40 +1208,89 @@ const handleGetLanguages = async () => {
     }
 
     const data = await response.json(); // تحويل الرد إلى JSON
-    setLanguages(data.languages); // تخزين اللغات في الحالة
+    setLanguages(data.languages); // تخزين اللغات في الحالة لعرضها
 
-    // (اختياري) طباعة اللغات للتحقق أثناء التطوير
-    console.log('Fetched languages:', data.languages);
+    console.log('Fetched languages:', data.languages); // تحقق من البيانات
   } catch (error) {
     console.error('Error fetching languages:', error.message);
   }
 };
 
-// دالة لإضافة أو إزالة اللغة المختارة
-const handleLanguageSelect = (language) => {
-  setSelectedLanguages((prevSelectedLanguages) => {
-    const newSelectedLanguages = prevSelectedLanguages.some((l) => l.id === language.id)
-      ? prevSelectedLanguages.filter((l) => l.id !== language.id) // إزالة اللغة إذا كانت موجودة
-      : [...prevSelectedLanguages, language]; // إضافة اللغة الجديدة
-    saveSelectedLanguages(newSelectedLanguages); // حفظ التغييرات في AsyncStorage
-    return newSelectedLanguages;
-  });
+
+const handleDeleteLanguages = async (languageId) => {
+  try {
+    const token = await AsyncStorage.getItem('userToken'); // استرجاع التوكن
+    if (!token) {
+      console.error('Token not found');
+      return;
+    }
+
+    const response = await fetch(`${baseUrl}/externalapi/deletelanguage`, { // تأكد من المسار الصحيح
+      method: 'DELETE',  // طريقة الحذف يجب أن تكون DELETE
+      headers: {
+        'Authorization': `Wasan__${token}`, // تضمين التوكن في الهيدر
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        LanguageId: languageId,  // تمرير الـ LanguageId الذي نريد حذفه
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json(); // إذا كان هناك خطأ في الرد
+      throw new Error(errorData.message || 'Failed to delete language');
+    }
+
+    const data = await response.json(); // تحويل الرد إلى JSON
+    setLanguages(data.languages); // تخزين اللغات المحدثة في الحالة لعرضها بعد الحذف
+
+    console.log('Updated languages:', data.languages); // تحقق من البيانات
+  } catch (error) {
+    console.error('Error deleting language:', error.message);
+  }
 };
 
-// دالة لحذف اللغة
-const handleDeleteLanguage = (languageId) => {
-  setSelectedLanguages((prevSelectedLanguages) => {
-    const updatedLanguages = prevSelectedLanguages.filter((l) => l.id !== languageId);
-    saveSelectedLanguages(updatedLanguages); // تحديث AsyncStorage
-    return updatedLanguages;
-  });
+
+// دالة لإضافة اللغة المختارة إلى المستخدم
+const handleAddLanguage = async (language) => {
+  try {
+    const token = await AsyncStorage.getItem('userToken'); // استرجاع التوكن
+    if (!token) {
+      console.error('Token not found');
+      return;
+    }
+
+    const response = await fetch(`${baseUrl}/externalapi/addlanguages`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Wasan__${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ languageId: language.id }), // إرسال الـ ID للغة المختارة
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to add language');
+    }
+
+    // تحديث قائمة اللغات المختارة في AsyncStorage
+    const updatedLanguages = [...selectedLanguages, language];
+    setSelectedLanguage(updatedLanguages);
+    SaveSelectedLanguage(updatedLanguages); // حفظ اللغات الجديدة
+
+    console.log('Language added successfully:', language.name);
+  } catch (error) {
+    console.error('Error adding language:', error.message);
+  }
 };
 
-// دالة لفتح النافذة المنبثقة واسترجاع اللغات من API
-const handleOpenModal = () => {
-  handleGetLanguages(); // استرجاع اللغات
+// دالة لفتح النافذة المنبثقة وجلب اللغات
+const handleOpenModal = async () => {
+  await handleGetLanguages(); // استرجاع اللغات
   setModalVisible(true); // إظهار النافذة
 };
+
 
 
 
@@ -2030,20 +2070,36 @@ useEffect(() => {
       </View>
       <View style={[styles.divider,{height:3}]}/>
 
-      {/* بطاقة Language */}
-      <View style={[styles.card,{ backgroundColor: isNightMode ? Colors.black : Colors.primary }]}>
-        <View style={styles.cardHeader}>
-          <Text style={[styles.cardTitle,{color: isNightMode ? Colors.primary : Colors.black }]}>Language</Text>
-          <View style={styles.actionButtons}>
-          <TouchableOpacity onPress={() => openModal('language')} style={styles.smallButton}>
-              <Text style={styles.smallButtonText}>Add</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => console.log('Delete Language')} style={styles.smallButton}>
-              <Text style={styles.smallButtonText}>Edit</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </View>
+      {/* بطاقة Languages */}
+      <TouchableOpacity
+  onPress={async () => {
+    await handleGetLanguages(); 
+  }}
+  style={[styles.card, { backgroundColor: isNightMode ? Colors.black : Colors.primary }]}
+>
+  <View style={styles.cardHeader}>
+    <Text style={[styles.cardTitle, { color: isNightMode ? Colors.primary : Colors.black }]}>
+      Language
+    </Text>
+    <View style={styles.actionButtons}>
+      <TouchableOpacity
+      handleAddLanguage
+      onPress={async () => {
+        await handleAddLanguage(); 
+      }}
+        style={styles.smallButton}>
+        <Text style={styles.smallButtonText}>Add</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        onPress={async () => {
+          await handleDeleteLanguages(); 
+        }}
+        style={styles.smallButton}>
+        <Text style={styles.smallButtonText}>Delete</Text>
+      </TouchableOpacity>
+    </View>
+  </View>
+</TouchableOpacity>
       <View style={[styles.divider,{height:3}]}/>
 
       {/* بطاقة Recommendation */}
@@ -2487,12 +2543,8 @@ useEffect(() => {
 )}
 
 
-
-
-    
-
             {/* محتويات Modal Language */}
-            {currentModal === 'language' && (
+            {currentModal === 'Language' && (
               <>
                 <Text style={styles.modalTitle}>Edit Language</Text>
                 <TextInput placeholder="Add a Language" placeholderTextColor = "#333" style={styles.input} />
@@ -3148,10 +3200,6 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: 'bold',
       },
-      smallButtonText: {
-        color: '#fff',
-        fontWeight: 'bold',
-      },
       modalContainer: {
         flex: 1,
         justifyContent: 'center',
@@ -3210,8 +3258,6 @@ const styles = StyleSheet.create({
       width: '45%',
       alignItems: 'center',
     },
-    
-    
     experienceItem: {
       marginBottom: 15,
     },

@@ -7,6 +7,7 @@ const router = express.Router();
 //  Api Languages
 router.get('/getlanguages',ExternalApiController.GetLanguages);
 router.post('/addlanguages',auth(EndPoints.AddLanguages),ExternalApiController.AddLanguages);
+router.delete('/deletelanguages',auth(EndPoints.AddLanguages),ExternalApiController.DeleteLanguages);
 
 // Api Skills
 router.get('/getskills',ExternalApiController.GetSkills);
