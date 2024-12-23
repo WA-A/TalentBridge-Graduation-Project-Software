@@ -143,6 +143,14 @@ Languages: [
    }
 ],
 
+Skills: [
+   {
+      id: { type: Number, required: true },
+      name: { type: String, required: true },
+      code: { type: String, required: true }
+   }
+],
+
 },
 
    {
