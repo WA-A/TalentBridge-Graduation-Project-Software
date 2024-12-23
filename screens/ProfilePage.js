@@ -2808,616 +2808,561 @@ secure_url }}
 
 const styles = StyleSheet.create({
   modalButtonsContainer:{
-flexDirection: 'row',
-        justifyContent: 'space-between',
+    flexDirection: 'row',
+            justifyContent: 'space-between',
+            width: '100%',
+      },
+      actionButtons: {
+        flexDirection: 'row',
+      },
+      smallButton: {
+        backgroundColor: fourhColor,
+        borderRadius: 15,
+        marginLeft: 10,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.2,
+        shadowRadius: 3,padding:8
+      },
+      smallButtonText: {
+        fontSize: 14,
+        fontWeight: 'bold',
+        color: '#000',
+      },
+      input: {
+        backgroundColor: '#FFF',
+        borderRadius: 10,
+        padding: 10,
+        marginBottom: 15,
+        fontSize: 16,
+        borderColor: '#E0E0E0',
+        borderWidth: 1,
+      },
+      switchContainer: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        marginBottom: 15,
+      },
+      switchButton: {
+        flex: 1,
+        padding: 10,
+        borderRadius: 10,
+        backgroundColor: '#F0F0F0',
+        marginHorizontal: 5,
+        alignItems: 'center',
+      },
+      activeSwitchButton: {
+        backgroundColor: '#D1CFE9',
+      },
+      switchText: {
+        color: '#555',
+        fontSize: 16,
+      },
+      activeSwitchText: {
+        color: '#000',
+        fontWeight: 'bold',
+      },
+      uploadButton: {
+        backgroundColor: '#E6E6E6',
+        padding: 15,
+        borderRadius: 10,
+        alignItems: 'center',
+      },
+      uploadButtonText: {
+        color: '#333',
+        fontWeight: 'bold',
+      },
+      previewImage: {
         width: '100%',
-
-  },
-  actionButtons: {
-    flexDirection: 'row',
-  },
-  smallButton: {
-    backgroundColor: fourhColor,
-    borderRadius: 15,
-    marginLeft: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,padding:8
-  },
-  smallButtonText: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#000',
-  },
-  input: {
-    backgroundColor: '#FFF',
-    borderRadius: 10,
-    padding: 10,
-    marginBottom: 15,
-    fontSize: 16,
-    borderColor: '#E0E0E0',
-    borderWidth: 1,
-  },
-  switchContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginBottom: 15,
-  },
-  switchButton: {
-    flex: 1,
-    padding: 10,
-    borderRadius: 10,
-    backgroundColor: '#F0F0F0',
-    marginHorizontal: 5,
-    alignItems: 'center',
-  },
-  activeSwitchButton: {
-    backgroundColor: '#D1CFE9',
-  },
-  switchText: {
-    color: '#555',
-    fontSize: 16,
-  },
-  activeSwitchText: {
-    color: '#000',
-    fontWeight: 'bold',
-  },
-  uploadButton: {
-    backgroundColor: '#E6E6E6',
-    padding: 15,
-    borderRadius: 10,
-    alignItems: 'center',
-  },
-  uploadButtonText: {
-    color: '#333',
-    fontWeight: 'bold',
-  },
-  previewImage: {
-    width: '100%',
-    height: 150,
-    marginTop: 15,
-    borderRadius: 10,
-  },
-  cardContent: {
-    marginTop: 10,
-},
-skillText: {
-    fontSize: 16,
-    color: '#555',
-    marginBottom: 5,
-},
-coverImageContainer: {
-  width: '100%',
-  height: height * 0.3, // استخدام نسبة من حجم الشاشة
-  backgroundColor: '#f0f0f0',
-  position: 'relative',
-  justifyContent: 'center', // لتوسيط المحتوى عموديًا
-  alignItems: 'center',     // لتوسيط المحتوى أفقيًا
-},
-coverImagePlaceholder: {
-  width: '100%',
-  height: '100%',
-  justifyContent: 'center',
-  alignItems: 'center',
-},
-
-coverImagePlaceholderText: {
-  fontSize: 18,
-  color: '#888',
-  textAlign: 'center',
-},
-
-coverImage: {
-  width: '100%',
-  height: '100%',
-},
-
-coverImageOverlay: {
-  position: 'absolute',
-  bottom: 0,
-  left: 0,
-  right: 0,
-  height: 3,
-  backgroundColor:'black', // لون رمادي مع شفافية بسيطة
-},
-
-  profileImageWrapper: {
-    position: 'absolute',
-    right: width * 0.35, // تخصيص المسافة بناءً على ارتفاع الشاشة
-    top: height * -0.04, // تخصيص المسافة بناءً على ارتفاع الشاشة
-  },
-  fullName:{
-    right: width * 0.21, // تخصيص المسافة بناءً على ارتفاع الشاشة
-    top: height * -0.003, // تخصيص المسافة بناءً على ارتفاع الشاشة
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  userName:{
-    right: width * 0.21, // تخصيص المسافة بناءً على ارتفاع الشاشة
-    top: height * -0.01, // تخصيص المسافة بناءً على ارتفاع الشاشة
-    fontSize: 14,color:firstColor,fontWeight:'bold',
-  },
-  profileImageContainer: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    overflow: 'hidden',
-    borderWidth: 2,
-  },
-  profileImage: {
-    width: '100%',
-    height: '100%',
-  },
-  editIcon: {
-    position: 'absolute',
-    top: height * 0.25, // تعديل الموقع بناءً على ارتفاع الشاشة
-    right: 10,
-    borderRadius: 25,
-    padding: 5,
-  },
-  githubEditWrapper: {
-    position: 'absolute',
-    top: height * 0.39, // تخصيص الموقع بناءً على الشاشة
-    right: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  githubInput: {
-    position: 'absolute',
-    backgroundColor: '#f0f0f0',
-    padding: 5,
-    borderRadius: 5,    
-    top: height * -0.02, // تعديل الموقع بناءً على ارتفاع الشاشة
-    right:width *0.22,
-    width: 150,height:30,
-    marginRight: 10,  height:30, 
-  },
-  saveButton: {
-    position: 'absolute',
-    backgroundColor: '#000',
-    padding: 5,    
-    top: height * -0.02, // تعديل الموقع بناءً على ارتفاع الشاشة
-    right:width *0.13,height:30,
-    borderRadius: 5,
-  },
-  saveButtonText: {
-    color: '#fff',
-  },
-  githubIcon: {
-    position: 'absolute',
-    top: height * 0.37, // تعديل الموقع بناءً على ارتفاع الشاشة
-    right:width *0.61,
-  },
-  bioWrapper: {
-    marginTop: 20,
-    alignItems: 'flex-start',
-    paddingHorizontal: 20,
-  },
-  bioTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginVertical: 5,
-  },
-  bioText: {
-    fontSize: 16,
-    color: '#000',
-    marginBottom: 10,
-  },
-  modalContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)', // خلفية شفافة
-  },
-  modalContent: {
-    width: '80%',
-    backgroundColor: 'white',
-    padding: 20,
-    borderRadius: 10,
-    alignItems: 'center',
-  },
-  bioWrapper: {
-    padding: 15,
-  },
-  section: {
-    marginBottom: 10,
-  },
-  bioTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 5,
-  },
-  bioText: {
-    fontSize: 16,
-    color: '#555',
-    lineHeight: 22,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: '#ddd',
-    marginVertical: 10,
-  },
-  container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 10,
-  },
-  backButton: {
-    marginRight: 10,
-  },
-  searchBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-    paddingHorizontal: 10,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#ccc',
-  },
-  searchIcon: {
-    marginRight: 10,
-  },
-  inputSearch: {
-    flex: 1,
-    height: 40,
-    fontSize: 16,
-  },
-  menuContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    width: '100%',
-    marginBottom: 20,
-  },
-  menuItem: {
-    backgroundColor: '#C99FA9',
-    padding: 15,
-    borderRadius: 25,
-    width: '22%',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 5,
-  },
-  menuText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#000',
-  },
-  tabContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
-  },
-  tabButton: {
-    alignItems: 'center',
-    paddingVertical: 10,
-    width: '25%',
-  },
-  tabText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  activeTabText: {
-    color: '#fff',
-  },
-  activeIndicator: {
-    width: '86%',
-    height:4,
-    borderRadius: 5,
-    backgroundColor: fourhColor,
-  },
-  content: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 15,
-    backgroundColor: '#fff',
-  },
-  tabContent: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  card: {
-    backgroundColor: '#ffffff',
-    padding: 15,
-    marginBottom: 15,
-    borderRadius: 8,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  cardTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  smallButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-  },
-  selectedLanguagesContainer: {
-    marginTop: 16,
-  },
-  selectedLanguageText: {
-    fontSize: 16,
-    color: '#000',
-  },
-  modalContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalContent: {
-    width: '90%',
-    padding: 20,
-    backgroundColor: 'white',
-    borderRadius: 10,
-    elevation: 5,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 15,
-  },
-  input: {
-    height: 40,
-    borderColor: '#ccc',
-    borderWidth: 1,
-    marginBottom: 15,
-    paddingLeft: 10,
-    borderRadius: 5,
-  },
-  closeButton: {
-    backgroundColor: '#dc3545',
-    padding: 10,
-    borderRadius: 5,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  },
-  modalContent: {
-    width: '80%',
-    backgroundColor: '#fff',
-    padding: 20,
-    borderRadius: 8,
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 16,
-  },
-  languageItem: {
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ddd',
-  },
-  languageName: {
-    fontSize: 16,
-  },
-  selectedText: {
-    color: 'green',
-    fontSize: 14,
-  },
-  closeButton: {
-    marginTop: 16,
-    backgroundColor: '#C99FA9',
-    padding: 8,
-    borderRadius: 4,
-    alignItems: 'center',
-  },
-  closeButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-  },
-  buttonsContainer: {
-  flexDirection: 'row',
-  justifyContent: 'space-between',
-  marginTop: 20,
-},
-saveButton: {
-  backgroundColor: fifthColor,
-  padding: 10,
-  borderRadius: 5,
-  width: '45%',
-  alignItems: 'center',
-},
-saveButtonText: {
-  color: 'white',
-  fontSize: 16,
-},
-closeButton: {
-  backgroundColor: fourhColor,
-  padding: 10,
-  borderRadius: 5,
-  width: '45%',
-  alignItems: 'center',
-},
-
-
-experienceItem: {
-  marginBottom: 15,
-},
-experienceTitle: {
-  fontSize: 16,
-  fontWeight: 'bold',
-  color: '#333',
-},
-experienceDescription: {
-  fontSize: 14,
-  color: '#666',
-},
-experienceDate: {
-  fontSize: 12,
-  color: '#888',
-},
-showAllButton: {
-  marginTop: 10,
-  padding: 10,
-  backgroundColor: fourhColor ,
-  borderRadius: 5,
-  alignItems: 'center',
-},
-showAllButtonText: {
-  color: '#fff',
-  fontSize: 16,
-},
-experienceItem: {
-  marginTop:10,
-  padding: 15,
-  borderRadius: 8,
-  borderColor: fifthColor,
-  borderWidth: 1,
-},
-experienceTitle: {
-  fontSize: 18,
-  fontWeight: 'bold',
-  color: '#333',
-},
-experienceDescription: {
-  fontSize: 14,
-  color: '#666',
-  marginVertical: 5,
-},
-experienceDate: {
-  fontSize: 12,
-  color: '#777',
-  marginBottom: 5,
-},
-experienceStatus: {
-  fontSize: 14,
-  fontWeight: 'bold',
-}, divider2: {
-  borderBottomWidth: 1,
-  borderColor: '#eee',
-  marginTop: 10,
-},  experienceHeader: {
-  flexDirection: 'row',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-  marginBottom: 8,
-},
-editButton:{
-  position: 'absolute',
-  right: 0, /* موقع الأيقونة من اليمين */
-  cursor: 'pointer',
-},
-deleteButton:{
-  position: 'absolute',
-  right: 25, /* موقع الأيقونة من اليمين */
-  cursor: 'pointer',
-},
-switchContainer: {
-  flexDirection: 'row',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  marginVertical: 10,
-  paddingHorizontal: 20,
-},
-label: {
-  fontSize: 16,
-  fontWeight: 'bold',
-  color: '#333',  // يمكنك تعديل اللون حسب الوضع الليلي أو النهاري
-},
-input: {
-  height: 40,
-  borderColor: '#ccc',
-  borderWidth: 1,
-  marginVertical: 10,
-  paddingHorizontal: 10,
-  borderRadius: 5,
-},
-switchButton: {
-  marginLeft: 10,
-},
-linkContainer: {
-  marginTop: 10,
-},
-linkText: {
-  color: 'blue',
-  textDecorationLine: 'underline',
-  fontSize: 14,
-},
-certImage: {
-  width: '100%',
-  height: 150,
-  resizeMode: 'contain',
-  marginTop: 10,
-},
-experienceDate: {
-  fontSize: 12,
-  marginTop: 5,
-},
-certImage: {
-  width: 60,
-  height: 60,
-  borderRadius: 8,
-  borderWidth: 2,
-  borderColor: Colors.primary, // تغيير اللون كما يناسبك
-  marginRight: 10,
-  resizeMode: 'cover',
-},
-linkContainer: {
-  marginTop: 5,
-},
-linkText: {
-  color: Colors.primary,
-  textDecorationLine: 'underline',
-},
-
-closeButtonimg: {
-  position: 'absolute',
-  left: '100%', // لتوسيط الزر
-  top:'25%',
-  transform:  [{ translateX: -20 }], // تعويض الحجم لتوسيطه بشكل دقيق
-  zIndex: 10, // التأكد من أن الزر سيكون في المقدمة
-},
-switchButton: {
-    marginVertical: 10,
-    padding: 10,
-    backgroundColor: '#f0f0f0',
-    borderRadius: 5,
-  },
-  switchButtonText: {
-    color: '#007BFF',
-    fontSize: 16,
-    textAlign: 'center',
-    fontWeight: 'bold',
-  },
-
-  addLinkButton: {
-    padding: 10,
-    backgroundColor: '#28a745',
-    borderRadius: 5,
-    marginTop: 10,
-  },
-  addLinkButtonText: {
-    color: '#fff',
-    textAlign: 'center',
-    fontWeight: 'bold',
-  },
-  deleteButton: {
-    backgroundColor: '#C99FA9',
-    paddingVertical: 5,
-    paddingHorizontal: 8,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
-  },
-  
-  deleteButtonText: {
-    fontSize: 12,
-    color: '#FFF',
-    fontWeight: 'bold',
-  },
+        height: 150,
+        marginTop: 15,
+        borderRadius: 10,
+      },
+      cardContent: {
+        marginTop: 10,
+    },
+    skillText: {
+        fontSize: 16,
+        color: '#555',
+        marginBottom: 5,
+    },
+    coverImageContainer: {
+      width: '100%',
+      height: height * 0.3, // استخدام نسبة من حجم الشاشة
+      backgroundColor: '#f0f0f0',
+      position: 'relative',
+      justifyContent: 'center', // لتوسيط المحتوى عموديًا
+      alignItems: 'center',     // لتوسيط المحتوى أفقيًا
+    },
+    coverImagePlaceholder: {
+      width: '100%',
+      height: '100%',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    
+    coverImagePlaceholderText: {
+      fontSize: 18,
+      color: '#888',
+      textAlign: 'center',
+    },
+    
+    coverImage: {
+      width: '100%',
+      height: '100%',
+    },
+    
+    coverImageOverlay: {
+      position: 'absolute',
+      bottom: 0,
+      left: 0,
+      right: 0,
+      height: 3,
+      backgroundColor:'black', // لون رمادي مع شفافية بسيطة
+    },
+    
+      profileImageWrapper: {
+        position: 'absolute',
+        right: width * 0.35, // تخصيص المسافة بناءً على ارتفاع الشاشة
+        top: height * -0.04, // تخصيص المسافة بناءً على ارتفاع الشاشة
+      },
+      fullName:{
+        right: width * 0.21, // تخصيص المسافة بناءً على ارتفاع الشاشة
+        top: height * -0.003, // تخصيص المسافة بناءً على ارتفاع الشاشة
+        fontSize: 20,
+        fontWeight: 'bold',
+      },
+      userName:{
+        right: width * 0.21, // تخصيص المسافة بناءً على ارتفاع الشاشة
+        top: height * -0.01, // تخصيص المسافة بناءً على ارتفاع الشاشة
+        fontSize: 14,color:firstColor,fontWeight:'bold',
+      },
+      profileImageContainer: {
+        width: 100,
+        height: 100,
+        borderRadius: 50,
+        overflow: 'hidden',
+        borderWidth: 2,
+      },
+      profileImage: {
+        width: '100%',
+        height: '100%',
+      },
+      editIcon: {
+        position: 'absolute',
+        top: height * 0.25, // تعديل الموقع بناءً على ارتفاع الشاشة
+        right: 10,
+        borderRadius: 25,
+        padding: 5,
+      },
+      githubEditWrapper: {
+        position: 'absolute',
+        top: height * 0.39, // تخصيص الموقع بناءً على الشاشة
+        right: 20,
+        flexDirection: 'row',
+        alignItems: 'center',
+      },
+      githubInput: {
+        position: 'absolute',
+        backgroundColor: '#f0f0f0',
+        padding: 5,
+        borderRadius: 5,    
+        top: height * -0.02, // تعديل الموقع بناءً على ارتفاع الشاشة
+        right:width *0.22,
+        width: 150,height:30,
+        marginRight: 10,  height:30, 
+      },
+      saveButton: {
+        position: 'absolute',
+        backgroundColor: '#000',
+        padding: 5,    
+        top: height * -0.02, // تعديل الموقع بناءً على ارتفاع الشاشة
+        right:width *0.13,height:30,
+        borderRadius: 5,
+      },
+      saveButtonText: {
+        color: '#fff',
+      },
+      githubIcon: {
+        position: 'absolute',
+        top: height * 0.37, // تعديل الموقع بناءً على ارتفاع الشاشة
+        right:width *0.61,
+      },
+      bioWrapper: {
+        marginTop: 20,
+        alignItems: 'flex-start',
+        paddingHorizontal: 20,
+      },
+      bioTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        marginVertical: 5,
+      },
+      bioText: {
+        fontSize: 16,
+        color: '#000',
+        marginBottom: 10,
+      },
+      modalContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(0, 0, 0, 0.5)', // خلفية شفافة
+      },
+      modalContent: {
+        width: '80%',
+        backgroundColor: 'white',
+        padding: 20,
+        borderRadius: 10,
+        alignItems: 'center',
+      },
+      bioWrapper: {
+        padding: 15,
+      },
+      section: {
+        marginBottom: 10,
+      },
+      bioTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#333',
+        marginBottom: 5,
+      },
+      bioText: {
+        fontSize: 16,
+        color: '#555',
+        lineHeight: 22,
+      },
+      divider: {
+        height: 1,
+        backgroundColor: '#ddd',
+        marginVertical: 10,
+      },
+      container: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 10,
+      },
+      backButton: {
+        marginRight: 10,
+      },
+      searchBox: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        flex: 1,
+        paddingHorizontal: 10,
+        borderRadius: 10,
+        borderWidth: 1,
+        borderColor: '#ccc',
+      },
+      searchIcon: {
+        marginRight: 10,
+      },
+      inputSearch: {
+        flex: 1,
+        height: 40,
+        fontSize: 16,
+      },
+      menuContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        width: '100%',
+        marginBottom: 20,
+      },
+      menuItem: {
+        backgroundColor: '#C99FA9',
+        padding: 15,
+        borderRadius: 25,
+        width: '22%',
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 5,
+      },
+      menuText: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: '#000',
+      },
+      tabContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        paddingVertical: 10,
+        borderBottomWidth: 1,
+        borderBottomColor: '#ccc',
+      },
+      tabButton: {
+        alignItems: 'center',
+        paddingVertical: 10,
+        width: '25%',
+      },
+      tabText: {
+        fontSize: 18,
+        fontWeight: 'bold',
+      },
+      activeTabText: {
+        color: '#fff',
+      },
+      activeIndicator: {
+        width: '86%',
+        height:4,
+        borderRadius: 5,
+        backgroundColor: fourhColor,
+      },
+      content: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 15,
+        backgroundColor: '#fff',
+      },
+      tabContent: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: '#333',
+      },
+      card: {
+        backgroundColor: '#ffffff',
+        padding: 15,
+        marginBottom: 15,
+        borderRadius: 8,
+      },
+      cardHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+      },
+      cardTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+      },
+      smallButtonText: {
+        color: '#fff',
+        fontWeight: 'bold',
+      },
+      modalContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+      },
+      modalContent: {
+        width: '90%',
+        padding: 20,
+        backgroundColor: 'white',
+        borderRadius: 10,
+        elevation: 5,
+      },
+      modalTitle: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        marginBottom: 15,
+      },
+      input: {
+        height: 40,
+        borderColor: '#ccc',
+        borderWidth: 1,
+        marginBottom: 15,
+        paddingLeft: 10,
+        borderRadius: 5,
+      },
+      closeButton: {
+        backgroundColor: '#dc3545',
+        padding: 10,
+        borderRadius: 5,
+        alignItems: 'center',
+      },
+      closeButtonText: {
+        color: '#fff',
+        fontWeight: 'bold',
+      },
+      buttonsContainer: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginTop: 20,
+    },
+    saveButton: {
+      backgroundColor: fifthColor,
+      padding: 10,
+      borderRadius: 5,
+      width: '45%',
+      alignItems: 'center',
+    },
+    saveButtonText: {
+      color: 'white',
+      fontSize: 16,
+    },
+    closeButton: {
+      backgroundColor: fourhColor,
+      padding: 10,
+      borderRadius: 5,
+      width: '45%',
+      alignItems: 'center',
+    },
+    
+    
+    experienceItem: {
+      marginBottom: 15,
+    },
+    experienceTitle: {
+      fontSize: 16,
+      fontWeight: 'bold',
+      color: '#333',
+    },
+    experienceDescription: {
+      fontSize: 14,
+      color: '#666',
+    },
+    experienceDate: {
+      fontSize: 12,
+      color: '#888',
+    },
+    showAllButton: {
+      marginTop: 10,
+      padding: 10,
+      backgroundColor: fourhColor ,
+      borderRadius: 5,
+      alignItems: 'center',
+    },
+    showAllButtonText: {
+      color: '#fff',
+      fontSize: 16,
+    },
+    experienceItem: {
+      marginTop:10,
+      padding: 15,
+      borderRadius: 8,
+      borderColor: fifthColor,
+      borderWidth: 1,
+    },
+    experienceTitle: {
+      fontSize: 18,
+      fontWeight: 'bold',
+      color: '#333',
+    },
+    experienceDescription: {
+      fontSize: 14,
+      color: '#666',
+      marginVertical: 5,
+    },
+    experienceDate: {
+      fontSize: 12,
+      color: '#777',
+      marginBottom: 5,
+    },
+    experienceStatus: {
+      fontSize: 14,
+      fontWeight: 'bold',
+    }, divider2: {
+      borderBottomWidth: 1,
+      borderColor: '#eee',
+      marginTop: 10,
+    },  experienceHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 8,
+    },
+    editButton:{
+      position: 'absolute',
+      right: 0, /* موقع الأيقونة من اليمين */
+      cursor: 'pointer',
+    },
+    deleteButton:{
+      position: 'absolute',
+      right: 25, /* موقع الأيقونة من اليمين */
+      cursor: 'pointer',
+    },
+    switchContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginVertical: 10,
+      paddingHorizontal: 20,
+    },
+    label: {
+      fontSize: 16,
+      fontWeight: 'bold',
+      color: '#333',  // يمكنك تعديل اللون حسب الوضع الليلي أو النهاري
+    },
+    input: {
+      height: 40,
+      borderColor: '#ccc',
+      borderWidth: 1,
+      marginVertical: 10,
+      paddingHorizontal: 10,
+      borderRadius: 5,
+    },
+    switchButton: {
+      marginLeft: 10,
+    },
+    linkContainer: {
+      marginTop: 10,
+    },
+    linkText: {
+      color: 'blue',
+      textDecorationLine: 'underline',
+      fontSize: 14,
+    },
+    certImage: {
+      width: '100%',
+      height: 150,
+      resizeMode: 'contain',
+      marginTop: 10,
+    },
+    experienceDate: {
+      fontSize: 12,
+      marginTop: 5,
+    },
+    certImage: {
+      width: 60,
+      height: 60,
+      borderRadius: 8,
+      borderWidth: 2,
+      borderColor: Colors.primary, // تغيير اللون كما يناسبك
+      marginRight: 10,
+      resizeMode: 'cover',
+    },
+    linkContainer: {
+      marginTop: 5,
+    },
+    linkText: {
+      color: Colors.primary,
+      textDecorationLine: 'underline',
+    },
+    
+    closeButtonimg: {
+      position: 'absolute',
+      left: '100%', // لتوسيط الزر
+      top:'25%',
+      transform:  [{ translateX: -20 }], // تعويض الحجم لتوسيطه بشكل دقيق
+      zIndex: 10, // التأكد من أن الزر سيكون في المقدمة
+    },
+    switchButton: {
+        marginVertical: 10,
+        padding: 10,
+        backgroundColor: '#f0f0f0',
+        borderRadius: 5,
+      },
+      switchButtonText: {
+        color: '#007BFF',
+        fontSize: 16,
+        textAlign: 'center',
+        fontWeight: 'bold',
+      },
+    
+      addLinkButton: {
+        padding: 10,
+        backgroundColor: '#28a745',
+        borderRadius: 5,
+        marginTop: 10,
+      },
+      addLinkButtonText: {
+        color: '#fff',
+        textAlign: 'center',
+        fontWeight: 'bold',
+      },
+    
    
 });
 
