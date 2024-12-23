@@ -272,7 +272,52 @@ export const AddSkills = async (req, res) => {
 
 
 
+export const DeleteSkill = async (req, res) => {
+    try {
+        if (!req.user) {
+            console.log("User not authorized: No token provided.");
+            return res.status(401).json({ message: "User not authorized. Please provide a valid token." });
+        }
 
+        const authUser = req.user;
+        const { SkillId } = req.body;
+
+        if (!authUser || !SkillId) {
+            console.log("Missing required fields: authUser or SkillId.");
+            return res.status(400).json({ message: "User ID and Skill ID are required." });
+        }
+
+        console.log("Request received:", { authUser, SkillId });
+
+        const user = await UserModel.findById(authUser);
+        if (!user) {
+            console.log("User not found in the database.");
+            return res.status(404).json({ message: "User not found." });
+        }
+
+        console.log("User found:", user);
+
+        const skillIndex = user.Skills.findIndex(skill => skill.id === SkillId);
+        if (skillIndex === -1) {
+            console.log("Skill not found for user.");
+            return res.status(404).json({ message: "Skill not found." });
+        }
+
+        user.Skills.splice(skillIndex, 1); 
+
+        await user.save();
+
+        console.log("Skill deleted successfully.");
+        return res.status(200).json({
+            message: "Skill deleted successfully.",
+            skills: user.Skills
+        });
+
+    } catch (error) {
+        console.error("Error deleting skill: ", error);
+        return res.status(500).json({ message: "Internal Server Error." });
+    }
+};
 
 
 
