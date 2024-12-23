@@ -85,6 +85,8 @@ export default function ProfilePage ({ navigation}) {
       certificationImageData:'',
       certificationLinkData:'',
     });
+    const [languages, setLanguages] = useState([]);  // لتخزين اللغات المسترجعة من الـ API
+  const [selectedLanguages, setSelectedLanguages] = useState([]);  // لتخزين اللغات المختارة
 
     const [newSkills,setNewSkills] = useState([]);
     const [newLanguage,setNewLanguage] = useState([]);
@@ -439,7 +441,6 @@ const toggleCredentialType = () => {
   };
   
 
-
 /////////////////////////////////delete////////////////////////////
   // حالة لتحديد القسم عند فتح المودال
 const [currentSectionToDelete, setCurrentSectionToDelete] = useState(null); // إما "experience" أو "education"
@@ -461,6 +462,7 @@ const closeConfirmDeleteModal = () => {
 };
 
 //////////////////////////////////////////////////////////////////
+
 
 // دالة فتح وإغلاق المودال
 const toggleModal = () => {
@@ -682,7 +684,7 @@ const addCertification = async () =>{
   
       // إعداد البيانات باستخدام FormData
       const formData = new FormData();
-  
+
       formData.append('About', newabout);
       formData.append('Bio', newbio);
       formData.append('UserName', newuserName);
@@ -1167,7 +1169,92 @@ const formatDate = (dateString) => {
     }
   };
 
+
+  
+  // دالة لتحميل اللغات المختارة من AsyncStorage
+const loadSelectedLanguages = async () => {
+  try {
+    const savedLanguages = await AsyncStorage.getItem('selectedLanguages');
+    if (savedLanguages) {
+      setSelectedLanguages(JSON.parse(savedLanguages)); // تحميل اللغات المحفوظة
+    }
+  } catch (error) {
+    console.error('Error loading selected languages from AsyncStorage:', error);
+  }
+};
+
+// دالة لحفظ اللغات المختارة في AsyncStorage
+const saveSelectedLanguages = async (languages) => {
+  try {
+    await AsyncStorage.setItem('selectedLanguages', JSON.stringify(languages)); // حفظ البيانات
+  } catch (error) {
+    console.error('Error saving selected languages to AsyncStorage:', error);
+  }
+};
+
+// دالة لاسترجاع اللغات من الـ API
+const handleGetLanguages = async () => {
+  try {
+    const token = await AsyncStorage.getItem('userToken'); // استرجاع التوكن
+    if (!token) {
+      console.error('Token not found');
+      return;
+    }
+
+    const response = await fetch(`${baseUrl}/externalapi/getlanguages`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Wasan__${token}`, // تضمين التوكن في الهيدر
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json(); // إذا كان هناك خطأ في الرد
+      throw new Error(errorData.message || 'Failed to fetch languages');
+    }
+
+    const data = await response.json(); // تحويل الرد إلى JSON
+    setLanguages(data.languages); // تخزين اللغات في الحالة
+
+    // (اختياري) طباعة اللغات للتحقق أثناء التطوير
+    console.log('Fetched languages:', data.languages);
+  } catch (error) {
+    console.error('Error fetching languages:', error.message);
+  }
+};
+
+// دالة لإضافة أو إزالة اللغة المختارة
+const handleLanguageSelect = (language) => {
+  setSelectedLanguages((prevSelectedLanguages) => {
+    const newSelectedLanguages = prevSelectedLanguages.some((l) => l.id === language.id)
+      ? prevSelectedLanguages.filter((l) => l.id !== language.id) // إزالة اللغة إذا كانت موجودة
+      : [...prevSelectedLanguages, language]; // إضافة اللغة الجديدة
+    saveSelectedLanguages(newSelectedLanguages); // حفظ التغييرات في AsyncStorage
+    return newSelectedLanguages;
+  });
+};
+
+// دالة لحذف اللغة
+const handleDeleteLanguage = (languageId) => {
+  setSelectedLanguages((prevSelectedLanguages) => {
+    const updatedLanguages = prevSelectedLanguages.filter((l) => l.id !== languageId);
+    saveSelectedLanguages(updatedLanguages); // تحديث AsyncStorage
+    return updatedLanguages;
+  });
+};
+
+// دالة لفتح النافذة المنبثقة واسترجاع اللغات من API
+const handleOpenModal = () => {
+  handleGetLanguages(); // استرجاع اللغات
+  setModalVisible(true); // إظهار النافذة
+};
+
+
+
+
 useEffect(() => {
+  loadSelectedLanguages();
+
   handleViewProfile(); 
   requestPermission();
   getAllExperiance();
@@ -1370,6 +1457,7 @@ useEffect(() => {
       </ScrollView>
     );
   };
+
 
 
     return (
@@ -2453,9 +2541,6 @@ secure_url }}
       </View>
     </View>
     
-             
-       
-
       </Animated.ScrollView>
     </View>
                 
@@ -2726,6 +2811,7 @@ const styles = StyleSheet.create({
 flexDirection: 'row',
         justifyContent: 'space-between',
         width: '100%',
+
   },
   actionButtons: {
     flexDirection: 'row',
@@ -3056,6 +3142,13 @@ coverImageOverlay: {
     color: '#fff',
     fontWeight: 'bold',
   },
+  selectedLanguagesContainer: {
+    marginTop: 16,
+  },
+  selectedLanguageText: {
+    fontSize: 16,
+    color: '#000',
+  },
   modalContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -3085,6 +3178,36 @@ coverImageOverlay: {
     backgroundColor: '#dc3545',
     padding: 10,
     borderRadius: 5,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    width: '80%',
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 8,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 16,
+  },
+  languageItem: {
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ddd',
+  },
+  languageName: {
+    fontSize: 16,
+  },
+  selectedText: {
+    color: 'green',
+    fontSize: 14,
+  },
+  closeButton: {
+    marginTop: 16,
+    backgroundColor: '#C99FA9',
+    padding: 8,
+    borderRadius: 4,
     alignItems: 'center',
   },
   closeButtonText: {
@@ -3277,7 +3400,25 @@ switchButton: {
     textAlign: 'center',
     fontWeight: 'bold',
   },
-
+  deleteButton: {
+    backgroundColor: '#C99FA9',
+    paddingVertical: 5,
+    paddingHorizontal: 8,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+  },
+  
+  deleteButtonText: {
+    fontSize: 12,
+    color: '#FFF',
+    fontWeight: 'bold',
+  },
+   
 });
 
 

@@ -29,7 +29,7 @@ const ProjectsSchema = new Schema({
     default: 'Open',
   },
   DurationInMounths: {
-    type: Number,
+    type: String,
     required: true, 
   },
   PositionRole:

@@ -4,9 +4,10 @@ import { Ionicons, Feather, FontAwesome5, EvilIcons,FontAwesome6 } from '@expo/v
 import { useNavigation } from '@react-navigation/native';
 import { Dimensions } from 'react-native';
 import { useFonts } from 'expo-font';
-//import DocumentPicker from 'react-native-document-picker'; // لإختيار الملفات
+import * as DocumentPicker from 'expo-document-picker';
 import { launchImageLibrary } from 'react-native-image-picker'; // لإختيار الصور
-import { Video } from 'react-native-video'; // لإختيار الفيديوهات إذا كنت تريد عرض الفيديوهات
+//import { Video } from 'react-native-video'; // لإختيار الفيديوهات إذا كنت تريد عرض الفيديوهات
+import { Video } from 'expo-av';
 
 import { NightModeProvider, NightModeContext } from './NightModeContext';
 
@@ -51,50 +52,129 @@ const AddPostScreen = () => {
     }
     const { isNightMode, toggleNightMode } = useContext(NightModeContext);
 
-    const [body, setBody] = useState('');
+    const [Body, setBody] = useState('');
     const [uploadType, setUploadType] = useState('image'); // الافتراضي هو الصورة
-    const [image, setImage] = useState(null);
-    //const [file, setFile] = useState(null);
-    const [video, setVideo] = useState(null);
+    const [Images, setImages] = useState(null);
+    const [Files, setFiles] = useState(null);
+    const [Videos, setVideos] = useState(null);
     
   
     const pickImage = () => {
-      launchImageLibrary({ mediaType: 'photo', quality: 1 }, response => {
-        if (response.assets) {
-          setImage(response.assets[0].uri);
-          setFile(null); // في حال تم اختيار صورة، يتم مسح الملف والفيديو
-          setVideo(null);
+  launchImageLibrary({ mediaType: 'photo', quality: 1 }, response => {
+    if (response.assets) {
+      const imageUri = response.assets[0].uri; // الرابط الكامل للصورة
+      const imageName = imageUri.split('/').pop(); // استخراج اسم الصورة مع الامتداد
+      setImages({ uri: imageUri, name: imageName }); // تخزين الرابط الكامل والاسم
+      setFiles(null); 
+      setVideos(null);
+    }
+  });
+};
+    
+  
+    const pickFile = async () => {
+      try {
+        const result = await DocumentPicker.getDocumentAsync({
+          type: '*/*', // جرب أنواع أخرى إذا لزم الأمر
+        });
+        if (result.type === 'success') {
+          setFiles(result.uri);
+          console.log('File URI:', result.uri);
         }
-      });
+      } catch (err) {
+        console.error('Error picking file:', err);
+      }
     };
+    
   
-    // const pickFile = async () => {
-    //   try {
-    //     const res = await DocumentPicker.pickSingle({
-    //       type: [DocumentPicker.types.allFiles],
-    //     });
-    //     setFile(res.uri);
-    //     setImage(null); // مسح الصورة والفيديو عند اختيار ملف
-    //     setVideo(null);
-    //   } catch (err) {
-    //     if (DocumentPicker.isCancel(err)) {
-    //       console.log('User cancelled the picker');
-    //     } else {
-    //       console.log('Unknown error:', err);
-    //     }
-    //   }
-    // };
-  
-    const pickVideo = () => {
-      launchImageLibrary({ mediaType: 'video', quality: 1 }, response => {
-        if (response.assets) {
-          setVideo(response.assets[0].uri);
-          setImage(null); // مسح الصورة والملف عند اختيار فيديو
-          setFile(null);
+    const pickVideo = async () => {
+      try {
+        const res = await DocumentPicker.getDocumentAsync({
+          type: 'video/*', // تحديد نوع الملفات ليكون فيديو
+        });
+    
+        if (res.type === 'success') {
+          setVideos(res.uri); // حفظ رابط الفيديو
+          setImages(null); // مسح الصورة
+          setFiles(null); // مسح الملفات الأخرى
+          console.log('Video selected: ', res.uri);
         }
-      });
+      } catch (err) {
+        console.log('Error picking video: ', err);
+      }
     };
-  
+    
+    const handleAddPost = async () => {
+      try {
+        const token = await AsyncStorage.getItem('userToken');
+        if (!token) throw new Error('No token found');
+    
+        const baseUrl = Platform.OS === 'web'
+          ? 'http://localhost:3000'
+          : 'http://192.168.1.239:3000';
+    
+        const formData = new FormData();
+    
+        // إضافة البودي إذا كان موجودًا
+        if (Body.trim()) {
+          formData.append('Body', Body);
+        }
+    
+        // التحقق من نوع المحتوى وإضافته إذا كان موجودًا
+        if (uploadType === 'image' && Images) {
+          const fileUri = Images.uri.startsWith('file://') ? Images.uri.replace('file://', '') : Images.uri;
+          formData.append('Images', {
+            uri: fileUri,
+            name: Images.name || 'image.jpg',
+            type: 'image/jpeg',
+          });
+        } else if (uploadType === 'video' && Videos) {
+          const fileUri = Videos.startsWith('file://') ? Videos.replace('file://', '') : Videos;
+          formData.append('Videos', {
+            uri: fileUri,
+            name: Videos.split('/').pop() || 'video.mp4',
+            type: 'video/mp4',
+          });
+        } else if (uploadType === 'file' && Files) {
+          const fileUri = Files.startsWith('file://') ? Files.replace('file://', '') : Files;
+          formData.append('Files', {
+            uri: fileUri,
+            name: Files.split('/').pop() || 'file.pdf',
+            type: 'application/pdf',
+          });
+        }
+    
+        // التأكد من وجود محتوى للإرسال
+        if (!Body.trim() && !Images && !Videos && !Files) {
+          throw new Error('Please add content or upload a file');
+        }
+    
+        console.log('FormData before sending:', formData);
+    
+        const response = await fetch(`${baseUrl}/post/createpost`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Wasan__${token}`,
+          },
+          body: formData,
+        });
+    
+        const responseText = await response.text();
+        console.log('Server Response:', responseText);
+    
+        if (!response.ok) {
+          const errorData = JSON.parse(responseText);
+          throw new Error(errorData.message || 'Something went wrong');
+        }
+    
+        const result = JSON.parse(responseText);
+        console.log('Post added successfully:', result);
+      } catch (error) {
+        console.error('Error adding post:', error);
+        alert(error.message);
+      }
+    };
+    
     return (
         <View style={{ flex: 1, backgroundColor: secondary, paddingTop: 20 }}>
         {/* الشريط العلوي */}
@@ -131,22 +211,23 @@ const AddPostScreen = () => {
         {/* Title for the post */}
         <PageTitle>Add New Post</PageTitle>
 
-       {/* Post Description Input */}
-  <TextInput
-    style={{
-      borderWidth: 1,
-      borderColor: "#ccc",
-      borderRadius: 10,
-      padding: 10,
-      marginBottom: 15,
-      fontSize: 16,
-      height: 100,
-      textAlignVertical: "top",
-    }}
-    placeholder="Post Description"
-    placeholderTextColor="#999"
-    multiline
-  />
+       {/* Post Body Input */}
+       <TextInput
+  style={{
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 10,
+    padding: 10,
+    marginBottom: 15,
+    fontSize: 16,
+    height: 100,
+    textAlignVertical: "top",
+  }}
+  placeholder="Post Body"
+  onChangeText={setBody}
+  placeholderTextColor="#999"
+  multiline
+/>
 
         {/* Switch between Upload Types */}
         <View style={{ flexDirection: 'row', marginVertical: 20 }}>
@@ -178,37 +259,53 @@ const AddPostScreen = () => {
 
         {/* Choose file section */}
         {uploadType === 'image' && (
-          <StyledButton onPress={pickImage}>
-            <ButtonText>Choose Image</ButtonText>
-          </StyledButton>
-        )}
+  <StyledButton onPress={pickImage}>
+    <ButtonText>Choose Image</ButtonText>
+  </StyledButton>
+)}
+
+
         {uploadType === 'video' && (
           <StyledButton onPress={pickVideo}>
             <ButtonText>Choose Video</ButtonText>
           </StyledButton>
         )}
-        {/* {uploadType === 'file' && (
+         {uploadType === 'file' && (
           <StyledButton onPress={pickFile}>
             <ButtonText>Choose File</ButtonText>
           </StyledButton>
-        )} */}
+        )} 
 
-        {/* Preview the uploaded content */}
-        {image && <Image source={{ uri: image }} style={{ width: 200, height: 200, marginVertical: 20 }} />}
-        {video && (
-          <Video
-            source={{ uri: video }}
-            style={{ width: 200, height: 200, marginVertical: 20 }}
-            controls={true}
-            resizeMode="cover"
-          />
-        )}
-        {/* File preview
-        {file && (
+       {/* Preview the uploaded content */}
+       {Images && (
+        <Text style={{ marginVertical: 20, fontSize: 16, color: '#555' }}>
+           {Images.name} {/* اسم الصورة مع الامتداد */}
+         </Text>
+     )}
+  {Videos && (
+  <Video
+    source={{ uri: Videos }}
+    style={{ width: 200, height: 200, marginVertical: 20 }}
+    useNativeControls // إضافة عناصر التحكم
+    resizeMode="cover" // لضبط الفيديو داخل الإطار
+    isLooping // تشغيل الفيديو بشكل متكرر
+  />
+)}
+        {/* File preview*/}
+        {Files && (
           <Text style={{ marginVertical: 20 }}>
-            {file.split('/').pop()}
+            {Files.split('/').pop()}
           </Text>
-        )*/}
+        )}
+
+<View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 20 }}>
+  <TouchableOpacity style={{ alignItems: 'center' }} onPress={handleAddPost}>
+    <StyledButton style={{ backgroundColor: brand, marginRight: 10 }}>
+      <ButtonText>Add Post</ButtonText>
+    </StyledButton>
+  </TouchableOpacity>
+</View>
+
       </InnerContainer>
     </StyledContainer>
 

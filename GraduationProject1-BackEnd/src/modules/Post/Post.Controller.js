@@ -5,9 +5,9 @@ import PostModel from './../../Model/PostModel.js';
 // Create Own Post
 export const CreatePost = async (req, res, next) => {
     try {
-        const { Body } = req.body;
-        if (!Body) {
-            return next(new Error("Body is required."));
+        const { Body,Category } = req.body;
+        if (!Body || !Category) {
+            return next(new Error("Body or Category is required."));
         }
 
         const UserId = req.user._id;
@@ -29,6 +29,7 @@ export const CreatePost = async (req, res, next) => {
         
         const Post = await PostModel.create({
             Body,
+            Category,
             Images: images,
             Videos: videos,
             Files: files,
