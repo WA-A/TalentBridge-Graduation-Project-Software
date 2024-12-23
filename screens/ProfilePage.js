@@ -1,6 +1,7 @@
 import React, { useEffect,useState, useContext } from 'react';
-import { View, Text, Image, TouchableOpacity,TextInput, StyleSheet, FlatList,ScrollView, Animated, Button, Alert, Platform } from 'react-native';
-import { Ionicons, Feather, FontAwesome5, EvilIcons, FontAwesome,MaterialIcons
+import { View, Text, Image,Pressable, TouchableOpacity,TextInput, StyleSheet,Switch, FlatList,ScrollView, Animated, Button, Alert, Platform } from 'react-native';
+import { Ionicons, Feather, FontAwesome5, EvilIcons, FontAwesome,MaterialIcons,MaterialCommunityIcons
+
 } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { Dimensions } from 'react-native';
@@ -12,6 +13,8 @@ import { Linking } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import io from 'socket.io-client';
 import Modal from 'react-native-modal';
+import ImageViewer from 'react-native-image-zoom-viewer';
+
 import {
     Colors,
     Card,
@@ -28,27 +31,89 @@ import {
     InteractionText,
 } from '../compnent/Style'
 import { use } from 'react';
+import { color } from 'react-native-elements/dist/helpers';
+import { colors } from 'react-native-elements';
 // Color constants
 const { secondary, primary, careysPink, darkLight, fourhColor, tertiary, fifthColor,firstColor } = Colors;
 const { width, height } = Dimensions.get('window');
 
 
 export default function ProfilePage ({ navigation}) {
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [modalVisibleEditting, setModalEdittingVisible] = useState(false);
+  const [currentModalEditting, setCurrentModalEditting] = useState('');
 
+  const openModalEditting = (item, type) => {
+    setSelectedItem({ ...item, type }); // تخزين بيانات البطاقة والنوع
+    setModalEdittingVisible(true); // إظهار المودال
+    setCurrentModalEditting(type); // تحديد نوع المودال (experience في هذه الحالة)
+  };
+  
+  const closeModalEditting = () => {
+    setModalEdittingVisible(false);
+  };
+  
+  
     const nav = useNavigation();
     const { isNightMode, toggleNightMode } = useContext(NightModeContext);
     const [scrollY] = useState(new Animated.Value(0));
     const [uploadType, setUploadType] = useState('link'); // "link" أو "image"
     const [image, setImage] = useState(null); // لتخزين الصورة
     const [showPosts, setShowPosts] = useState(false);
+    const [newExperiance,setNewExperiance] = useState(
+    {
+      name: '',
+      jobTitle: '',
+      startDate: '',
+      endDate: '',
+      isContinuing: false,
+      Description: '',
+    }
+    );
+    const [newEducation, setNewEducation] = useState({
+      universityName: '',
+      degree: '',
+      fieldOfStudy: '',
+    });
 
+    const [newCertification,setNewCertificaion]=useState({
+      title:'',
+      issuingOrganization: '',
+      issueDate: '',
+      expirationDate: '',
+      credentialType:'',
+      certificationImageData:'',
+      certificationLinkData:'',
+    });
     const [languages, setLanguages] = useState([]);  // لتخزين اللغات المسترجعة من الـ API
   const [selectedLanguages, setSelectedLanguages] = useState([]);  // لتخزين اللغات المختارة
-  const [modalVisible, setModalVisible] = useState(false);  // لإظهار/إخفاء النافذة المنبثقة
 
+    const [newSkills,setNewSkills] = useState([]);
+    const [newLanguage,setNewLanguage] = useState([]);
     
+    
+    const handleChangeExperience = (field, value) => {
+      setNewExperiance(prevState => ({
+        ...prevState,
+        [field]: value,
+      }));
+    };
+    
+     
+    const handleChangeEducation = (field, value) => {
+      setNewEducation(prevState => ({
+        ...prevState,
+        [field]: value,
+      }));
+    };
 
-    const [skill, setSkill] = useState(''); // لتخزين المهارة الحالية
+    const [isImageType, setIsImageType] = useState(true);
+
+    // دالة لتبديل العرض بين الصورة والرابط
+    const toggleDisplayType = () => {
+      setIsImageType(!isImageType);
+    };
+    const [skill, setSkill] = useState('');  // لتخزين المهارة الحالية
     const [skillsList, setSkillsList] = useState([]); // قائمة المهارات
 
     // وظيفة لإضافة المهارة للقائمة
@@ -64,7 +129,18 @@ export default function ProfilePage ({ navigation}) {
     const [isEditing, setIsEditing] = useState(false); // حالة للتحكم في إظهار/إخفاء الإدخال
 
 
+    const [showAllCertification, setShowAllCertification] = useState(false); // المتغير الذي يحدد ما إذا كان يجب عرض جميع الشهادات
 
+    // دالة لعرض جميع الشهادات
+    const handleShowAllCertification = () => {
+      setShowAllCertification(true);
+    };
+  
+    // دالة لإخفاء الشهادات
+    const handleHideCertification = () => {
+      setShowAllCertification(false);
+    };
+  
     // Load custom fonts
     const bottomBarTranslate = scrollY.interpolate({
         inputRange: [0, 50],
@@ -103,7 +179,153 @@ export default function ProfilePage ({ navigation}) {
   const [newabout, setnewAbout] = useState('');
   const [isModalVisible, setIsModalVisible] = useState(false); // متغير لحالة المودال
   const [cancelled,setIsCancled]=useState(false);
+  const [selectedOption, setSelectedOption] = useState(null);
+  const [activeTab, setActiveTab] = useState('Posts');
 
+  const [modalVisible, setModalVisible] = useState(false);
+  const [currentModal, setCurrentModal] = useState('');
+
+
+
+  const [experiences, setExperiences] = useState([]);
+
+ const [Education, setEducation] = useState([]);
+ const [isModalVisibleviewImage, setIsModalVisibleViewImage] = useState(false);
+ const [currentImage, setCurrentImage] = useState(null);
+ 
+ // دالة لفتح نافذة عرض الصورة
+ const openImageViewer = (imageUri) => {
+   console.log('Open Image Viewer:', imageUri);
+   
+   // تعيين الصورة المعروضة
+   setCurrentImage([{ url: imageUri }]);
+   setIsModalVisibleViewImage(true);  // فتح النافذة
+ };
+ 
+ // إغلاق نافذة عرض الصورة
+ const closeImageViewer = () => {
+   setIsModalVisibleViewImage(false);
+ };
+  const [certification, setCertification] = useState([ ]);
+
+  const [project, setProject] = useState([]);
+
+  const [language, setLanguage] = useState([  ]);
+  const [recommendation, setRecommendation] = useState([ ]);
+
+  const [skills, setSkills] = useState([]);
+
+  const sortedExperiences = [...experiences].sort((a, b) => new Date(b.startDate) - new Date(a.startDate));
+
+
+  const [showAllExperiences, setShowAllExperiences] = useState(false);
+  const [showAllEducation, setShowAllEducation] = useState(false);
+
+  const handleShowAllExperiences = () => {
+    setShowAllExperiences(true);
+  };
+  const handleHideExperiences = () => {
+    setShowAllExperiences(false);
+  };
+
+  const handleShowAllEducation = () => {
+    setShowAllEducation(true);
+  };
+  const handleHideEducation = () => {
+    setShowAllEducation(false);
+  };
+
+
+  // دالة لفتح الـ Modal بناءً على البطاقة
+  const openModal = (modalName) => {
+    setCurrentModal(modalName);
+    setModalVisible(true);
+  };
+
+  // إغلاق الـ Modal
+  const closeModal = () => {
+    setModalVisible(false);
+    setCurrentModal('');
+  };
+
+
+  const handleSave = async () => {
+    if (currentModal === 'experience') {
+      // إذا كان النوع "experience" (التجربة)
+      await addExperience();
+    } 
+    if (currentModal === 'education') {
+      // إذا كان النوع "experience" (التجربة)
+      await addEducation();
+    }
+    if (currentModal === 'certification') {
+      await addCertification ();
+
+    }
+    closeModal();
+  };
+ 
+ 
+  
+  const handleEditForEachCard = async () => {
+    const { type,...updatedItem } = selectedItem;  // استخراج الـ type والتواريخ
+    delete updatedItem.type;
+    if (currentModalEditting === 'experience') {
+      // إذا كان القسم "الخبرة"
+      await updateExperience(updatedItem);
+    } 
+    if (currentModalEditting === 'education') {
+      // إذا كان القسم "التعليم"
+      await updateEducation(updatedItem);
+    } 
+    if (currentModalEditting === 'certification') {
+      // إذا كان القسم "التعليم"
+      await updateCertification(updatedItem);
+    } 
+    if (currentModalEditting === 'project') {
+      // إذا كان القسم "المشاريع"
+      await addProject();
+    } 
+    if (currentModalEditting === 'skills') {
+      // إذا كان القسم "المهارات"
+      await addSkill();
+    } 
+  };
+  
+
+  const selectNewImage = async () => {
+      try {
+        // طلب إذن الوصول إلى مكتبة الصور
+        let permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (permissionResult.granted === false) {
+          Alert.alert('Permission required', 'You need to grant permission to access the gallery.');
+          return;
+        }
+    
+        let result = await ImagePicker.launchImageLibraryAsync({
+          mediaTypes: ['images'],
+          allowsEditing: true,
+          aspect: [8, 5],
+          quality: 1,
+        });
+    
+        console.log(result);
+    
+        // إذا تم اختيار صورة
+        if (!result.canceled) {
+          const selectedImage = result.assets[0];
+          setImage(selectedImage.uri);
+          setSelectedItem((prev) => ({
+            ...prev,credentialType: 'image',
+            certificationImageData: selectedImage.uri,
+          }));  
+             } 
+      } catch (error) {
+        console.log('Error picking image: ', error);
+      }
+    };
+    
+  
   const cancleEdit = ()=>{
     setnewProfileImage(profileImage);
     setnewCoverImage(CoverImage);
@@ -115,6 +337,7 @@ export default function ProfilePage ({ navigation}) {
     setIsCancled(true);
     setIsModalVisible(false)  
   };
+
   const pickImage = async (type) => {
     try {
       // طلب إذن الوصول إلى مكتبة الصور
@@ -158,6 +381,48 @@ export default function ProfilePage ({ navigation}) {
     }
   };
 
+
+  const pickImageCertification = async () => {
+    try {
+      // طلب إذن الوصول إلى مكتبة الصور
+      let permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (permissionResult.granted === false) {
+        Alert.alert('Permission required', 'You need to grant permission to access the gallery.');
+        return;
+      }
+      let result ;
+      result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect: [8, 5],
+        quality: 1,
+      });
+      console.log(result);
+      // إذا تم اختيار صورة
+      if (!result.canceled) {
+        const selectedImage = result.assets[0];
+        setImage(selectedImage.uri);
+        setNewCertificaion((prev) => ({
+          ...prev,credentialType: 'image',
+          certificationImageData: selectedImage.uri,
+        }));  
+           } 
+      
+    } catch (error) {
+      console.log('Error picking image: ', error);
+    }
+   
+  };
+// عند التبديل بين الصورة والرابط
+const toggleCredentialType = () => {
+  setSelectedItem((prev) => ({
+    ...prev,
+    credentialType: prev.credentialType === 'image' ? 'link' : 'image',
+    certificationImageData: prev.credentialType === 'image' ? null : prev.certificationImageData,
+    certificationLinkData: prev.credentialType === 'link' ? null : prev.certificationLinkData,
+  }));
+};
+
   const base64ToBlob = (base64Data, contentType = 'image/jpeg') => {
     const byteCharacters = atob(base64Data.split(',')[1]);
     const byteArrays = [];
@@ -175,6 +440,28 @@ export default function ProfilePage ({ navigation}) {
     return new Blob(byteArrays, { type: contentType });
   };
   
+
+/////////////////////////////////delete////////////////////////////
+  // حالة لتحديد القسم عند فتح المودال
+const [currentSectionToDelete, setCurrentSectionToDelete] = useState(null); // إما "experience" أو "education"
+const [selectedItemToDelete, setSelectedItemToDelete] = useState(null); // لتخزين العنصر المحدد
+const [confirmDeleteModalVisible, setConfirmDeleteModalVisible] = useState(false); // حالة لظهور المودال
+
+// دالة لفتح المودال بناءً على القسم المختار
+const openConfirmDeleteModal = (section, item) => {
+    setCurrentSectionToDelete(section); // تحديد القسم
+    setSelectedItemToDelete(item); // تحديد العنصر
+    setConfirmDeleteModalVisible(true); // إظهار المودال
+};
+
+// دالة لإغلاق المودال
+const closeConfirmDeleteModal = () => {
+    setConfirmDeleteModalVisible(false);
+    setSelectedItemToDelete(null);
+    setCurrentSectionToDelete(null);
+};
+
+//////////////////////////////////////////////////////////////////
 
 
 // دالة فتح وإغلاق المودال
@@ -200,7 +487,6 @@ const toggleModal = () => {
 
 
   const handleViewProfile = async () => {
-    console.log("sama");
      try {
        const token = await AsyncStorage.getItem('userToken'); // الحصول على التوكن من التخزين
        console.log(token);
@@ -221,7 +507,6 @@ const toggleModal = () => {
          throw new Error(`HTTP error! status: ${response.status}`);
      }
      const data = await response.json();
-     console.log('ProfileData:',data );
      setProfileData(data); 
      setFullName(data.FullName);
      seUserName(data.UserName);
@@ -240,7 +525,6 @@ const toggleModal = () => {
      setSearchQuery(data.FullName);
      socket.emit('profileUpdated', data.user); // إرسال التحديث للسيرفر
 
-     console.log("Hi",FullName, bio, about, userName, location, CoverImage, profileImage);
      
      } catch (error) {
        console.error('Error fetching ProfileData:', error);
@@ -249,7 +533,61 @@ const toggleModal = () => {
      setIsLoading(false);
    }
   };
+const addCertification = async () =>{
+  try {
+    const token = await AsyncStorage.getItem('userToken');
+    if (!token) {
+      console.error('Token not found');
+      return;
+    }
+    // إعداد البيانات باستخدام FormData
+    const formData = new FormData();
+  
+    // إضافة الحقول النصية
+    formData.append('title', newCertification.title);
+    formData.append('issuingOrganization', newCertification.issuingOrganization);
+    formData.append('issueDate', newCertification.issueDate);
+    formData.append('expirationDate', newCertification.expirationDate);
+    formData.append('credentialType',newCertification.credentialType);
+    formData.append('certificationLinkData',newCertification.certificationLinkData);
+    // إضافة صورة البروفايل إذا كانت موجودة
+    if (newCertification.certificationImageData) {
+      if (Platform.OS === 'web') {
+        // استخدام Blob للويب
+        const profileBlob = base64ToBlob(newCertification.certificationImageData, 'image/jpeg');
+        formData.append('CertificationImage', profileBlob, 'CertificationImage.jpg');
+      } else {
+        console.log("ss",newCertification.certificationImageData);
 
+        // استخدام uri للموبايل
+        formData.append('CertificationImage', {
+          uri: newCertification.certificationImageData,
+          type: 'image/jpeg',
+          name: 'CertificationImage.jpg',
+        }
+      );
+      }
+    }
+
+    console.log('Sending certification data:', formData);
+
+    const response = await fetch(`${baseUrl}/user/addCertification`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Wasan__${token}`,
+      },
+      body: formData, // إرسال البيانات كـ FormData
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Something went wrong');
+    }
+  }
+  catch (error) {
+    console.error('Error fetching addCertification:', error);
+} 
+};
 
   const handleUpdateProfile = async (values) => {
     try {
@@ -316,7 +654,6 @@ const toggleModal = () => {
       }
   
       const data = await response.json();
-      console.log('User profile updated successfully:', data);
   
       // تحديث البيانات في الواجهة الأمامية
       setAbout(data.user.About);
@@ -407,7 +744,6 @@ const toggleModal = () => {
       setLocation(data.user.Location);
       setProfileimage(data.user.PictureProfile?.secure_url || '');
       setCoverimage(data.user.CoverImage?.secure_url || '');
-      console.log('User profile Created successfully:', data);
       Alert.alert('Profile Created successfully.');
 
           // إرسال التحديث عبر socket بعد نجاح التحديث
@@ -417,6 +753,8 @@ const toggleModal = () => {
       console.error('Error creating profile:', error.message);
     }
   };
+
+  
   
    ////////////////////////////Call Creat and Update ////////////////////////////////////
    const handleProfile = async () => {
@@ -458,6 +796,371 @@ const toggleModal = () => {
   };
   
 
+
+  //////////////////////////////////////////GetAllExperiance//////////////////////////////////
+const getAllExperiance = async () => {
+  try {
+    const token = await AsyncStorage.getItem('userToken');
+    if (!token) {
+      console.error('Token not found');
+      return;
+    }
+
+    // جلب بيانات المستخدم الحالية من السيرفر
+    const response = await fetch(`${baseUrl}/user/getAllExperiences`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Wasan__${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch user Experiences');
+    }
+
+    const userData = await response.json();
+    setExperiences(userData.experiences);
+
+
+  } catch (error) {
+    console.error('Error handling experiamce:', error.message);
+  }
+
+};
+
+const getAllCertifications = async () => {
+  try {
+    const token = await AsyncStorage.getItem('userToken');
+    if (!token) {
+      console.error('Token not found');
+      return;
+    }
+
+    // جلب بيانات المستخدم الحالية من السيرفر
+    const response = await fetch(`${baseUrl}/user/getAllCertifications `, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Wasan__${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch user Experiences');
+    }
+
+    const userData = await response.json();
+    setCertification(userData.certifications);
+    console.log(certification);
+
+  } catch (error) {
+    console.error('Error handling experiamce:', error.message);
+  }
+
+};
+
+
+const updateExperience = async (updatedItem) => {
+
+  try {
+    const token = await AsyncStorage.getItem('userToken');
+    if (!token) {
+      console.error('Token not found');
+      return;
+    }
+    // جلب بيانات المستخدم الحالية من السيرفر
+    const response = await fetch(`${baseUrl}/user/updateExperience/${updatedItem._id}`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Wasan__${token}`,
+        'Content-Type': 'application/json', // تحديد نوع البيانات المرسلة
+      },
+      body: JSON.stringify(updatedItem), // تحويل البيانات إلى JSON
+
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch user Experiences');
+    }
+
+    if (response.ok) {
+      console.log('Experience updated successfully');
+      setModalEdittingVisible(false); // إغلاق المودال بعد التحديث
+    } else {
+      console.error('Failed to update experience');
+    }
+    
+    const userData = await response.json();
+    setExperiences(userData.experiences);
+   socket.emit('profileUpdated', userData.experiences); 
+  getAllExperiance();
+  } catch (error) {
+    console.error('Error updating experience:', error);
+  }
+};
+
+const updateCertification = async (updatedItem) => {
+  console.log(updatedItem._id);
+  try {
+    const token = await AsyncStorage.getItem('userToken');
+    if (!token) {
+      console.error('Token not found');
+      return;
+    }
+
+    // إعداد البيانات باستخدام FormData
+    const formData = new FormData();
+
+    // إضافة الحقول النصية
+    formData.append('title', updatedItem.title);
+    formData.append('issuingOrganization', updatedItem.issuingOrganization);
+    formData.append('issueDate', updatedItem.issueDate);
+    formData.append('expirationDate', updatedItem.expirationDate);
+    formData.append('credentialType', updatedItem.credentialType);
+    formData.append('certificationLinkData', updatedItem.certificationLinkData);
+
+  // إضافة صورة البروفايل إذا كانت موجودة
+  if (selectedItem.certificationImageData) {
+    if (Platform.OS === 'web') {
+      // استخدام Blob للويب
+      const profileBlob = base64ToBlob(selectedItem.certificationImageData, 'image/jpeg');
+      formData.append('CertificationImage', profileBlob, 'CertificationImage.jpg');
+    } else {
+      console.log("ss",selectedItem.certificationImageData);
+
+      // استخدام uri للموبايل
+      formData.append('CertificationImage', {
+        uri: selectedItem.certificationImageData,
+        type: 'image/jpeg',
+        name: 'CertificationImage.jpg',
+      }
+    );
+    }
+  }
+  console.log("ss",formData.certificationImageData);
+
+
+    console.log("theform", formData);
+
+    // إرسال الطلب باستخدام fetch
+    const response = await fetch(`${baseUrl}/user/updateCertification/${updatedItem._id}`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Wasan__${token}`,
+      },
+      body: formData, // إرسال formData مباشرة
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch user Certification');
+    }
+
+    if (response.ok) {
+      console.log('Certification updated successfully');
+      setModalEdittingVisible(false); // إغلاق المودال بعد التحديث
+    } else {
+      console.error('Failed to update Certification');
+    }
+
+    const userData = await response.json();
+    setCertification(userData.certifications);
+    socket.emit('profileUpdated', userData.certifications);
+    getAllCertifications();
+
+  } catch (error) {
+    console.error('Error updating certifications:', error);
+  }
+};
+
+
+const updateEducation = async (updatedItem) => {
+
+  try {
+    const token = await AsyncStorage.getItem('userToken');
+    if (!token) {
+      console.error('Token not found');
+      return;
+    }
+    // جلب بيانات المستخدم الحالية من السيرفر
+    const response = await fetch(`${baseUrl}/user/updateEducation/${updatedItem._id}`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Wasan__${token}`,
+        'Content-Type': 'application/json', // تحديد نوع البيانات المرسلة
+      },
+      body: JSON.stringify(updatedItem), // تحويل البيانات إلى JSON
+
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch user Education');
+    }
+
+    if (response.ok) {
+      console.log('Education updated successfully');
+      setModalEdittingVisible(false); // إغلاق المودال بعد التحديث
+    } else {
+      console.error('Failed to update education');
+    }
+    
+    const userData = await response.json();
+    setEducation(userData.education);
+   socket.emit('profileUpdated', userData.education); 
+  getAllEducation();
+  } catch (error) {
+    console.error('Error updating experience:', error);
+  }
+};
+
+
+const getAllEducation = async () => {
+  try {
+    const token = await AsyncStorage.getItem('userToken');
+    if (!token) {
+      console.error('Token not found');
+      return;
+    }
+
+    // جلب بيانات المستخدم الحالية من السيرفر
+    const response = await fetch(`${baseUrl}/user/getAllEducation`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Wasan__${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch user Education');
+    }
+
+    const userData = await response.json();
+    setEducation(userData.education);
+
+  } catch (error) {
+    console.error('Error handling education:', error.message);
+  }
+
+};
+
+
+
+const addExperience = async () => {
+  console.log(newExperiance);
+  try {
+    const token = await AsyncStorage.getItem('userToken');
+    if (!token) {
+      console.error('Token not found');
+      return;
+    }
+
+    // إرسال بيانات التجربة الجديدة إلى السيرفر
+    const response = await fetch(`${baseUrl}/user/addExperience`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Wasan__${token}`,
+        'Content-Type': 'application/json', // تحديد نوع البيانات المرسلة
+      },
+      body: JSON.stringify(newExperiance), // تحويل البيانات إلى JSON
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to add experience');
+    }
+
+    // الحصول على بيانات الاستجابة
+    const userData = await response.json();
+    console.log('Experience added successfully:', userData);
+    getAllExperiance();
+  } catch (error) {
+    console.error('Error adding experience:', error.message);
+  }
+};
+
+const addEducation = async () => {
+  console.log(newEducation);
+  try {
+    const token = await AsyncStorage.getItem('userToken');
+    if (!token) {
+      console.error('Token not found');
+      return;
+    }
+
+    // إرسال بيانات التجربة الجديدة إلى السيرفر
+    const response = await fetch(`${baseUrl}/user/addEducation`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Wasan__${token}`,
+        'Content-Type': 'application/json', // تحديد نوع البيانات المرسلة
+      },
+      body: JSON.stringify(newEducation), // تحويل البيانات إلى JSON
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to add Education');
+    }
+    const userData = await response.json();
+    console.log('Education added successfully:', userData);
+    getAllEducation();
+  } catch (error) {
+    console.error('Error adding  Education:', error.message);
+  }
+};
+
+
+
+const handleDelete = async () => {
+  console.log("delete",selectedItemToDelete);
+  if (!selectedItemToDelete) {
+      console.error('No item selected for deletion');
+      return;
+  }
+
+  const itemId = selectedItemToDelete._id;  // المعرف الخاص بالعنصر
+  const section = currentSectionToDelete;   // القسم (الخبرة أو التعليم)
+
+  try {
+      const token = await AsyncStorage.getItem('userToken');
+      if (!token) {
+          console.error('Token not found');
+          return;
+      }
+
+      // إرسال طلب الحذف إلى السيرفر بناءً على القسم المحدد
+      const response = await fetch(`${baseUrl}/user/delete${section.charAt(0).toUpperCase() + section.slice(1)}/${itemId}`, {
+          method: 'DELETE',
+          headers: {
+              'Authorization': `Wasan__${token}`,
+              'Content-Type': 'application/json',
+          },
+      });
+
+      if (!response.ok) {
+          throw new Error('Failed to delete item');
+      }
+
+      const userData = await response.json();
+      console.log(`${section} deleted successfully`, userData);
+
+      setConfirmDeleteModalVisible(false);  // إغلاق المودال بعد الحذف
+
+      // تحديث قائمة العناصر بعد الحذف
+      if (section === 'experience') {
+          setExperiences(userData.Experiences); // تحديث الخبرات فقط
+      } else if (section === 'education') {
+          setEducation(userData.Education); // تحديث التعليم فقط
+      }
+    getAllEducation();
+    getAllExperiance();
+  } catch (error) {
+      console.error('Error deleting item:', error);
+  }
+};
+
+
+////////////////////////////////////////////////////////////////////////////////////////////
+const formatDate = (dateString) => {
+  const date = new Date(dateString);
+  return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
+};
   
   const requestPermission = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -465,6 +1168,7 @@ const toggleModal = () => {
       alert('Permission to access the media library is required!');
     }
   };
+
 
   
   // دالة لتحميل اللغات المختارة من AsyncStorage
@@ -545,15 +1249,17 @@ const handleOpenModal = () => {
   setModalVisible(true); // إظهار النافذة
 };
 
-// تحميل اللغات المختارة عند تحميل الصفحة
+
+
+
 useEffect(() => {
   loadSelectedLanguages();
-}, []);
 
-
-useEffect(() => {
   handleViewProfile(); 
   requestPermission();
+  getAllExperiance();
+  getAllEducation();
+  getAllCertifications();
   socket.on('profileUpdated', (updatedUserData) => {
     console.log('Profile updated:', updatedUserData);
   
@@ -620,12 +1326,139 @@ useEffect(() => {
       setIsLoading(false);
     }
   };
-  
+  const getStatusColor = (isContinuing) => {
+    return isContinuing ? 'green' : 'red'; // أخضر إذا كان مستمر وأحمر إذا كان منتهي
+  };
+  const ExperienceList = ({ experiences }) => {
+    // دالة لتصفية الخبرات وعرض الخبرات من الثالثة فما فوق
+    const filterExperiences = () => {
+      return sortedExperiences.slice(2); // تصفية الخبرات بحيث تبدأ من الخبرة الثالثة
+    };
+    return (
+      <ScrollView>
+        {filterExperiences().map((exp, index) => (
+          <View key={index} style={styles.experienceItem}>
+          <View style={styles.experienceHeader}>
+                    <Text style={[styles.experienceTitle,{color:isNightMode ?Colors.primary :Colors.black}]}>{exp.jobTitle}</Text>
+                    <TouchableOpacity onPress={() =>  openModalEditting(exp, 'experience')} style={styles.editButton}>
+              <MaterialIcons name="edit" size={20} color={isNightMode ? Colors.primary : Colors.black} />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => openConfirmDeleteModal('experience',exp)} style={styles.deleteButton}>
+              <MaterialCommunityIcons name="minus-circle" size={20} color={isNightMode ? Colors.primary : Colors.black} />
+            </TouchableOpacity>
+          </View>
+            <Text style={[styles.experienceDescription,{color:isNightMode? Colors.primary :Colors.black}]}>{exp.Description}</Text>
+            <Text style={styles.experienceDate}>
+            {exp.isContinuing 
+              ?   `working at ${exp.name} since ${formatDate(exp.startDate)}` // إذا كان العمل مستمر فقط يظهر منذ وتاريخ البدء
+              : ` ًWorked at ${exp.name} from  ${formatDate(exp.startDate)} to ${formatDate(exp.endDate)}`} 
+          </Text>
+                      {/* عرض حالة العمل (مستمر أو منتهي) */}
+          <Text
+            style={[
+              styles.experienceStatus,
+              { color: getStatusColor(exp.isContinuing) },
+            ]}
+          >
+            {exp.isContinuing ? 'Ongoing' : 'Completed'}
+          </Text>
+                    <View style={styles.divider} />
+                </View>
 
-
-
-
+        ))}
+      </ScrollView>
+    );
+  };
  
+
+  const EducationList = ({ education }) => {
+    // دالة لتصفية الخبرات وعرض الخبرات من الثالثة فما فوق
+    const filterExperiences = () => {
+      return Education.slice(2); // تصفية الخبرات بحيث تبدأ من الخبرة الثالثة
+    };
+    return (
+      <ScrollView>
+        {filterExperiences().map((exp, index) => (
+          <View key={index} style={styles.experienceItem}>
+                <View style={styles.experienceHeader}>
+                    <Text style={[styles.experienceTitle,{color:isNightMode ?Colors.primary :Colors.black}]}>{exp.universityName}</Text>
+                    <TouchableOpacity onPress={() =>  openModalEditting(exp, 'education')} style={styles.editButton}>
+              <MaterialIcons name="edit" size={20} color={isNightMode ? Colors.primary : Colors.black} />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => openConfirmDeleteModal('education',exp)} style={styles.deleteButton}>
+              <MaterialCommunityIcons name="minus-circle" size={20} color={isNightMode ? Colors.primary : Colors.black} />
+            </TouchableOpacity>
+          </View>
+                    <Text style={[styles.experienceDescription,{color:isNightMode ?Colors.primary :Colors.black}]}>{exp.degree}</Text>
+                    <Text style={styles.experienceDate}>{exp.fieldOfStudy}</Text>
+
+                      {/* عرض حالة العمل (مستمر أو منتهي) */}
+                    <View style={styles.divider} />
+                </View>
+
+        ))}
+      </ScrollView>
+    );
+  };
+
+  const CertificationList = ({certification}) => {
+    // دالة لتصفية الخبرات وعرض الخبرات من الثالثة فما فوق
+    const filterExperiences = () => {
+      return certification.slice(2); // تصفية الخبرات بحيث تبدأ من الخبرة الثالثة
+    };
+    return (
+      <ScrollView>
+        {filterExperiences().map((cert, index) => (
+          <View key={index} style={[styles.experienceItem, { flexDirection: 'row' }]}>
+    
+    {/* عرض الصورة */}
+    {cert.credentialType === 'image' && cert.certificationImageData && (
+    <TouchableOpacity onPress={() => openImageViewer(cert.certificationImageData.uri || cert.certificationImageData || cert.certificationImageData.secure_url)}>
+      <Image
+        source={{ uri: cert.certificationImageData.uri || cert.certificationImageData ||cert.certificationImageData.secure_url
+ }}
+        style={styles.certImage}
+      />
+    </TouchableOpacity>
+    )}
+
+    {/* محتوى الشهادة */}
+    <View style={{ flex: 1 }}>
+      {/* العنوان */}
+      <Text style={[styles.experienceTitle, { color: isNightMode ? Colors.primary : Colors.black }]}>
+        {cert.title}
+      </Text>
+      <TouchableOpacity onPress={() =>  openModalEditting(cert, 'certification')}style={styles.editButton}>
+            <MaterialIcons name="edit" size={20} color={isNightMode ? Colors.primary : Colors.black} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => openConfirmDeleteModal('certification',cert)} style={styles.deleteButton}>
+            <MaterialCommunityIcons name="minus-circle" size={20} color={isNightMode ? Colors.primary : Colors.black} />
+          </TouchableOpacity>
+      {/* الجهة المصدرة */}
+      <Text style={[styles.experienceDescription, { color: isNightMode ? Colors.primary : Colors.black }]}>
+        {cert.issuingOrganization}
+      </Text>
+
+      {/* تاريخ الإصدار والانتهاء */}
+      <Text style={[styles.experienceDate, { color: isNightMode ? Colors.primary : Colors.gray }]}>
+        Issued: {cert.issueDate} {cert.expirationDate ? ` - Expires: ${cert.expirationDate}` : ''}
+      </Text>
+
+      {/* المحتوى بناءً على النوع */}
+      {cert.credentialType === 'link' && cert.certificationLinkData && (
+        <TouchableOpacity onPress={() => Linking.openURL(cert.certificationLinkData)} style={styles.linkContainer}>
+          <Text style={styles.linkText}>{cert.certificationLinkData}</Text>
+        </TouchableOpacity>
+      )}
+    </View>
+  </View>
+
+        ))}
+      </ScrollView>
+    );
+  };
+
+
 
     return (
         <View style={{ flex: 1 }}>
@@ -951,567 +1784,763 @@ useEffect(() => {
 
 
 
+<View style={[styles.divider,{height:3}]}/>
 
 
-        {/* أزرار البوستات والتعليقات */}
-        <View
-  style={{
-    flexDirection: 'row',
-    flexWrap: 'wrap', // السماح بالتفاف العناصر
-    justifyContent: 'center',
-    width: '100%',
-    marginTop: 30,
-    marginBottom: 20,
-  }}
->
-  {/* زر الرسائل */}
-  <TouchableOpacity
-    onPress={() => console.log('Go to Messages')}
-    style={{
-      backgroundColor: '#C99FA9',
-      padding: 15,
-      borderRadius: 25,
-      alignItems: 'center',
-      justifyContent: 'center',
-      width: '45%', // عرض الزر 45% لتوفير مساحة للزر الآخر
-      margin: 10, // إضافة مسافة بين الأزرار
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.2,
-      shadowRadius: 5,
-    }}
-  >
-    <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#000' }}>Message</Text>
-  </TouchableOpacity>
-
-  {/* زر الطلبات */}
-  <TouchableOpacity
-    onPress={() => console.log('Go to Connect')}
-    style={{
-      backgroundColor: '#C99FA9',
-      padding: 15,
-      borderRadius: 25,
-      alignItems: 'center',
-      justifyContent: 'center',
-      width: '45%',
-      margin: 10,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.2,
-      shadowRadius: 5,
-    }}
-  >
-    <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#000' }}>Connect</Text>
-  </TouchableOpacity>
-
-  {/* زر البوستات */}
-  {/* زر Posts */}
-  <TouchableOpacity
-      //  onPress={handelGetUserPosts} // استدعاء الدالة عند الضغط على الزر
-        style={{
-          backgroundColor: '#C99FA9',
-          padding: 15,
-          borderRadius: 25,
-          alignItems: 'center',
-          justifyContent: 'center',
-          width: '45%',
-          margin: 10,
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.2,
-          shadowRadius: 5,
-        }}
-      >
-        <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#000' }}>Posts</Text>
-      </TouchableOpacity>
-
-      {/* عرض مؤشر تحميل عند جلب البيانات */}
-      {isLoading && <ActivityIndicator size="large" color="#C99FA9" />}
-
-      {/* عرض البوستات إذا كانت الحالة showPosts تساوي true */}
-      {showPosts && ownpost && Array.isArray(ownpost) && ownpost.length > 0 ? (
-        ownpost.map((post, index) => (
-          <View
-            key={index}
-            style={{
-              backgroundColor: '#f9f9f9',
-              padding: 15,
-              borderRadius: 10,
-              margin: 10,
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 1 },
-              shadowOpacity: 0.1,
-              shadowRadius: 3,
-            }}
-          >
-            <Text style={{ fontWeight: 'bold', marginBottom: 5 }}>{post.UserId}</Text>
-            <Text>{post.Body}</Text>
-            {post.Images && post.Images.length > 0 && (
-              <Image
-                source={{ uri: post.Images[0].secure_url }}
-                style={{ width: '100%', height: 200, marginTop: 10 }}
-              />
-            )}
-          </View>
-        ))
-      ) : showPosts && !isLoading ? (
-        <Text>No posts available.</Text>
-      ) : null}
-
-      {/* عرض البوستات إذا كانت الحالة true */}
-      {showPosts && ownpost && Array.isArray(ownpost) && ownpost.length > 0 ? (
-        ownpost.map((post, index) => (
-          <View
-            key={index}
-            style={
-              Platform.OS === 'web'
-                ? {
-                    marginTop: 30,
-                    width: isSidebarVisible ? '50%' : '50%',
-                    marginLeft: isSidebarVisible ? '35%' : 0,
-                  }
-                : { width: '100%', alignItems: 'center', marginBottom: 10 }
-            }
-          >
-            <View
-              style={{
-                backgroundColor: isNightMode ? '#454545' : secondary,
-                padding: 10,
-                borderRadius: 15,
-                width: '95%',
-                boxShadow: Platform.OS === 'web' ? '0 4px 10px rgba(0,0,0,0.1)' : undefined,
-                margin: 10,
-              }}
-            >
-              <View style={{ flexDirection: 'row', alignItems: 'center', padding: 10 }}>
-                <Image
-                  source={{ uri: post.ProfilePicture }}
-                  style={{
-                    width: Platform.OS === 'web' ? 80 : 40,
-                    height: Platform.OS === 'web' ? 80 : 40,
-                    borderRadius: Platform.OS === 'web' ? 40 : 25,
-                    marginRight: 10,
-                    objectFit: 'cover',
-                  }}
-                />
-                <View>
-                  <Text style={{ color: isNightMode ? primary : '#000', fontWeight: 'bold', fontSize: 16 }}>
-                    {post.UserId}
-                  </Text>
-                  <Text style={{ color: darkLight, fontSize: 12 }}>
-                    {new Date(post.createdAt).toLocaleString()}
-                  </Text>
+{/* بطاقة Experience */}
+<View style={[styles.card, { backgroundColor: isNightMode ? Colors.black : Colors.primary }]}>
+            <View style={styles.cardHeader}>
+                <Text style={[styles.cardTitle, { color: isNightMode ? Colors.primary : Colors.black }]}>Experience</Text>
+                <View style={styles.actionButtons}>
+                    <TouchableOpacity onPress={() => openModal('experience')} style={styles.smallButton}>
+                        <Text style={styles.smallButtonText}>Add</Text>
+                    </TouchableOpacity>
                 </View>
+            </View>
+
+            {/* عرض أول 2 خبرات */}
+            {sortedExperiences.slice(0, 2).map((exp, index) => (
+                <View key={index} style={styles.experienceItem}>
+                <View style={styles.experienceHeader}>
+                    <Text style={[styles.experienceTitle,{color:isNightMode ?Colors.primary :Colors.black}]}>{exp.jobTitle}</Text>
+                    <TouchableOpacity onPress={() =>  openModalEditting(exp, 'experience')} style={styles.editButton}>
+              <MaterialIcons name="edit" size={20} color={isNightMode ? Colors.primary : Colors.black} />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => openConfirmDeleteModal('experience',exp)} style={styles.deleteButton}>
+              <MaterialCommunityIcons name="minus-circle" size={20} color={isNightMode ? Colors.primary : Colors.black} />
+            </TouchableOpacity>
+          </View>
+                    <Text style={[styles.experienceDescription,{color:isNightMode ?Colors.primary :Colors.black}]}>{exp.Description}</Text>
+                    <Text style={styles.experienceDate}>
+          
+          {exp.isContinuing 
+            ?   `working at ${exp.name} since ${formatDate(exp.startDate)}` // إذا كان العمل مستمر فقط يظهر منذ وتاريخ البدء
+            : ` ًWorked at ${exp.name} from  ${formatDate(exp.startDate)} to ${formatDate(exp.endDate)}`} 
+        </Text>
+
+                      {/* عرض حالة العمل (مستمر أو منتهي) */}
+          <Text
+            style={[
+              styles.experienceStatus,
+              { color: getStatusColor(exp.isContinuing) },
+            ]}
+          >
+            {exp.isContinuing ? 'Ongoing' : 'Completed'}
+          </Text>
+                    <View style={styles.divider} />
+                </View>
+            ))}
+
+            {/* عرض خيار "عرض الكل" إذا كانت هناك أكثر من خبرتين */}
+            {experiences.length > 2 && !showAllExperiences && (
+                <TouchableOpacity onPress={handleShowAllExperiences} style={styles.showAllButton}>
+                    <Text style={styles.showAllButtonText}>Show All</Text>
+                </TouchableOpacity>
+            )}
+
+            {/* عرض جميع الخبرات إذا كانت حالة العرض تم تفعيلها */}
+            {showAllExperiences && (
+                <>
+                    <ExperienceList experiences={experiences} />
+                    <TouchableOpacity onPress={handleHideExperiences} style={styles.showAllButton}>
+                        <Text style={styles.showAllButtonText}>Hide</Text>
+                    </TouchableOpacity>
+                </>
+            )}
+
+     
+      </View>
+      <View style={[styles.divider,{height:3}]}/>
+
+
+      {/* بطاقة Education */}
+      <View style={[styles.card,{ backgroundColor: isNightMode ? Colors.black : Colors.primary }]}>
+        <View style={styles.cardHeader}>
+          <Text style={[styles.cardTitle,{color: isNightMode ? Colors.primary : Colors.black }]}>Education</Text>
+          <View style={styles.actionButtons}>
+
+          <TouchableOpacity onPress={() => openModal('education')} style={styles.smallButton}>
+            <Text style={styles.smallButtonText}>Add</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => console.log('Edit Recommendation')} style={styles.smallButton}>
+              <Text style={styles.smallButtonText}>Edit</Text>
+            </TouchableOpacity></View>
+
+            
+        </View>
+         {/* عرض أول 2 خبرات */}
+         {Education.slice(0, 2).map((exp, index) => (
+                <View key={index} style={styles.experienceItem}>
+                <View style={styles.experienceHeader}>
+                    <Text style={[styles.experienceTitle,{color:isNightMode ?Colors.primary :Colors.black}]}>{exp.universityName}</Text>
+                    <TouchableOpacity onPress={() =>  openModalEditting(exp, 'education')}style={styles.editButton}>
+              <MaterialIcons name="edit" size={20} color={isNightMode ? Colors.primary : Colors.black} />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => openConfirmDeleteModal('education',exp)} style={styles.deleteButton}>
+              <MaterialCommunityIcons name="minus-circle" size={20} color={isNightMode ? Colors.primary : Colors.black} />
+            </TouchableOpacity>
+          </View>
+                    <Text style={[styles.experienceDescription,{color:isNightMode ?Colors.primary :Colors.black}]}>{exp.degree}</Text>
+                    <Text style={styles.experienceDate}>{exp.fieldOfStudy}</Text>
+
+                      {/* عرض حالة العمل (مستمر أو منتهي) */}
+                    <View style={styles.divider} />
+                </View>
+            ))}
+
+            {/* عرض خيار "عرض الكل" إذا كانت هناك أكثر من خبرتين */}
+            {Education.length > 2 && !showAllEducation && (
+                <TouchableOpacity onPress={handleShowAllEducation} style={styles.showAllButton}>
+                    <Text style={styles.showAllButtonText}>Show All</Text>
+                </TouchableOpacity>
+            )}
+
+            {/* عرض جميع الخبرات إذا كانت حالة العرض تم تفعيلها */}
+            {showAllEducation && (
+                <>
+                   
+                   <EducationList education={Education} />
+                    <TouchableOpacity onPress={handleHideEducation} style={styles.showAllButton}>
+                        <Text style={styles.showAllButtonText}>Hide</Text>
+                    </TouchableOpacity>
+                </>
+            )}
+
+     
+      </View>
+
+      <View style={[styles.divider,{height:3}]}/>
+
+ {/* بطاقة Certification */}
+ <View style={[styles.card, { backgroundColor: isNightMode ? Colors.black : Colors.primary }]}>
+  <View style={styles.cardHeader}>
+    <Text style={[styles.cardTitle, { color: isNightMode ? Colors.primary : Colors.black }]}>Certification</Text>
+    <View style={styles.actionButtons}>
+      <TouchableOpacity onPress={() => openModal('certification')} style={styles.smallButton}>
+        <Text style={styles.smallButtonText}>Add</Text>
+      </TouchableOpacity>
+     
+    </View>
+  </View>
+
+  {/* عرض الشهادات */}
+  {certification.slice(0, 2).map((cert, index) => (
+    <View key={index} style={[styles.experienceItem, { flexDirection: 'row' }]}>
+    
+      {/* عرض الصورة */}
+      {cert.credentialType === 'image' && cert.certificationImageData && (
+      <TouchableOpacity onPress={() => openImageViewer(cert.certificationImageData.uri || cert.certificationImageData ||cert.certificationImageData.secure_url)}>
+        <Image
+          source={{ uri: cert.certificationImageData.uri || cert.certificationImageData ||cert.certificationImageData.
+secure_url }}
+          style={styles.certImage}
+        />
+      </TouchableOpacity>
+      )}
+
+      {/* محتوى الشهادة */}
+      <View style={{ flex: 1 }}>
+        {/* العنوان */}
+        <Text style={[styles.experienceTitle, { color: isNightMode ? Colors.primary : Colors.black }]}>
+          {cert.title}
+        </Text>
+        <TouchableOpacity onPress={() =>  openModalEditting(cert, 'certification')}style={styles.editButton}>
+              <MaterialIcons name="edit" size={20} color={isNightMode ? Colors.primary : Colors.black} />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => openConfirmDeleteModal('certification',cert)} style={styles.deleteButton}>
+              <MaterialCommunityIcons name="minus-circle" size={20} color={isNightMode ? Colors.primary : Colors.black} />
+            </TouchableOpacity>
+        {/* الجهة المصدرة */}
+        <Text style={[styles.experienceDescription, { color: isNightMode ? Colors.primary : Colors.black }]}>
+          {cert.issuingOrganization}
+        </Text>
+
+        {/* تاريخ الإصدار والانتهاء */}
+        <Text style={[styles.experienceDate, { color: isNightMode ? Colors.primary : Colors.gray }]}>
+          Issued: {cert.issueDate} {cert.expirationDate ? ` - Expires: ${cert.expirationDate}` : ''}
+        </Text>
+
+        {/* المحتوى بناءً على النوع */}
+        {cert.credentialType === 'link' && cert.certificationLinkData && (
+          <TouchableOpacity onPress={() => Linking.openURL(cert.certificationLinkData)} style={styles.linkContainer}>
+            <Text style={styles.linkText}>{cert.certificationLinkData}</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+    </View>
+  ))}
+
+    {/* عرض خيار "عرض الكل" إذا كانت هناك أكثر من خبرتين */}
+    {certification.length > 2 && !showAllCertification && (
+                <TouchableOpacity onPress={handleShowAllCertification} style={styles.showAllButton}>
+                    <Text style={styles.showAllButtonText}>Show All</Text>
+                </TouchableOpacity>
+            )}
+
+            {/* عرض جميع الخبرات إذا كانت حالة العرض تم تفعيلها */}
+            {showAllCertification && (
+                <>  
+                   <CertificationList certification={certification} />
+                    <TouchableOpacity onPress={handleHideCertification} style={styles.showAllButton}>
+                        <Text style={styles.showAllButtonText}>Hide</Text>
+                    </TouchableOpacity>
+                </>
+            )}
+
+</View>
+
+<View style={[styles.divider, { height: 3 }]} />
+
+
+      {/* بطاقة Project */}
+      <View style={[styles.card,{ backgroundColor: isNightMode ? Colors.black : Colors.primary }]}>
+      <View style={styles.cardHeader}>
+          <Text style={[styles.cardTitle,{color: isNightMode ? Colors.primary : Colors.black }]}>Project</Text>
+          <View style={styles.actionButtons}>
+
+          <TouchableOpacity onPress={() => openModal('project')} style={styles.smallButton}>
+            <Text style={styles.smallButtonText}>Add</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => console.log('Edit Recommendation')} style={styles.smallButton}>
+              <Text style={styles.smallButtonText}>Edit</Text>
+            </TouchableOpacity></View>
+        </View>
+      </View>
+
+
+      <View style={[styles.divider,{height:3}]}/>
+
+
+      {/* بطاقة Skills */}
+      <View style={[styles.card,{ backgroundColor: isNightMode ? Colors.black : Colors.primary }]}>
+        <View style={styles.cardHeader}>
+          <Text style={[styles.cardTitle,{color: isNightMode ? Colors.primary : Colors.black }]}>Skills</Text>
+          <View style={styles.actionButtons}>
+
+          <TouchableOpacity onPress={() => openModal('skills')} style={styles.smallButton}>
+              <Text style={styles.smallButtonText}>Add</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => console.log('Edit Recommendation')} style={styles.smallButton}>
+              <Text style={styles.smallButtonText}>Edit</Text>
+            </TouchableOpacity></View>
+        </View>
+      </View>
+      <View style={[styles.divider,{height:3}]}/>
+
+      {/* بطاقة Language */}
+      <View style={[styles.card,{ backgroundColor: isNightMode ? Colors.black : Colors.primary }]}>
+        <View style={styles.cardHeader}>
+          <Text style={[styles.cardTitle,{color: isNightMode ? Colors.primary : Colors.black }]}>Language</Text>
+          <View style={styles.actionButtons}>
+          <TouchableOpacity onPress={() => openModal('language')} style={styles.smallButton}>
+              <Text style={styles.smallButtonText}>Add</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => console.log('Delete Language')} style={styles.smallButton}>
+              <Text style={styles.smallButtonText}>Edit</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+      <View style={[styles.divider,{height:3}]}/>
+
+      {/* بطاقة Recommendation */}
+      <View style={[styles.card,{ backgroundColor: isNightMode ? Colors.black : Colors.primary }]}>
+        <View style={styles.cardHeader}>
+          <Text style={[styles.cardTitle,{color: isNightMode ? Colors.primary : Colors.black }]}>Recommendation</Text>
+          <View style={styles.actionButtons}>
+          <TouchableOpacity onPress={() => openModal('recommendation')} style={styles.smallButton}>
+              <Text style={styles.smallButtonText}>Add</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => console.log('Edit Recommendation')} style={styles.smallButton}>
+              <Text style={styles.smallButtonText}>Edit</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+
+      <View style={[styles.divider,{height:3}]}/>
+
+      {/* Modal لكل بطاقة */}
+      <Modal animationType="slide" transparent={true} visible={modalVisible} onRequestClose={closeModal}>
+        <View style={styles.modalContainer}>
+          <View style={[styles.modalContent,{ backgroundColor: isNightMode ? Colors.black : Colors.primary }]}>
+            {/* محتويات Modal Experience */}
+            {currentModal === 'experience' && (
+              <>
+                <Text style={[styles.modalTitle,{color:isNightMode ? Colors.primary : Colors.black}]}>Experience</Text>
+                <TextInput placeholder="Institution Name" value={newExperiance.name} placeholderTextColor = "#333"style={styles.input}  
+                             onChangeText={(text) => handleChangeExperience('name', text)}
+ />
+                <TextInput placeholder="Job Title" placeholderTextColor = "#333" value={newExperiance.jobTitle} onChangeText={(text) => handleChangeExperience('jobTitle', text)}style={styles.input} />
+               
+                <TextInput
+              placeholder="Start Date (e.g., 2022-01-01)"
+              placeholderTextColor="#333"
+              style={styles.input}
+              value={newExperiance.startDate}
+              onChangeText={(text) => handleChangeExperience('startDate', text)}
+            />
+            
+            
+            {/* Checkbox للتحديد ما إذا كان العمل مستمرًا */}
+            <View style={styles.switchContainer}>
+              <Text style={[styles.label, { color: isNightMode ? Colors.primary : Colors.black }]}>
+                Is the work still continuing?
+              </Text>
+              <Switch
+    //value={newExperiance.isContinuing}
+                onValueChange={(value) => handleChangeExperience('isContinuing', value)}   
+                value={newExperiance.isContinuing}             
+                trackColor={{ false: '#767577', true: Colors.fourhColor }}
+                thumbColor={newExperiance.isContinuing ? Colors.black : Colors.fourhColor}
+              />
+            </View>
+
+            {/* حقل تاريخ النهاية يظهر فقط إذا لم يكن العمل مستمرًا */}
+            {!newExperiance.isContinuing && (
+              <TextInput
+                placeholder="End Date (e.g., 2023-05-01)"
+                placeholderTextColor="#333"
+                style={styles.input}
+                value={newExperiance.endDate}
+                onChangeText={(text) => handleChangeExperience('endDate', text)}/>
+            )}
+            
+            <TextInput
+              placeholder="Description"
+              placeholderTextColor="#333"
+              style={styles.input}
+              value={newExperiance.Description}
+              onChangeText={(text) => handleChangeExperience('Description', text)}
+                          />
+                          </>
+            )}
+
+          {/* محتويات Modal Education */}
+{currentModal === 'education' && (
+  <>
+    <Text style={[styles.modalTitle, { color: isNightMode ? Colors.primary : Colors.black }]}>Education</Text>
+    
+    {/* University Name */}
+    <TextInput
+      placeholder="University Name"
+      placeholderTextColor="#333"
+      style={[styles.input, { color: isNightMode ? Colors.primary : Colors.black }]}
+      value={newEducation.universityName}
+      onChangeText={(text) => handleChangeEducation('universityName', text)}
+    />
+    
+    {/* Degree */}
+    <TextInput
+      placeholder="Degree"
+      placeholderTextColor="#333"
+      style={[styles.input, { color: isNightMode ? Colors.primary : Colors.black }]}
+      value={newEducation.degree}
+      onChangeText={(text) =>handleChangeEducation('degree', text)}
+    />
+    
+    {/* Field Of Study */}
+    <TextInput
+      placeholder="Field Of Study"
+      placeholderTextColor="#333"
+      style={styles.input}
+      value={newEducation.fieldOfStudy}
+      onChangeText={(text) => handleChangeEducation('fieldOfStudy', text)}
+    />
+  </>
+)}
+
+            {/* محتويات Modal Certification */}
+            {currentModal === 'certification' && (
+              <>
+    <Text style={styles.modalTitle}>Certification</Text>
+    
+    <TextInput
+  placeholder="Certificate Title"
+  placeholderTextColor="#333"
+  style={styles.input}
+  value={newCertification.title}
+  onChangeText={(text) => setNewCertificaion((prev) => ({ ...prev, title: text }))}
+/>
+
+<TextInput
+  placeholder="Issuing Organization"
+  placeholderTextColor="#333"
+  style={styles.input}
+  value={newCertification.issuingOrganization}
+  onChangeText={(text) => setNewCertificaion((prev) => ({ ...prev, issuingOrganization: text }))}
+/>
+
+<TextInput
+  placeholder="Issue Date (e.g., 01/2024)"
+  placeholderTextColor="#333"
+  style={styles.input}
+  value={newCertification.issueDate}
+  onChangeText={(text) => setNewCertificaion((prev) => ({ ...prev, issueDate: text }))}
+/>
+
+<TextInput
+  placeholder="Expiration Date (optional)"
+  placeholderTextColor="#333"
+  style={styles.input}
+  value={newCertification.expirationDate}
+  onChangeText={(text) => setNewCertificaion((prev) => ({ ...prev, expirationDate: text }))}
+/>
+
+    {/* Credential Options: Switch Between Link or Image */}
+<View style={styles.switchContainer}>
+  <TouchableOpacity
+    onPress={() => {
+      setUploadType('link');
+      setNewCertificaion((prev) => ({ ...prev,credentialType: 'link', certificationImageData: '', certificationLinkData: '' }));
+      
+    }}
+    style={[styles.switchButton, uploadType === 'link' && styles.activeSwitchButton]}
+  >
+    <Text style={uploadType === 'link' ? styles.activeSwitchText : styles.switchText}>Link</Text>
+  </TouchableOpacity>
+
+  <TouchableOpacity
+    onPress={() => {
+      setUploadType('image');
+      setNewCertificaion((prev) => ({ ...prev,credentialType: 'image', certificationImageData: '', certificationLinkData: '' }));
+    }}
+    style={[styles.switchButton, uploadType === 'image' && styles.activeSwitchButton]}
+  >
+    <Text style={uploadType === 'image' ? styles.activeSwitchText : styles.switchText}>Upload Image</Text>
+  </TouchableOpacity>
+</View>
+
+{/* If 'link' is selected, show URL input */}
+{uploadType === 'link' ? (
+  <TextInput
+    placeholder="Credential URL"
+    placeholderTextColor="#333"
+    style={styles.input}
+    value={newCertification.certificationLinkData}
+    onChangeText={(text) => setNewCertificaion((prev) => ({ ...prev,credentialType: 'link', certificationLinkData: text }))}
+/>
+) : (
+  <TouchableOpacity
+    onPress={pickImageCertification}
+    style={styles.uploadButton}
+  >
+    <Text style={styles.uploadButtonText}>Choose Image</Text>
+  </TouchableOpacity>
+)}
+{image && <Image source={{ uri: image }} style={styles.previewImage} />}
+              </>
+            )}
+              {/* محتويات Modal Project */}
+              {currentModal === 'project' && (
+              <>
+                <Text style={styles.modalTitle}>Edit Project</Text>
+                <TextInput placeholder="Project Title" placeholderTextColor = "#333" style={styles.input} />
+                <TextInput placeholder="Project Description" placeholderTextColor = "#333" style={styles.input} />
+                <View style={styles.switchContainer}>
+                  <TouchableOpacity
+                    onPress={() => setUploadType('link')}
+                    style={[styles.switchButton, uploadType === 'link' && styles.activeSwitchButton]}
+                  >
+                    <Text style={uploadType === 'link' ? styles.activeSwitchText : styles.switchText}>
+                      Link
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => setUploadType('image')}
+                    style={[styles.switchButton, uploadType === 'image' && styles.activeSwitchButton]}
+                  >
+                    <Text style={uploadType === 'image' ? styles.activeSwitchText : styles.switchText}>
+                      Upload Image
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+                {uploadType === 'link' ? (
+                  <TextInput placeholder="Project URL" placeholderTextColor = "#333"style={styles.input} />
+                ) : (
+                  <TouchableOpacity onPress={pickImage} style={styles.uploadButton}>
+                    <Text style={styles.uploadButtonText}>Choose Image</Text>
+                  </TouchableOpacity>
+                )}
+                {image && <Image source={{ uri: image }} style={styles.previewImage} />}
+              </>
+            )}
+ {/* محتويات Modal Skills */}
+ {currentModal === 'skills' && (
+              <>
+                <Text style={styles.modalTitle}>Edit Skills</Text>
+                <TextInput placeholder="Add a Skill" placeholderTextColor = "#333" style={styles.input} />
+              </>
+            )}
+
+            {/* محتويات Modal Language */}
+            {currentModal === 'language' && (
+              <>
+                <Text style={styles.modalTitle}>Edit Language</Text>
+                <TextInput placeholder="Add a Language" placeholderTextColor = "#333" style={styles.input} />
+              </>
+            )}
+
+            {/* محتويات Modal Recommendation */}
+            {currentModal === 'recommendation' && (
+              <>
+                <Text style={styles.modalTitle}>Edit Recommendation</Text>
+                <TextInput placeholder="Recommendation"  placeholderTextColor = "#333" style={styles.input} />
+              </>
+            )}
+
+            <View style={styles.buttonsContainer}>
+      <TouchableOpacity onPress={handleSave} style={styles.saveButton}>
+        <Text style={styles.saveButtonText}>Save</Text>
+      </TouchableOpacity>
+      <TouchableOpacity onPress={closeModal} style={styles.closeButton}>
+        <Text style={styles.closeButtonText}>Close</Text>
+      </TouchableOpacity>
+    </View>
+          </View>
+        </View>
+      </Modal>
+
+
+   {/*modal for Editting*/}
+     {/* Modal لكل بطاقة */}
+     <Modal animationType="slide" transparent={true} visible={modalVisibleEditting} onRequestClose={closeModal}>
+      <View style={styles.modalContainer}>
+        <View style={[styles.modalContent, { backgroundColor: isNightMode ? '#000' : '#fff' }]}>
+          {/* محتويات المودال بناءً على النوع */}
+          {currentModalEditting === 'experience' && selectedItem && (
+            <>
+              <Text style={[styles.modalTitle, { color: isNightMode ? '#fff' : '#000' }]}>Edit Experience</Text>
+              <TextInput
+                placeholder="Institution Name"
+                value={selectedItem.name}
+                onChangeText={(text) => setSelectedItem({ ...selectedItem, name: text })}
+                style={styles.input}
+              />
+              <TextInput
+                placeholder="Job Title"
+                value={selectedItem.jobTitle}
+                onChangeText={(text) => setSelectedItem({ ...selectedItem, jobTitle: text })}
+                style={styles.input}
+              />
+              <TextInput
+                placeholder="Start Date (e.g., 2022-01-01)"
+                value={selectedItem.startDate}
+                onChangeText={(text) => setSelectedItem({ ...selectedItem, startDate: text })}
+                style={styles.input}
+              />
+              <View style={styles.switchContainer}>
+                <Text style={[styles.label, { color: isNightMode ? '#fff' : '#000' }]}>Is the work still continuing?</Text>
+                <Switch
+                  value={selectedItem.isContinuing}
+                  onValueChange={(value) => setSelectedItem({ ...selectedItem, isContinuing: value })}
+                  trackColor={{ false: '#767577', true: '#81b0ff' }}
+                  thumbColor={selectedItem.isContinuing ? '#f5dd4b' : '#f4f3f4'}
+                />
               </View>
-
-              <Text style={{ color: isNightMode ? primary : '#000', padding: 15 }}>{post.Body}</Text>
-
-              {post.Images && post.Images.length > 0 && (
-                <Image
-                  source={{ uri: post.Images[0].secure_url }}
-                  style={{
-                    width: Platform.OS === 'web' ? '90%' : '100%',
-                    height: Platform.OS === 'web' ? 500 : 320,
-                    alignSelf: 'center',
-                  }}
+              {!selectedItem.isContinuing && (
+                <TextInput
+                  placeholder="End Date (e.g., 2023-05-01)"
+                  value={selectedItem.endDate || ''}
+                  onChangeText={(text) => setSelectedItem({ ...selectedItem, endDate: text })}
+                  style={styles.input}
                 />
               )}
-            </View>
-          </View>
-        ))
-      ) : (
-        showPosts && <Text>No posts available.</Text> // عرض رسالة في حال عدم وجود بوستات
-      )}
+              <TextInput
+                placeholder="Description"
+                value={selectedItem.Description}
+                onChangeText={(text) => setSelectedItem({ ...selectedItem, Description: text })}
+                style={styles.input}
+              />
+            </>
+          )}
+
+          {currentModalEditting === 'education' && selectedItem && (
+            <>
+              <Text style={[styles.modalTitle, { color: isNightMode ? '#fff' : '#000' }]}>Edit Education</Text>
+              <TextInput
+                placeholder="University Name"
+                value={selectedItem.universityName}
+                onChangeText={(text) => setSelectedItem({ ...selectedItem, universityName: text })}
+                style={styles.input}
+              />
+              <TextInput
+                placeholder="Degree"
+                value={selectedItem.degree}
+                onChangeText={(text) => setSelectedItem({ ...selectedItem, degree: text })}
+                style={styles.input}
+              />
+              <TextInput
+                placeholder="Field Of Study"
+                value={selectedItem.fieldOfStudy}
+                onChangeText={(text) => setSelectedItem({ ...selectedItem, fieldOfStudy: text })}
+                style={styles.input}
+              />
+            </>
+          )}
+
+          {currentModalEditting === 'project' && selectedItem && (
+            <>
+              <Text style={[styles.modalTitle, { color: isNightMode ? '#fff' : '#000' }]}>Edit Project</Text>
+              <TextInput
+                placeholder="Project Title"
+                value={selectedItem.title}
+                onChangeText={(text) => setSelectedItem({ ...selectedItem, title: text })}
+                style={styles.input}
+              />
+              <TextInput
+                placeholder="Project Description"
+                value={selectedItem.description}
+                onChangeText={(text) => setSelectedItem({ ...selectedItem, description: text })}
+                style={styles.input}
+              />
+              <TextInput
+                placeholder="Project URL"
+                value={selectedItem.url}
+                onChangeText={(text) => setSelectedItem({ ...selectedItem, url: text })}
+                style={styles.input}
+              />
+            </>
+          )}
+
+          {currentModalEditting === 'skills' && selectedItem && (
+            <>
+              <Text style={[styles.modalTitle, { color: isNightMode ? '#fff' : '#000' }]}>Edit Skills</Text>
+              <TextInput
+                placeholder="Skill Name"
+                value={selectedItem.skill}
+                onChangeText={(text) => setSelectedItem({ ...selectedItem, skill: text })}
+                style={styles.input}
+              />
+            </>
+          )}
+
+
+
           
-  {/* زر التعليقات */}
-  <TouchableOpacity
-    onPress={() => console.log('Go to Comments')}
-    style={{
-      backgroundColor: '#C99FA9',
-      padding: 15,
-      borderRadius: 25,
-      alignItems: 'center',
-      justifyContent: 'center',
-      width: '45%',
-      margin: 10,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.2,
-      shadowRadius: 5,
-    }}
-  >
-    <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#000' }}>Comments</Text>
-  </TouchableOpacity>
-</View>
+          {currentModalEditting === 'certification' && selectedItem && (
+  <View>
+    <Text style={[styles.modalTitle, { color: isNightMode ? '#fff' : '#000' }]}>Edit Certification</Text>
 
+    {/* عرض عنوان الشهادة */}
+    <TextInput
+      placeholder="Certification Title"
+      value={selectedItem.title}
+      onChangeText={(text) => setSelectedItem({ ...selectedItem, title: text })}
+      style={styles.input}
+    />
 
-                  
+    {/* عرض الجهة المصدرة */}
+    <TextInput
+      placeholder="Issuing Organization"
+      value={selectedItem.issuingOrganization}
+      onChangeText={(text) => setSelectedItem({ ...selectedItem, issuingOrganization: text })}
+      style={styles.input}
+    />
 
-              {/* 1- Card Add Experince*/}
-              <View style={styles.card}>
-          <View style={styles.cardHeader}>
-            <Text style={styles.cardTitle}>Add Experience</Text>
-            <View style={styles.actionButtons}>
-              <TouchableOpacity
-                onPress={() => console.log('Add Experience')}
-                style={styles.smallButton}
-              >
-                <Text style={styles.smallButtonText}>Add</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => console.log('Edit Experience')}
-                style={styles.smallButton}
-              >
-                <Text style={styles.smallButtonText}>Edit</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
+    {/* عرض تاريخ الإصدار والانتهاء */}
+    <TextInput
+      placeholder="Issue Date"
+      value={selectedItem.issueDate}
+      onChangeText={(text) => setSelectedItem({ ...selectedItem, issueDate: text })}
+      style={styles.input}
+    />
+    <TextInput
+      placeholder="Expiration Date (optional)"
+      value={selectedItem.expirationDate || ''}
+      onChangeText={(text) => setSelectedItem({ ...selectedItem, expirationDate: text })}
+      style={styles.input}
+    />
 
-          <TextInput
-            placeholder="Institution Name"
-            placeholderTextColor="#888"
-            style={styles.input}
-          />
-          <TextInput
-            placeholder="Job Title"
-            placeholderTextColor="#888"
-            style={styles.input}
-          />
-          <TextInput
-            placeholder="Duration (e.g., 2 years)"
-            placeholderTextColor="#888"
-            style={styles.input}
-          />
-        </View>
-              {/* 1- Card Add Eduction*/}
-              <View style={styles.card}>
-          <View style={styles.cardHeader}>
-            <Text style={styles.cardTitle}>Add Eduction</Text>
-            <View style={styles.actionButtons}>
-              <TouchableOpacity
-                onPress={() => console.log('Add Eduction')}
-                style={styles.smallButton}
-              >
-                <Text style={styles.smallButtonText}>Add</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => console.log('Edit Eduction')}
-                style={styles.smallButton}
-              >
-                <Text style={styles.smallButtonText}>Edit</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
+    {/* التبديل بين صورة ورابط */}
+    <TouchableOpacity onPress={toggleCredentialType} style={styles.switchButton}>
+      <Text style={styles.switchButtonText}>
+        {selectedItem.credentialType === 'image' ? 'Switch to Link' : 'Switch to Image'}
+      </Text>
+    </TouchableOpacity>
 
-          <TextInput
-            placeholder="University Name"
-            placeholderTextColor="#888"
-            style={styles.input}
-          />
-          <TextInput
-            placeholder="Degree"
-            placeholderTextColor="#888"
-            style={styles.input}
-          />
-          <TextInput
-            placeholder="Field Of Study"
-            placeholderTextColor="#888"
-            style={styles.input}
-          />
-        </View>
-
-         {/* 3- Card Add Certification*/}
-         <View style={styles.card}>
-      <View style={styles.cardHeader}>
-        <Text style={styles.cardTitle}>Add Certification</Text>
-        <View style={styles.actionButtons}>
-          <TouchableOpacity
-            onPress={() => console.log('Add Certification')}
-            style={styles.smallButton}
-          >
-            <Text style={styles.smallButtonText}>Add</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => console.log('Edit Certification')}
-            style={styles.smallButton}
-          >
-            <Text style={styles.smallButtonText}>Edit</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      {/* Title */}
-      <TextInput
-        placeholder="Certificate Title"
-        placeholderTextColor="#888"
-        style={styles.input}
-      />
-      {/* Issuing Organization */}
-      <TextInput
-        placeholder="Issuing Organization"
-        placeholderTextColor="#888"
-        style={styles.input}
-      />
-      {/* Issue Date */}
-      <TextInput
-        placeholder="Issue Date (e.g., 01/2024)"
-        placeholderTextColor="#888"
-        style={styles.input}
-      />
-      {/* Expiration Date */}
-      <TextInput
-        placeholder="Expiration Date (optional)"
-        placeholderTextColor="#888"
-        style={styles.input}
-      />
-
-      {/* Credential Options */}
-      <View style={styles.switchContainer}>
-        <TouchableOpacity
-          onPress={() => setUploadType('link')}
-          style={[
-            styles.switchButton,
-            uploadType === 'link' && styles.activeSwitchButton,
-          ]}
-        >
-          <Text style={uploadType === 'link' ? styles.activeSwitchText : styles.switchText}>
-            Link
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() => setUploadType('image')}
-          style={[
-            styles.switchButton,
-            uploadType === 'image' && styles.activeSwitchButton,
-          ]}
-        >
-          <Text style={uploadType === 'image' ? styles.activeSwitchText : styles.switchText}>
-            Upload Image
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      {uploadType === 'link' ? (
-        <TextInput
-          placeholder="Credential URL"
-          placeholderTextColor="#888"
-          style={styles.input}
+    {/* إذا كانت الشهادة تحتوي على صورة */}
+    {selectedItem.credentialType === 'image' && selectedItem.certificationImageData && (
+      <TouchableOpacity onPress={selectNewImage}>
+        <Image
+          source={{ uri: selectedItem.certificationImageData }}
+          style={styles.certImage}
         />
-      ) : (
-        <TouchableOpacity onPress={pickImage} style={styles.uploadButton}>
-          <Text style={styles.uploadButtonText}>Choose Image</Text>
-        </TouchableOpacity>
-      )}
+      </TouchableOpacity>
+    )}
 
-      {image && (
-        <Image source={{ uri: image }} style={styles.previewImage} />
-      )}
-    </View>
-       
-
-       {/* 4- Card Add Projects*/}
-       <View style={styles.card}>
-      <View style={styles.cardHeader}>
-        <Text style={styles.cardTitle}>Add Projects</Text>
-        <View style={styles.actionButtons}>
-          <TouchableOpacity
-            onPress={() => console.log('Add Projects')}
-            style={styles.smallButton}
-          >
-            <Text style={styles.smallButtonText}>Add</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => console.log('Edit Projects')}
-            style={styles.smallButton}
-          >
-            <Text style={styles.smallButtonText}>Edit</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      {/* Title */}
+    {/* إذا كانت الشهادة تحتوي على رابط */}
+    {selectedItem.credentialType === 'link' && (
       <TextInput
-        placeholder="Projects Title"
-        placeholderTextColor="#888"
+        placeholder="Certification Link"
+        value={selectedItem.certificationLinkData || ''}
+        onChangeText={(text) => setSelectedItem({ ...selectedItem, certificationLinkData: text })}
         style={styles.input}
       />
-      <TextInput
-        placeholder="Projects Discription"
-        placeholderTextColor="#888"
-        style={styles.input}
-      />
+    )}
 
-      {/* Projects Options */}
-      <View style={styles.switchContainer}>
-        <TouchableOpacity
-          onPress={() => setUploadType('link')}
-          style={[
-            styles.switchButton,
-            uploadType === 'link' && styles.activeSwitchButton,
-          ]}
-        >
-          <Text style={uploadType === 'link' ? styles.activeSwitchText : styles.switchText}>
-            Link
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() => setUploadType('image')}
-          style={[
-            styles.switchButton,
-            uploadType === 'image' && styles.activeSwitchButton,
-          ]}
-        >
-          <Text style={uploadType === 'image' ? styles.activeSwitchText : styles.switchText}>
-            Upload Image
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      {uploadType === 'link' ? (
-        <TextInput
-          placeholder="Projects URL"
-          placeholderTextColor="#888"
-          style={styles.input}
-        />
-      ) : (
-        <TouchableOpacity onPress={pickImage} style={styles.uploadButton}>
-          <Text style={styles.uploadButtonText}>Choose Image</Text>
-        </TouchableOpacity>
-      )}
-
-      {image && (
-        <Image source={{ uri: image }} style={styles.previewImage} />
-      )}
-    </View>
-                         {/* Add Skills */}
-                         <View style={styles.card}>
-          <View style={styles.cardHeader}>
-            <Text style={styles.cardTitle}>Add Skills</Text>
-            <View style={styles.actionButtons}>
-              <TouchableOpacity
-                onPress={() => console.log('Add Skills')}
-                style={styles.smallButton}
-              >
-                <Text style={styles.smallButtonText}>Add</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-            onPress={() => console.log('Delete Skills')}
-            style={styles.smallButton}
-          >
-            <Text style={styles.smallButtonText}>Delete</Text>
-          </TouchableOpacity>
-            </View>
-          </View>
-
-          <TouchableOpacity>
-                    <Text style={styles.input}>{ "Add Skills"}</Text>
-                </TouchableOpacity>
-        </View>
+ 
+  </View>
+)}
 
 
 
-              {/* Add Language */}
-              <View style={styles.card}>
-      <View style={styles.cardHeader}>
-        <Text style={styles.cardTitle}>Add Language</Text>
-        <View style={styles.actionButtons}>
-          <TouchableOpacity onPress={handleOpenModal} style={styles.smallButton}>
-            <Text style={styles.smallButtonText}>Select Languages</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
 
-      {/* عرض اللغات المختارة */}
-      <View style={styles.selectedLanguagesContainer}>
-        {selectedLanguages.map((language, index) => (
-          <View style={[styles.languageItem, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}>
-  <Text style={styles.selectedLanguageText}>{language.name}</Text>
-  <TouchableOpacity
-    onPress={() => handleDeleteLanguage(language.id)} // حذف اللغة
-    style={styles.deleteButton}
-  >
-    <Text style={styles.deleteButtonText}>X</Text>
-  </TouchableOpacity>
-</View>
+    
 
-        ))}
-      </View>
+            {/* محتويات Modal Language */}
+            {currentModal === 'language' && (
+              <>
+                <Text style={styles.modalTitle}>Edit Language</Text>
+                <TextInput placeholder="Add a Language" placeholderTextColor = "#333" style={styles.input} />
+              </>
+            )}
 
-      {/* النافذة المنبثقة لاختيار اللغات */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Select Languages</Text>
+            {/* محتويات Modal Recommendation */}
+            {currentModal === 'recommendation' && (
+              <>
+                <Text style={styles.modalTitle}>Edit Recommendation</Text>
+                <TextInput placeholder="Recommendation"  placeholderTextColor = "#333" style={styles.input} />
+              </>
+            )}
 
-            <FlatList
-              data={languages}
-              keyExtractor={(item) => item.id.toString()}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  onPress={() => handleLanguageSelect(item)} // اختيار اللغة
-                  style={styles.languageItem}
-                >
-                  <Text style={styles.languageName}>{item.name}</Text>
-                  {selectedLanguages.some((l) => l.id === item.id) && (
-                    <Text style={styles.selectedText}>Selected</Text>
-                  )}
-                </TouchableOpacity>
-              )}
-            />
-
-            <TouchableOpacity
-              onPress={() => setModalVisible(false)} // إغلاق النافذة
-              style={styles.closeButton}
-            >
+            {/* أزرار الحفظ والإغلاق */}
+            <View style={styles.buttonsContainer}>
+            <TouchableOpacity onPress={handleEditForEachCard} style={styles.saveButton}>
+              <Text style={styles.saveButtonText}>Save</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={closeModalEditting} style={styles.closeButton}>
               <Text style={styles.closeButtonText}>Close</Text>
             </TouchableOpacity>
           </View>
         </View>
-      </Modal>
-    </View>
+      </View>
+    </Modal>
 
-         {/* Add Recommendation */}
-         <View style={styles.card}>
-          <View style={styles.cardHeader}>
-            <Text style={styles.cardTitle}>Add Recommendation</Text>
-            <View style={styles.actionButtons}>
-              <TouchableOpacity
-                onPress={() => console.log('Add Recommendation')}
-                style={styles.smallButton}
-              >
-                <Text style={styles.smallButtonText}>Add</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-            onPress={() => console.log('Delete Recommendation')}
-            style={styles.smallButton}
-          >
-            <Text style={styles.smallButtonText}>Delete</Text>
-          </TouchableOpacity>
-
+<View style={{ flex: 1,marginBottom:50}}>
+{/* قائمة التبويبات */}
+          <View style={styles.tabContainer}>
+        {['Messages', 'Connect', 'Posts', 'Comments'].map((tab) => (
           <TouchableOpacity
-            onPress={() => console.log('Edit Recommendation')}
-            style={styles.smallButton}
+            key={tab}
+            onPress={() => setActiveTab(tab)}
+            style={styles.tabButton}
           >
-            <Text style={styles.smallButtonText}>Edit</Text>
+            <Text style={[styles.tabText,{color: isNightMode? Colors.primary : Colors.black}]}>{tab}</Text>
+            {activeTab === tab && <View style={styles.activeIndicator} />}
           </TouchableOpacity>
-              
-            </View>
-          </View>
+        ))}
+      </View>
 
-          <TextInput
-        placeholder="Add Recommendation"
-        placeholderTextColor="#888"
-        style={styles.input}
-      />
-                   
-               
-        </View>
-
+      {/* عرض محتوى التبويب المختار */}
+      <View style={[styles.content,{backgroundColor : isNightMode? Colors.black : Colors.primary }]}>
+        {activeTab === 'Messages' && <Text style={[styles.tabContent,{color: isNightMode? Colors.primary : Colors.black}]}>Messages Content</Text>}
+        {activeTab === 'Connect' && <Text style={[styles.tabContent,{color: isNightMode? Colors.primary : Colors.black}]}>Connect Content</Text>}
+        {activeTab === 'Posts' && <Text style={[styles.tabContent,{color: isNightMode? Colors.primary : Colors.black}]}>Posts Content</Text>}
+        {activeTab === 'Comments' && <Text style={[styles.tabContent,{color: isNightMode? Colors.primary : Colors.black}]}>Comments Content</Text>}
+      </View>
+    </View>
+    
       </Animated.ScrollView>
     </View>
                 
@@ -1672,6 +2701,47 @@ useEffect(() => {
       </View>
     </Modal>
 
+
+
+
+    {/* Modal لتأكيد الحذف */}
+<Modal animationType="slide" transparent={true} visible={confirmDeleteModalVisible} onRequestClose={closeConfirmDeleteModal}>
+    <View style={styles.modalContainer}>
+        <View style={[styles.modalContent, { backgroundColor: isNightMode ? Colors.black : Colors.primary }]}>
+            <Text style={[styles.modalTitle, { color: isNightMode ? Colors.primary : Colors.black }]}>
+                Confirm Deletion
+            </Text>
+            {/* عرض تفاصيل العنصر (الخبرة أو التعليم) الذي سيتم حذفه */}
+            {currentSectionToDelete === 'experience' && (
+              <>
+                <Text style={{ color: isNightMode ? Colors.primary : Colors.black }}>
+                    Are you sure you want to delete the experience:
+                </Text>
+                            
+            <Text style={{ fontWeight: 'bold', color: isNightMode ? Colors.primary : Colors.black }}>
+                {selectedItemToDelete?.name} - {selectedItemToDelete?.jobTitle || selectedItemToDelete?.degree}
+            </Text></>
+            )}
+            {currentSectionToDelete === 'education' && (
+                <Text style={{ color: isNightMode ? Colors.primary : Colors.black }}>
+                    Are you sure you want to delete the education:
+                </Text>
+            )}
+
+
+            <View style={styles.modalButtonsContainer}>
+                <TouchableOpacity onPress={handleDelete} style={styles.confirmButton}>
+                    <Text style={styles.buttonText}>Yes</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={closeConfirmDeleteModal} style={styles.cancelButton}>
+                    <Text style={styles.buttonText}>No</Text>
+                </TouchableOpacity>
+            </View>
+        </View>
+    </View>
+</Modal>
+
+
                       {/* Bottom Navigation Bar */}
              {Platform.OS === 'web' ? (null) : (
             <Animated.View
@@ -1717,354 +2787,583 @@ useEffect(() => {
              )}
     
 
+             <Modal visible={isModalVisibleviewImage} transparent={true} onRequestClose={closeImageViewer}>
+
+
+      <ImageViewer
+        imageUrls={currentImage} // الصورة المعروضة
+        onCancel={closeImageViewer} // غلق الصورة عند الضغط
+        enableSwipeDown={true} // تمكين السحب لأسفل لإغلاق الصورة
+        backgroundColor="transparent" // إزالة الخلفية السوداء
+
+      />
+    </Modal>
         </View>
     );
+
+
 };
 
     
 
 const styles = StyleSheet.create({
-  card: {
-    backgroundColor: '#CAC5D8',
-    padding: 20,
-    borderRadius: 15,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 4,
-    marginVertical: 20,
-  },
-  cardHeader: {
+  modalButtonsContainer:{
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 15,
-  },
-  cardTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#000',
-  },
-  actionButtons: {
-    flexDirection: 'row',
-  },
-  smallButton: {
-    backgroundColor: '#C99FA9',
-    paddingVertical: 5,
-    paddingHorizontal: 10,
-    borderRadius: 15,
-    marginLeft: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
-  },
-  smallButtonText: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#000',
-  },
-  input: {
-    backgroundColor: '#FFF',
-    borderRadius: 10,
-    padding: 10,
-    marginBottom: 15,
-    fontSize: 16,
-    borderColor: '#E0E0E0',
-    borderWidth: 1,
-  },
-  switchContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginBottom: 15,
-  },
-  switchButton: {
-    flex: 1,
-    padding: 10,
-    borderRadius: 10,
-    backgroundColor: '#F0F0F0',
-    marginHorizontal: 5,
-    alignItems: 'center',
-  },
-  activeSwitchButton: {
-    backgroundColor: '#D1CFE9',
-  },
-  switchText: {
-    color: '#555',
-    fontSize: 16,
-  },
-  activeSwitchText: {
-    color: '#000',
-    fontWeight: 'bold',
-  },
-  uploadButton: {
-    backgroundColor: '#E6E6E6',
-    padding: 15,
-    borderRadius: 10,
-    alignItems: 'center',
-  },
-  uploadButtonText: {
-    color: '#333',
-    fontWeight: 'bold',
-  },
-  previewImage: {
-    width: '100%',
-    height: 150,
-    marginTop: 15,
-    borderRadius: 10,
-  },
-  cardContent: {
-    marginTop: 10,
-},
-skillText: {
-    fontSize: 16,
-    color: '#555',
-    marginBottom: 5,
-},
-coverImageContainer: {
-  width: '100%',
-  height: height * 0.3, // استخدام نسبة من حجم الشاشة
-  backgroundColor: '#f0f0f0',
-  position: 'relative',
-  justifyContent: 'center', // لتوسيط المحتوى عموديًا
-  alignItems: 'center',     // لتوسيط المحتوى أفقيًا
-},
-coverImagePlaceholder: {
-  width: '100%',
-  height: '100%',
-  justifyContent: 'center',
-  alignItems: 'center',
-},
-
-coverImagePlaceholderText: {
-  fontSize: 18,
-  color: '#888',
-  textAlign: 'center',
-},
-
-coverImage: {
-  width: '100%',
-  height: '100%',
-},
-
-coverImageOverlay: {
-  position: 'absolute',
-  bottom: 0,
-  left: 0,
-  right: 0,
-  height: 3,
-  backgroundColor:'black', // لون رمادي مع شفافية بسيطة
-},
-
-  profileImageWrapper: {
-    position: 'absolute',
-    right: width * 0.35, // تخصيص المسافة بناءً على ارتفاع الشاشة
-    top: height * -0.04, // تخصيص المسافة بناءً على ارتفاع الشاشة
-  },
-  fullName:{
-    right: width * 0.21, // تخصيص المسافة بناءً على ارتفاع الشاشة
-    top: height * -0.003, // تخصيص المسافة بناءً على ارتفاع الشاشة
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  userName:{
-    right: width * 0.21, // تخصيص المسافة بناءً على ارتفاع الشاشة
-    top: height * -0.01, // تخصيص المسافة بناءً على ارتفاع الشاشة
-    fontSize: 14,color:firstColor,fontWeight:'bold',
-  },
-  profileImageContainer: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    overflow: 'hidden',
-    borderWidth: 2,
-  },
-  profileImage: {
-    width: '100%',
-    height: '100%',
-  },
-  editIcon: {
-    position: 'absolute',
-    top: height * 0.25, // تعديل الموقع بناءً على ارتفاع الشاشة
-    right: 10,
-    borderRadius: 25,
-    padding: 5,
-  },
-  githubEditWrapper: {
-    position: 'absolute',
-    top: height * 0.39, // تخصيص الموقع بناءً على الشاشة
-    right: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  githubInput: {
-    position: 'absolute',
-    backgroundColor: '#f0f0f0',
-    padding: 5,
-    borderRadius: 5,    
-    top: height * -0.02, // تعديل الموقع بناءً على ارتفاع الشاشة
-    right:width *0.22,
-    width: 150,height:30,
-    marginRight: 10,  height:30, 
-  },
-  saveButton: {
-    position: 'absolute',
-    backgroundColor: '#000',
-    padding: 5,    
-    top: height * -0.02, // تعديل الموقع بناءً على ارتفاع الشاشة
-    right:width *0.13,height:30,
-    borderRadius: 5,
-  },
-  saveButtonText: {
-    color: '#fff',
-  },
-  githubIcon: {
-    position: 'absolute',
-    top: height * 0.37, // تعديل الموقع بناءً على ارتفاع الشاشة
-    right:width *0.61,
-  },
-  bioWrapper: {
-    marginTop: 20,
-    alignItems: 'flex-start',
-    paddingHorizontal: 20,
-  },
-  bioTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginVertical: 5,
-  },
-  bioText: {
-    fontSize: 16,
-    color: '#000',
-    marginBottom: 10,
-  },
-  modalContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)', // خلفية شفافة
-  },
-  modalContent: {
-    width: '80%',
-    backgroundColor: 'white',
-    padding: 20,
-    borderRadius: 10,
-    alignItems: 'center',
-  },
-  bioWrapper: {
-    padding: 15,
-  },
-  section: {
-    marginBottom: 10,
-  },
-  bioTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 5,
-  },
-  bioText: {
-    fontSize: 16,
-    color: '#555',
-    lineHeight: 22,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: '#ddd',
-    marginVertical: 10,
-  },
-  container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 10,
-  },
-  backButton: {
-    marginRight: 10,
-  },
-  searchBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-    paddingHorizontal: 10,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#ccc',
-  },
-  searchIcon: {
-    marginRight: 10,
-  },
-  inputSearch: {
-    flex: 1,
-    height: 40,
-    fontSize: 16,
-  },
-  selectedLanguagesContainer: {
-    marginTop: 16,
-  },
-  selectedLanguageText: {
-    fontSize: 16,
-    color: '#000',
-  },
-  modalContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  },
-  modalContent: {
-    width: '80%',
-    backgroundColor: '#fff',
-    padding: 20,
-    borderRadius: 8,
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 16,
-  },
-  languageItem: {
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ddd',
-  },
-  languageName: {
-    fontSize: 16,
-  },
-  selectedText: {
-    color: 'green',
-    fontSize: 14,
-  },
-  closeButton: {
-    marginTop: 16,
-    backgroundColor: '#C99FA9',
-    padding: 8,
-    borderRadius: 4,
-    alignItems: 'center',
-  },
-  closeButtonText: {
-    color: '#fff',
-  },
-  deleteButton: {
-    backgroundColor: '#C99FA9',
-    paddingVertical: 5,
-    paddingHorizontal: 8,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
-  },
-  
-  deleteButtonText: {
-    fontSize: 12,
-    color: '#FFF',
-    fontWeight: 'bold',
-  },
-  
-  
+            justifyContent: 'space-between',
+            width: '100%',
+      },
+      actionButtons: {
+        flexDirection: 'row',
+      },
+      smallButton: {
+        backgroundColor: fourhColor,
+        borderRadius: 15,
+        marginLeft: 10,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.2,
+        shadowRadius: 3,padding:8
+      },
+      smallButtonText: {
+        fontSize: 14,
+        fontWeight: 'bold',
+        color: '#000',
+      },
+      input: {
+        backgroundColor: '#FFF',
+        borderRadius: 10,
+        padding: 10,
+        marginBottom: 15,
+        fontSize: 16,
+        borderColor: '#E0E0E0',
+        borderWidth: 1,
+      },
+      switchContainer: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        marginBottom: 15,
+      },
+      switchButton: {
+        flex: 1,
+        padding: 10,
+        borderRadius: 10,
+        backgroundColor: '#F0F0F0',
+        marginHorizontal: 5,
+        alignItems: 'center',
+      },
+      activeSwitchButton: {
+        backgroundColor: '#D1CFE9',
+      },
+      switchText: {
+        color: '#555',
+        fontSize: 16,
+      },
+      activeSwitchText: {
+        color: '#000',
+        fontWeight: 'bold',
+      },
+      uploadButton: {
+        backgroundColor: '#E6E6E6',
+        padding: 15,
+        borderRadius: 10,
+        alignItems: 'center',
+      },
+      uploadButtonText: {
+        color: '#333',
+        fontWeight: 'bold',
+      },
+      previewImage: {
+        width: '100%',
+        height: 150,
+        marginTop: 15,
+        borderRadius: 10,
+      },
+      cardContent: {
+        marginTop: 10,
+    },
+    skillText: {
+        fontSize: 16,
+        color: '#555',
+        marginBottom: 5,
+    },
+    coverImageContainer: {
+      width: '100%',
+      height: height * 0.3, // استخدام نسبة من حجم الشاشة
+      backgroundColor: '#f0f0f0',
+      position: 'relative',
+      justifyContent: 'center', // لتوسيط المحتوى عموديًا
+      alignItems: 'center',     // لتوسيط المحتوى أفقيًا
+    },
+    coverImagePlaceholder: {
+      width: '100%',
+      height: '100%',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    
+    coverImagePlaceholderText: {
+      fontSize: 18,
+      color: '#888',
+      textAlign: 'center',
+    },
+    
+    coverImage: {
+      width: '100%',
+      height: '100%',
+    },
+    
+    coverImageOverlay: {
+      position: 'absolute',
+      bottom: 0,
+      left: 0,
+      right: 0,
+      height: 3,
+      backgroundColor:'black', // لون رمادي مع شفافية بسيطة
+    },
+    
+      profileImageWrapper: {
+        position: 'absolute',
+        right: width * 0.35, // تخصيص المسافة بناءً على ارتفاع الشاشة
+        top: height * -0.04, // تخصيص المسافة بناءً على ارتفاع الشاشة
+      },
+      fullName:{
+        right: width * 0.21, // تخصيص المسافة بناءً على ارتفاع الشاشة
+        top: height * -0.003, // تخصيص المسافة بناءً على ارتفاع الشاشة
+        fontSize: 20,
+        fontWeight: 'bold',
+      },
+      userName:{
+        right: width * 0.21, // تخصيص المسافة بناءً على ارتفاع الشاشة
+        top: height * -0.01, // تخصيص المسافة بناءً على ارتفاع الشاشة
+        fontSize: 14,color:firstColor,fontWeight:'bold',
+      },
+      profileImageContainer: {
+        width: 100,
+        height: 100,
+        borderRadius: 50,
+        overflow: 'hidden',
+        borderWidth: 2,
+      },
+      profileImage: {
+        width: '100%',
+        height: '100%',
+      },
+      editIcon: {
+        position: 'absolute',
+        top: height * 0.25, // تعديل الموقع بناءً على ارتفاع الشاشة
+        right: 10,
+        borderRadius: 25,
+        padding: 5,
+      },
+      githubEditWrapper: {
+        position: 'absolute',
+        top: height * 0.39, // تخصيص الموقع بناءً على الشاشة
+        right: 20,
+        flexDirection: 'row',
+        alignItems: 'center',
+      },
+      githubInput: {
+        position: 'absolute',
+        backgroundColor: '#f0f0f0',
+        padding: 5,
+        borderRadius: 5,    
+        top: height * -0.02, // تعديل الموقع بناءً على ارتفاع الشاشة
+        right:width *0.22,
+        width: 150,height:30,
+        marginRight: 10,  height:30, 
+      },
+      saveButton: {
+        position: 'absolute',
+        backgroundColor: '#000',
+        padding: 5,    
+        top: height * -0.02, // تعديل الموقع بناءً على ارتفاع الشاشة
+        right:width *0.13,height:30,
+        borderRadius: 5,
+      },
+      saveButtonText: {
+        color: '#fff',
+      },
+      githubIcon: {
+        position: 'absolute',
+        top: height * 0.37, // تعديل الموقع بناءً على ارتفاع الشاشة
+        right:width *0.61,
+      },
+      bioWrapper: {
+        marginTop: 20,
+        alignItems: 'flex-start',
+        paddingHorizontal: 20,
+      },
+      bioTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        marginVertical: 5,
+      },
+      bioText: {
+        fontSize: 16,
+        color: '#000',
+        marginBottom: 10,
+      },
+      modalContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(0, 0, 0, 0.5)', // خلفية شفافة
+      },
+      modalContent: {
+        width: '80%',
+        backgroundColor: 'white',
+        padding: 20,
+        borderRadius: 10,
+        alignItems: 'center',
+      },
+      bioWrapper: {
+        padding: 15,
+      },
+      section: {
+        marginBottom: 10,
+      },
+      bioTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#333',
+        marginBottom: 5,
+      },
+      bioText: {
+        fontSize: 16,
+        color: '#555',
+        lineHeight: 22,
+      },
+      divider: {
+        height: 1,
+        backgroundColor: '#ddd',
+        marginVertical: 10,
+      },
+      container: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 10,
+      },
+      backButton: {
+        marginRight: 10,
+      },
+      searchBox: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        flex: 1,
+        paddingHorizontal: 10,
+        borderRadius: 10,
+        borderWidth: 1,
+        borderColor: '#ccc',
+      },
+      searchIcon: {
+        marginRight: 10,
+      },
+      inputSearch: {
+        flex: 1,
+        height: 40,
+        fontSize: 16,
+      },
+      menuContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        width: '100%',
+        marginBottom: 20,
+      },
+      menuItem: {
+        backgroundColor: '#C99FA9',
+        padding: 15,
+        borderRadius: 25,
+        width: '22%',
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 5,
+      },
+      menuText: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: '#000',
+      },
+      tabContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        paddingVertical: 10,
+        borderBottomWidth: 1,
+        borderBottomColor: '#ccc',
+      },
+      tabButton: {
+        alignItems: 'center',
+        paddingVertical: 10,
+        width: '25%',
+      },
+      tabText: {
+        fontSize: 18,
+        fontWeight: 'bold',
+      },
+      activeTabText: {
+        color: '#fff',
+      },
+      activeIndicator: {
+        width: '86%',
+        height:4,
+        borderRadius: 5,
+        backgroundColor: fourhColor,
+      },
+      content: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 15,
+        backgroundColor: '#fff',
+      },
+      tabContent: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: '#333',
+      },
+      card: {
+        backgroundColor: '#ffffff',
+        padding: 15,
+        marginBottom: 15,
+        borderRadius: 8,
+      },
+      cardHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+      },
+      cardTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+      },
+      smallButtonText: {
+        color: '#fff',
+        fontWeight: 'bold',
+      },
+      modalContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+      },
+      modalContent: {
+        width: '90%',
+        padding: 20,
+        backgroundColor: 'white',
+        borderRadius: 10,
+        elevation: 5,
+      },
+      modalTitle: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        marginBottom: 15,
+      },
+      input: {
+        height: 40,
+        borderColor: '#ccc',
+        borderWidth: 1,
+        marginBottom: 15,
+        paddingLeft: 10,
+        borderRadius: 5,
+      },
+      closeButton: {
+        backgroundColor: '#dc3545',
+        padding: 10,
+        borderRadius: 5,
+        alignItems: 'center',
+      },
+      closeButtonText: {
+        color: '#fff',
+        fontWeight: 'bold',
+      },
+      buttonsContainer: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginTop: 20,
+    },
+    saveButton: {
+      backgroundColor: fifthColor,
+      padding: 10,
+      borderRadius: 5,
+      width: '45%',
+      alignItems: 'center',
+    },
+    saveButtonText: {
+      color: 'white',
+      fontSize: 16,
+    },
+    closeButton: {
+      backgroundColor: fourhColor,
+      padding: 10,
+      borderRadius: 5,
+      width: '45%',
+      alignItems: 'center',
+    },
+    
+    
+    experienceItem: {
+      marginBottom: 15,
+    },
+    experienceTitle: {
+      fontSize: 16,
+      fontWeight: 'bold',
+      color: '#333',
+    },
+    experienceDescription: {
+      fontSize: 14,
+      color: '#666',
+    },
+    experienceDate: {
+      fontSize: 12,
+      color: '#888',
+    },
+    showAllButton: {
+      marginTop: 10,
+      padding: 10,
+      backgroundColor: fourhColor ,
+      borderRadius: 5,
+      alignItems: 'center',
+    },
+    showAllButtonText: {
+      color: '#fff',
+      fontSize: 16,
+    },
+    experienceItem: {
+      marginTop:10,
+      padding: 15,
+      borderRadius: 8,
+      borderColor: fifthColor,
+      borderWidth: 1,
+    },
+    experienceTitle: {
+      fontSize: 18,
+      fontWeight: 'bold',
+      color: '#333',
+    },
+    experienceDescription: {
+      fontSize: 14,
+      color: '#666',
+      marginVertical: 5,
+    },
+    experienceDate: {
+      fontSize: 12,
+      color: '#777',
+      marginBottom: 5,
+    },
+    experienceStatus: {
+      fontSize: 14,
+      fontWeight: 'bold',
+    }, divider2: {
+      borderBottomWidth: 1,
+      borderColor: '#eee',
+      marginTop: 10,
+    },  experienceHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 8,
+    },
+    editButton:{
+      position: 'absolute',
+      right: 0, /* موقع الأيقونة من اليمين */
+      cursor: 'pointer',
+    },
+    deleteButton:{
+      position: 'absolute',
+      right: 25, /* موقع الأيقونة من اليمين */
+      cursor: 'pointer',
+    },
+    switchContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginVertical: 10,
+      paddingHorizontal: 20,
+    },
+    label: {
+      fontSize: 16,
+      fontWeight: 'bold',
+      color: '#333',  // يمكنك تعديل اللون حسب الوضع الليلي أو النهاري
+    },
+    input: {
+      height: 40,
+      borderColor: '#ccc',
+      borderWidth: 1,
+      marginVertical: 10,
+      paddingHorizontal: 10,
+      borderRadius: 5,
+    },
+    switchButton: {
+      marginLeft: 10,
+    },
+    linkContainer: {
+      marginTop: 10,
+    },
+    linkText: {
+      color: 'blue',
+      textDecorationLine: 'underline',
+      fontSize: 14,
+    },
+    certImage: {
+      width: '100%',
+      height: 150,
+      resizeMode: 'contain',
+      marginTop: 10,
+    },
+    experienceDate: {
+      fontSize: 12,
+      marginTop: 5,
+    },
+    certImage: {
+      width: 60,
+      height: 60,
+      borderRadius: 8,
+      borderWidth: 2,
+      borderColor: Colors.primary, // تغيير اللون كما يناسبك
+      marginRight: 10,
+      resizeMode: 'cover',
+    },
+    linkContainer: {
+      marginTop: 5,
+    },
+    linkText: {
+      color: Colors.primary,
+      textDecorationLine: 'underline',
+    },
+    
+    closeButtonimg: {
+      position: 'absolute',
+      left: '100%', // لتوسيط الزر
+      top:'25%',
+      transform:  [{ translateX: -20 }], // تعويض الحجم لتوسيطه بشكل دقيق
+      zIndex: 10, // التأكد من أن الزر سيكون في المقدمة
+    },
+    switchButton: {
+        marginVertical: 10,
+        padding: 10,
+        backgroundColor: '#f0f0f0',
+        borderRadius: 5,
+      },
+      switchButtonText: {
+        color: '#007BFF',
+        fontSize: 16,
+        textAlign: 'center',
+        fontWeight: 'bold',
+      },
+    
+      addLinkButton: {
+        padding:  10,
+        backgroundColor: '#28a745',
+        borderRadius: 5,
+        marginTop: 10,
+      },
+      addLinkButtonText: {
+        color: '#fff',
+        textAlign: 'center',
+        fontWeight: 'bold',
+      },
+    
+   
 });
 
 

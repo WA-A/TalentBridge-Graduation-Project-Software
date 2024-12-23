@@ -93,8 +93,55 @@ const UserSchema = new Schema({
          'QA Tester'
       ],
       required: true
+   },
+    // الحقول الجديدة
+    Experiences: [
+      {
+         name: String,
+         jobTitle: String,
+         startDate: Date,
+         endDate: Date,
+         isContinuing: Boolean,
+         Description:String,
+      }
+   ],
+
+   Education: [
+      {
+         universityName: String,
+         degree: String,
+         fieldOfStudy: String
+      }
+   ],
+
+   Languages: [
+      {
+         type: String
+      }
+   ],
+
+   Recommendations: [
+      {
+         text: String,
+         author: String,
+         date: Date
+      }
+   ],
+
+Certifications: [
+   {
+      title: { type: String, required: true },
+      issuingOrganization: { type: String, required: true },
+      issueDate: { type: String, required: true },
+      expirationDate: { type: String, default: null },
+      credentialType: { type: String, enum: ['link', 'image'], required: true },
+      certificationImageData: {type: Object},
+      certificationLinkData:{type: String},
    }
+],
+
 },
+
    {
       timestamps: true,
    }
