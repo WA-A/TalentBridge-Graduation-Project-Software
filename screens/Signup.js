@@ -632,7 +632,7 @@ export default function Signup({ navigation }) {
                                         </View>
                                     </View>
                                 </View>
-
+ 
 
                                 {isMenuVisible && (
                                     <View style={[
@@ -659,6 +659,8 @@ export default function Signup({ navigation }) {
                                         </View>
                                     </View>
                                 )}
+
+
 
                                 <StyledButton
                                     onPress={() => {
