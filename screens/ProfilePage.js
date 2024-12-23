@@ -3352,7 +3352,7 @@ const styles = StyleSheet.create({
       },
     
       addLinkButton: {
-        padding: 10,
+        padding:  10,
         backgroundColor: '#28a745',
         borderRadius: 5,
         marginTop: 10,
