@@ -368,3 +368,62 @@ export const GetUserSkills = async (req, res) => {
         return res.status(500).json({ message: "Internal Server Error." });
     }
 };
+
+
+export const AddMoreSkills = async (req, res) => {
+    try {
+        if (!req.user) {
+            console.log("User not authorized: No token provided.");
+            return res.status(401).json({ message: "User not authorized. Please provide a valid token." });
+        }
+
+        const authUser = req.user;
+        const { SkillIds } = req.body;  
+
+        if (!authUser || !SkillIds || !Array.isArray(SkillIds)) {
+            console.log("Missing required fields: authUser or SkillIds.");
+            return res.status(400).json({ message: "User ID and an array of Skill IDs are required." });
+        }
+
+        console.log("Request received:", { authUser, SkillIds });
+
+        const selectedSkills = Skills.filter(skill => SkillIds.includes(skill.id));
+        if (selectedSkills.length === 0) {
+            console.log("No valid skills found.");
+            return res.status(404).json({ message: "No valid skills found." });
+        }
+
+        console.log("Selected skills:", selectedSkills);
+
+        const user = await UserModel.findById(authUser);
+        if (!user) {
+            console.log("User not found in the database.");
+            return res.status(404).json({ message: "User not found." });
+        }
+
+        console.log("User found:", user);
+
+        const existingSkills = user.Skills.map(skill => skill.id);
+        const newSkills = selectedSkills.filter(skill => !existingSkills.includes(skill.id));
+
+        if (newSkills.length === 0) {
+            console.log("All skills already exist for user.");
+            return res.status(400).json({ message: "All selected skills are already added." });
+        }
+
+        user.Skills.push(...newSkills);
+
+        await user.save();
+
+        console.log("Skills added successfully:", newSkills);
+        return res.status(200).json({
+            message: "Skills added successfully.",
+            skills: user.Skills
+        });
+
+    } catch (error) {
+        console.error("Error adding skills: ", error);
+        return res.status(500).json({ message: "Internal Server Error." });
+    }
+};
+
