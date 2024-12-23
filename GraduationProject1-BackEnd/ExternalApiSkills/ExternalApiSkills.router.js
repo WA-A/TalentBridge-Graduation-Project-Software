@@ -9,6 +9,7 @@ router.get('/getskills',ExternalApiSkillsController.GetSkills);
 router.post('/addskills',auth(EndPoints.AddSkills),ExternalApiSkillsController.AddSkills);
 router.delete('/deleteskills',auth(EndPoints.AddSkills),ExternalApiSkillsController.DeleteSkill);
 router.get('/getuserskills',auth(EndPoints.AddSkills),ExternalApiSkillsController.GetUserSkills);
+router.post('/addmoreskills',auth(EndPoints.AddSkills),ExternalApiSkillsController.AddMoreSkills);
 
 
 
