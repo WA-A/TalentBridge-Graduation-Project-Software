@@ -1123,7 +1123,6 @@ const handleDelete = async () => {
           console.error('Token not found');
           return;
       }
-
       // إرسال طلب الحذف إلى السيرفر بناءً على القسم المحدد
       const response = await fetch(`${baseUrl}/user/delete${section.charAt(0).toUpperCase() + section.slice(1)}/${itemId}`, {
           method: 'DELETE',
@@ -1148,8 +1147,12 @@ const handleDelete = async () => {
       } else if (section === 'education') {
           setEducation(userData.Education); // تحديث التعليم فقط
       }
+      else if (section === 'certification') {
+        setCertification(userData.certification); // تحديث التعليم فقط
+    }
     getAllEducation();
     getAllExperiance();
+    getAllCertifications();
   } catch (error) {
       console.error('Error deleting item:', error);
   }
@@ -1412,12 +1415,13 @@ useEffect(() => {
           <View key={index} style={[styles.experienceItem, { flexDirection: 'row' }]}>
     
     {/* عرض الصورة */}
-    {cert.credentialType === 'image' && cert.certificationImageData && (
-    <TouchableOpacity onPress={() => openImageViewer(cert.certificationImageData.uri || cert.certificationImageData || cert.certificationImageData.secure_url)}>
+    {cert.credentialType === 'image' && cert.certificationImageData?.secure_url&& (
+    <TouchableOpacity onPress={() => openImageViewer(cert.certificationImageData?.secure_url)}>
       <Image
-        source={{ uri: cert.certificationImageData.uri || cert.certificationImageData ||cert.certificationImageData.secure_url
+        source={{ uri: cert.certificationImageData.secure_url
  }}
-        style={styles.certImage}
+        style={styles.certImage}                 
+
       />
     </TouchableOpacity>
     )}
@@ -1928,11 +1932,10 @@ useEffect(() => {
     <View key={index} style={[styles.experienceItem, { flexDirection: 'row' }]}>
     
       {/* عرض الصورة */}
-      {cert.credentialType === 'image' && cert.certificationImageData && (
-      <TouchableOpacity onPress={() => openImageViewer(cert.certificationImageData.uri || cert.certificationImageData ||cert.certificationImageData.secure_url)}>
+      {cert.credentialType === 'image' && cert.certificationImageData?.secure_url && (
+      <TouchableOpacity onPress={() => openImageViewer(cert.certificationImageData.secure_url)}>
         <Image
-          source={{ uri: cert.certificationImageData.uri || cert.certificationImageData ||cert.certificationImageData.
-secure_url }}
+          source={{ uri: cert.certificationImageData.secure_url }}
           style={styles.certImage}
         />
       </TouchableOpacity>
@@ -2463,7 +2466,7 @@ secure_url }}
     {selectedItem.credentialType === 'image' && selectedItem.certificationImageData && (
       <TouchableOpacity onPress={selectNewImage}>
         <Image
-          source={{ uri: selectedItem.certificationImageData }}
+          source={{ uri: selectedItem.certificationImageData.secure_ur }}
           style={styles.certImage}
         />
       </TouchableOpacity>
@@ -2727,7 +2730,15 @@ secure_url }}
                     Are you sure you want to delete the education:
                 </Text>
             )}
-
+            {currentSectionToDelete === 'certification' && (
+              <>
+                <Text style={{ color: isNightMode ? Colors.primary : Colors.black }}>
+                    Are you sure you want to delete the certification:
+                </Text>
+                <Text style={{ fontWeight: 'bold', color: isNightMode ? Colors.primary : Colors.black }}>
+                {selectedItemToDelete?.title}
+            </Text></>
+            )}
 
             <View style={styles.modalButtonsContainer}>
                 <TouchableOpacity onPress={handleDelete} style={styles.confirmButton}>
@@ -3363,7 +3374,12 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
       },
     
-   
+      buttonText:{
+        padding:  7,
+        backgroundColor: fourhColor ,
+        borderRadius: 10,
+        marginTop: 10,
+      }
 });
 
 

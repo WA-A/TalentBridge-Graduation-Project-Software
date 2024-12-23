@@ -105,7 +105,7 @@ export const addCertification = async (req, res) => {
             issueDate,
             expirationDate: expirationDate || null,
             credentialType,
-            certificationImageData: certificationImageData ? certificationImageData.secure_url : null,
+            certificationImageData: certificationImageData, // تخزين كائن الصورة
             certificationLinkData: credentialType === 'link' ? req.body.certificationLinkData : null,
         };
 
@@ -761,6 +761,7 @@ export const deleteCertification = async (req, res) => {
 
         return res.status(200).json({
             message: "Certification deleted successfully",
+            certification: user.Certifications 
         });
     } catch (error) {
         console.error("Error deleting certification:", error);
