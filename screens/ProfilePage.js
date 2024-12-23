@@ -2072,9 +2072,7 @@ useEffect(() => {
 
       {/* بطاقة Languages */}
       <TouchableOpacity
-  onPress={async () => {
-    await handleGetLanguages(); 
-  }}
+  onPress={async () => { handleGetLanguages(); }}
   style={[styles.card, { backgroundColor: isNightMode ? Colors.black : Colors.primary }]}
 >
   <View style={styles.cardHeader}>
@@ -2084,16 +2082,12 @@ useEffect(() => {
     <View style={styles.actionButtons}>
       <TouchableOpacity
       handleAddLanguage
-      onPress={async () => {
-        await handleAddLanguage(); 
-      }}
+      onPress={async () => { handleAddLanguage(); }}
         style={styles.smallButton}>
         <Text style={styles.smallButtonText}>Add</Text>
       </TouchableOpacity>
       <TouchableOpacity
-        onPress={async () => {
-          await handleDeleteLanguages(); 
-        }}
+       onPress={() => handleDeleteLanguages(language.id)}
         style={styles.smallButton}>
         <Text style={styles.smallButtonText}>Delete</Text>
       </TouchableOpacity>
