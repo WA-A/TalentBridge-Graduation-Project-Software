@@ -114,11 +114,6 @@ const UserSchema = new Schema({
       }
    ],
 
-   Languages: [
-      {
-         type: String
-      }
-   ],
 
    Recommendations: [
       {
@@ -137,6 +132,22 @@ Certifications: [
       credentialType: { type: String, enum: ['link', 'image'], required: true },
       certificationImageData: {type: Object},
       certificationLinkData:{type: String},
+   }
+],
+
+Languages: [
+   {
+      id: { type: Number, required: true },
+      name: { type: String, required: true },
+      code: { type: String, required: true }
+   }
+],
+
+Skills: [
+   {
+      id: { type: Number, required: true },
+      name: { type: String, required: true },
+      code: { type: String, required: true }
    }
 ],
 

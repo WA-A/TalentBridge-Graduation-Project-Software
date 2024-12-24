@@ -1,58 +1,4 @@
-// ملف الـ controller
-const languages = [
-    { id: 1, name: "English", code: "en" },
-    { id: 2, name: "Arabic", code: "ar" },
-    { id: 3, name: "French", code: "fr" },
-    { id: 4, name: "Spanish", code: "es" },
-    { id: 5, name: "Chinese", code: "zh" },
-    { id: 6, name: "German", code: "de" },
-    { id: 7, name: "Russian", code: "ru" },
-    { id: 8, name: "Italian", code: "it" },
-    { id: 9, name: "Portuguese", code: "pt" },
-    { id: 10, name: "Japanese", code: "ja" },
-    { id: 11, name: "Korean", code: "ko" },
-    { id: 12, name: "Turkish", code: "tr" },
-    { id: 13, name: "Dutch", code: "nl" },
-    { id: 14, name: "Swedish", code: "sv" },
-    { id: 15, name: "Polish", code: "pl" },
-    { id: 16, name: "Danish", code: "da" },
-    { id: 17, name: "Norwegian", code: "no" },
-    { id: 18, name: "Finnish", code: "fi" },
-    { id: 19, name: "Greek", code: "el" },
-    { id: 20, name: "Hungarian", code: "hu" },
-    { id: 21, name: "Czech", code: "cs" },
-    { id: 22, name: "Romanian", code: "ro" },
-    { id: 23, name: "Hebrew", code: "he" },
-    { id: 24, name: "Thai", code: "th" },
-    { id: 25, name: "Hindi", code: "hi" },
-    { id: 26, name: "Bengali", code: "bn" },
-    { id: 27, name: "Vietnamese", code: "vi" },
-    { id: 28, name: "Indonesian", code: "id" },
-    { id: 29, name: "Malay", code: "ms" },
-    { id: 30, name: "Swahili", code: "sw" },
-    { id: 31, name: "Zulu", code: "zu" },
-    { id: 32, name: "Tamil", code: "ta" },
-    { id: 33, name: "Telugu", code: "te" },
-    { id: 34, name: "Marathi", code: "mr" },
-    { id: 35, name: "Punjabi", code: "pa" },
-    { id: 36, name: "Urdu", code: "ur" },
-    { id: 37, name: "Kazakh", code: "kk" },
-    { id: 38, name: "Ukrainian", code: "uk" },
-    { id: 39, name: "Croatian", code: "hr" },
-    { id: 40, name: "Serbian", code: "sr" }
-];
-
-export const GetLanguages = (req, res) => {
-    try {
-        return res.status(200).json({
-            message: "Languages fetched successfully",
-            languages: languages
-        });
-    } catch (error) {
-        console.error("Error fetching languages: ", error);
-        return res.status(500).json({ message: "Internal Server Error" });
-    }
-};
+import UserModel from '../src/Model/User.Model.js';
 
 const Skills = [
     { id: 1, name: "Python", code: "py" },
@@ -261,6 +207,120 @@ const Skills = [
 ];
 
 
+export const AddSkills = async (req, res) => {
+    try {
+        if (!req.user) {
+            console.log("User not authorized: No token provided.");
+            return res.status(401).json({ message: "User not authorized. Please provide a valid token." });
+        }
+
+        const authUser = req.user;
+        const { SkillId } = req.body;
+
+        if (!authUser || !SkillId) {
+            console.log("Missing required fields: authUser or SkillId.");
+            return res.status(400).json({ message: "User ID and Skill ID are required." });
+        }
+
+        console.log("Request received:", { authUser, SkillId });
+
+        const selectedSkill = Skills.find(skill => skill.id === SkillId);
+        if (!selectedSkill) {
+            console.log("Skill not found in predefined list.");
+            return res.status(404).json({ message: "Skill not found." });
+        }
+
+        console.log("Selected skill:", selectedSkill);
+
+        if (!selectedSkill.id || !selectedSkill.name || !selectedSkill.code) {
+            return res.status(400).json({ message: "Selected skill is missing required fields." });
+        }
+
+        const user = await UserModel.findById(authUser);
+        if (!user) {
+            console.log("User not found in the database.");
+            return res.status(404).json({ message: "User not found." });
+        }
+
+        console.log("User found:", user);
+
+        const skillExists = user.Skills.some(skill => skill.id === selectedSkill.id);
+        if (skillExists) {
+            console.log("Skill already exists for user.");
+            return res.status(400).json({ message: "Skill already added." });
+        }
+
+        user.Skills.push({
+            id: selectedSkill.id,
+            name: selectedSkill.name,
+            code: selectedSkill.code
+        });
+
+        await user.save();
+
+        console.log("Skill added successfully:", selectedSkill);
+        return res.status(200).json({
+            message: "Skill added successfully.",
+            skills: user.Skills
+        });
+
+    } catch (error) {
+        console.error("Error adding skill: ", error);
+        return res.status(500).json({ message: "Internal Server Error." });
+    }
+};
+
+
+
+export const DeleteSkill = async (req, res) => {
+    try {
+        if (!req.user) {
+            console.log("User not authorized: No token provided.");
+            return res.status(401).json({ message: "User not authorized. Please provide a valid token." });
+        }
+
+        const authUser = req.user;
+        const { SkillId } = req.body;
+
+        if (!authUser || !SkillId) {
+            console.log("Missing required fields: authUser or SkillId.");
+            return res.status(400).json({ message: "User ID and Skill ID are required." });
+        }
+
+        console.log("Request received:", { authUser, SkillId });
+
+        const user = await UserModel.findById(authUser);
+        if (!user) {
+            console.log("User not found in the database.");
+            return res.status(404).json({ message: "User not found." });
+        }
+
+        console.log("User found:", user);
+
+        const skillIndex = user.Skills.findIndex(skill => skill.id === SkillId);
+        if (skillIndex === -1) {
+            console.log("Skill not found for user.");
+            return res.status(404).json({ message: "Skill not found." });
+        }
+
+        user.Skills.splice(skillIndex, 1); 
+
+        await user.save();
+
+        console.log("Skill deleted successfully.");
+        return res.status(200).json({
+            message: "Skill deleted successfully.",
+            skills: user.Skills
+        });
+
+    } catch (error) {
+        console.error("Error deleting skill: ", error);
+        return res.status(500).json({ message: "Internal Server Error." });
+    }
+};
+
+
+
 export const GetSkills = (req, res) => {
     try {
         return res.status(200).json({
@@ -272,3 +332,98 @@ export const GetSkills = (req, res) => {
         return res.status(500).json({ message: "Internal Server Error" });
     }
 };
+
+
+export const GetUserSkills = async (req, res) => {
+    try {
+        if (!req.user) {
+            console.log("User not authorized: No token provided.");
+            return res.status(401).json({ message: "User not authorized. Please provide a valid token." });
+        }
+
+        const authUser = req.user;
+
+        const user = await UserModel.findById(authUser);
+        if (!user) {
+            console.log("User not found in the database.");
+            return res.status(404).json({ message: "User not found." });
+        }
+
+        console.log("User found:", user);
+
+        const userSkills = user.Skills;
+
+        if (userSkills.length === 0) {
+            return res.status(404).json({ message: "No skills added yet." });
+        }
+
+        console.log("User skills:", userSkills);
+        return res.status(200).json({
+            message: "User skills fetched successfully.",
+            skills: userSkills
+        });
+
+    } catch (error) {
+        console.error("Error fetching user skills: ", error);
+        return res.status(500).json({ message: "Internal Server Error." });
+    }
+};
+
+
+export const AddMoreSkills = async (req, res) => {
+    try {
+        if (!req.user) {
+            console.log("User not authorized: No token provided.");
+            return res.status(401).json({ message: "User not authorized. Please provide a valid token." });
+        }
+
+        const authUser = req.user;
+        const { SkillIds } = req.body;  
+
+        if (!authUser || !SkillIds || !Array.isArray(SkillIds)) {
+            console.log("Missing required fields: authUser or SkillIds.");
+            return res.status(400).json({ message: "User ID and an array of Skill IDs are required." });
+        }
+
+        console.log("Request received:", { authUser, SkillIds });
+
+        const selectedSkills = Skills.filter(skill => SkillIds.includes(skill.id));
+        if (selectedSkills.length === 0) {
+            console.log("No valid skills found.");
+            return res.status(404).json({ message: "No valid skills found." });
+        }
+
+        console.log("Selected skills:", selectedSkills);
+
+        const user = await UserModel.findById(authUser);
+        if (!user) {
+            console.log("User not found in the database.");
+            return res.status(404).json({ message: "User not found." });
+        }
+
+        console.log("User found:", user);
+
+        const existingSkills = user.Skills.map(skill => skill.id);
+        const newSkills = selectedSkills.filter(skill => !existingSkills.includes(skill.id));
+
+        if (newSkills.length === 0) {
+            console.log("All skills already exist for user.");
+            return res.status(400).json({ message: "All selected skills are already added." });
+        }
+
+        user.Skills.push(...newSkills);
+
+        await user.save();
+
+        console.log("Skills added successfully:", newSkills);
+        return res.status(200).json({
+            message: "Skills added successfully.",
+            skills: user.Skills
+        });
+
+    } catch (error) {
+        console.error("Error adding skills: ", error);
+        return res.status(500).json({ message: "Internal Server Error." });
+    }
+};
+

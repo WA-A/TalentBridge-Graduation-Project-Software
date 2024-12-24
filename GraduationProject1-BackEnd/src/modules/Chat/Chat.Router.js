@@ -12,7 +12,7 @@ router.post('/createchat', auth(EndPoints.CreateChat), fileUpload(FileValue.imag
 router.post('/addmessagetochat', auth(EndPoints.CreateChat), fileUpload(FileValue.image).fields([{ name: 'images' }, { name: 'videos' }, { name: 'files' }]), ChatController.AddMessageToChat);
 router.get('/getallchats', auth(EndPoints.CreateChat), ChatController.GetAllChats);
 router.get('/getchatmessages/:ChatId', auth(EndPoints.CreateChat), ChatController.GetChatMessages);
-router.get('/getchatusers', auth(EndPoints.GetChatUsers), ChatController.GetChatUsers);  // حدد الأدوار المسموح بها
+router.get('/getchatusers', auth(EndPoints.GetChatUsers), ChatController.GetChatUsers); 
 
 
 router.put('/updatemessageinchat', auth(EndPoints.CreateChat), fileUpload(FileValue.image).fields([{ name: 'images' }, { name: 'videos' }, { name: 'files' }]), ChatController.UpdateMessageInChat)
