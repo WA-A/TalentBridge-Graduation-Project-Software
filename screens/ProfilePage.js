@@ -33,6 +33,8 @@ import {
 import { use } from 'react';
 import { color } from 'react-native-elements/dist/helpers';
 import { colors } from 'react-native-elements';
+import MultiSelect from 'react-native-multiple-select';
+
 // Color constants
 const { secondary, primary, careysPink, darkLight, fourhColor, tertiary, fifthColor,firstColor } = Colors;
 const { width, height } = Dimensions.get('window');
@@ -141,6 +143,13 @@ export default function ProfilePage ({ navigation}) {
       setShowAllCertification(false);
     };
   
+    const handleShowAllLanguage =()=>{
+      setShowAllLanguage(true);
+    }
+    const handleHideLanguage = ()=>{
+      setShowAllLanguage(false);
+
+    }
     // Load custom fonts
     const bottomBarTranslate = scrollY.interpolate({
         inputRange: [0, 50],
@@ -149,6 +158,9 @@ export default function ProfilePage ({ navigation}) {
     });
 
 
+const [friendsCount,setFriendsCount]= useState('');
+const [userProgress,setUserProgress]=useState('');
+const [achievements,setAchievements]=useState('');
     const [UniversityName, setUniversityName] = useState('Najah');
   const [Degree, setDegree] = useState('BS');
   const [FieldOfStudy, setFieldOfStudy] = useState('CE');
@@ -185,7 +197,10 @@ export default function ProfilePage ({ navigation}) {
   const [modalVisible, setModalVisible] = useState(false);
   const [currentModal, setCurrentModal] = useState('');
 
-
+  // دالة لمعالجة التحديد
+  const onSelectedItemsChange = (selectedItems) => {
+    setSelectedLanguages(selectedItems); // تحديث حالة اللغات المحددة
+  };
 
   const [experiences, setExperiences] = useState([]);
 
@@ -210,17 +225,24 @@ export default function ProfilePage ({ navigation}) {
 
   const [project, setProject] = useState([]);
 
-  const [language, setLanguage] = useState([  ]);
+  //const [language, setLanguage] = useState([  ]);
+  const language = [
+    { id: 1, name: 'English', code: 'en' },
+    { id: 2, name: 'Arabic', code: 'ar' },
+    { id: 3, name: 'French', code: 'fr' },
+  ];
   const [recommendation, setRecommendation] = useState([ ]);
 
   const [skills, setSkills] = useState([]);
 
   const sortedExperiences = [...experiences].sort((a, b) => new Date(b.startDate) - new Date(a.startDate));
 
+  const [selectedLanguages, setSelectedLanguages] = useState([]);
+const [error,setError]=useState('');
 
   const [showAllExperiences, setShowAllExperiences] = useState(false);
   const [showAllEducation, setShowAllEducation] = useState(false);
-
+  const [showAlllLanguage,setShowAllLanguage]=useState(false);
   const handleShowAllExperiences = () => {
     setShowAllExperiences(true);
   };
@@ -240,6 +262,8 @@ export default function ProfilePage ({ navigation}) {
   const openModal = (modalName) => {
     setCurrentModal(modalName);
     setModalVisible(true);
+    setError('');
+    setSelectedLanguages([]);
   };
 
   // إغلاق الـ Modal
@@ -250,6 +274,7 @@ export default function ProfilePage ({ navigation}) {
 
 
   const handleSave = async () => {
+    
     if (currentModal === 'experience') {
       // إذا كان النوع "experience" (التجربة)
       await addExperience();
@@ -262,7 +287,10 @@ export default function ProfilePage ({ navigation}) {
       await addCertification ();
 
     }
-    closeModal();
+    if(currentModal === 'language'){
+      await handleAddLanguages();
+      
+    }
   };
  
  
@@ -1107,7 +1135,9 @@ const addEducation = async () => {
 
 
 
+
 const handleDelete = async () => {
+  console.log("sssssssssss");
   console.log("delete",selectedItemToDelete);
   if (!selectedItemToDelete) {
       console.error('No item selected for deletion');
@@ -1158,6 +1188,23 @@ const handleDelete = async () => {
   }
 };
 
+const handleDeleteAction = () => {
+  if (currentSectionToDelete === 'language') { 
+    // تحقق من كون اللغة هي "language"
+    handleDeleteLanguages();  // استدعاء دالة حذف اللغة
+    closeConfirmDeleteModal();
+  } 
+  else if (currentSectionToDelete === 'skills') { 
+    // تحقق من كون المهارات هي "skills"
+    // إذا كان لديك دالة أخرى مخصصة لمهارات معينة، استدعها هنا
+    // مثلا handleDeleteSkills();
+  } 
+  else {
+    // دالة الحذف الأخرى في حال لم يكن currentSectionToDelete هو "language" أو "skills"
+    handleDelete();  // استدعاء دالة الحذف العامة
+  }
+};
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////
 const formatDate = (dateString) => {
@@ -1195,7 +1242,7 @@ const handleGetLanguages = async () => {
       return;
     }
 
-    const response = await fetch(`${baseUrl}/externalapi/getlanguages`, {
+    const response = await fetch(`${baseUrl}/externalapiLanguages/getlanguages`, {
       method: 'GET',
       headers: {
         'Authorization': `Wasan__${token}`, // تضمين التوكن في الهيدر
@@ -1209,7 +1256,7 @@ const handleGetLanguages = async () => {
 
     const data = await response.json(); // تحويل الرد إلى JSON
     setLanguages(data.languages); // تخزين اللغات في الحالة لعرضها
-
+    
     console.log('Fetched languages:', data.languages); // تحقق من البيانات
   } catch (error) {
     console.error('Error fetching languages:', error.message);
@@ -1217,7 +1264,8 @@ const handleGetLanguages = async () => {
 };
 
 
-const handleDeleteLanguages = async (languageId) => {
+// دالة لاسترجاع اللغات من الـ API (لعرضها فقط)
+const handleGetLanguagesUser = async () => {
   try {
     const token = await AsyncStorage.getItem('userToken'); // استرجاع التوكن
     if (!token) {
@@ -1225,7 +1273,36 @@ const handleDeleteLanguages = async (languageId) => {
       return;
     }
 
-    const response = await fetch(`${baseUrl}/externalapi/deletelanguage`, { // تأكد من المسار الصحيح
+    const response = await fetch(`${baseUrl}/externalapiLanguages/GetLanguagesUser`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Wasan__${token}`, // تضمين التوكن في الهيدر
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json(); 
+      throw new Error(errorData.message || 'Failed to fetch languages');
+    } 
+
+    const data =  await response.json(); 
+    setUserLanguages(data.languages); 
+    console.log('Fetched languages:', data.languages); 
+  } catch (error) {
+    console.error('Error fetching languages:', error.message);
+  }
+};
+
+const handleDeleteLanguages = async () => {
+  try {
+    const token = await AsyncStorage.getItem('userToken'); // استرجاع التوكن
+    if (!token) {
+      console.error('Token not found');
+      return;
+    }
+    const languageId = selectedItemToDelete.id;
+    console.log(languageId);
+    const response = await fetch(`${baseUrl}/externalapiLanguages/deletelanguages`, { // تأكد من المسار الصحيح
       method: 'DELETE',  // طريقة الحذف يجب أن تكون DELETE
       headers: {
         'Authorization': `Wasan__${token}`, // تضمين التوكن في الهيدر
@@ -1242,7 +1319,7 @@ const handleDeleteLanguages = async (languageId) => {
     }
 
     const data = await response.json(); // تحويل الرد إلى JSON
-    setLanguages(data.languages); // تخزين اللغات المحدثة في الحالة لعرضها بعد الحذف
+    setUserLanguages(data.languages); // تخزين اللغات المحدثة في الحالة لعرضها بعد الحذف
 
     console.log('Updated languages:', data.languages); // تحقق من البيانات
   } catch (error) {
@@ -1251,8 +1328,7 @@ const handleDeleteLanguages = async (languageId) => {
 };
 
 
-// دالة لإضافة اللغة المختارة إلى المستخدم
-const handleAddLanguage = async (language) => {
+const handleAddLanguages = async () => {
   try {
     const token = await AsyncStorage.getItem('userToken'); // استرجاع التوكن
     if (!token) {
@@ -1260,35 +1336,33 @@ const handleAddLanguage = async (language) => {
       return;
     }
 
-    const response = await fetch(`${baseUrl}/externalapi/addlanguages`, {
+    console.log("Selected Languages: ", selectedLanguages);
+
+    // إرسال الـ LanguageIds مباشرةً إذا كانت selectedLanguages تحتوي على الـ ids
+    const LanguageIds = selectedLanguages;
+
+    const response = await fetch(`${baseUrl}/externalapiLanguages/addlanguages`, {
       method: 'POST',
       headers: {
         'Authorization': `Wasan__${token}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ languageId: language.id }), // إرسال الـ ID للغة المختارة
+      body: JSON.stringify({ LanguageIds }), // إرسال الـ IDs مباشرةً
     });
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.message || 'Failed to add language');
+      throw new Error(errorData.message || 'Failed to add languages');
     }
 
-    // تحديث قائمة اللغات المختارة في AsyncStorage
-    const updatedLanguages = [...selectedLanguages, language];
-    setSelectedLanguage(updatedLanguages);
-    SaveSelectedLanguage(updatedLanguages); // حفظ اللغات الجديدة
-
-    console.log('Language added successfully:', language.name);
+    // استرجاع اللغات بعد إضافة اللغات
+    handleGetLanguagesUser();
+    closeModal();
+    console.log('Languages added successfully:', LanguageIds);
   } catch (error) {
-    console.error('Error adding language:', error.message);
+    setError(error.message);
+   // console.error('Error adding languages:', error.message);
   }
-};
-
-// دالة لفتح النافذة المنبثقة وجلب اللغات
-const handleOpenModal = async () => {
-  await handleGetLanguages(); // استرجاع اللغات
-  setModalVisible(true); // إظهار النافذة
 };
 
 
@@ -1297,12 +1371,13 @@ const handleOpenModal = async () => {
 
 useEffect(() => {
   loadSelectedLanguages();
-
+  handleGetLanguages(); // استرجاع اللغات عند تحميل المكون
   handleViewProfile(); 
   requestPermission();
   getAllExperiance();
   getAllEducation();
   getAllCertifications();
+  handleGetLanguagesUser();
   socket.on('profileUpdated', (updatedUserData) => {
     console.log('Profile updated:', updatedUserData);
   
@@ -1444,6 +1519,30 @@ useEffect(() => {
     );
   };
 
+  const LanguageList = ({ language }) => {
+    // دالة لتصفية الخبرات وعرض الخبرات من الثالثة فما فوق
+    const filterExperiences = () => {
+      return userLanguages.slice(2); // تصفية الخبرات بحيث تبدأ من الخبرة الثالثة
+    };
+    return (
+      <ScrollView>
+        {filterExperiences().map((exp, index) => (
+          <View key={index} style={[styles.experienceItem, { flexDirection: 'row' }]}>
+      <View style={{ flex: 1 }}>
+        <Text style={[styles.experienceTitle, { color: isNightMode ? Colors.primary : Colors.black }]}>
+          {exp.name}
+        </Text>
+            <TouchableOpacity onPress={() => openConfirmDeleteModal('language',exp)} style={styles.editButton}>
+              <MaterialCommunityIcons name="minus-circle" size={20} color={isNightMode ? Colors.primary : Colors.black} />
+            </TouchableOpacity>
+      </View>
+    </View>
+
+        ))}
+      </ScrollView>
+    );
+  };
+
   const CertificationList = ({certification}) => {
     // دالة لتصفية الخبرات وعرض الخبرات من الثالثة فما فوق
     const filterExperiences = () => {
@@ -1501,6 +1600,7 @@ useEffect(() => {
       </ScrollView>
     );
   };
+
 
 
 
@@ -1735,7 +1835,7 @@ useEffect(() => {
 
 </View>
 
-
+        
       {/* عرض أو تعديل رابط GitHub */}
       {isEditing ? (
         <View style={styles.githubEditWrapper}>
@@ -1771,8 +1871,54 @@ useEffect(() => {
         </TouchableOpacity>
       )}
     </View>
-    
+
+         {/* قسم الأصدقاء والتقدم والإنجازات */}
+         <View style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            backgroundColor: isNightMode ? Colors.tertiary : Colors.secondary,
+            width: '100%',
+            marginTop: 20,
+            padding: 10,
+          }}>
+
+            {/* عدد الأصدقاء */}
+            <View style={{ flex: 1, alignItems: 'center'}}>
+            <TouchableOpacity>
+              <Text style={{
+                fontSize: 18,
+                fontWeight: 'bold',
+                color: isNightMode ? Colors.primary : Colors.black
+              }}>
+                Friends {friendsCount || '0'}
+              </Text></TouchableOpacity>
+            </View>
+
+            {/* التقدم */}
+            <View style={{ flex: 1, alignItems: 'center',left:18 }}>
+              <Text style={{
+                fontSize: 18,
+                fontWeight: 'bold',
+                color: isNightMode ? Colors.fourhColor : Colors.gray
+              }}>
+                {userProgress || 'Beginner'}
+              </Text>
+            </View>
+
+            {/* قائمة الإنجازات */}
+            <View style={{ flex: 1, alignItems: 'center' ,left:19 }}>
+              <MaterialIcons
+                name="emoji-events"
+                size={24}
+                color={isNightMode ? Colors.fourhColor : Colors.gold}
+              />
+            </View>
+
+          </View>
+
     <View style={[styles.divider,{height:3}]}/>
+
 
 
          
@@ -2015,7 +2161,7 @@ useEffect(() => {
 
     {/* عرض خيار "عرض الكل" إذا كانت هناك أكثر من خبرتين */}
     {certification.length > 2 && !showAllCertification && (
-                <TouchableOpacity onPress={handleShowAllCertification} style={styles.showAllButton}>
+                <TouchableOpacity onPress={handleShowAllLanguage} style={styles.showAllButton}>
                     <Text style={styles.showAllButtonText}>Show All</Text>
                 </TouchableOpacity>
             )}
@@ -2024,7 +2170,7 @@ useEffect(() => {
             {showAllCertification && (
                 <>  
                    <CertificationList certification={certification} />
-                    <TouchableOpacity onPress={handleHideCertification} style={styles.showAllButton}>
+                    <TouchableOpacity onPress={handleHideLanguage} style={styles.showAllButton}>
                         <Text style={styles.showAllButtonText}>Hide</Text>
                     </TouchableOpacity>
                 </>
@@ -2044,9 +2190,7 @@ useEffect(() => {
           <TouchableOpacity onPress={() => openModal('project')} style={styles.smallButton}>
             <Text style={styles.smallButtonText}>Add</Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => console.log('Edit Recommendation')} style={styles.smallButton}>
-              <Text style={styles.smallButtonText}>Edit</Text>
-            </TouchableOpacity></View>
+          </View>
         </View>
       </View>
 
@@ -2063,36 +2207,62 @@ useEffect(() => {
           <TouchableOpacity onPress={() => openModal('skills')} style={styles.smallButton}>
               <Text style={styles.smallButtonText}>Add</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => console.log('Edit Recommendation')} style={styles.smallButton}>
-              <Text style={styles.smallButtonText}>Edit</Text>
-            </TouchableOpacity></View>
+           </View>
         </View>
       </View>
       <View style={[styles.divider,{height:3}]}/>
 
       {/* بطاقة Languages */}
       <TouchableOpacity
-  onPress={async () => { handleGetLanguages(); }}
   style={[styles.card, { backgroundColor: isNightMode ? Colors.black : Colors.primary }]}
 >
   <View style={styles.cardHeader}>
+  
     <Text style={[styles.cardTitle, { color: isNightMode ? Colors.primary : Colors.black }]}>
       Language
     </Text>
+    
     <View style={styles.actionButtons}>
+
       <TouchableOpacity
       handleAddLanguage
-      onPress={async () => { handleAddLanguage(); }}
+      onPress={() => openModal('language') }
         style={styles.smallButton}>
         <Text style={styles.smallButtonText}>Add</Text>
       </TouchableOpacity>
-      <TouchableOpacity
-       onPress={() => handleDeleteLanguages(language.id)}
-        style={styles.smallButton}>
-        <Text style={styles.smallButtonText}>Delete</Text>
-      </TouchableOpacity>
+ 
     </View>
   </View>
+    {userLanguages.slice(0,2).map((cert, index) => (
+    <View key={index} style={[styles.experienceItem, { flexDirection: 'row' }]}>
+      <View style={{ flex: 1 }}>
+        <Text style={[styles.experienceTitle, { color: isNightMode ? Colors.primary : Colors.black }]}>
+          {cert.name}
+        </Text>
+            <TouchableOpacity onPress={() => openConfirmDeleteModal('language',cert)} style={styles.editButton}>
+              <MaterialCommunityIcons name="minus-circle" size={20} color={isNightMode ? Colors.primary : Colors.black} />
+            </TouchableOpacity>
+      </View>
+    </View>
+  ))}
+
+    {userLanguages.length > 2 && !showAlllLanguage && (
+                <TouchableOpacity onPress={handleShowAllLanguage} style={styles.showAllButton}>
+                    <Text style={styles.showAllButtonText}>Show All</Text>
+                </TouchableOpacity>
+            )}
+
+
+            {showAlllLanguage && (
+                <>  
+                   <LanguageList language={language} />
+                    <TouchableOpacity onPress={handleHideLanguage} style={styles.showAllButton}>
+                        <Text style={styles.showAllButtonText}>Hide</Text>
+                    </TouchableOpacity>
+                </>
+            )}
+            
+
 </TouchableOpacity>
       <View style={[styles.divider,{height:3}]}/>
 
@@ -2103,9 +2273,6 @@ useEffect(() => {
           <View style={styles.actionButtons}>
           <TouchableOpacity onPress={() => openModal('recommendation')} style={styles.smallButton}>
               <Text style={styles.smallButtonText}>Add</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => console.log('Edit Recommendation')} style={styles.smallButton}>
-              <Text style={styles.smallButtonText}>Edit</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -2326,13 +2493,50 @@ useEffect(() => {
               </>
             )}
 
-            {/* محتويات Modal Language */}
             {currentModal === 'language' && (
-              <>
-                <Text style={styles.modalTitle}>Edit Language</Text>
-                <TextInput placeholder="Add a Language" placeholderTextColor = "#333" style={styles.input} />
-              </>
-            )}
+  <>
+    <Text style={[styles.modalTitle, { marginTop: 0 }]}>Select Language(s)</Text>
+    <Text style={{color:Colors.brand}}>{error}</Text>
+    <MultiSelect
+      style={styles.scrollableItemsContainer}
+      items={languages} // قائمة اللغات
+      uniqueKey="id" // المفتاح الفريد لكل عنصر
+      onSelectedItemsChange={onSelectedItemsChange} // التعامل مع التحديد
+      selectedItems={selectedLanguages} // العناصر المحددة حالياً
+      selectText="Choose Languages"
+      submitButtonColor={isNightMode ? Colors.fourhColor : Colors.fourhColor} // لون خلفية زر "Submit"
+      tagRemoveIconColor={isNightMode ? Colors.brand : Colors.brand} // لون أيقونة الحذف
+      tagBorderColor={isNightMode ? '#4A90E2' : '#333'} // لون الحدود
+      tagTextColor={isNightMode ? Colors.fifthColor : '#333'} // لون النص في التاج
+      selectedItemTextColor={isNightMode ? Colors.fifthColor : '#333'} // لون النص في العنصر المحدد
+      selectedItemIconColor={isNightMode ? Colors.brand : '#333'} // لون أيقونة العنصر المحدد
+      itemTextColor={isNightMode ?'#000' : '#333'} // لون النص في العنصر غير المحدد
+      displayKey="name"
+ 
+  // تخصيص النص عند عدم اختيار أي عنصر
+
+       // تخصيص رأس القائمة (الخلفية التي تحتوي النص الافتراضي)
+  styleDropdownMenu={{
+    backgroundColor: isNightMode ? '#444' : '#EEE', // خلفية رأس القائمة
+  }}
+      // تخصيص النص داخل الحقل
+      styleTextDropdown={{
+        color: isNightMode ? '#000' : '#333', // لون النص
+        fontSize: 16, // حجم الخط
+        fontWeight: 'bold', // سمك الخط
+      }}
+      // خصائص إضافية لتحسين العرض والتخصيص
+      fixedHeight={true} // تحديد ارتفاع ثابت
+      styleItemsContainer={{
+        maxHeight: 190, // تحديد الحد الأقصى للارتفاع
+        
+      }}
+
+    />
+  </>
+)}
+
+
 
             {/* محتويات Modal Recommendation */}
             {currentModal === 'recommendation' && (
@@ -2786,8 +2990,17 @@ useEffect(() => {
             </Text></>
             )}
 
+            {currentSectionToDelete === 'language' && (
+              <>
+                <Text style={{ color: isNightMode ? Colors.primary : Colors.black }}>
+                Are you sure you want to remove the ,<Text style={{ fontWeight: 'bold', color: isNightMode ? Colors.primary : Colors.black }}>{selectedItemToDelete?.name} </Text> language?
+                </Text>
+               
+             
+           </>
+            )}
             <View style={styles.modalButtonsContainer}>
-                <TouchableOpacity onPress={handleDelete} style={styles.confirmButton}>
+                <TouchableOpacity onPress={handleDeleteAction} style={styles.confirmButton}>
                     <Text style={styles.buttonText}>Yes</Text>
                 </TouchableOpacity>
                 <TouchableOpacity onPress={closeConfirmDeleteModal} style={styles.cancelButton}>
@@ -3060,12 +3273,6 @@ const styles = StyleSheet.create({
         color: '#000',
         marginBottom: 10,
       },
-      modalContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: 'rgba(0, 0, 0, 0.5)', // خلفية شفافة
-      },
       modalContent: {
         width: '80%',
         backgroundColor: 'white',
@@ -3195,7 +3402,7 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
       },
       modalContainer: {
-        flex: 1,
+        flex:1,
         justifyContent: 'center',
         alignItems: 'center',
       },
@@ -3419,7 +3626,28 @@ const styles = StyleSheet.create({
         backgroundColor: fourhColor ,
         borderRadius: 10,
         marginTop: 10,
-      }
+      },  pickerContainer: {
+        borderRadius: 10,
+        padding: 10,
+      },
+      pickerItem: {
+        fontSize: 16,
+      },
+      languageListContainer: {
+        maxHeight: 200, // تحديد ارتفاع ثابت فقط لقائمة اللغات
+        padding: 10,
+        borderRadius: 10,
+        marginTop: 10,
+      },
+      selectedLanguagesText: {
+        fontSize: 16,
+        marginTop: 10,
+      },
+      scrollableItemsContainer: {
+      flex:1
+      },
+     
+      
 });
 
 
