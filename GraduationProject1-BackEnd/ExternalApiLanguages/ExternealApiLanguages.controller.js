@@ -51,25 +51,22 @@ export const AddLanguages = async (req, res) => {
         }
 
         const authUser = req.user;
-        const { LanguageId } = req.body;
+        const { LanguageIds } = req.body;  // يجب أن تكون هذه مجموعة من الـ IDs للغات
 
-        if (!authUser || !LanguageId) {
-            console.log("Missing required fields: authUser or LanguageId.");
-            return res.status(400).json({ message: "User ID and Language ID are required." });
+        if (!authUser || !LanguageIds || !Array.isArray(LanguageIds)) {
+            console.log("Missing required fields: authUser or LanguageIds.");
+            return res.status(400).json({ message: "User ID and Language IDs are required." });
         }
 
-        console.log("Request received:", { authUser, LanguageId });
+        console.log("Request received:", { authUser, LanguageIds });
 
-        const selectedLanguage = Languages.find(lang => lang.id === LanguageId);
-        if (!selectedLanguage) {
-            console.log("Language not found in predefined list.");
-            return res.status(404).json({ message: "Language not found." });
-        }
+        // التحقق من وجود اللغات في القائمة المبدئية
+        const languagesToAdd = LanguageIds.map(id => Languages.find(lang => lang.id === id))
+                                        .filter(lang => lang); // تصفية اللغات غير الموجودة
 
-        console.log("Selected language:", selectedLanguage);
-
-        if (!selectedLanguage.id || !selectedLanguage.name || !selectedLanguage.code) {
-            return res.status(400).json({ message: "Selected language is missing required fields." });
+        if (languagesToAdd.length !== LanguageIds.length) {
+            console.log("Some languages were not found.");
+            return res.status(404).json({ message: "Some languages were not found in the predefined list." });
         }
 
         const user = await UserModel.findById(authUser);
@@ -80,31 +77,31 @@ export const AddLanguages = async (req, res) => {
 
         console.log("User found:", user);
 
-        const languageExists = user.Languages.some(lang => lang.id === selectedLanguage.id);
-        if (languageExists) {
-            console.log("Language already exists for user.");
-            return res.status(400).json({ message: "Language already added." });
+        // إضافة اللغات إلى المستخدم إذا لم تكن موجودة بالفعل
+        const existingLanguages = user.Languages.map(lang => lang.id);
+        const newLanguages = languagesToAdd.filter(lang => !existingLanguages.includes(lang.id));
+
+        if (newLanguages.length === 0) {
+            console.log("All selected languages already added.");
+            return res.status(400).json({ message: "All selected languages already added." });
         }
 
-        user.Languages.push({
-            id: selectedLanguage.id,
-            name: selectedLanguage.name,
-            code: selectedLanguage.code
-        });
-
+        // إضافة اللغات الجديدة إلى المستخدم
+        user.Languages.push(...newLanguages);
         await user.save();
 
-        console.log("Language added successfully:", selectedLanguage);
+        console.log("Languages added successfully:", newLanguages);
         return res.status(200).json({
-            message: "Language added successfully.",
+            message: "Languages added successfully.",
             languages: user.Languages
         });
 
     } catch (error) {
-        console.error("Error adding language: ", error);
+        console.error("Error adding languages: ", error);
         return res.status(500).json({ message: "Internal Server Error." });
     }
 };
+
 
 export const GetLanguages = (req, res) => {
     try {
@@ -167,3 +164,32 @@ export const DeleteLanguages = async (req, res) => {
 };
 
 
+// دالة GET لاسترجاع اللغات الخاصة بالمستخدم
+export const GetLanguagesUser = async (req, res) => {
+    try {
+        // التأكد من وجود المستخدم في التوكن
+        if (!req.user) {
+            console.log("User not authorized: No token provided.");
+            return res.status(401).json({ message: "User not authorized. Please provide a valid token." });
+        }
+
+        const authUser = req.user;
+
+        // البحث عن المستخدم في قاعدة البيانات باستخدام معرّف المستخدم
+        const user = await UserModel.findById(authUser);
+        if (!user) {
+            console.log("User not found in the database.");
+            return res.status(404).json({ message: "User not found." });
+        }
+
+        // إرجاع اللغات الخاصة بالمستخدم
+        return res.status(200).json({
+            message: "Languages fetched successfully.",
+            languages: user.Languages // إرجاع اللغات المخزنة في قاعدة البيانات
+        });
+        
+    } catch (error) {
+        console.error("Error fetching languages: ", error);
+        return res.status(500).json({ message: "Internal Server Error." });
+    }
+};

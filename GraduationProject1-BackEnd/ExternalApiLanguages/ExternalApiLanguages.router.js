@@ -7,8 +7,8 @@ const router = express.Router();
 //  Api Languages
 router.get('/getlanguages',ExternalApiLanguagesController.GetLanguages);
 router.post('/addlanguages',auth(EndPoints.AddLanguages),ExternalApiLanguagesController.AddLanguages);
-router.delete('/deletelanguages',auth(EndPoints.AddLanguages),ExternalApiLanguagesController.DeleteLanguages);
-
+router.delete('/deletelanguages/',auth(EndPoints.AddLanguages),ExternalApiLanguagesController.DeleteLanguages);
+router.get('/GetLanguagesUser',auth(EndPoints.AddLanguages),ExternalApiLanguagesController.GetLanguagesUser)
 
 
 export default router;
