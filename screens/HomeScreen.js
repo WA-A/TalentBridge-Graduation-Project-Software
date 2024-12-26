@@ -1,11 +1,11 @@
 import React, { useState, useContext,useRef,useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { View, Text, Image,TextInput,TouchableOpacity, StyleSheet, ScrollView, Animated, Button, Alert, Platform,TouchableWithoutFeedback,Keyboard, FlatList,KeyboardAvoidingView,flatListRef} from 'react-native';
+import { View, Text, Image,TextInput,TouchableOpacity, StyleSheet, ToastAndroid, PermissionsAndroid, ScrollView,Animated, Button, Alert, Platform,TouchableWithoutFeedback,Keyboard, FlatList,KeyboardAvoidingView,flatListRef} from 'react-native';
 import { Ionicons, Feather, FontAwesome5, EvilIcons, FontAwesome,Entypo,MaterialIcons
 } from '@expo/vector-icons';
 import axios from 'axios';
-
-
+import * as MediaLibrary from 'expo-media-library';
+import Modal from 'react-native-modal';
 import { useNavigation } from '@react-navigation/native';
 import { Dimensions } from 'react-native';
 import { useFonts } from 'expo-font';
@@ -27,16 +27,16 @@ import {
     InteractionText,
 } from './../compnent/Style'
 import { Video } from 'react-native-video';
-
-// Color constants
+import ImageViewer from 'react-native-image-zoom-viewer';
 // Color constants
 const { secondary, primary, careysPink, darkLight, fourhColor, tertiary, fifthColor } = Colors;
 const { width } = Dimensions.get('window');
 
+import * as FileSystem from 'expo-file-system';
+import * as Linking from 'expo-linking';
+import * as DocumentPicker from 'expo-document-picker';
 
-
-
-
+import * as DocumentViewer from 'expo-document-viewer'; // لاستعراض ملفات PDF
 export default function HomeScreen({ navigation, route}) {
 
 
@@ -83,10 +83,124 @@ const [openedChatId, setOpenedChatId] = useState(null); // لتتبع أي شا�
     // استدعاء الدالة الخاصة بإزالة الفقاعة من التجمع (إذا لزم الأمر)
     handleRemoveBubble(bubbleId);
   };
+
+  const saveImageToDevice = async (imageUrl) => {
+    setLoading(true); 
+    try {
+      if (Platform.OS === 'web') {
+        // منطق خاص بالويب مع اختيار مكان الحفظ
+        const response = await fetch(imageUrl);
+        const blob = await response.blob();
+
+        const fileHandle = await window.showSaveFilePicker({
+          suggestedName: 'image.png',
+          types: [
+            {
+              description: 'Image Files',
+              accept: { 'image/png': ['.png'] },
+            },
+          ],
+        });
+
+        const writableStream = await fileHandle.createWritable();
+        await writableStream.write(blob);
+        await writableStream.close();
+
+        Alert.alert('Success', 'Image has been saved');
+      }  else {
+          // منطق خاص بالموبايل
+          const fileUri = FileSystem.documentDirectory + 'image.png';
+          const { uri } = await FileSystem.downloadAsync(imageUrl, fileUri);
+  
+          const { status } = await MediaLibrary.requestPermissionsAsync();
+          if (status === 'granted') {
+            const asset = await MediaLibrary.createAssetAsync(uri);
+            const album = await MediaLibrary.getAlbumAsync('Expo');
+            if (album) {
+              await MediaLibrary.addAssetsToAlbumAsync([asset], album.id, false);
+            } else {
+              await MediaLibrary.createAlbumAsync('Expo', asset, false);
+            }
+            Alert.alert('Success', 'Image has been saved to gallery');
+          } else {
+            Alert.alert('Permission Denied', 'We need permission to save the image');
+          }
+        }
+      }  catch (error) {
+      Alert.alert('Error', 'There was an error downloading or saving the image');
+    } finally {
+      setLoading(false);
+    }
+  };
+ 
+    const [fileUri, setFileUri] = useState(null);
+  
+
+  
+    const downloadFile = async (fileUrl, fileName) => {
+      try {
+        const fileUri = FileSystem.documentDirectory + fileName;
+        const downloadResult = await FileSystem.downloadAsync(fileUrl, fileUri);
+        return downloadResult.uri;
+      } catch (error) {
+        console.log('Error downloading file: ', error);
+        Alert.alert('Error', 'Failed to download file');
+      }
+    };
+    
+    const getFileExtension = (fileName) => {
+      return fileName.split('.').pop();
+    };
   
   
- 
- 
+  
+    const getFileIcon = (fileExtension) => {
+      switch (fileExtension) {
+        case 'pdf':
+          return <FontAwesome name="file-pdf-o" size={24} color="red" />;
+        case 'jpg':
+        case 'jpeg':
+        case 'png':
+          return <FontAwesome name="file-image-o" size={24} color="blue" />;
+        case 'mp3':
+          return <FontAwesome name="file-audio-o" size={24} color="green" />;
+        case 'docx':
+        case 'xlsx':
+          return <FontAwesome name="file-word-o" size={24} color="orange" />;
+        default:
+          return <FontAwesome name="file-o" size={24} color="#555" />;
+      }
+    };
+
+
+    const handleFilePress = async (uri, fileName) => {
+      if (!Array.isArray(uri) || uri.length === 0) {
+        Alert.alert('Error', 'Invalid file URL');
+        return;
+      }
+    
+      const fileUri = uri[0]; // استخراج أول عنصر من المصفوفة (الملف)
+    
+      const fileExtension = getFileExtension(fileName);
+      const downloadedFileUri = await downloadFile(fileUri, fileName);
+    
+      // التعامل مع الملف بناءً على نوعه
+      if (fileExtension === 'pdf') {
+        DocumentViewer.previewDocumentAsync(downloadedFileUri)
+          .catch((error) => {
+            console.log('Error opening PDF: ', error);
+            Alert.alert('Error', 'Failed to open PDF');
+          });
+      } else if (fileExtension === 'jpg' || fileExtension === 'jpeg' || fileExtension === 'png') {
+        // عرض الصور
+        Linking.openURL(downloadedFileUri);
+      } else if (fileExtension === 'mp3') {
+        // تشغيل الصوت
+        Linking.openURL(downloadedFileUri);
+      } else {
+        Alert.alert('Unsupported File', 'This file type is not supported for viewing.');
+      }
+    };
   const handleCloseChat = (personId) => {
     
     setMinimizedChats((prev) => prev.filter((chat) => chat._id !== personId));
@@ -95,8 +209,16 @@ const [openedChatId, setOpenedChatId] = useState(null); // لتتبع أي شا�
     handleRemoveBubble(personId);
   };
 
-
-
+  const extractFileName = (filePathArray) => {
+    console.log(filePathArray); // عرض المدخلات لفحصها
+    if (!Array.isArray(filePathArray) || filePathArray.length === 0) return "Unknown File"; // تحقق من أن المدخل مصفوفة وغير فارغة
+    
+    const filePath = filePathArray[0]; // استخراج أول عنصر من المصفوفة
+    if (typeof filePath !== "string" || !filePath) return "Unknown File"; // تحقق من أن العنصر نص
+    
+    const parts = filePath.split("\\"); // تقسيم النص إلى أجزاء باستخدام "\\"
+    return parts[parts.length - 1] || "Unknown File"; // إذا لم يتم العثور على اسم ملف
+  };
   const [minimizedChats, setMinimizedChats] = useState([]); // قائمة الفقاعات
 
 
@@ -127,7 +249,23 @@ const [openedChatId, setOpenedChatId] = useState(null); // لتتبع أي شا�
   };
 
 
-  
+ const [isModalVisibleviewImage, setIsModalVisibleViewImage] = useState(false);
+ const [currentImage, setCurrentImage] = useState(null);
+ 
+ // دالة لفتح نافذة عرض الصورة
+ const openImageViewer = (imageUri) => {
+   console.log('Open Image Viewer:', imageUri);
+   // تعيين الصورة المعروضة
+
+   setCurrentImage([{ url: imageUri }]);
+   setIsModalVisibleViewImage(true);  // فتح النافذة
+ };
+ 
+ // إغلاق نافذة عرض الصورة
+ const closeImageViewer = () => {
+   setIsModalVisibleViewImage(false);
+ };
+
   const [gatheredChats, setGatheredChats] = useState([]);
 
   const handleCloseAllBubbles = () => {
@@ -340,6 +478,7 @@ const handleLogout = async () => {
     };
 
 
+  
 
     const [hoveredMessageId, setHoveredMessageId] = useState(null); // لتحديد الرسالة التي يتم التمرير عليها
 
@@ -615,8 +754,7 @@ const handleSelectedPerson = async (item) => {
           } else {
             console.error('No posts found or data is not an array', data);
           }
-          
-    
+
         setIsLoading(false);
       } catch (error) {
         console.error('Error fetching posts:', error);
@@ -774,7 +912,7 @@ const handleSelectedPerson = async (item) => {
     style={{
       flex: 1,
       backgroundColor: isNightMode ? "#000" : primary,
-      marginLeft: Platform.OS === 'web' && isSidebarVisible ? '0%' : 0,  // تحديد المسافة في حالة وجود الشريط الجانبي
+      marginLeft: Platform.OS === 'web' && isSidebarVisible ? '30%' : 0,  // تحديد المسافة في حالة وجود الشريط الجانبي
     }}
     contentContainerStyle={{
       flexGrow: 1,
@@ -790,126 +928,129 @@ const handleSelectedPerson = async (item) => {
     )}
     scrollEventThrottle={16}
   >
-
-  <Text style={{ fontSize: 24, fontWeight: 'bold' }}>Posts</Text>
-  
-  {posts && Array.isArray(posts.posts) && posts.posts.map((post, index) => (
-  <View
-    key={index}
-    style={{
-      width: Platform.OS === 'web' ? '50%' : '100%',
-      alignItems: 'center',
-      marginBottom: 10,
-      backgroundColor: isNightMode ? '#454545' : secondary,
-    }}
-  >
+<Text style={{ fontSize: 28, fontWeight: 'bold', marginBottom: 15, textAlign: 'center', color: isNightMode ? primary : '#000' }}>
+  Posts
+</Text>
+{posts.map((post, index) => (
+  <React.Fragment key={index}>
     <View
       style={{
-        backgroundColor: isNightMode ? '#454545' : secondary,
-        width: '95%',
-        borderRadius: 10,
-        margin: 10,
-        padding: 10,
+        width: Platform.OS === 'web' ? '50%' : '100%',
+        alignItems: 'center',
+        marginBottom: 15,
       }}
     >
-      <View style={{ flexDirection: 'row', alignItems: 'center', padding: 10 }}>
-        <Image
-          source={{ uri: post.ProfilePicture }}
-          style={{
-            width: Platform.OS === 'web' ? 80 : 40,
-            height: Platform.OS === 'web' ? 80 : 40,
-            borderRadius: Platform.OS === 'web' ? 40 : 25,
-            marginRight: 10,
-            marginTop: 10,
-            objectFit: 'cover',
-            borderWidth: 1,
-            bottom: 3,
-          }}
-        />
-        <View>
-          <Text style={{ color: isNightMode ? primary : '#000', fontWeight: 'bold', fontSize: 16 }}>
-            {post.UserId}
-          </Text>
-          <Text style={{ color: darkLight, fontSize: 12 }}>
-            {new Date(post.createdAt).toLocaleString()}
-          </Text>
+      <View
+        style={{
+          backgroundColor: isNightMode ? '#3a3a3a' : '#fff',
+          width: '95%',
+          borderRadius: 15,
+          padding: 15,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.3,
+          shadowRadius: 5,
+          elevation: 5,
+        }}
+      >
+        {/* Header */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
+          <Image
+            source={{ uri: post.UserId.PictureProfile.secure_url }}
+            style={{
+              width: 50,
+              height: 50,
+              borderRadius: 25,
+              marginRight: 10,
+              borderWidth: 2,
+              borderColor: isNightMode ? primary : '#ddd',
+            }}
+          />
+          <View>
+            <Text style={{ color: isNightMode ? primary : '#000', fontWeight: 'bold', fontSize: 16 }}>
+              {post.UserId.FullName}
+            </Text>
+            <Text style={{ color: darkLight, fontSize: 12 }}>
+              {new Date(post.createdAt).toLocaleString()}
+            </Text>
+          </View>
         </View>
-      </View>
 
-      <Text style={{ color: isNightMode ? primary : '#000', padding: 15 }}>
-        {post.Body}
-      </Text>
+        {/* Body */}
+        <Text style={{ color: isNightMode ? primary : '#000', fontSize: 16, lineHeight: 22, marginBottom: 15 }}>
+          {post.Body}
+        </Text>
+        <View style={styles.divider} />
 
-      {/* عرض الصور إذا كانت موجودة */}
-      {post.Images && post.Images.length > 0 && post.Images.map((image, idx) => (
-        <Image
-          key={idx}
-          source={{ uri: image.secure_url }}
-          style={{
-            width: Platform.OS === 'web' ? '90%' : '100%',
-            height: Platform.OS === 'web' ? 500 : 320,
-            objectFit: 'fill',
-            alignSelf: 'center',
-          }}
-        />
+        {/* Images */}
+        {post.Images && post.Images.length > 0 && post.Images.map((image, idx) => (
+          <TouchableOpacity
+            key={idx}
+            onPress={() => openImageViewer(image?.secure_url)}
+          >
+            <Image
+              source={{ uri: image.secure_url }}
+              style={{
+                width: '100%',
+                height: 300,
+                borderRadius: 10,
+                marginBottom: 10,
+                resizeMode: 'cover',
+              }}
+            />
+          </TouchableOpacity>
+        ))}
+
+        {/* Videos */}
+        {post.Videos && post.Videos.length > 0 && post.Videos.map((video, idx) => (
+          <RNVideo
+            key={idx}
+            source={{ uri: video.secure_url }}
+            style={{
+              width: '100%',
+              height: 300,
+              borderRadius: 10,
+              marginBottom: 10,
+            }}
+            controls
+          />
+        ))}
+
+        {/* Files */}
+        {post.Files && post.Files.length > 0 && post.Files.map((file, index) => (
+        <TouchableOpacity
+          key={index}
+          style={styles.fileCard}
+          onPress={() => openFile(post.Files)} // فتح الملف أولاً
+        >
+          <FontAwesome name="file-o" size={24} color="#555" style={styles.icon} />
+          <Text style={styles.fileName}>
+            {extractFileName(post.Files) || 'Click to view/download file'}
+          </Text>
+        </TouchableOpacity>
       ))}
 
-      {/* عرض الفيديوهات إذا كانت موجودة */}
-      {post.Videos && post.Videos.length > 0 && post.Videos.map((video, idx) => (
-        <RNVideo
-          key={idx}
-          source={{ uri: video.secure_url }}
-          style={{
-            width: Platform.OS === 'web' ? '90%' : '100%',
-            height: Platform.OS === 'web' ? 500 : 320,
-            alignSelf: 'center',
-          }}
-          controls
-        />
-      ))}
-
-      {/* عرض الملفات إذا كانت موجودة */}
-      {post.Files && post.Files.length > 0 && (
-        <View style={{ alignItems: 'center', marginVertical: 10 }}>
-          <Text style={{ fontWeight: 'bold' }}>File:</Text>
-          {post.Files.map((file, index) => (
-            <TouchableOpacity
-              key={index}
-              onPress={() => Linking.openURL(file.secure_url)}
-            >
-              <Text style={{ color: 'blue' }}>
-                {file.name || 'Click to open/download file'}
-              </Text>
-            </TouchableOpacity>
-          ))}
+        {/* Actions */}
+        <View style={{ flexDirection: 'row', justifyContent: 'space-around', marginTop: 10 }}>
+          <TouchableOpacity style={{ alignItems: 'center' }}>
+            <Ionicons name="heart-circle" size={30} color={isNightMode ? secondary : Colors.brand} />
+            <Text style={{ color: isNightMode ? primary : '#000', fontSize: 14 }}>Like</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={{ alignItems: 'center' }}>
+            <Ionicons name="chatbubbles" size={28} color={isNightMode ? secondary : Colors.brand} />
+            <Text style={{ color: isNightMode ? primary : '#000', fontSize: 14 }}>Comment</Text>
+          </TouchableOpacity>
         </View>
-      )}
-
-      <View style={{ flexDirection: 'row', justifyContent: 'space-around', paddingTop: 7 }}>
-        <Interaction>
-          <Ionicons
-            style={{
-              color: isNightMode ? secondary : 'rgba(0, 0, 0, 0.2)',
-            }}
-            name="heart-circle"
-            size={25}
-          />
-          <InteractionText style={{ color: isNightMode ? primary : '#000' }}>Like</InteractionText>
-        </Interaction>
-        <Interaction>
-          <Ionicons
-            style={{
-              color: isNightMode ? secondary : 'rgba(0, 0, 0, 0.2)',
-            }}
-            name="chatbubbles"
-            size={23}
-          />
-          <InteractionText style={{ color: isNightMode ? primary : '#000' }}>Comment</InteractionText>
-        </Interaction>
       </View>
     </View>
-  </View>
+
+    {/* Divider */}
+    {index < posts.length - 1 && (
+      <View style={{ width: '100%', height:3, backgroundColor: isNightMode ? '#555' : '#ddd', marginVertical: 20 }} />
+    )}
+  </React.Fragment>
 ))}
+
 
 
 
@@ -1270,7 +1411,7 @@ const handleSelectedPerson = async (item) => {
 
 
 
-
+   
 
             {/* Menu */}
             {isMenuVisible && (
@@ -1300,6 +1441,31 @@ left: 10, backgroundColor: 'white', padding: 10, borderRadius: 5, zIndex: 20,bot
                     </View>
                 </View>
             )}
+
+
+            <Modal
+        visible={isModalVisibleviewImage}
+        transparent={true}
+        onRequestClose={closeImageViewer}
+      >
+        <ImageViewer
+          imageUrls={currentImage}
+          onCancel={closeImageViewer}
+          enableSwipeDown={true}
+          menus={({  }) => (
+            <View style={styles.menuContainer}>
+              <Button
+                title="Dounlowd Image"
+                color={Colors.darkLight}
+                onPress={() => saveImageToDevice(currentImage[0]?.url)}
+              />
+            </View>
+          )}
+        />
+      </Modal>
+
+
+       
         </View>
     </TouchableWithoutFeedback>);
 
@@ -1311,7 +1477,59 @@ left: 10, backgroundColor: 'white', padding: 10, borderRadius: 5, zIndex: 20,bot
 };
 
 const styles = StyleSheet.create({
-  
+  menuContainer: {
+    position: 'absolute',
+    bottom: 20,
+    left: 20,
+    right: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    borderRadius: 10,
+    padding: 10,
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },   divider: {
+    height: 1,
+    backgroundColor: '#ddd',
+    marginVertical: 8,
+  },
+  container: {
+    alignItems: 'center',
+    marginVertical: 10,
+  },
+  divider2: {
+    height: 1,
+    backgroundColor: '#ddd',
+    marginVertical: 8,
+  },
+  title: {
+    fontWeight: 'bold',
+    marginBottom: 10,
+    fontSize: 16,
+    textAlign: 'center',
+  },
+  fileCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f9f9f9',
+    borderRadius: 10,
+    padding: 10,
+    marginBottom: 10,
+    width: '100%',
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
+  },
+  icon: {
+    marginRight: 10,
+  },
+  fileName: {
+    color: '#007BFF',
+    textDecorationLine: 'underline',
+    flexShrink: 1,
+    fontSize: 14,
+  },
 });
  
   

@@ -16,14 +16,20 @@
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
-        "NSPhotoLibraryUsageDescription": "This app requires access to your photo library"
+        "NSPhotoLibraryUsageDescription": "This app requires access to your photo library",
+        "NSCameraUsageDescription": "This app requires access to your camera",
+        "NSMicrophoneUsageDescription": "This app requires access to your microphone"
       }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "permissions": [
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE"
+      ]
     },
     "web": {
       "bundler": "metro",

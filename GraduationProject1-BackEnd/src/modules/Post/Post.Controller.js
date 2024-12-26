@@ -1,11 +1,9 @@
 import cloudinary from '../../../utls/Cloudinary.js';
 import PostModel from './../../Model/PostModel.js';
-
-
 // Create Own Post
 export const CreatePost = async (req, res, next) => {
     try {
-        const { Body,Category } = req.body;
+        const { Body, Category } = req.body;
         if (!Body || !Category) {
             return next(new Error("Body or Category is required."));
         }
@@ -25,23 +23,20 @@ export const CreatePost = async (req, res, next) => {
 
         const files = req.files['files'] ? req.files['files'].map(file => file.path) : [];
 
-        const ProfilePicture = req.user.profileImage || '../../../../assets/face.jpg';  // استخدم صورة بروفايل افتراضية إذا لم تكن موجودة
-        
         const Post = await PostModel.create({
             Body,
             Category,
             Images: images,
             Videos: videos,
             Files: files,
-            UserId,
-            ProfilePicture,  
+            UserId, // فقط مرر UserId ولا تضف ProfilePicture هنا
         });
 
         if (!Post) {
             return next(new Error("Can't Create Post"));
         }
 
-        return res.status(201).json({ message: "success", Post });
+        return res.status(201).json({ message: "Post created successfully", Post });
     } catch (error) {
         console.error("Error creating post:", error);
         return next(error);
@@ -157,28 +152,17 @@ export const GetUserPosts = async (req, res, next) => {
 
 
 // Get All Posts
-
 export const GetAllPosts = async (req, res, next) => {
     try {
         const posts = await PostModel.find()
-            .populate('UserId', 'ProfilePicture');
+            .populate('UserId', 'FullName PictureProfile'); // اجلب الحقول المطلوبة فقط
 
         if (!posts || posts.length === 0) {
             return res.status(404).json({ message: "No posts found." });
         }
 
-        const postsWithProfilePicture = posts.map(post => {
-            // تحقق إذا كان UserId موجودًا وإذا كان يحتوي على ProfilePicture
-            const profilePicture = post.UserId && post.UserId.ProfilePicture
-                ? post.UserId.ProfilePicture
-                : '../../../../assets/face.jpg';  // استخدم صورة بروفايل افتراضية إذا لم تكن موجودة
-            return {
-                ...post.toObject(),
-                ProfilePicture: profilePicture
-            };
-        });
-
-        return res.status(200).json({ message: "Posts retrieved successfully", posts: postsWithProfilePicture });
+        // لا حاجة لإعادة معالجة البيانات وإضافة الحقول بشكل مسطح
+        return res.status(200).json({ message: "Posts retrieved successfully", posts });
     } catch (error) {
         console.error("Error retrieving posts:", error);
         return next(error);

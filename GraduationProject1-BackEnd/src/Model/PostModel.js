@@ -28,10 +28,6 @@ const PostSchema = new Schema({
         ref: 'User',
         required: true,
     },
-    ProfilePicture: {
-        type: String,
-        required: true,
-    },
     like: [
         {
             type: Types.ObjectId,
