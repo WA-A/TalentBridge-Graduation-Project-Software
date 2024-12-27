@@ -1,9 +1,10 @@
 import React, { useState, useContext,useRef,useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { View, Text, Image,TextInput,TouchableOpacity, StyleSheet, ToastAndroid, PermissionsAndroid, ScrollView,Animated, Button, Alert, Platform,TouchableWithoutFeedback,Keyboard, FlatList,KeyboardAvoidingView,flatListRef} from 'react-native';
+import { View, Text, Image,TextInput,TouchableOpacity, StyleSheet, ToastAndroid,Linking, PermissionsAndroid, ScrollView,Animated, Button, Alert, Platform,TouchableWithoutFeedback,Keyboard, FlatList,KeyboardAvoidingView,flatListRef} from 'react-native';
 import { Ionicons, Feather, FontAwesome5, EvilIcons, FontAwesome,Entypo,MaterialIcons
 } from '@expo/vector-icons';
 import axios from 'axios';
+import { Video as ExpoVideo } from 'expo-av';
 import * as MediaLibrary from 'expo-media-library';
 import Modal from 'react-native-modal';
 import { useNavigation } from '@react-navigation/native';
@@ -26,17 +27,16 @@ import {
     Interaction,
     InteractionText,
 } from './../compnent/Style'
-import { Video } from 'react-native-video';
 import ImageViewer from 'react-native-image-zoom-viewer';
 // Color constants
 const { secondary, primary, careysPink, darkLight, fourhColor, tertiary, fifthColor } = Colors;
 const { width } = Dimensions.get('window');
+import * as WebBrowser from 'expo-web-browser'
 
 import * as FileSystem from 'expo-file-system';
-import * as Linking from 'expo-linking';
-import * as DocumentPicker from 'expo-document-picker';
+import Video from 'react-native-video';
+//import * as Linking from 'expo-linking';
 
-import * as DocumentViewer from 'expo-document-viewer'; // لاستعراض ملفات PDF
 export default function HomeScreen({ navigation, route}) {
 
 
@@ -136,71 +136,23 @@ const [openedChatId, setOpenedChatId] = useState(null); // لتتبع أي شا�
     const [fileUri, setFileUri] = useState(null);
   
 
-  
-    const downloadFile = async (fileUrl, fileName) => {
-      try {
-        const fileUri = FileSystem.documentDirectory + fileName;
-        const downloadResult = await FileSystem.downloadAsync(fileUrl, fileUri);
-        return downloadResult.uri;
-      } catch (error) {
-        console.log('Error downloading file: ', error);
-        Alert.alert('Error', 'Failed to download file');
-      }
-    };
-    
-    const getFileExtension = (fileName) => {
-      return fileName.split('.').pop();
-    };
-  
-  
-  
-    const getFileIcon = (fileExtension) => {
-      switch (fileExtension) {
-        case 'pdf':
-          return <FontAwesome name="file-pdf-o" size={24} color="red" />;
-        case 'jpg':
-        case 'jpeg':
-        case 'png':
-          return <FontAwesome name="file-image-o" size={24} color="blue" />;
-        case 'mp3':
-          return <FontAwesome name="file-audio-o" size={24} color="green" />;
-        case 'docx':
-        case 'xlsx':
-          return <FontAwesome name="file-word-o" size={24} color="orange" />;
-        default:
-          return <FontAwesome name="file-o" size={24} color="#555" />;
-      }
-    };
-
-
-    const handleFilePress = async (uri, fileName) => {
-      if (!Array.isArray(uri) || uri.length === 0) {
+    const openFileInBrowser = async (uri) => {
+      if (!uri) {
         Alert.alert('Error', 'Invalid file URL');
         return;
       }
     
-      const fileUri = uri[0]; // استخراج أول عنصر من المصفوفة (الملف)
-    
-      const fileExtension = getFileExtension(fileName);
-      const downloadedFileUri = await downloadFile(fileUri, fileName);
-    
-      // التعامل مع الملف بناءً على نوعه
-      if (fileExtension === 'pdf') {
-        DocumentViewer.previewDocumentAsync(downloadedFileUri)
-          .catch((error) => {
-            console.log('Error opening PDF: ', error);
-            Alert.alert('Error', 'Failed to open PDF');
-          });
-      } else if (fileExtension === 'jpg' || fileExtension === 'jpeg' || fileExtension === 'png') {
-        // عرض الصور
-        Linking.openURL(downloadedFileUri);
-      } else if (fileExtension === 'mp3') {
-        // تشغيل الصوت
-        Linking.openURL(downloadedFileUri);
-      } else {
-        Alert.alert('Unsupported File', 'This file type is not supported for viewing.');
+      try {
+        // إضافة المعامل download إلى الرابط لتنزيل الملف مباشرة
+        const downloadUrl = `${uri}?download=true`; 
+        await WebBrowser.openBrowserAsync(downloadUrl); // فتح الرابط في المتصفح
+      } catch (error) {
+        console.log('Error opening file:', error);
+        Alert.alert('Error', 'Failed to open file');
       }
     };
+    
+    
   const handleCloseChat = (personId) => {
     
     setMinimizedChats((prev) => prev.filter((chat) => chat._id !== personId));
@@ -1003,32 +955,39 @@ const handleSelectedPerson = async (item) => {
 
         {/* Videos */}
         {post.Videos && post.Videos.length > 0 && post.Videos.map((video, idx) => (
-          <RNVideo
-            key={idx}
-            source={{ uri: video.secure_url }}
-            style={{
-              width: '100%',
-              height: 300,
-              borderRadius: 10,
-              marginBottom: 10,
-            }}
-            controls
-          />
-        ))}
+          <View key={idx}>
+          {Platform.OS === 'web' ? (
+                <video
+                    controls
+                    style={styles.video}
+                    src={video.secure_url}
+                    resizeMode="contain" // التأكد من أن الفيديو يبقى ضمن الحدود
+                />
+            ) : (
+                <ExpoVideo
+                    source={{ uri: video.secure_url }}
+                    style={styles.video}
+                    useNativeControls
+                    resizeMode="contain" // التأكد من أن الفيديو يبقى ضمن الحدود
+                />
+            )}
+        </View>
+            ))}
 
-        {/* Files */}
-        {post.Files && post.Files.length > 0 && post.Files.map((file, index) => (
-        <TouchableOpacity
-          key={index}
-          style={styles.fileCard}
-          onPress={() => openFile(post.Files)} // فتح الملف أولاً
-        >
-          <FontAwesome name="file-o" size={24} color="#555" style={styles.icon} />
-          <Text style={styles.fileName}>
-            {extractFileName(post.Files) || 'Click to view/download file'}
-          </Text>
-        </TouchableOpacity>
-      ))}
+      {/* Files */}
+      {post.Files && post.Files.length > 0 && post.Files.map((file, index) => (
+  <TouchableOpacity
+    key={index}
+    style={styles.fileCard}
+    onPress={() => openFileInBrowser (file.secure_url, file.originalname)} // تمرير secure_url و originalname
+  >
+    <FontAwesome name="file-o" size={24} color="#555" style={styles.icon} />
+    <Text style={styles.fileName}>
+      {file.originalname || 'Click to view/download file'}
+    </Text>
+  </TouchableOpacity>
+))}
+
 
         {/* Actions */}
         <View style={{ flexDirection: 'row', justifyContent: 'space-around', marginTop: 10 }}>
@@ -1521,6 +1480,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     elevation: 2,
   },
+  
   icon: {
     marginRight: 10,
   },
@@ -1530,6 +1490,20 @@ const styles = StyleSheet.create({
     flexShrink: 1,
     fontSize: 14,
   },
+  video: {
+    width: '100%',
+    height: 300,
+    borderRadius: 10,
+    marginBottom: 10,
+    backgroundColor: '#000', // لون خلفية الفيديو (لأغراض التحميل)
+},    webVideo: {
+  width: '100%',
+  height: 300,
+  borderRadius: 10,
+  marginBottom: 10,
+  backgroundColor: '#000', // لون خلفية الفيديو (لأغراض التحميل)
+},
+
 });
  
   
