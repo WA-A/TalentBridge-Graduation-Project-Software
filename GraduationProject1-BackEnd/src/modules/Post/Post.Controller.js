@@ -122,13 +122,13 @@ export const UpdatePost = async (req, res, next) => {
 
 export const GetUserPosts = async (req, res, next) => {
     try {
-        const userId = req.user.id; // الحصول على ID اليوزر الذي قام بتسجيل الدخول من التوكن
+        const userId = req.user.id; 
 
         if (!userId) {
             return res.status(400).json({ message: "User ID is required." });
         }
 
-        // Fetch posts for the currently logged-in user and populate the UserId field with ProfileImage
+        // Fetch posts for the currently logged-in user and populate the UserId field with ProfilePicture
         const posts = await PostModel.find({ UserId: userId })
             .populate('UserId', 'ProfilePicture'); // Populate the ProfilePicture from the UserId
 
@@ -136,23 +136,28 @@ export const GetUserPosts = async (req, res, next) => {
             return res.status(404).json({ message: "No posts found for this user." });
         }
 
-        // Add profile image to each post if necessary
-        const postsWithProfilePicture = posts.map(post => {
+        // Add profile image and likes count to each post
+        const postsWithDetails = posts.map(post => {
             const profilePicture = post.UserId && post.UserId.ProfilePicture
                 ? post.UserId.ProfilePicture
                 : '../../../../assets/face.jpg';  // Default profile picture if not available
+
+            const likeCount = post.like ? post.like.length : 0; // Count the number of likes
+
             return {
                 ...post.toObject(),
-                ProfilePicture: profilePicture
+                ProfilePicture: profilePicture,
+                LikeCount: likeCount // Add like count to the response
             };
         });
 
-        return res.status(200).json({ message: "Posts retrieved successfully", posts: postsWithProfilePicture });
+        return res.status(200).json({ message: "Posts retrieved successfully", posts: postsWithDetails });
     } catch (error) {
         console.error("Error retrieving posts:", error);
         return next(error);
     }
 };
+
 
 
 
@@ -161,29 +166,33 @@ export const GetUserPosts = async (req, res, next) => {
 export const GetAllPosts = async (req, res, next) => {
     try {
         const posts = await PostModel.find()
-            .populate('UserId', 'ProfilePicture');
+            .populate('UserId', 'ProfilePicture'); 
 
         if (!posts || posts.length === 0) {
             return res.status(404).json({ message: "No posts found." });
         }
 
-        const postsWithProfilePicture = posts.map(post => {
-            // تحقق إذا كان UserId موجودًا وإذا كان يحتوي على ProfilePicture
+        const postsWithDetails = posts.map(post => {
             const profilePicture = post.UserId && post.UserId.ProfilePicture
                 ? post.UserId.ProfilePicture
-                : '../../../../assets/face.jpg';  // استخدم صورة بروفايل افتراضية إذا لم تكن موجودة
+                : '../../../../assets/face.jpg';
+
+            const likeCount = post.like ? post.like.length : 0;
+
             return {
                 ...post.toObject(),
-                ProfilePicture: profilePicture
+                ProfilePicture: profilePicture,
+                LikeCount: likeCount 
             };
         });
 
-        return res.status(200).json({ message: "Posts retrieved successfully", posts: postsWithProfilePicture });
+        return res.status(200).json({ message: "Posts retrieved successfully", posts: postsWithDetails });
     } catch (error) {
         console.error("Error retrieving posts:", error);
         return next(error);
     }
 };
+
 
 
 // Delete Own Post
@@ -211,3 +220,5 @@ export const DeletePost = async (req, res, next) => {
         return next(error);
     }
 };
+
+
