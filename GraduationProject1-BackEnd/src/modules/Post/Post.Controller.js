@@ -1,113 +1,123 @@
 import cloudinary from '../../../utls/Cloudinary.js';
 import PostModel from './../../Model/PostModel.js';
-
-
 // Create Own Post
 export const CreatePost = async (req, res, next) => {
+    console.log("req.body:", req.body);
+    console.log("req.files:", req.files);
+
     try {
-        const { Body,Category } = req.body;
+        const { Body, Category } = req.body;
         if (!Body || !Category) {
-            return next(new Error("Body or Category is required."));
+            return next(new Error("Body or Category is required.")); // التحقق من وجود الـ Body و Category
         }
 
-        const UserId = req.user._id;
+        const UserId = req.user._id; // استخراج الـ UserId من التوكن
 
-        // رفع الصور والفيديوهات والملفات
+        // رفع الصور إلى Cloudinary
         const images = req.files['images'] ? await Promise.all(req.files['images'].map(async (file) => {
             const { secure_url, public_id } = await cloudinary.uploader.upload(file.path, { folder: `GraduationProject1-Software/Post/${UserId}` });
-            return { secure_url, public_id };
+            return { secure_url, public_id, originalname: file.originalname };
         })) : [];
 
+        // رفع الفيديوهات إلى Cloudinary
         const videos = req.files['videos'] ? await Promise.all(req.files['videos'].map(async (file) => {
-            const { secure_url, public_id } = await cloudinary.uploader.upload(file.path, { folder: `GraduationProject1-Software/Post/${UserId}` });
-            return { secure_url, public_id };
+            const { secure_url, public_id } = await cloudinary.uploader.upload(file.path, { folder: `GraduationProject1-Software/Post/${UserId}`, resource_type: "video" });
+            return { secure_url, public_id, originalname: file.originalname };
         })) : [];
 
-        const files = req.files['files'] ? req.files['files'].map(file => file.path) : [];
+        // رفع الملفات (مثل PDFs) إلى Cloudinary
+        const files = req.files['files'] ? await Promise.all(req.files['files'].map(async (file) => {
+            const { secure_url, public_id } = await cloudinary.uploader.upload(file.path, { folder: `GraduationProject1-Software/Post/${UserId}` });
+            return { secure_url, public_id, originalname: file.originalname };
+        })) : [];
 
-        const ProfilePicture = req.user.profileImage || '../../../../assets/face.jpg';  // استخدم صورة بروفايل افتراضية إذا لم تكن موجودة
-        
+        // إنشاء الـ Post في قاعدة البيانات
         const Post = await PostModel.create({
             Body,
             Category,
             Images: images,
-            Videos: videos,
-            Files: files,
-            UserId,
-            ProfilePicture,  
+            Videos: videos,  // تخزين الفيديوهات بعد رفعها
+            Files: files,    // تخزين الملفات بعد رفعها
+            UserId, // فقط مرر الـ UserId هنا
         });
 
+        // التأكد من أنه تم إنشاء الـ Post بنجاح
         if (!Post) {
             return next(new Error("Can't Create Post"));
         }
 
-        return res.status(201).json({ message: "success", Post });
+        // إرجاع استجابة بنجاح
+        return res.status(201).json({ message: "Post created successfully", Post });
     } catch (error) {
-        console.error("Error creating post:", error);
-        return next(error);
+        console.error("Error creating post:", error); // طباعة الخطأ في حالة فشل العملية
+        return next(error); // تمرير الخطأ إلى المعالج التالي
     }
 };
-
 
 
 // Update Own Post
 export const UpdatePost = async (req, res, next) => {
     try {
         const { postId } = req.params; 
-        const {  Body } = req.body;
+        const { Body, Category } = req.body;  // تأكد من أنك تأخذ الـ Body و Category
         const UserId = req.user._id;
 
-        // Find the existing post by ID
+        // البحث عن البوست الحالي بناءً على ID
         const post = await PostModel.findById(postId);
         if (!post) {
             return next(new Error("Post not found"));
         }
 
-        // Check if the user is the owner of the post
+        // التحقق من أن المستخدم هو صاحب البوست
         if (post.UserId.toString() !== UserId.toString()) {
             return next(new Error("You are not authorized to update this post"));
         }
 
-        // Update Title and Body if provided
+        // تحديث الـ Body و Category إذا تم تقديمهما
         if (Body) post.Body = Body;
+        if (Category) post.Category = Category;  // إضافة التحديث للـ Category
 
-        // Handle images if provided
+        // التعامل مع الصور إذا تم توفيرها
         if (req.files['images']) {
-            // Delete existing images from Cloudinary
+            // حذف الصور القديمة من Cloudinary
             await Promise.all(post.Images.map(async (image) => {
                 await cloudinary.uploader.destroy(image.public_id);
             }));
 
-            // Upload new images
+            // رفع الصور الجديدة
             post.Images = await Promise.all(req.files['images'].map(async (file) => {
                 const { secure_url, public_id } = await cloudinary.uploader.upload(file.path, { folder: `GraduationProject1-Software/Post/${UserId}` });
-                return { secure_url, public_id };
+                return { secure_url, public_id, originalname: file.originalname };  // إضافة الاسم الأصلي للملف
             }));
         }
 
-        // Handle videos if provided
+        // التعامل مع الفيديوهات إذا تم توفيرها
         if (req.files['videos']) {
-            // Delete existing videos from Cloudinary
+            // حذف الفيديوهات القديمة من Cloudinary
             await Promise.all(post.Videos.map(async (video) => {
                 await cloudinary.uploader.destroy(video.public_id);
             }));
 
-            // Upload new videos
+            // رفع الفيديوهات الجديدة
             post.Videos = await Promise.all(req.files['videos'].map(async (file) => {
-                const { secure_url, public_id } = await cloudinary.uploader.upload(file.path, { folder: `GraduationProject1-Software/Post/${UserId}` });
-                return { secure_url, public_id };
+                const { secure_url, public_id } = await cloudinary.uploader.upload(file.path, { folder: `GraduationProject1-Software/Post/${UserId}`, resource_type: "video" });
+                return { secure_url, public_id, originalname: file.originalname };  // إضافة الاسم الأصلي للملف
             }));
         }
 
-        // Handle files if provided
+        // التعامل مع الملفات الأخرى (مثل PDF) إذا تم توفيرها
         if (req.files['files']) {
-            post.Files = req.files['files'].map(file => file.path);
+            // إضافة الملفات الجديدة
+            post.Files = await Promise.all(req.files['files'].map(async (file) => {
+                const { secure_url, public_id } = await cloudinary.uploader.upload(file.path, { folder: `GraduationProject1-Software/Post/${UserId}` });
+                return { secure_url, public_id, originalname: file.originalname };  // إضافة الاسم الأصلي للملف
+            }));
         }
 
-        // Ensure the ProfileImage is updated from the user's profile
-        post.ProfileImage = req.user.profileImage; // Update ProfileImage
+        // تحديث صورة البروفايل من بيانات المستخدم
+        post.ProfileImage = req.user.profileImage;
 
-        // Save the updated post
+        // حفظ التعديلات على البوست
         await post.save();
 
         return res.status(200).json({ message: "Post updated successfully", post });
@@ -118,8 +128,7 @@ export const UpdatePost = async (req, res, next) => {
 };
 
 
-// Get Own Posts
-
+// Get Own Posts (جلب البوستات الخاصة بالمستخدم)
 export const GetUserPosts = async (req, res, next) => {
     try {
         const userId = req.user.id; // الحصول على ID اليوزر الذي قام بتسجيل الدخول من التوكن
@@ -130,20 +139,20 @@ export const GetUserPosts = async (req, res, next) => {
 
         // Fetch posts for the currently logged-in user and populate the UserId field with ProfileImage
         const posts = await PostModel.find({ UserId: userId })
-            .populate('UserId', 'ProfilePicture'); // Populate the ProfilePicture from the UserId
+            .populate('UserId', 'FullName PictureProfile'); // Populate فقط الحقول المطلوبة
 
         if (!posts || posts.length === 0) {
             return res.status(404).json({ message: "No posts found for this user." });
         }
 
-        // Add profile image to each post if necessary
+        // إضافة صورة بروفايل للمستخدم إذا كانت غير موجودة في البيانات
         const postsWithProfilePicture = posts.map(post => {
-            const profilePicture = post.UserId && post.UserId.ProfilePicture
-                ? post.UserId.ProfilePicture
-                : '../../../../assets/face.jpg';  // Default profile picture if not available
+            const profilePicture = post.UserId && post.UserId.PictureProfile
+                ? post.UserId.PictureProfile
+                : '../../../../assets/face.jpg';  // صورة افتراضية في حال لم توجد صورة بروفايل
             return {
                 ...post.toObject(),
-                ProfilePicture: profilePicture
+                ProfilePicture: profilePicture // إضافة الصورة للبروفايل
             };
         });
 
@@ -155,30 +164,18 @@ export const GetUserPosts = async (req, res, next) => {
 };
 
 
-
 // Get All Posts
-
 export const GetAllPosts = async (req, res, next) => {
     try {
         const posts = await PostModel.find()
-            .populate('UserId', 'ProfilePicture');
+            .populate('UserId', 'FullName PictureProfile'); // اجلب الحقول المطلوبة فقط
 
         if (!posts || posts.length === 0) {
             return res.status(404).json({ message: "No posts found." });
         }
 
-        const postsWithProfilePicture = posts.map(post => {
-            // تحقق إذا كان UserId موجودًا وإذا كان يحتوي على ProfilePicture
-            const profilePicture = post.UserId && post.UserId.ProfilePicture
-                ? post.UserId.ProfilePicture
-                : '../../../../assets/face.jpg';  // استخدم صورة بروفايل افتراضية إذا لم تكن موجودة
-            return {
-                ...post.toObject(),
-                ProfilePicture: profilePicture
-            };
-        });
-
-        return res.status(200).json({ message: "Posts retrieved successfully", posts: postsWithProfilePicture });
+        // لا حاجة لإعادة معالجة البيانات وإضافة الحقول بشكل مسطح
+        return res.status(200).json({ message: "Posts retrieved successfully", posts });
     } catch (error) {
         console.error("Error retrieving posts:", error);
         return next(error);

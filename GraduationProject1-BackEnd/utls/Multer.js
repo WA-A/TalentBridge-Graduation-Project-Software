@@ -1,42 +1,33 @@
+import 'dotenv/config';
+import cloudinary from 'cloudinary';
 import multer from 'multer';
 
-
+// إضافة دعم لملفات ZIP
 export const FileValue = {
-    image: ['image/jpeg','image/png','image/webp','image/jpg'],
-    file:['application/pdf'],
+    image: ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'],
+    file: ['application/pdf', 'application/zip', 'application/x-zip-compressed', 'multipart/x-zip'],
     video: ['video/mp4', 'video/x-msvideo', 'video/x-matroska'],
-}
+};
 
-function fileUpload(customValue = []){
-    const storage = multer.diskStorage(
-         {
-            
-        //     destination:(req,res,cb)=>{ // cb is function call back
-        //         cb(null, 'Uploads'); // nul : if make error / then name file
-        //     } ,
+// تحديث دالة fileUpload لإضافة دعم لملفات ZIP
+function fileUpload(customValue = []) {
+    console.log(customValue);
 
-        //     filename:  (req, file, cb)=>{
-        //         cb(null,Date.now()+Math.random()+"_"+file.originalname) // controll to name file when reguest the same file
-               // Date -> return time in server
-               // 2- use libary nanoid
-        //     }
-         }
-    );
+    const storage = multer.diskStorage({
+        // يمكن تخصيص الوجهة واسم الملف هنا إذا لزم الأمر
+    });
 
-    function fileFilter (req, file, cb) {
+    function fileFilter(req, file, cb) {
+        console.log("File mimetype:", file.mimetype); // سطر لفحص نوع mimetype
+        if (customValue.includes(file.mimetype)) {
+            cb(null, true);
+        } else {
+            cb(new Error("Invalid file format"), false);
+        }
+    }
 
-         if (customValue.includes(file.mimetype)){
-
-        cb(null,true);
-     }
-     else{
-         cb("inavlid format",false);
-     }
-    
-       }
-       const upload = multer ({fileFilter,storage});
-       return upload;
-
+    const upload = multer({ storage, fileFilter });
+    return upload;
 }
 
 export default fileUpload;
