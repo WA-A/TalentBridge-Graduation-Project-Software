@@ -155,7 +155,8 @@ export const GetUserPosts = async (req, res, next) => {
 
             return {
                 ...post.toObject(),
-                ProfilePicture: profilePicture
+                ProfilePicture: profilePicture,
+                LikeCount: likeCount,
             };
         });
 
@@ -183,9 +184,14 @@ export const GetAllPosts = async (req, res, next) => {
             const profilePicture = post.UserId && post.UserId.ProfilePicture
                 ? post.UserId.ProfilePicture
                 : '../../../../assets/face.jpg';  // استخدم صورة بروفايل افتراضية إذا لم تكن موجودة
+
+                const likeCount = post.like ? post.like.length : 0; // Count the number of likes
+
             return {
                 ...post.toObject(),
-                ProfilePicture: profilePicture
+                ProfilePicture: profilePicture,
+                LikeCount: likeCount,
+
             };
         });
 
