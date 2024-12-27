@@ -225,3 +225,54 @@ export const DeletePost = async (req, res, next) => {
 };
 
 
+
+export const LikePost = async (req,res,next)=>{
+
+    const UserId = req.user._id;
+    const {id} = req.params;   //postId
+    
+
+const Post = await PostModel.findOneAndUpdate({_id:id},
+{
+    $addToSet:{
+        Like:UserId,
+    },
+    $pull:{unLike:UserId},
+},
+{
+    new:true
+}
+);
+   
+if(!Post){
+    return next(new Error("Can't Create like in Post"));
+}
+
+return res.status(201).json({message:"success",Post});
+} 
+
+
+
+export const UnLikePost = async (req,res,next)=>{
+
+    const UserId = req.user._id;
+    const {id} = req.params; //postId
+    
+
+const Post = await PostModel.findOneAndUpdate({_id:id},
+{
+    $addToSet:{
+       unLike:UserId,
+    },
+    $pull:{Like:UserId},
+},
+{
+    new:true
+});
+   
+if(!Post){
+    return next(new Error("Can't Create unlike in Post"));
+}
+
+return res.status(201).json({message:"success",Post});
+}
