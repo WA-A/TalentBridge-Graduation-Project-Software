@@ -21,6 +21,7 @@ import ProjectsJuniorPage from './screens/ProjectsJuniorPage.js'
 import AddProjectsPage from './screens/AddProjectsPage';
 import SearchScreen from './screens/SearchScreen.js';
 import ViewOtherProfile from './screens/ViewOtherProfile';
+import CommentsModal from './screens/CommentsModal.js';
 const Stack = createStackNavigator();
 
 const linking = Platform.OS === 'web' ? {
@@ -130,7 +131,10 @@ component={ResetPassword}
  options={{ headerShown: false }}
  />
 
-
+<Stack.Screen name="CommentsModal" 
+component={CommentsModal}                    
+ options={{ headerShown: false }}
+ />
 
 
                     </Stack.Navigator>
