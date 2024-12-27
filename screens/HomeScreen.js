@@ -11,6 +11,7 @@ import { useNavigation } from '@react-navigation/native';
 import { Dimensions } from 'react-native';
 import { useFonts } from 'expo-font';
 import { NightModeContext } from './NightModeContext';
+import * as ImagePicker from 'expo-image-picker';
 import './../compnent/webCardStyle.css';
 import {
     Colors,
@@ -36,6 +37,7 @@ import * as WebBrowser from 'expo-web-browser'
 import * as FileSystem from 'expo-file-system';
 import Video from 'react-native-video';
 //import * as Linking from 'expo-linking';
+import CommentsModal from './CommentsModal';
 
 export default function HomeScreen({ navigation, route}) {
 
@@ -54,12 +56,132 @@ const [openedChatId, setOpenedChatId] = useState(null); // لتتبع أي شا�
   const [isGatheredBubbleHovered, setIsGatheredBubbleHovered] = useState(false);
   const [activeChatId, setActiveChatId] = useState(null); // لتخزين الـ chatId الحالي
 
-
-
-
   const [selectedChatId, setSelectedChatId] = useState(null);
 
+///////////////Comment /////////////////
+const [imageUriComment, setImageUriComment] = useState('');
 
+  const pickImageComment = async () => {
+    try {
+      // طلب إذن الوصول إلى مكتبة الصور
+      let permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (permissionResult.granted === false) {
+        Alert.alert('Permission required', 'You need to grant permission to access the gallery.');
+        return;
+      }
+      let result ;
+      result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect: [8, 5],
+        quality: 1,
+      });
+      console.log(result);
+      // إذا تم اختيار صورة
+      if (!result.canceled) {
+        const selectedImage = result.assets[0];
+        setImageUriComment(selectedImage.uri);
+      
+           } 
+      
+    } catch (error) {
+      console.log('Error picking image: ', error);
+    }
+   
+  };
+const [isCommentModal,setCommenModal] = useState (false);
+const [commentPost, setCommentPosts]=useState([]);
+const [postIdForComment,setPostIdForComment]=useState([]);
+
+const handleCommentPress = () => {
+  setCommenModal(true); // إظهار المودال عند الضغط على تعليق
+};
+
+const handleCloseModal = () => {
+  setCommenModal(false); // إغلاق المودال
+};
+const toggleModal = () =>setCommenModal(!isCommentModal);
+    const [comments, setComments] = useState([]);
+    const [newComment, setNewComment] = useState('');
+    const [imageUri, setImageUri] = useState('');
+
+    // دالة لإضافة تعليق جديد
+    const addComment = () => {
+      if (newComment.trim()) {
+        const newComments = [
+          ...comments,
+          { text: newComment, user: 'User', image: imageUri },
+        ];
+        setComments(newComments);  // إضافة التعليق الجديد
+        setNewComment('');
+        setImageUriComment('');
+      }
+    };
+
+    // دالة لتحميل التعليقات من الخادم (إذا كان لديك API)
+    useEffect(() => {
+        // هنا يمكنك استخدام API لاستدعاء التعليقات بناءً على `postId`
+        // مثل:
+        // fetchComments(postId).then((data) => setComments(data));
+
+        // مثال تعليقات ثابتة لتجربة العرض
+        setComments([
+            { user: 'User 1', text: 'Nice post!', image: '' },
+            { user: 'User 2', text: 'Amazing!', image: 'https://path-to-image.com/image.jpg' },
+        ]);
+    }, []);
+   
+
+const handleGetAllPostsComment = async (postId) => {
+  console.log("Fetching Comments...");
+  setIsLoading(true); // بدء التحميل
+  try {
+    const token = await AsyncStorage.getItem('userToken');
+    console.log('Token:', token); 
+    if (!token) {
+      throw new Error('No token found');
+    }
+
+    const baseUrl = Platform.OS === 'web'
+      ? 'http://localhost:3000'
+      : 'http://192.168.1.239:3000';
+
+    const response = await fetch(`${baseUrl}/comment/getallcomments/${postId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Wasan__${token}`,
+      },
+    });
+    
+    console.log('Response:', response); 
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch comments');
+    }
+
+    const data = await response.json();
+    console.log('Fetched Comments:', data);
+
+    if (data && Array.isArray(data.comments) && data.comments.length > 0) {
+      setCommentPosts(data.comments); // تخزين التعليقات في الحالة
+      setPostIdForComment(postId);    // تخزين ID المنشور
+      setCommenModal(true);           // فتح المودال
+    } else {
+      console.log('No comments available.');
+    }
+  } catch (error) {
+    console.error('Error fetching comments:', error);
+    alert("Error loading comments. Please try again.");
+  } finally {
+    setIsLoading(false); // إيقاف التحميل
+  }
+};
+
+
+
+
+//////////////////////////////////////
 
   const handleBubbleClick = (bubbleId) => {
     // إزالة الدردشة من قائمة الفقاعات (minimizedChats)
@@ -995,10 +1117,20 @@ const handleSelectedPerson = async (item) => {
             <Ionicons name="heart-circle" size={30} color={isNightMode ? secondary : Colors.brand} />
             <Text style={{ color: isNightMode ? primary : '#000', fontSize: 14 }}>Like</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={{ alignItems: 'center' }}>
-            <Ionicons name="chatbubbles" size={28} color={isNightMode ? secondary : Colors.brand} />
-            <Text style={{ color: isNightMode ? primary : '#000', fontSize: 14 }}>Comment</Text>
-          </TouchableOpacity>
+          <TouchableOpacity 
+  onPress={() => handleGetAllPostsComment(post._id)} // تمرير الدالة بدون تنفيذها مباشرة
+  style={{ alignItems: 'center' }}
+>
+  <Ionicons 
+    name="chatbubbles" 
+    size={28} 
+    color={isNightMode ? secondary : Colors.brand} 
+  />
+  <Text style={{ color: isNightMode ? primary : '#000', fontSize: 14 }}>
+    Comment
+  </Text>
+</TouchableOpacity>
+
         </View>
       </View>
     </View>
@@ -1424,6 +1556,64 @@ left: 10, backgroundColor: 'white', padding: 10, borderRadius: 5, zIndex: 20,bot
       </Modal>
 
 
+
+            {/* مودال التعليقات */}
+            <Modal isVisible={isCommentModal} onBackdropPress={handleCloseModal} style={styles.commentModal}>
+      <View style={styles.commentModalContent}>
+        {/* شريط العنوان */}
+        <View style={styles.commentHeader}>
+          <Text style={styles.commentTitle}>Comments</Text>
+          <TouchableOpacity onPress={handleCloseModal} style={styles.commentCloseButton}>
+            <Ionicons name="close" size={28} color="gray" />
+          </TouchableOpacity>
+        </View>
+
+        {/* عرض التعليقات السابقة */}
+        <FlatList
+          data={comments}
+          renderItem={({ item }) => (
+            <View style={styles.commentItem}>
+              {/* صورة الشخص */}
+              <Image source={{ uri: 'https://randomuser.me/api/portraits/men/1.jpg' }} style={styles.commentUserImage} />
+              <View style={styles.commentTextContainer}>
+                <Text style={styles.commentUser}>{item.user}</Text>
+                <Text>{item.text}</Text>
+                {item.image ? <Image source={{ uri: item.image }} style={styles.commentImage} /> : null}
+              </View>
+            </View>
+          )}
+          keyExtractor={(item, index) => index.toString()}
+          contentContainerStyle={styles.commentList}
+        />
+
+        {/* حقل إدخال تعليق جديد */}
+        <TextInput
+          placeholder="Write a comment..."
+          value={newComment}
+          onChangeText={setNewComment}
+          style={styles.commentInput}
+        />
+
+        {/* حقل إدخال رابط الصورة إذا لزم الأمر */}
+        <TextInput
+          placeholder="Image URL"
+          value={imageUriComment}
+          onChangeText={setImageUriComment}
+          style={styles.commentImageInput}
+        />
+
+        {/* زر لاختيار صورة من المعرض */}
+        <TouchableOpacity onPress={pickImageComment} style={styles.imagePickerButton}>
+          <Ionicons name="image" size={30} color="gray" />
+          <Text style={styles.imagePickerText}>Pick Image</Text>
+        </TouchableOpacity>
+
+        {/* زر إضافة تعليق */}
+        <TouchableOpacity onPress={addComment} style={styles.commentSendButton}>
+          <Ionicons name="send" size={30} color="white" />
+        </TouchableOpacity>
+      </View>
+    </Modal>
        
         </View>
     </TouchableWithoutFeedback>);
@@ -1504,6 +1694,89 @@ const styles = StyleSheet.create({
   backgroundColor: '#000', // لون خلفية الفيديو (لأغراض التحميل)
 },
 
+commentModal: {
+  justifyContent: 'flex-end', // لعرض المودال في أسفل الشاشة
+  margin: 0,
+},
+commentModalContent: {
+  backgroundColor: 'white',
+  padding: 20,
+  borderTopLeftRadius: 10,
+  borderTopRightRadius: 10,
+  minHeight: '40%',
+},
+commentHeader: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  marginBottom: 15,
+},
+commentTitle: {
+  fontSize: 20,
+  fontWeight: 'bold',
+},
+commentCloseButton: {
+  padding: 5,
+},
+commentList: {
+  maxHeight: 200,
+  marginBottom: 10,
+},
+commentItem: {
+  flexDirection: 'row',
+  marginBottom: 15,
+},
+commentUserImage: {
+  width: 40,
+  height: 40,
+  borderRadius: 20,
+  marginRight: 10,
+},
+commentTextContainer: {
+  flex: 1,
+},
+commentUser: {
+  fontWeight: 'bold',
+},
+commentImage: {
+  width: 100,
+  height: 100,
+  borderRadius: 8,
+  marginTop: 5,
+},
+commentInput: {
+  borderWidth: 1,
+  borderRadius: 5,
+  padding: 10,
+  marginBottom: 10,
+  height: 40,
+},
+commentImageInput: {
+  borderWidth: 1,
+  borderRadius: 5,
+  padding: 10,
+  marginBottom: 15,
+  height: 40,
+},
+imagePickerButton: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  marginBottom: 10,
+},
+imagePickerText: {
+  marginLeft: 10,
+  fontSize: 16,
+  color: 'gray',
+},
+commentSendButton: {
+  backgroundColor: '#007AFF',
+  borderRadius: 50,
+  width: 50,
+  height: 50,
+  justifyContent: 'center',
+  alignItems: 'center',
+  marginTop: 10,
+},
 });
  
   
