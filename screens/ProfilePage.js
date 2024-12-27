@@ -1740,7 +1740,7 @@ useEffect(() => {
         <Text style={[styles.experienceTitle, { color: isNightMode ? Colors.primary : Colors.black }]}>
           {exp.name}
         </Text>
-            <TouchableOpacity onPress={() => openConfirmDeleteModal('skill',exp)} style={styles.editButton}>
+            <TouchableOpacity onPress={() => openConfirmDeleteModal('skills',exp)} style={styles.editButton}>
               <MaterialCommunityIcons name="minus-circle" size={20} color={isNightMode ? Colors.primary : Colors.black} />
             </TouchableOpacity>
       </View>
@@ -2445,11 +2445,13 @@ useEffect(() => {
                    <SkillsList skill={Skills} />
                     <TouchableOpacity onPress={handleHideSkills} style={styles.showAllButton}>
                         <Text style={styles.showAllButtonText}>Hide</Text>
+                      
                     </TouchableOpacity>
                 </>
             )}
+      
+      
       <View style={[styles.divider,{height:3}]}/>
-
      
 
       {/* بطاقة Languages */}
