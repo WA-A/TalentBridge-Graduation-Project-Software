@@ -209,32 +209,22 @@ const Skills = [
 
 export const AddSkills = async (req, res) => {
     try {
+        // التحقق من وجود المستخدم
         if (!req.user) {
             console.log("User not authorized: No token provided.");
             return res.status(401).json({ message: "User not authorized. Please provide a valid token." });
         }
 
         const authUser = req.user;
-        const { SkillId } = req.body;
+        const { SkillIds } = req.body; // الآن SkillIds مصفوفة
 
-        if (!authUser || !SkillId) {
-            console.log("Missing required fields: authUser or SkillId.");
-            return res.status(400).json({ message: "User ID and Skill ID are required." });
+        // التحقق من صحة الإدخال
+        if (!authUser || !Array.isArray(SkillIds) || SkillIds.length === 0) {
+            console.log("Missing required fields: authUser or SkillIds.");
+            return res.status(400).json({ message: "User ID and Skill IDs are required, and must be a non-empty array." });
         }
 
-        console.log("Request received:", { authUser, SkillId });
-
-        const selectedSkill = Skills.find(skill => skill.id === SkillId);
-        if (!selectedSkill) {
-            console.log("Skill not found in predefined list.");
-            return res.status(404).json({ message: "Skill not found." });
-        }
-
-        console.log("Selected skill:", selectedSkill);
-
-        if (!selectedSkill.id || !selectedSkill.name || !selectedSkill.code) {
-            return res.status(400).json({ message: "Selected skill is missing required fields." });
-        }
+        console.log("Request received:", { authUser, SkillIds });
 
         const user = await UserModel.findById(authUser);
         if (!user) {
@@ -244,32 +234,49 @@ export const AddSkills = async (req, res) => {
 
         console.log("User found:", user);
 
-        const skillExists = user.Skills.some(skill => skill.id === selectedSkill.id);
-        if (skillExists) {
-            console.log("Skill already exists for user.");
-            return res.status(400).json({ message: "Skill already added." });
-        }
+        const addedSkills = [];
+        const failedSkills = [];
 
-        user.Skills.push({
-            id: selectedSkill.id,
-            name: selectedSkill.name,
-            code: selectedSkill.code
-        });
+        // معالجة كل المهارات في المصفوفة
+        for (const SkillId of SkillIds) {
+            const selectedSkill = Skills.find(skill => skill.id === SkillId);
+            if (!selectedSkill) {
+                console.log(`Skill not found: ${SkillId}`);
+                failedSkills.push(SkillId);
+                continue;
+            }
+
+            const skillExists = user.Skills.some(skill => skill.id === selectedSkill.id);
+            if (skillExists) {
+                console.log(`Skill already exists for user: ${SkillId}`);
+                failedSkills.push(SkillId);
+                continue;
+            }
+
+            user.Skills.push({
+                id: selectedSkill.id,
+                name: selectedSkill.name,
+                code: selectedSkill.code
+            });
+
+            addedSkills.push(selectedSkill);
+        }
 
         await user.save();
 
-        console.log("Skill added successfully:", selectedSkill);
+        console.log("Skills added successfully.");
         return res.status(200).json({
-            message: "Skill added successfully.",
-            skills: user.Skills
+            message: "Skills processed successfully.",
+            addedSkills,
+            failedSkills,
+            userSkills: user.Skills
         });
 
     } catch (error) {
-        console.error("Error adding skill: ", error);
+        console.error("Error adding skills:", error);
         return res.status(500).json({ message: "Internal Server Error." });
     }
 };
-
 
 
 export const DeleteSkill = async (req, res) => {

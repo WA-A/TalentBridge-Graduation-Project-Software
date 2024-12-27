@@ -34,6 +34,7 @@ import { use } from 'react';
 import { color } from 'react-native-elements/dist/helpers';
 import { colors } from 'react-native-elements';
 import MultiSelect from 'react-native-multiple-select';
+import { GetUserSkills } from '../GraduationProject1-BackEnd/ExternalApiSkills/ExternealApiSkills.controller';
 
 // Color constants
 const { secondary, primary, careysPink, darkLight, fourhColor, tertiary, fifthColor,firstColor } = Colors;
@@ -122,8 +123,8 @@ export default function ProfilePage ({ navigation}) {
 
     const [userSkills, setUserSkills] = useState([]);  
     const [skillsList, setSkillsList] = useState([]); // قائمة المهارات
-    const [Skills, setSkill] = useState([]); // قائمة مهارات من API
     const [selectedSkills, setSelectedSkills] = useState([]);
+    const [Skills, setSkills] = useState([]);
 
 
     // وظيفة لإضافة المهارة للقائمة
@@ -1227,14 +1228,11 @@ const handleDeleteAction = () => {
   if (currentSectionToDelete === 'language') { 
     // تحقق من كون اللغة هي "language"
     handleDeleteLanguages();  // استدعاء دالة حذف اللغة
-    handleDeleteSkills();  // استدعاء دالة حذف اللغة
-
     closeConfirmDeleteModal();
   } 
   else if (currentSectionToDelete === 'skills') { 
-    // تحقق من كون المهارات هي "skills"
-    // إذا كان لديك دالة أخرى مخصصة لمهارات معينة، استدعها هنا
-    // مثلا handleDeleteSkills();
+    handleDeleteSkills();  // استدعاء دالة حذف اللغة
+    closeConfirmDeleteModal();
   } 
   else {
     // دالة الحذف الأخرى في حال لم يكن currentSectionToDelete هو "language" أو "skills"
@@ -1436,9 +1434,9 @@ const handleGetSkills = async () => {
     }
 
     const data = await response.json(); // تحويل الرد إلى JSON
-    setSkill(data.skills); // تخزين اللغات في الحالة لعرضها
-    
-    console.log('Fetched skills:', data.skills); // تحقق من البيانات
+    setSkills(data.Skills); // تخزين اللغات في الحالة لعرضها
+    console.log(Skills);
+    console.log('Fetched skills:', data.Skills); // تحقق من البيانات
   } catch (error) {
     console.error('Error fetching skills:', error.message);
   }
@@ -1479,8 +1477,8 @@ const handleDeleteSkills = async () => {
       console.error('Token not found');
       return;
     }
-    const languageId = selectedItemToDelete.id;
-    console.log(languageId);
+    const SkillId = selectedItemToDelete.id;
+    console.log("sama",SkillId);
     const response = await fetch(`${baseUrl}/externalapiSkills/deleteskills`, { // تأكد من المسار الصحيح
       method: 'DELETE',  // طريقة الحذف يجب أن تكون DELETE
       headers: {
@@ -1488,7 +1486,7 @@ const handleDeleteSkills = async () => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        LanguageId: languageId,  // تمرير الـ LanguageId الذي نريد حذفه
+       SkillId: SkillId,  // تمرير الـ LanguageId الذي نريد حذفه
       }),
     });
 
@@ -1496,11 +1494,7 @@ const handleDeleteSkills = async () => {
       const errorData = await response.json(); // إذا كان هناك خطأ في الرد
       throw new Error(errorData.message || 'Failed to delete skills');
     }
-
-    const data = await response.json(); // تحويل الرد إلى JSON
-    setUserSkills(data.skills); // تخزين اللغات المحدثة في الحالة لعرضها بعد الحذف
-
-    console.log('Updated skills:', data.skills); // تحقق من البيانات
+    handleGetSkillsUser();
   } catch (error) {
     console.error('Error deleting skills:', error.message);
   }
@@ -1516,7 +1510,7 @@ const handleAddSkills = async () => {
 
     console.log("Selected Skills: ", selectedSkills);
 
-    const SkillsIds = selectedSkills;
+    const SkillIds = selectedSkills;
 
     const response = await fetch(`${baseUrl}/externalapiSkills/addskills`, {
       method: 'POST',
@@ -1524,7 +1518,7 @@ const handleAddSkills = async () => {
         'Authorization': `Wasan__${token}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ SkillsIds }), // إرسال الـ IDs مباشرةً
+      body: JSON.stringify({SkillIds }), // إرسال الـ IDs مباشرةً
     });
 
     if (!response.ok) {
@@ -1535,7 +1529,7 @@ const handleAddSkills = async () => {
     // استرجاع اللغات بعد إضافة اللغات
     handleGetSkillsUser();
     closeModal();
-    console.log('Skills added successfully:', LanguageIds);
+    console.log('Skills added successfully');
   } catch (error) {
     setError(error.message);
    // console.error('Error adding skills:', error.message);
@@ -1734,19 +1728,20 @@ useEffect(() => {
     };
     return (
       <ScrollView>
-        {filterExperiences().map((exp, index) => (
-          <View key={index} style={[styles.experienceItem, { flexDirection: 'row' }]}>
+          {filterExperiences().slice(0,2).map((cert, index) => (
+        <View key={index} style={[styles.experienceItem, { flexDirection: 'row' }]}>
       <View style={{ flex: 1 }}>
         <Text style={[styles.experienceTitle, { color: isNightMode ? Colors.primary : Colors.black }]}>
-          {exp.name}
+          {cert.name}
         </Text>
-            <TouchableOpacity onPress={() => openConfirmDeleteModal('skills',exp)} style={styles.editButton}>
+            <TouchableOpacity onPress={() => openConfirmDeleteModal('language',cert)} style={styles.editButton}>
               <MaterialCommunityIcons name="minus-circle" size={20} color={isNightMode ? Colors.primary : Colors.black} />
             </TouchableOpacity>
       </View>
     </View>
+  ))}
 
-        ))}
+      
       </ScrollView>
     );
   };
@@ -2327,13 +2322,13 @@ useEffect(() => {
     
       {/* عرض الصورة */}
       {cert.credentialType === 'image' && cert.certificationImageData?.secure_url && (
-      <TouchableOpacity onPress={() => openImageViewer(cert.certificationImageData.secure_url)}>
+         <TouchableOpacity onPress={() => openImageViewer(cert.certificationImageData.secure_url)}>
         <Image
           source={{ uri: cert.certificationImageData.secure_url }}
           style={styles.certImage}
         />
-      </TouchableOpacity>
-      )}
+         </TouchableOpacity>
+            )}
 
       {/* محتوى الشهادة */}
       <View style={{ flex: 1 }}>
@@ -2407,7 +2402,7 @@ useEffect(() => {
 
 
       {/* بطاقة Skills */}
-      <View style={[styles.card,{ backgroundColor: isNightMode ? Colors.black : Colors.primary }]}>
+      <View style={[styles.card, { backgroundColor: isNightMode ? Colors.black : Colors.primary }]}>
         <View style={styles.cardHeader}>
           <Text style={[styles.cardTitle,{color: isNightMode ? Colors.primary : Colors.black }]}>Skills</Text>
           <View style={styles.actionButtons}>
@@ -2419,21 +2414,20 @@ useEffect(() => {
             </TouchableOpacity>
            </View>
         </View>
-      </View>
-      {userSkills.slice(0,2).map((cert, index) => (
-    <View key={index} style={[styles.experienceItem, { flexDirection: 'row' }]}>
-      <View style={{ flex: 1 }}>
+             {userSkills.slice(0,2).map((cert, index) => (
+        <View key={index} style={[styles.experienceItem, { flexDirection: 'row' }]}>
+            <View style={{ flex: 1 }}>
         <Text style={[styles.experienceTitle, { color: isNightMode ? Colors.primary : Colors.black }]}>
           {cert.name}
         </Text>
-            <TouchableOpacity onPress={() => openConfirmDeleteModal('skills',cert)} style={styles.editButton}>
+            <TouchableOpacity onPress={() => openConfirmDeleteModal('language',cert)} style={styles.editButton}>
               <MaterialCommunityIcons name="minus-circle" size={20} color={isNightMode ? Colors.primary : Colors.black} />
             </TouchableOpacity>
-      </View>
-    </View>
-  ))}
+          </View>
+         </View>
+                      ))}
 
-      {userSkills.length > 2 && !showAllSkills && (
+        {userSkills.length > 2 && !showAllSkills && (
                 <TouchableOpacity onPress={handleShowAllSkills} style={styles.showAllButton}>
                     <Text style={styles.showAllButtonText}>Show All</Text>
                 </TouchableOpacity>
@@ -2449,7 +2443,7 @@ useEffect(() => {
                     </TouchableOpacity>
                 </>
             )}
-      
+      </View>
       
       <View style={[styles.divider,{height:3}]}/>
      
@@ -2736,7 +2730,7 @@ useEffect(() => {
       style={styles.scrollableItemsContainer}
       items={Skills} // قائمة مهارات
       uniqueKey="id" // المفتاح الفريد لكل عنصر
-      onSelectedItemsChangeSkills={onSelectedItemsChangeSkills} // التعامل مع التحديد
+      onSelectedItemsChange={onSelectedItemsChangeSkills} // التعامل مع التحديد
       selectedItems={selectedSkills} // العناصر المحددة حالياً
       selectText="Choose Skills"
       submitButtonColor={isNightMode ? Colors.fourhColor : Colors.fourhColor} // لون خلفية زر "Submit"
@@ -3270,6 +3264,16 @@ useEffect(() => {
             )}
 
             {currentSectionToDelete === 'language' && (
+              <>
+                <Text style={{ color: isNightMode ? Colors.primary : Colors.black }}>
+                Are you sure you want to remove the ,<Text style={{ fontWeight: 'bold', color: isNightMode ? Colors.primary : Colors.black }}>{selectedItemToDelete?.name} </Text> language?
+                </Text>
+               
+             
+           </>
+            )}
+
+            {currentSectionToDelete === 'skills' && (
               <>
                 <Text style={{ color: isNightMode ? Colors.primary : Colors.black }}>
                 Are you sure you want to remove the ,<Text style={{ fontWeight: 'bold', color: isNightMode ? Colors.primary : Colors.black }}>{selectedItemToDelete?.name} </Text> language?
