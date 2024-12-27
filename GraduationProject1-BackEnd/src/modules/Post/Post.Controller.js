@@ -131,13 +131,13 @@ export const UpdatePost = async (req, res, next) => {
 // Get Own Posts (جلب البوستات الخاصة بالمستخدم)
 export const GetUserPosts = async (req, res, next) => {
     try {
-        const userId = req.user.id; // الحصول على ID اليوزر الذي قام بتسجيل الدخول من التوكن
+        const userId = req.user.id; 
 
         if (!userId) {
             return res.status(400).json({ message: "User ID is required." });
         }
 
-        // Fetch posts for the currently logged-in user and populate the UserId field with ProfileImage
+        // Fetch posts for the currently logged-in user and populate the UserId field with ProfilePicture
         const posts = await PostModel.find({ UserId: userId })
             .populate('UserId', 'FullName PictureProfile'); // Populate فقط الحقول المطلوبة
 
@@ -145,14 +145,53 @@ export const GetUserPosts = async (req, res, next) => {
             return res.status(404).json({ message: "No posts found for this user." });
         }
 
-        // إضافة صورة بروفايل للمستخدم إذا كانت غير موجودة في البيانات
-        const postsWithProfilePicture = posts.map(post => {
-            const profilePicture = post.UserId && post.UserId.PictureProfile
-                ? post.UserId.PictureProfile
-                : '../../../../assets/face.jpg';  // صورة افتراضية في حال لم توجد صورة بروفايل
+        // Add profile image and likes count to each post
+        const postsWithDetails = posts.map(post => {
+            const profilePicture = post.UserId && post.UserId.ProfilePicture
+                ? post.UserId.ProfilePicture
+                : '../../../../assets/face.jpg';  // Default profile picture if not available
+
+            const likeCount = post.like ? post.like.length : 0; // Count the number of likes
+
             return {
                 ...post.toObject(),
-                ProfilePicture: profilePicture // إضافة الصورة للبروفايل
+                ProfilePicture: profilePicture,
+                LikeCount: likeCount,
+            };
+        });
+
+        return res.status(200).json({ message: "Posts retrieved successfully", posts: postsWithDetails });
+    } catch (error) {
+        console.error("Error retrieving posts:", error);
+        return next(error);
+    }
+};
+
+
+
+// Get All Posts
+export const GetAllPosts = async (req, res, next) => {
+    try {
+        const posts = await PostModel.find()
+            .populate('UserId', 'ProfilePicture');
+
+        if (!posts || posts.length === 0) {
+            return res.status(404).json({ message: "No posts found." });
+        }
+
+        const postsWithProfilePicture = posts.map(post => {
+            // تحقق إذا كان UserId موجودًا وإذا كان يحتوي على ProfilePicture
+            const profilePicture = post.UserId && post.UserId.ProfilePicture
+                ? post.UserId.ProfilePicture
+                : '../../../../assets/face.jpg';  // استخدم صورة بروفايل افتراضية إذا لم تكن موجودة
+
+                const likeCount = post.like ? post.like.length : 0; // Count the number of likes
+
+            return {
+                ...post.toObject(),
+                ProfilePicture: profilePicture,
+                LikeCount: likeCount,
+
             };
         });
 
@@ -163,24 +202,6 @@ export const GetUserPosts = async (req, res, next) => {
     }
 };
 
-
-// Get All Posts
-export const GetAllPosts = async (req, res, next) => {
-    try {
-        const posts = await PostModel.find()
-            .populate('UserId', 'FullName PictureProfile'); // اجلب الحقول المطلوبة فقط
-
-        if (!posts || posts.length === 0) {
-            return res.status(404).json({ message: "No posts found." });
-        }
-
-        // لا حاجة لإعادة معالجة البيانات وإضافة الحقول بشكل مسطح
-        return res.status(200).json({ message: "Posts retrieved successfully", posts });
-    } catch (error) {
-        console.error("Error retrieving posts:", error);
-        return next(error);
-    }
-};
 
 
 // Delete Own Post
@@ -208,3 +229,56 @@ export const DeletePost = async (req, res, next) => {
         return next(error);
     }
 };
+
+
+
+export const LikePost = async (req,res,next)=>{
+
+    const UserId = req.user._id;
+    const {id} = req.params;   //postId
+    
+
+const Post = await PostModel.findOneAndUpdate({_id:id},
+{
+    $addToSet:{
+        Like:UserId,
+    },
+    $pull:{unLike:UserId},
+},
+{
+    new:true
+}
+);
+   
+if(!Post){
+    return next(new Error("Can't Create like in Post"));
+}
+
+return res.status(201).json({message:"success",Post});
+} 
+
+
+
+export const UnLikePost = async (req,res,next)=>{
+
+    const UserId = req.user._id;
+    const {id} = req.params; //postId
+    
+
+const Post = await PostModel.findOneAndUpdate({_id:id},
+{
+    $addToSet:{
+       unLike:UserId,
+    },
+    $pull:{Like:UserId},
+},
+{
+    new:true
+});
+   
+if(!Post){
+    return next(new Error("Can't Create unlike in Post"));
+}
+
+return res.status(201).json({message:"success",Post});
+}

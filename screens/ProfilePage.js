@@ -90,6 +90,9 @@ export default function ProfilePage ({ navigation}) {
     const [languages, setLanguages] = useState([]); // قائمة اللغات من API
   const [userLanguages, setUserLanguages] = useState([]); // قائمة لغات المستخدم
 
+
+  
+
     const [newSkills,setNewSkills] = useState([]);
     const [newLanguage,setNewLanguage] = useState([]);
     
@@ -115,16 +118,22 @@ export default function ProfilePage ({ navigation}) {
     const toggleDisplayType = () => {
       setIsImageType(!isImageType);
     };
-    const [skill, setSkill] = useState('');  // لتخزين المهارة الحالية
+
+
+    const [userSkills, setUserSkills] = useState([]);  
     const [skillsList, setSkillsList] = useState([]); // قائمة المهارات
+    const [Skills, setSkill] = useState([]); // قائمة مهارات من API
+    const [selectedSkills, setSelectedSkills] = useState([]);
+
 
     // وظيفة لإضافة المهارة للقائمة
-    const addSkill = () => {
-        if (skill.trim()) {
-            setSkillsList([...skillsList, skill]); // إضافة المهارة
-            setSkill(''); // مسح حقل الإدخال
-        }
-    };
+    // const addSkill = () => {
+    //     if (skill.trim()) {
+    //         setSkillsList([...skillsList, skill]); // إضافة المهارة
+    //         setSkill(''); // مسح حقل الإدخال
+    //     }
+    // };
+
 
 
     const [githubLink, setGithubLink] = useState(''); // لحفظ الرابط الذي يُدخله المستخدم  
@@ -150,6 +159,8 @@ export default function ProfilePage ({ navigation}) {
       setShowAllLanguage(false);
 
     }
+
+    
     // Load custom fonts
     const bottomBarTranslate = scrollY.interpolate({
         inputRange: [0, 50],
@@ -200,8 +211,17 @@ const [achievements,setAchievements]=useState('');
   // دالة لمعالجة التحديد
   const onSelectedItemsChange = (selectedItems) => {
     setSelectedLanguages(selectedItems); // تحديث حالة اللغات المحددة
+    
   };
 
+
+  const onSelectedItemsChangeSkills = (selectedItemsSkills) => {
+    setSelectedSkills(selectedItemsSkills);
+  };
+
+  
+
+  
   const [experiences, setExperiences] = useState([]);
 
  const [Education, setEducation] = useState([]);
@@ -233,7 +253,6 @@ const [achievements,setAchievements]=useState('');
   ];
   const [recommendation, setRecommendation] = useState([ ]);
 
-  const [skills, setSkills] = useState([]);
 
   const sortedExperiences = [...experiences].sort((a, b) => new Date(b.startDate) - new Date(a.startDate));
 
@@ -243,6 +262,9 @@ const [error,setError]=useState('');
   const [showAllExperiences, setShowAllExperiences] = useState(false);
   const [showAllEducation, setShowAllEducation] = useState(false);
   const [showAlllLanguage,setShowAllLanguage]=useState(false);
+  const [showAllSkills,setShowAllSkills]=useState(false);
+
+
   const handleShowAllExperiences = () => {
     setShowAllExperiences(true);
   };
@@ -256,6 +278,14 @@ const [error,setError]=useState('');
   const handleHideEducation = () => {
     setShowAllEducation(false);
   };
+   
+  const handleShowAllSkills = () => {
+    setShowAllSkills(true);
+  };
+
+  const handleHideSkills = () => {
+    setShowAllSkills(false);
+  };
 
 
   // دالة لفتح الـ Modal بناءً على البطاقة
@@ -264,6 +294,7 @@ const [error,setError]=useState('');
     setModalVisible(true);
     setError('');
     setSelectedLanguages([]);
+    setSelectedSkills([]);
   };
 
   // إغلاق الـ Modal
@@ -291,6 +322,10 @@ const [error,setError]=useState('');
       await handleAddLanguages();
       
     }
+    if(currentModal === 'skills'){
+      await handleAddSkills();
+      
+    }
   };
  
  
@@ -314,10 +349,10 @@ const [error,setError]=useState('');
       // إذا كان القسم "المشاريع"
       await addProject();
     } 
-    if (currentModalEditting === 'skills') {
-      // إذا كان القسم "المهارات"
-      await addSkill();
-    } 
+    // if (currentModalEditting === 'skills') {
+    //   // إذا كان القسم "المهارات"
+    //   await addSkill();
+    // } 
   };
   
 
@@ -1192,6 +1227,8 @@ const handleDeleteAction = () => {
   if (currentSectionToDelete === 'language') { 
     // تحقق من كون اللغة هي "language"
     handleDeleteLanguages();  // استدعاء دالة حذف اللغة
+    handleDeleteSkills();  // استدعاء دالة حذف اللغة
+
     closeConfirmDeleteModal();
   } 
   else if (currentSectionToDelete === 'skills') { 
@@ -1365,6 +1402,146 @@ const handleAddLanguages = async () => {
   }
 };
 
+// Function Skills
+const loadSelectedSkills = async () => {
+  try {
+    const savedSkills = await AsyncStorage.getItem('selectedSkills');
+    if (savedSkills) {
+      setSelectedSkills(JSON.parse(savedSkills)); // تحميل اللغات المحفوظة
+    }
+  } catch (error) {
+    console.error('Error loading selected skills from AsyncStorage:', error);
+  }
+};
+
+
+const handleGetSkills = async () => {
+  try {
+    const token = await AsyncStorage.getItem('userToken'); // استرجاع التوكن
+    if (!token) {
+      console.error('Token not found');
+      return;
+    }
+
+    const response = await fetch(`${baseUrl}/externalapiSkills/getskills`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Wasan__${token}`, // تضمين التوكن في الهيدر
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json(); // إذا كان هناك خطأ في الرد
+      throw new Error(errorData.message || 'Failed to fetch skills');
+    }
+
+    const data = await response.json(); // تحويل الرد إلى JSON
+    setSkill(data.skills); // تخزين اللغات في الحالة لعرضها
+    
+    console.log('Fetched skills:', data.skills); // تحقق من البيانات
+  } catch (error) {
+    console.error('Error fetching skills:', error.message);
+  }
+};
+
+const handleGetSkillsUser = async () => {
+  try {
+    const token = await AsyncStorage.getItem('userToken'); // استرجاع التوكن
+    if (!token) {
+      console.error('Token not found');
+      return;
+    }
+
+    const response = await fetch(`${baseUrl}/externalapiSkills/getuserskills`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Wasan__${token}`, // تضمين التوكن في الهيدر
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json(); 
+      throw new Error(errorData.message || 'Failed to fetch skills');
+    } 
+
+    const data =  await response.json(); 
+    setUserSkills(data.skills); 
+    console.log('Fetched skills:', data.skills); 
+  } catch (error) {
+    console.error('Error fetching skills:', error.message);
+  }
+};
+
+const handleDeleteSkills = async () => {
+  try {
+    const token = await AsyncStorage.getItem('userToken'); // استرجاع التوكن
+    if (!token) {
+      console.error('Token not found');
+      return;
+    }
+    const languageId = selectedItemToDelete.id;
+    console.log(languageId);
+    const response = await fetch(`${baseUrl}/externalapiSkills/deleteskills`, { // تأكد من المسار الصحيح
+      method: 'DELETE',  // طريقة الحذف يجب أن تكون DELETE
+      headers: {
+        'Authorization': `Wasan__${token}`, // تضمين التوكن في الهيدر
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        LanguageId: languageId,  // تمرير الـ LanguageId الذي نريد حذفه
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json(); // إذا كان هناك خطأ في الرد
+      throw new Error(errorData.message || 'Failed to delete skills');
+    }
+
+    const data = await response.json(); // تحويل الرد إلى JSON
+    setUserSkills(data.skills); // تخزين اللغات المحدثة في الحالة لعرضها بعد الحذف
+
+    console.log('Updated skills:', data.skills); // تحقق من البيانات
+  } catch (error) {
+    console.error('Error deleting skills:', error.message);
+  }
+};
+
+const handleAddSkills = async () => {
+  try {
+    const token = await AsyncStorage.getItem('userToken'); // استرجاع التوكن
+    if (!token) {
+      console.error('Token not found');
+      return;
+    }
+
+    console.log("Selected Skills: ", selectedSkills);
+
+    const SkillsIds = selectedSkills;
+
+    const response = await fetch(`${baseUrl}/externalapiSkills/addskills`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Wasan__${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ SkillsIds }), // إرسال الـ IDs مباشرةً
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to add skills');
+    }
+
+    // استرجاع اللغات بعد إضافة اللغات
+    handleGetSkillsUser();
+    closeModal();
+    console.log('Skills added successfully:', LanguageIds);
+  } catch (error) {
+    setError(error.message);
+   // console.error('Error adding skills:', error.message);
+  }
+};
+
 
 
 
@@ -1372,12 +1549,15 @@ const handleAddLanguages = async () => {
 useEffect(() => {
   loadSelectedLanguages();
   handleGetLanguages(); // استرجاع اللغات عند تحميل المكون
+  loadSelectedSkills();
+  handleGetSkills(); // استرجاع المهارات عند تحميل المكون
   handleViewProfile(); 
   requestPermission();
   getAllExperiance();
   getAllEducation();
   getAllCertifications();
   handleGetLanguagesUser();
+  handleGetSkillsUser();
   socket.on('profileUpdated', (updatedUserData) => {
     console.log('Profile updated:', updatedUserData);
   
@@ -1444,6 +1624,7 @@ useEffect(() => {
       setIsLoading(false);
     }
   };
+
   const getStatusColor = (isContinuing) => {
     return isContinuing ? 'green' : 'red'; // أخضر إذا كان مستمر وأحمر إذا كان منتهي
   };
@@ -1533,6 +1714,33 @@ useEffect(() => {
           {exp.name}
         </Text>
             <TouchableOpacity onPress={() => openConfirmDeleteModal('language',exp)} style={styles.editButton}>
+              <MaterialCommunityIcons name="minus-circle" size={20} color={isNightMode ? Colors.primary : Colors.black} />
+            </TouchableOpacity>
+      </View>
+    </View>
+
+        ))}
+      </ScrollView>
+    );
+  };
+
+
+  // Skills List
+
+  const SkillsList = ({ skill }) => {
+    // دالة لتصفية الخبرات وعرض الخبرات من الثالثة فما فوق
+    const filterExperiences = () => {
+      return userSkills.slice(2); // تصفية الخبرات بحيث تبدأ من الخبرة الثالثة
+    };
+    return (
+      <ScrollView>
+        {filterExperiences().map((exp, index) => (
+          <View key={index} style={[styles.experienceItem, { flexDirection: 'row' }]}>
+      <View style={{ flex: 1 }}>
+        <Text style={[styles.experienceTitle, { color: isNightMode ? Colors.primary : Colors.black }]}>
+          {exp.name}
+        </Text>
+            <TouchableOpacity onPress={() => openConfirmDeleteModal('skills',exp)} style={styles.editButton}>
               <MaterialCommunityIcons name="minus-circle" size={20} color={isNightMode ? Colors.primary : Colors.black} />
             </TouchableOpacity>
       </View>
@@ -2204,13 +2412,47 @@ useEffect(() => {
           <Text style={[styles.cardTitle,{color: isNightMode ? Colors.primary : Colors.black }]}>Skills</Text>
           <View style={styles.actionButtons}>
 
-          <TouchableOpacity onPress={() => openModal('skills')} style={styles.smallButton}>
+          <TouchableOpacity 
+          handleAddSkills
+          onPress={() => openModal('skills')} style={styles.smallButton}>
               <Text style={styles.smallButtonText}>Add</Text>
             </TouchableOpacity>
            </View>
         </View>
       </View>
+      {userSkills.slice(0,2).map((cert, index) => (
+    <View key={index} style={[styles.experienceItem, { flexDirection: 'row' }]}>
+      <View style={{ flex: 1 }}>
+        <Text style={[styles.experienceTitle, { color: isNightMode ? Colors.primary : Colors.black }]}>
+          {cert.name}
+        </Text>
+            <TouchableOpacity onPress={() => openConfirmDeleteModal('skills',cert)} style={styles.editButton}>
+              <MaterialCommunityIcons name="minus-circle" size={20} color={isNightMode ? Colors.primary : Colors.black} />
+            </TouchableOpacity>
+      </View>
+    </View>
+  ))}
+
+      {userSkills.length > 2 && !showAllSkills && (
+                <TouchableOpacity onPress={handleShowAllSkills} style={styles.showAllButton}>
+                    <Text style={styles.showAllButtonText}>Show All</Text>
+                </TouchableOpacity>
+            )}
+
+
+            {showAllSkills && (
+                <>  
+                   <SkillsList skill={Skills} />
+                    <TouchableOpacity onPress={handleHideSkills} style={styles.showAllButton}>
+                        <Text style={styles.showAllButtonText}>Hide</Text>
+                      
+                    </TouchableOpacity>
+                </>
+            )}
+      
+      
       <View style={[styles.divider,{height:3}]}/>
+     
 
       {/* بطاقة Languages */}
       <TouchableOpacity
@@ -2488,9 +2730,46 @@ useEffect(() => {
  {/* محتويات Modal Skills */}
  {currentModal === 'skills' && (
               <>
-                <Text style={styles.modalTitle}>Edit Skills</Text>
-                <TextInput placeholder="Add a Skill" placeholderTextColor = "#333" style={styles.input} />
-              </>
+               <Text style={[styles.modalTitle, { marginTop: 0 }]}>Select Skill(s)</Text>
+    <Text style={{color:Colors.brand}}>{error}</Text>
+    <MultiSelect
+      style={styles.scrollableItemsContainer}
+      items={Skills} // قائمة مهارات
+      uniqueKey="id" // المفتاح الفريد لكل عنصر
+      onSelectedItemsChangeSkills={onSelectedItemsChangeSkills} // التعامل مع التحديد
+      selectedItems={selectedSkills} // العناصر المحددة حالياً
+      selectText="Choose Skills"
+      submitButtonColor={isNightMode ? Colors.fourhColor : Colors.fourhColor} // لون خلفية زر "Submit"
+      tagRemoveIconColor={isNightMode ? Colors.brand : Colors.brand} // لون أيقونة الحذف
+      tagBorderColor={isNightMode ? '#4A90E2' : '#333'} // لون الحدود
+      tagTextColor={isNightMode ? Colors.fifthColor : '#333'} // لون النص في التاج
+      selectedItemTextColor={isNightMode ? Colors.fifthColor : '#333'} // لون النص في العنصر المحدد
+      selectedItemIconColor={isNightMode ? Colors.brand : '#333'} // لون أيقونة العنصر المحدد
+      itemTextColor={isNightMode ?'#000' : '#333'} // لون النص في العنصر غير المحدد
+      displayKey="name"
+ 
+  // تخصيص النص عند عدم اختيار أي عنصر
+
+       // تخصيص رأس القائمة (الخلفية التي تحتوي النص الافتراضي)
+  styleDropdownMenu={{
+    backgroundColor: isNightMode ? '#444' : '#EEE', // خلفية رأس القائمة
+  }}
+      // تخصيص النص داخل الحقل
+      styleTextDropdown={{
+        color: isNightMode ? '#000' : '#333', // لون النص
+        fontSize: 16, // حجم الخط
+        fontWeight: 'bold', // سمك الخط
+      }}
+      // خصائص إضافية لتحسين العرض والتخصيص
+      fixedHeight={true} // تحديد ارتفاع ثابت
+      styleItemsContainer={{
+        maxHeight: 190, // تحديد الحد الأقصى للارتفاع
+        
+      }}
+
+    />
+  </>
+            
             )}
 
             {currentModal === 'language' && (

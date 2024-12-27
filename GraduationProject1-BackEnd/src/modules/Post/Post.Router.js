@@ -18,6 +18,8 @@ router.put('/updatepost/:postId',auth(EndPoints.CreatePost),  fileUpload(FileVal
 router.get('/getpost',auth(EndPoints.CreatePost),PostController.GetUserPosts);
 router.get('/getallpost',auth(EndPoints.CreatePost),PostController.GetAllPosts);
 router.delete('/deletepost/:postId',auth(EndPoints.CreatePost),PostController.DeletePost);
+router.patch('/:id/like',auth(EndPoints.CreatePost),PostController.LikePost);
+router.patch('/:id/unlike',auth(EndPoints.CreatePost),PostController.UnLikePost);
 
 
 router.post(
