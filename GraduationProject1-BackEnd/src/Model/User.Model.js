@@ -147,7 +147,8 @@ Skills: [
    {
       id: { type: Number, required: true },
       name: { type: String, required: true },
-      code: { type: String, required: true }
+      code: { type: String, required: true },
+      Rate: { type: Number, required: true, min: 1, max: 5 }
    }
 ],
 
