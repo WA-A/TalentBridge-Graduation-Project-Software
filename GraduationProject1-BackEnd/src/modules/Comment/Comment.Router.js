@@ -9,7 +9,7 @@ import * as schema from './Comment.Validation.js';
 const router = Router();
 
 router.post('/createcomment/:PostId',auth(EndPoints.CreateComment),fileUpload(FileValue.image).fields([{ name: 'images'}, { name: 'videos'}, { name: 'files'}]),CommentController.CreateComment);
-router.put('/updatecomment/:CommentId',Validation(schema.UpdateCommentSchema),auth(EndPoints.CreateComment),fileUpload(FileValue.image).fields([{ name: 'images'}, { name: 'videos'}, { name: 'files'} ]),CommentController.UpdateComment);
+router.put('/updatecomment/:CommentId',auth(EndPoints.CreateComment),fileUpload(FileValue.image).fields([{ name: 'images'}, { name: 'videos'}, { name: 'files'} ]),CommentController.UpdateComment);
 router.get('/getallcomments/:PostId',auth(EndPoints.CreateComment),CommentController.GetAllComments);
 router.get('/getallowncomments',auth(EndPoints.CreateComment),CommentController.GetAllOwnComments);
 router.delete('/deletecomment/:CommentId',auth(EndPoints.CreateComment),CommentController.DeleteComment);

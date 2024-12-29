@@ -168,20 +168,19 @@ export const GetUserPosts = async (req, res, next) => {
 export const GetAllPosts = async (req, res, next) => {
     try {
         const posts = await PostModel.find()
-            .populate('UserId', 'FullName PictureProfile'); // اجلب الحقول المطلوبة فقط
+            .populate('UserId', 'FullName PictureProfile') // اجلب الحقول المطلوبة فقط
+            .sort({ createdAt: -1 }); // الترتيب تنازلي (الأحدث أولاً)
 
         if (!posts || posts.length === 0) {
             return res.status(404).json({ message: "No posts found." });
         }
 
-        // لا حاجة لإعادة معالجة البيانات وإضافة الحقول بشكل مسطح
         return res.status(200).json({ message: "Posts retrieved successfully", posts });
     } catch (error) {
         console.error("Error retrieving posts:", error);
         return next(error);
     }
 };
-
 
 // Delete Own Post
 

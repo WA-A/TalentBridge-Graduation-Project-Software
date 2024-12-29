@@ -7,7 +7,7 @@ const CommentSchema = new Schema({
     },
     Images: [ 
         {
-            type:Object,
+            type: Object,
             required: false,
         }
     ],
