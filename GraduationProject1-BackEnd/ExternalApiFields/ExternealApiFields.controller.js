@@ -337,6 +337,32 @@ export const DeleteFields = async (req, res) => {
     }
 };
 
+export const GetFieldsUser = async (req, res) => {
+    try {
+        if (!req.user) {
+            console.log("User not authorized: No token provided.");
+            return res.status(401).json({ message: "User not authorized. Please provide a valid token." });
+        }
+
+        const authUser = req.user;
+
+        const user = await UserModel.findById(authUser);
+        if (!user) {
+            console.log("User not found in the database.");
+            return res.status(404).json({ message: "User not found." });
+        }
+
+        return res.status(200).json({
+            message: "Fields fetched successfully.",
+            Fields: user.Fields 
+        });
+        
+    } catch (error) {
+        console.error("Error fetching Fields: ", error);
+        return res.status(500).json({ message: "Internal Server Error." });
+    }
+};
+
 
 
 
