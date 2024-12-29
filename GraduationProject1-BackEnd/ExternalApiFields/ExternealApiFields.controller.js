@@ -245,7 +245,7 @@ export const AddFields = async (req, res) => {
         const { FieldIds } = req.body;  
 
         if (!authUser || !FieldIds || !Array.isArray(FieldIds)) {
-            console.log("Missing required fields: authUser or LanguageIds.");
+            console.log("Missing required fields: authUser or FieldsIds.");
             return res.status(400).json({ message: "User ID and Language IDs are required." });
         }
 
@@ -290,7 +290,52 @@ export const AddFields = async (req, res) => {
     }
 };
 
+export const DeleteFields = async (req, res) => {
+    try {
+        if (!req.user) {
+            console.log("User not authorized: No token provided.");
+            return res.status(401).json({ message: "User not authorized. Please provide a valid token." });
+        }
 
+        const authUser = req.user;
+        const { FieldsId } = req.body;
+
+        if (!authUser || !FieldsId) {
+            console.log("Missing required fields: authUser or FieldsId.");
+            return res.status(400).json({ message: "User ID and fieldIndex ID are required." });
+        }
+
+        console.log("Request received to delete fieldIndex:", { authUser, FieldsId });
+
+        const user = await UserModel.findById(authUser);
+        if (!user) {
+            console.log("User not found in the database.");
+            return res.status(404).json({ message: "User not found." });
+        }
+
+        console.log("User found:", user);
+
+        const fieldIndex = user.Fields.findIndex(field => field.id === FieldsId);
+        if (fieldIndex === -1) {
+            console.log("fieldIndex not found in user's Fields.");
+            return res.status(404).json({ message: "fieldIndex not found for the user." });
+        }
+
+        user.Fields.splice(fieldIndex, 1);
+
+        await user.save();
+
+        console.log("fieldIndex deleted successfully. Remaining Fields:", user.Fields);
+        return res.status(200).json({
+            message: "fieldIndex deleted successfully.",
+            Fields: user.Fields
+        });
+
+    } catch (error) {
+        console.error("Error deleting fieldIndex: ", error);
+        return res.status(500).json({ message: "Internal Server Error." });
+    }
+};
 
 
 
