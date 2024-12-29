@@ -1,8 +1,9 @@
 import React, { useState, useContext,useRef,useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { View, Text, Image,TextInput,TouchableOpacity, StyleSheet, ToastAndroid,Linking, PermissionsAndroid, ScrollView,Animated, Button, Alert, Platform,TouchableWithoutFeedback,Keyboard, FlatList,KeyboardAvoidingView,flatListRef} from 'react-native';
+import { View, Text, Image,TextInput,TouchableOpacity, StyleSheet, ToastAndroid,useColorScheme, PermissionsAndroid, ScrollView,Animated, Button, Alert, Platform,TouchableWithoutFeedback,Keyboard, FlatList,KeyboardAvoidingView,flatListRef} from 'react-native';
 import { Ionicons, Feather, FontAwesome5, EvilIcons, FontAwesome,Entypo,MaterialIcons
 } from '@expo/vector-icons';
+import { jwtDecode } from "jwt-decode";
 import axios from 'axios';
 import { Video as ExpoVideo } from 'expo-av';
 import * as MediaLibrary from 'expo-media-library';
@@ -55,11 +56,53 @@ const [openedChatId, setOpenedChatId] = useState(null); // لتتبع أي شا�
   const [messages, setMessages] = useState({}); // تخزين الرسائل بشكل منفصل لكل chatId
   const [isGatheredBubbleHovered, setIsGatheredBubbleHovered] = useState(false);
   const [activeChatId, setActiveChatId] = useState(null); // لتخزين الـ chatId الحالي
+  const [currentUserId,setuserId] = useState(''); // أو حسب هيكلة التوكن
 
   const [selectedChatId, setSelectedChatId] = useState(null);
-
 ///////////////Comment /////////////////
+const [isEditing, setIsEditing] = useState(false);
+const [editingCommentId, setEditingCommentId] = useState(null); // ID التعليق الجاري تعديله
+const [editingImage, setEditingImage] = useState(null); // صورة التعليق الجاري تعديله
+const editCommentHandler = (commentId, text, image) => {
+  setIsEditing(true);
+  setEditingCommentId(commentId);
+  setNewCommentText(text); // إعداد النص الحالي للتعليق
+ setImageUriComment(image);  // إعداد الصورة الحالية للتعليق
+};
+
+const cancelEditHandler = () => {
+  setIsEditing(false);
+  setEditingCommentId(null);
+  setNewCommentText(''); // إعادة تعيين النص
+  setEditingImage(null);  // إعادة تعيين الصورة
+};
 const [imageUriComment, setImageUriComment] = useState('');
+const [newCommentText, setNewCommentText] = useState('');
+const [imageUriForComment, setImageUriForComment] = useState('');
+const [selectedCommentImage, setSelectedCommentImage] = useState(null);
+const colorScheme = useColorScheme(); // Check if dark mode is enabled
+
+const handleAddComment = () => {
+  addCommentHandler(newCommentText, selectedCommentImage);
+  setNewCommentText('');
+  setSelectedCommentImage(null);
+};
+const base64ToBlob = (base64Data, contentType = 'image/jpeg') => {
+  const byteCharacters = atob(base64Data.split(',')[1]);
+  const byteArrays = [];
+
+  for (let offset = 0; offset < byteCharacters.length; offset += 512) {
+    const slice = byteCharacters.slice(offset, offset + 512);
+    const byteNumbers = new Array(slice.length);
+    for (let i = 0; i < slice.length; i++) {
+      byteNumbers[i] = slice.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    byteArrays.push(byteArray);
+  }
+
+  return new Blob(byteArrays, { type: contentType });
+};
 
   const pickImageComment = async () => {
     try {
@@ -118,30 +161,80 @@ const toggleModal = () =>setCommenModal(!isCommentModal);
       }
     };
 
-    // دالة لتحميل التعليقات من الخادم (إذا كان لديك API)
-    useEffect(() => {
-        // هنا يمكنك استخدام API لاستدعاء التعليقات بناءً على `postId`
-        // مثل:
-        // fetchComments(postId).then((data) => setComments(data));
-
-        // مثال تعليقات ثابتة لتجربة العرض
-        setComments([
-            { user: 'User 1', text: 'Nice post!', image: '' },
-            { user: 'User 2', text: 'Amazing!', image: 'https://path-to-image.com/image.jpg' },
-        ]);
-    }, []);
-   
+    const updateMyComment = async (updatedItem) => {
+      try {
+        const token = await AsyncStorage.getItem('userToken');
+        if (!token) {
+          console.error('Token not found');
+          return;
+        }
+    
+        const formData = new FormData();
+        
+        // إضافة الحقول النصية
+        formData.append('Text', newCommentText);
+    
+        // إضافة الصور إذا كانت موجودة
+        if (imageUriComment) {
+          if (Platform.OS === 'web') {
+            // استخدام Blob للويب
+            const profileBlob = base64ToBlob(imageUriComment, 'image/jpeg');
+            formData.append('images', profileBlob, 'image.jpg');
+          } else {
+            // استخدام uri للموبايل
+            formData.append('images', {
+              uri: imageUriComment,
+              type: 'image/jpeg',
+              name: 'image.jpg',
+            });
+          }
+        }
+    
+        // إرسال البيانات إلى الخادم
+        const response = await fetch(`${baseUrl}/comment/updatecomment/${updatedItem._id}`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Wasan__${token}`,
+            // لا حاجة لإضافة Content-Type مع FormData
+          },
+          body: formData, // إرسال البيانات كـ FormData
+        });
+    
+        if (!response.ok) {
+          throw new Error('Failed to update comment');
+        }
+    
+        // الحصول على البيانات المستلمة من الخادم
+        const userData = await response.json();
+        console.log('comment updated successfully');
+        setModalEdittingVisible(false); // إغلاق المودال بعد التحديث
+        setExperiences(userData.comment); // تحديث بيانات التعليقات المعروضة
+    
+        // إرسال الحدث عبر socket
+        socket.emit('commentUpdated', userData.comment);
+        handleGetAllPostsComment(postIdForComment); 
+      } catch (error) {
+        console.error('Error updating comment:', error);
+      }
+    };
+    const ActionComment = async(postId) =>{
+      handleGetAllPostsComment(postId);
+      setCommenModal(true);           // فتح المودال
+    };
 
 const handleGetAllPostsComment = async (postId) => {
   console.log("Fetching Comments...");
   setIsLoading(true); // بدء التحميل
   try {
     const token = await AsyncStorage.getItem('userToken');
-    console.log('Token:', token); 
+
     if (!token) {
       throw new Error('No token found');
     }
-
+    
+    const decodedToken = jwtDecode(token); // فك التوكن
+    setuserId(decodedToken.id); // تخزين معرف المستخدم (id)
+    console.log('Decoded Token:', decodedToken); 
     const baseUrl = Platform.OS === 'web'
       ? 'http://localhost:3000'
       : 'http://192.168.1.239:3000';
@@ -166,7 +259,6 @@ const handleGetAllPostsComment = async (postId) => {
     if (data && Array.isArray(data.comments) && data.comments.length > 0) {
       setCommentPosts(data.comments); // تخزين التعليقات في الحالة
       setPostIdForComment(postId);    // تخزين ID المنشور
-      setCommenModal(true);           // فتح المودال
     } else {
       console.log('No comments available.');
     }
@@ -1118,7 +1210,7 @@ const handleSelectedPerson = async (item) => {
             <Text style={{ color: isNightMode ? primary : '#000', fontSize: 14 }}>Like</Text>
           </TouchableOpacity>
           <TouchableOpacity 
-  onPress={() => handleGetAllPostsComment(post._id)} // تمرير الدالة بدون تنفيذها مباشرة
+  onPress={() => ActionComment(post._id)} // تمرير الدالة بدون تنفيذها مباشرة
   style={{ alignItems: 'center' }}
 >
   <Ionicons 
@@ -1546,7 +1638,7 @@ left: 10, backgroundColor: 'white', padding: 10, borderRadius: 5, zIndex: 20,bot
           menus={({  }) => (
             <View style={styles.menuContainer}>
               <Button
-                title="Dounlowd Image"
+                title="Download Image"
                 color={Colors.darkLight}
                 onPress={() => saveImageToDevice(currentImage[0]?.url)}
               />
@@ -1555,74 +1647,117 @@ left: 10, backgroundColor: 'white', padding: 10, borderRadius: 5, zIndex: 20,bot
         />
       </Modal>
 
+      <Modal 
+  isVisible={isCommentModal} 
+  onBackdropPress={handleCloseModal} 
+  style={{ justifyContent: 'flex-end', margin: 0 }} 
+  transparent={true}
+>
+  <View style={{
+    backgroundColor: isNightMode ? '#333' : '#fff',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
+    height: '80%',  // نسبة مئوية للارتفاع
+    flexDirection: 'column',
+  }}>
+    {/* Header */}
+    <View style={styles.commentHeader}>
+      <Text style={[styles.commentTitle, isNightMode && styles.commentTitleDark]}>Comments</Text>
+      <TouchableOpacity onPress={handleCloseModal} style={styles.commentCloseButton}>
+        <Ionicons name="close" size={28} color={isNightMode ? 'white' : 'gray'} />
+      </TouchableOpacity>
+    </View>
 
-
-            {/* مودال التعليقات */}
-            <Modal isVisible={isCommentModal} onBackdropPress={handleCloseModal} style={styles.commentModal}>
-      <View style={styles.commentModalContent}>
-        {/* شريط العنوان */}
-        <View style={styles.commentHeader}>
-          <Text style={styles.commentTitle}>Comments</Text>
-          <TouchableOpacity onPress={handleCloseModal} style={styles.commentCloseButton}>
-            <Ionicons name="close" size={28} color="gray" />
-          </TouchableOpacity>
-        </View>
-
-        {/* عرض التعليقات السابقة */}
-        <FlatList
-          data={comments}
-          renderItem={({ item }) => (
-            <View style={styles.commentItem}>
-              {/* صورة الشخص */}
-              <Image source={{ uri: 'https://randomuser.me/api/portraits/men/1.jpg' }} style={styles.commentUserImage} />
-              <View style={styles.commentTextContainer}>
-                <Text style={styles.commentUser}>{item.user}</Text>
-                <Text>{item.text}</Text>
-                {item.image ? <Image source={{ uri: item.image }} style={styles.commentImage} /> : null}
-              </View>
+    {/* Comments List - FlatList */}
+    <FlatList 
+      style={{ flex: 1 }}
+      data={commentPost}
+      renderItem={({ item }) => {
+        const isOwner = item.UserId === currentUserId; // تحقق إن كان صاحب الحساب
+        return (
+          <View style={[styles.commentItem, isNightMode && styles.commentItemDark]}>
+            <TouchableOpacity onPress={() => handleProfilePress(item.UserId)}>
+              <Image source={{ uri: item.PictureProfile.secure_url }} style={styles.commentUserImage} />
+            </TouchableOpacity>
+            <View style={styles.commentTextContainer}>
+              <Text style={[styles.commentUser, isNightMode && styles.commentUserDark]}>{item.FullName}</Text>
+              <Text>{item.Text}</Text>
+              {item.Images && <Image source={{ uri: item.Images[0].secure_url }} style={styles.commentImage} />}
+              {isOwner && (
+                <View style={styles.commentOptions}>
+                  <TouchableOpacity onPress={() => editCommentHandler(item._id, item.Text, item.Images)}>
+                    <Ionicons name="create" size={20} color={isNightMode ? 'white' : 'gray'} />
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => cancelEditHandler(item._id)}>
+                    <Ionicons name="trash" size={20} color={isNightMode ? 'white' : 'gray'} />
+                  </TouchableOpacity>
+                </View>
+              )}
             </View>
-          )}
-          keyExtractor={(item, index) => index.toString()}
-          contentContainerStyle={styles.commentList}
-        />
+          </View>
+        );
+      }}
+      keyExtractor={(item) => item._id ? item._id.toString() : ''}
+      contentContainerStyle={styles.commentList}
+    />
 
-        {/* حقل إدخال تعليق جديد */}
-        <TextInput
-          placeholder="Write a comment..."
-          value={newComment}
-          onChangeText={setNewComment}
-          style={styles.commentInput}
-        />
+{editingImage && (  // استخدم editingImage بدلاً من selectedCommentImage
 
-        {/* حقل إدخال رابط الصورة إذا لزم الأمر */}
-        <TextInput
-          placeholder="Image URL"
-          value={imageUriComment}
-          onChangeText={setImageUriComment}
-          style={styles.commentImageInput}
-        />
+    <View  style={styles.imageWrapper}>
+   <TouchableOpacity onPress={cancelEditHandler}  >
+    <Text  style={styles.commentCancelText}>Cancle Edit</Text></TouchableOpacity> 
+    <TouchableOpacity onPress={pickImageComment} >
+      <Image source={{ uri: imageUriComment[0].secure_url }} style={styles.commentImage} />
+      </TouchableOpacity>
+      {/* Remove Image Button */}
+      <TouchableOpacity onPress={() => setEditingImage(null)} style={styles.removeImageButton}>
+        <Ionicons name="close" size={15} color="white" />
+      </TouchableOpacity>
+    </View>
+  )}
 
-        {/* زر لاختيار صورة من المعرض */}
-        <TouchableOpacity onPress={pickImageComment} style={styles.imagePickerButton}>
-          <Ionicons name="image" size={30} color="gray" />
-          <Text style={styles.imagePickerText}>Pick Image</Text>
-        </TouchableOpacity>
+    {/* Comment Input Section */}
+    <View style={[styles.commentInputContainer]}>
+  {/* Text Input with auto-resize */}
+  <TextInput
+    placeholder="Write a comment..."
+    value={newCommentText}
+    onChangeText={setNewCommentText}
+    style={[
+      styles.commentInput,
+      isNightMode && styles.commentInputDark,
+      { minHeight: 40, textAlignVertical: 'top' }, // توسع الحقل مع النص
+    ]}
+    multiline={true} // لجعل الإدخال متعدد الأسطر
+  />
 
-        {/* زر إضافة تعليق */}
-        <TouchableOpacity onPress={addComment} style={styles.commentSendButton}>
-          <Ionicons name="send" size={30} color="white" />
-        </TouchableOpacity>
-      </View>
-    </Modal>
-       
+  {/* Action Buttons */}
+  <View style={styles.actionButtonsContainer}>
+    <TouchableOpacity onPress={pickImageComment} style={styles.imagePickerButton}>
+      <Ionicons name="image" size={30} color={isNightMode ? 'white' : 'gray'} />
+    </TouchableOpacity>
+    <TouchableOpacity
+onPress={isEditing ? () => updateMyComment(editingCommentId) : handleAddComment}
+style={styles.commentSendButton}
+    >
+      <Ionicons name="send" size={15} color="white" />
+    </TouchableOpacity>
+  </View>
+  
+  {/* Image Preview inside Input */}
+  
+</View>
+
+  </View>
+</Modal>
+
+
+
         </View>
-    </TouchableWithoutFeedback>);
-
-
-
-
-
-
+    </TouchableWithoutFeedback>
+    
+    );
 };
 
 const styles = StyleSheet.create({
@@ -1693,90 +1828,225 @@ const styles = StyleSheet.create({
   marginBottom: 10,
   backgroundColor: '#000', // لون خلفية الفيديو (لأغراض التحميل)
 },
-
-commentModal: {
-  justifyContent: 'flex-end', // لعرض المودال في أسفل الشاشة
+commentModal: { 
+  justifyContent: 'center',
+  alignItems: 'center',
+  justifyContent: 'flex-end', // لظهور المودال من الأسفل في الجوال
   margin: 0,
 },
-commentModalContent: {
-  backgroundColor: 'white',
-  padding: 20,
-  borderTopLeftRadius: 10,
-  borderTopRightRadius: 10,
-  minHeight: '40%',
+commentModalDark: {
+  backgroundColor: '#000000AA', // لون الظل عند التفعيل في وضع الليل
 },
+commentModalContent: {
+  width: '100%',
+  backgroundColor: '#fff',
+  borderTopLeftRadius: 20,  // جولة الزوايا من الأعلى
+  borderTopRightRadius: 20,  // جولة الزوايا من الأعلى
+  padding: 20,
+  justifyContent: 'flex-end',  // يتم وضع حقل التعليق في أسفل المودال
+  maxHeight: '70%',// تحديد أقصى ارتفاع للمودال ليكون 90% من الشاشة
+},
+// الهيدر
 commentHeader: {
   flexDirection: 'row',
   justifyContent: 'space-between',
   alignItems: 'center',
-  marginBottom: 15,
+  marginBottom: 20,
 },
 commentTitle: {
-  fontSize: 20,
+  fontSize: 18,
   fontWeight: 'bold',
 },
+commentTitleDark: {
+  color: 'white',
+},
 commentCloseButton: {
-  padding: 5,
+  padding: 10,
 },
+// القائمة التعليقات
 commentList: {
-  maxHeight: 200,
-  marginBottom: 10,
+  paddingBottom: 20,
 },
+// تعليق فردي
 commentItem: {
   flexDirection: 'row',
   marginBottom: 15,
+  borderBottomWidth: 1,
+  borderBottomColor: '#ddd',
+  paddingBottom: 10,
+  paddingRight: 10,
+},
+commentItemDark: {
+  backgroundColor: '#333',
+},
+commentUserImageContainer: {
+  marginRight: 10,
 },
 commentUserImage: {
-  width: 40,
-  height: 40,
-  borderRadius: 20,
-  marginRight: 10,
+  width: 45,
+  height: 45,
+  borderRadius: 25, // جعل الصورة دائرية
+  borderWidth: 1,   // إطار
+  borderColor:Colors.fifthColor,
+  marginRight: 10,  // مسافة بين الصورة والنص
 },
 commentTextContainer: {
   flex: 1,
 },
 commentUser: {
   fontWeight: 'bold',
+  fontSize: 14,
+},
+commentUserDark: {
+  color: 'white',
 },
 commentImage: {
-  width: 100,
-  height: 100,
-  borderRadius: 8,
-  marginTop: 5,
+  width: '100%',
+  height: 200,
+  borderRadius: 10,
+  marginTop: 10,
 },
-commentInput: {
-  borderWidth: 1,
-  borderRadius: 5,
-  padding: 10,
-  marginBottom: 10,
-  height: 40,
+commentOptions: {
+  flexDirection: 'row',
+  marginTop: 10,
 },
-commentImageInput: {
-  borderWidth: 1,
-  borderRadius: 5,
-  padding: 10,
-  marginBottom: 15,
-  height: 40,
+commentInputDark: {
+  backgroundColor: '#333',
+  color: 'white',
+},
+previewImage: {
+  width: '100%',
+  height: 200,
+  borderRadius: 10,
+  marginTop: 10,
 },
 imagePickerButton: {
   flexDirection: 'row',
   alignItems: 'center',
-  marginBottom: 10,
-},
-imagePickerText: {
-  marginLeft: 10,
-  fontSize: 16,
-  color: 'gray',
-},
-commentSendButton: {
-  backgroundColor: '#007AFF',
-  borderRadius: 50,
-  width: 50,
-  height: 50,
-  justifyContent: 'center',
-  alignItems: 'center',
   marginTop: 10,
 },
+imagePickerText: {
+  fontSize: 16,
+  marginLeft: 10,
+  color: '#007BFF',
+},
+commentInputContainer: {
+  flexDirection: 'row',  // وضع العناصر في نفس السطر
+  alignItems: 'center',  // محاذاة العناصر في الوسط عموديا
+  marginBottom: 15,  // مسافة بين المودال وعناصر الإدخال
+},
+
+
+commentInputDark: {
+  backgroundColor: '#333',  // تعديل الخلفية في الوضع الداكن
+  color: 'white',  // تغيير لون النص في الوضع الداكن
+},
+previewImage: {
+  width: 40,  // عرض الصورة المعاينة
+  height: 40,  // ارتفاع الصورة المعاينة
+  borderRadius: 5,
+  marginLeft: 10,  // مسافة بين الزر والصورة
+},
+imagePickerButton: {
+  padding: 10,
+},
+commentModalContent: {
+  borderTopLeftRadius: 20,
+  borderTopRightRadius: 20,
+  padding: 20,
+  flex: 1,
+  justifyContent: 'flex-start', // جعل التبرير يبدأ من الأعلى
+  maxHeight: '80%', // تحديد أقصى ارتفاع ليكون 80% من الشاشة
+},
+
+commentList: {
+  paddingBottom: 20, // تحديد المسافة أسفل القائمة
+},
+
+commentInputContainer: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  marginTop: 10, // تقليل المسافة بين منطقة الإدخال والتعليقات
+  marginBottom: 0, // لا نريد مسافة إضافية أسفل منطقة الإدخال
+},
+
+
+// إضافة هذا لتجنب المسافة البيضاء الكبيرة أسفل منطقة الإدخال:
+modalContentContainer: {
+  flex: 1,
+  justifyContent: 'space-between', // توزيع المحتوى ليشغل المساحة المتاحة بشكل متساوٍ
+},
+commentCancelButton: {
+  backgroundColor: 'red',
+  paddingHorizontal: 15,
+  paddingVertical: 10,
+  borderRadius: 5,
+  marginRight: 10,
+},
+commentCancelText: {
+  color: 'red',
+  fontSize: 14,
+  fontWeight: 'bold',
+},
+commentInputContainer: {
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    marginBottom: 10,
+  },
+  commentInput: {
+    flex: 1, // لتمديد الحقل لملء المساحة المتاحة
+    padding: 10,
+    borderWidth: 1,
+    borderColor: Colors.darkLight,
+    borderRadius: 5,backgroundColor:Colors.secondary
+  },
+  commentInputContainer: {
+    flexDirection: 'row', // وضع العناصر بجانب بعضها
+    alignItems: 'center', // محاذاة العناصر عمودياً
+    marginTop: 10,
+  },
+  commentInputDark: {
+    backgroundColor: '#222',
+    color: 'white',
+  },
+  imageWrapper: {
+    position: 'relative',
+    marginTop: 10,
+    alignSelf: 'stretch',
+  },
+  commentImagePreview: {
+    width: '100%',
+    height: 150,
+    borderRadius: 10,
+    resizeMode: 'cover',
+  },
+  removeImageButton: {
+    position: 'absolute',
+    top: 20,
+    right:-5,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    borderRadius: 15,padding:3
+  },
+  actionButtonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 10,
+    width: '100%',
+  },
+  imagePickerButton: {
+    marginRight: 10,
+  },
+  commentSendButton: {
+    backgroundColor:Colors.fourhColor,
+    padding: 8,
+    width:30,height:30, borderRadius: 30,
+  },
+  actionButtonsContainer: {
+    flexDirection: 'row', // ترتيب الأزرار بجانب بعضها
+    alignItems: 'center',
+    marginLeft: 10,
+  },
+
 });
  
   

@@ -246,12 +246,6 @@ const [achievements,setAchievements]=useState('');
 
   const [project, setProject] = useState([]);
 
-  //const [language, setLanguage] = useState([  ]);
-  const language = [
-    { id: 1, name: 'English', code: 'en' },
-    { id: 2, name: 'Arabic', code: 'ar' },
-    { id: 3, name: 'French', code: 'fr' },
-  ];
   const [recommendation, setRecommendation] = useState([ ]);
 
 
@@ -1225,6 +1219,7 @@ const handleDelete = async () => {
 };
 
 const handleDeleteAction = () => {
+  console.log(currentSectionToDelete);
   if (currentSectionToDelete === 'language') { 
     // تحقق من كون اللغة هي "language"
     handleDeleteLanguages();  // استدعاء دالة حذف اللغة
@@ -1352,7 +1347,6 @@ const handleDeleteLanguages = async () => {
       const errorData = await response.json(); // إذا كان هناك خطأ في الرد
       throw new Error(errorData.message || 'Failed to delete language');
     }
-
     const data = await response.json(); // تحويل الرد إلى JSON
     setUserLanguages(data.languages); // تخزين اللغات المحدثة في الحالة لعرضها بعد الحذف
 
@@ -1486,7 +1480,7 @@ const handleDeleteSkills = async () => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-       SkillId: SkillId,  // تمرير الـ LanguageId الذي نريد حذفه
+       SkillId: SkillId,  
       }),
     });
 
@@ -1734,7 +1728,7 @@ useEffect(() => {
         <Text style={[styles.experienceTitle, { color: isNightMode ? Colors.primary : Colors.black }]}>
           {cert.name}
         </Text>
-            <TouchableOpacity onPress={() => openConfirmDeleteModal('language',cert)} style={styles.editButton}>
+            <TouchableOpacity onPress={() => openConfirmDeleteModal('skills',cert)} style={styles.editButton}>
               <MaterialCommunityIcons name="minus-circle" size={20} color={isNightMode ? Colors.primary : Colors.black} />
             </TouchableOpacity>
       </View>
@@ -2420,7 +2414,7 @@ useEffect(() => {
         <Text style={[styles.experienceTitle, { color: isNightMode ? Colors.primary : Colors.black }]}>
           {cert.name}
         </Text>
-            <TouchableOpacity onPress={() => openConfirmDeleteModal('language',cert)} style={styles.editButton}>
+            <TouchableOpacity onPress={() => openConfirmDeleteModal('skills',cert)} style={styles.editButton}>
               <MaterialCommunityIcons name="minus-circle" size={20} color={isNightMode ? Colors.primary : Colors.black} />
             </TouchableOpacity>
           </View>
@@ -3076,14 +3070,14 @@ useEffect(() => {
       onBackdropPress={() => setIsModalVisible(false)}
       style={{ justifyContent: 'flex-end', margin: 0}}
     >
-      <View style={{
+     <View style={{
         backgroundColor: isNightMode ? '#333' : '#fff', 
         padding: 20, 
         borderTopLeftRadius: 20, 
         borderTopRightRadius: 20, 
         height: '80%'
-      }}>
-        <ScrollView>
+             }}>
+          <ScrollView>
           <Text style={{
             fontSize: 24, 
             fontWeight: 'bold', 
@@ -3093,8 +3087,8 @@ useEffect(() => {
             Edit Profile
           </Text>
 
-       {/* إدخال صورة البروفايل */}
-       <Text style={{ color: isNightMode ? Colors.primary : Colors.black }}>Profile Image:</Text>
+           {/* إدخال صورة البروفايل */}
+          <Text style={{ color: isNightMode ? Colors.primary : Colors.black }}>Profile Image:</Text>
           <TouchableOpacity onPress={() => pickImage('profile')}>
             <View style={{ marginVertical: 10 }}>
               <Text style={{ color: isNightMode ? Colors.primary : Colors.black }}>
@@ -3117,8 +3111,8 @@ useEffect(() => {
 
           <View style={{ borderBottomWidth: 1, borderBottomColor: isNightMode ? '#555' : '#ddd', marginVertical: 10 }} />
 
-    {/* إدخال صورة الغلاف */}
-    <Text style={{ color: isNightMode ? Colors.primary : Colors.black }}>Cover Image:</Text>
+         {/* إدخال صورة الغلاف */}
+          <Text style={{ color: isNightMode ? Colors.primary : Colors.black }}>Cover Image:</Text>
           <TouchableOpacity onPress={() => pickImage('cover')}>
             <View style={{ marginVertical: 10 }}>
               <Text style={{ color: isNightMode ? Colors.primary : Colors.black }}>
@@ -3276,9 +3270,8 @@ useEffect(() => {
             {currentSectionToDelete === 'skills' && (
               <>
                 <Text style={{ color: isNightMode ? Colors.primary : Colors.black }}>
-                Are you sure you want to remove the ,<Text style={{ fontWeight: 'bold', color: isNightMode ? Colors.primary : Colors.black }}>{selectedItemToDelete?.name} </Text> language?
-                </Text>
-               
+                Are you sure you want to remove the ,<Text style={{ fontWeight: 'bold', color: isNightMode ? Colors.primary : Colors.black }}>{selectedItemToDelete?.name} </Text> skills?
+                </Text>    
              
            </>
             )}
