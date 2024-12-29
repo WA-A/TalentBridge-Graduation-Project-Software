@@ -45,6 +45,7 @@ export const CreateComment = async (req, res, next) => {
 export const UpdateComment = async (req, res, next) => {
     try {
         console.log(req.body);
+        console.log(req.Files);
 
         const { CommentId } = req.params;
         const { Text } = req.body;
@@ -101,13 +102,14 @@ export const UpdateComment = async (req, res, next) => {
 
 
 // Get All Comment 
-
 export const GetAllComments = async (req, res, next) => {
     try {
         const { PostId } = req.params;
 
-        // جلب التعليقات مع المستخدمين
-        const comments = await CommentModel.find({ PostId }).populate('UserId', 'FullName PictureProfile'); 
+        // جلب التعليقات مع المستخدمين وترتيبها من الأحدث أولًا بناءً على createdAt
+        const comments = await CommentModel.find({ PostId })
+            .populate('UserId', 'FullName PictureProfile')
+            .sort({ createdAt: -1 }); // -1 يعني ترتيب تنازلي (الأحدث أولًا)
 
         // تنسيق التعليقات مع إضافة بيانات المستخدم
         const formattedComments = comments.map(comment => ({
@@ -134,6 +136,7 @@ export const GetAllComments = async (req, res, next) => {
         return next(error);
     }
 };
+
 
 // Delete Comment
 
@@ -167,15 +170,19 @@ export const GetAllOwnComments = async (req, res, next) => {
     try {
         const userId = req.user._id; 
 
-        const comments = await CommentModel.find({ UserId: userId }).populate('PostId', 'Body'); 
+        // جلب التعليقات الخاصة بالمستخدم وترتيبها من الأحدث أولًا بناءً على createdAt
+        const comments = await CommentModel.find({ UserId: userId })
+            .populate('PostId', 'Body')
+            .sort({ createdAt: -1 }); // -1 يعني ترتيب تنازلي (الأحدث أولًا)
 
+        // تنسيق التعليقات مع إضافة بيانات المنشور
         const formattedComments = comments.map(comment => ({
             _id: comment._id,
             Text: comment.Text,
             Images: comment.Images,
             Videos: comment.Videos,
             Files: comment.Files,
-            PostId: comment.PostId, 
+            PostId: comment.PostId, // بيانات المنشور
             createdAt: comment.createdAt,
             updatedAt: comment.updatedAt,
         }));

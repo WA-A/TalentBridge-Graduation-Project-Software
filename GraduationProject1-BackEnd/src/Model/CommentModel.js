@@ -3,7 +3,6 @@ import { Schema, Types, model } from 'mongoose';
 const CommentSchema = new Schema({
     Text: {
         type: String,
-        required: true,
     },
     Images: [ 
         {
