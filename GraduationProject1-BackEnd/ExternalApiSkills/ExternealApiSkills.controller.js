@@ -209,22 +209,20 @@ const Skills = [
 
 export const AddSkills = async (req, res) => {
     try {
-        // التحقق من وجود المستخدم
         if (!req.user) {
             console.log("User not authorized: No token provided.");
             return res.status(401).json({ message: "User not authorized. Please provide a valid token." });
         }
 
         const authUser = req.user;
-        const { SkillIds } = req.body; // الآن SkillIds مصفوفة
+        const { SkillsWithRates } = req.body;  
 
-        // التحقق من صحة الإدخال
-        if (!authUser || !Array.isArray(SkillIds) || SkillIds.length === 0) {
-            console.log("Missing required fields: authUser or SkillIds.");
-            return res.status(400).json({ message: "User ID and Skill IDs are required, and must be a non-empty array." });
+        if (!authUser || !Array.isArray(SkillsWithRates) || SkillsWithRates.length === 0) {
+            console.log("Missing required fields: authUser or SkillsWithRates.");
+            return res.status(400).json({ message: "User ID and SkillsWithRates are required, and must be a non-empty array." });
         }
 
-        console.log("Request received:", { authUser, SkillIds });
+        console.log("Request received:", { authUser, SkillsWithRates });
 
         const user = await UserModel.findById(authUser);
         if (!user) {
@@ -237,29 +235,44 @@ export const AddSkills = async (req, res) => {
         const addedSkills = [];
         const failedSkills = [];
 
-        // معالجة كل المهارات في المصفوفة
-        for (const SkillId of SkillIds) {
-            const selectedSkill = Skills.find(skill => skill.id === SkillId);
+        // تحويل المهارات القديمة إلى تنسيق جديد مع Rate
+        user.Skills = user.Skills.map(skill => ({
+            ...skill,
+            Rate: skill.Rate || 1 // إضافة Rate افتراضي إذا لم يكن موجوداً
+        }));
+
+        for (const { SkillId, Rate } of SkillsWithRates) {
+            if (Rate === undefined || Rate < 1 || Rate > 5) {
+                console.log(`Invalid or missing rate for SkillId ${SkillId}: ${Rate}`);
+                failedSkills.push(SkillId);
+                continue;
+            }
+        
+            // تحويل SkillId إلى رقم
+            const skillIdNum = parseInt(SkillId);
+            const selectedSkill = Skills.find(skill => skill.id === skillIdNum);
+            
             if (!selectedSkill) {
                 console.log(`Skill not found: ${SkillId}`);
                 failedSkills.push(SkillId);
                 continue;
             }
-
+        
             const skillExists = user.Skills.some(skill => skill.id === selectedSkill.id);
             if (skillExists) {
                 console.log(`Skill already exists for user: ${SkillId}`);
                 failedSkills.push(SkillId);
                 continue;
             }
-
+        
             user.Skills.push({
                 id: selectedSkill.id,
                 name: selectedSkill.name,
-                code: selectedSkill.code
+                code: selectedSkill.code,
+                Rate: Rate  // تأكد من استخدام Rate وليس rate
             });
-
-            addedSkills.push(selectedSkill);
+        
+            addedSkills.push({ ...selectedSkill, Rate: Rate });
         }
 
         await user.save();
@@ -277,6 +290,7 @@ export const AddSkills = async (req, res) => {
         return res.status(500).json({ message: "Internal Server Error." });
     }
 };
+
 
 
 export const DeleteSkill = async (req, res) => {
