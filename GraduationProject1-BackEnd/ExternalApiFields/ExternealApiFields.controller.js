@@ -234,6 +234,68 @@ export const GetFields = (req, res) => {
 };
 
 
+export const AddFields = async (req, res) => {
+    try {
+        if (!req.user) {
+            console.log("User not authorized: No token provided.");
+            return res.status(401).json({ message: "User not authorized. Please provide a valid token." });
+        }
+
+        const authUser = req.user;
+        const { FieldIds } = req.body;  
+
+        if (!authUser || !FieldIds || !Array.isArray(FieldIds)) {
+            console.log("Missing required fields: authUser or LanguageIds.");
+            return res.status(400).json({ message: "User ID and Language IDs are required." });
+        }
+
+        console.log("Request received:", { authUser, FieldIds });
+
+        const FieldsToAdd = FieldIds.map(id => Fields.find(field => field.id === id))
+                                        .filter(field => field); 
+
+        if (FieldsToAdd.length !== FieldIds.length) {
+            console.log("Some Fields were not found.");
+            return res.status(404).json({ message: "Some Fields were not found in the predefined list." });
+        }
+
+        const user = await UserModel.findById(authUser);
+        if (!user) {
+            console.log("User not found in the database.");
+            return res.status(404).json({ message: "User not found." });
+        }
+
+        console.log("User found:", user);
+
+        const existingFields = user.Fields.map(field => field.id);
+        const newFields = FieldsToAdd.filter(field => !existingFields.includes(field.id));
+
+        if (newFields.length === 0) {
+            console.log("All selected Fields already added.");
+            return res.status(400).json({ message: "All selected Fields already added." });
+        }
+
+        user.Fields.push(...newFields);
+        await user.save();
+
+        console.log("Fields added successfully:", newFields);
+        return res.status(200).json({
+            message: "Fields added successfully.",
+            Fields: user.Fields
+        });
+
+    } catch (error) {
+        console.error("Error adding Fields: ", error);
+        return res.status(500).json({ message: "Internal Server Error." });
+    }
+};
+
+
+
+
+
+
+
 
 
 

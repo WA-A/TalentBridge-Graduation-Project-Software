@@ -6,6 +6,9 @@ const router = express.Router();
 
 
 router.get('/getfields',ExternalApiFieldsController.GetFields);
+ router.post('/addfields',auth(EndPoints.AddFields),ExternalApiFieldsController.AddFields);
+// router.delete('/deletefields',auth(EndPoints.AddFields),ExternalApiFieldsController);
+// router.get('/getuserfields',auth(EndPoints.AddFields),ExternalApiFieldsController);
 
 
 

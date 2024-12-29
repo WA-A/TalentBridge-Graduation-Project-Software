@@ -76,24 +76,13 @@ const UserSchema = new Schema({
       type: String,
       default: false
    },
-   Field: {
-      type: String,
-      enum: [
-         'IT',
-         'Digital Marketing',
-         'Decor Design',
-         'Graphic Design',
-         'Software Engineer',
-         'Data Scientist',
-         'Product Manager',
-         'UX/UI Designer',
-         'Marketing Specialist',
-         'Business Analyst',
-         'DevOps Engineer',
-         'QA Tester'
-      ],
-      required: true
-   },
+   Fields:[
+      {
+         id: { type: Number, required: true },
+         sub_specialization: { type: String, required: true },
+         code: { type: String, required: true }
+      }
+   ],
     // الحقول الجديدة
     Experiences: [
       {
