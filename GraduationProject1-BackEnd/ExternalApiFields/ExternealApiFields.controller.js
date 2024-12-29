@@ -221,3 +221,21 @@ const Fields = [
 
 
 
+export const GetFields = (req, res) => {
+    try {
+        return res.status(200).json({
+            message: "Skills fetched successfully",
+            Fields: Fields
+        });
+    } catch (error) {
+        console.error("Error fetching Skills: ", error);
+        return res.status(500).json({ message: "Internal Server Error" });
+    }
+};
+
+
+
+
+
+
+
