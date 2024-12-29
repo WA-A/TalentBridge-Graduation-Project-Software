@@ -481,22 +481,23 @@ const toggleCredentialType = () => {
   }));
 };
 
-  const base64ToBlob = (base64Data, contentType = 'image/jpeg') => {
-    const byteCharacters = atob(base64Data.split(',')[1]);
-    const byteArrays = [];
-  
-    for (let offset = 0; offset < byteCharacters.length; offset += 512) {
-      const slice = byteCharacters.slice(offset, offset + 512);
-      const byteNumbers = new Array(slice.length);
-      for (let i = 0; i < slice.length; i++) {
-        byteNumbers[i] = slice.charCodeAt(i);
-      }
-      const byteArray = new Uint8Array(byteNumbers);
-      byteArrays.push(byteArray);
+const base64ToBlob = (base64Data, contentType = 'image/jpeg') => {
+  const byteCharacters = atob(base64Data.split(',')[1]);
+  const byteArrays = [];
+
+  for (let offset = 0; offset < byteCharacters.length; offset += 512) {
+    const slice = byteCharacters.slice(offset, offset + 512);
+    const byteNumbers = new Array(slice.length);
+    for (let i = 0; i < slice.length; i++) {
+      byteNumbers[i] = slice.charCodeAt(i);
     }
-  
-    return new Blob(byteArrays, { type: contentType });
-  };
+    const byteArray = new Uint8Array(byteNumbers);
+    byteArrays.push(byteArray);
+  }
+
+  return new Blob(byteArrays, { type: contentType });
+};
+
   
 
 /////////////////////////////////delete////////////////////////////
@@ -647,90 +648,99 @@ const addCertification = async () =>{
 } 
 };
 
-  const handleUpdateProfile = async (values) => {
-    try {
-      const token = await AsyncStorage.getItem('userToken');
-      if (!token) {
-        console.error('Token not found');
-        return;
-      }
-  
-      // إعداد البيانات باستخدام FormData
-      const formData = new FormData();
-  
-      // إضافة الحقول النصية
-      formData.append('Bio', newbio);
-      formData.append('Location', newlocation);
-      formData.append('About', newabout);
-      formData.append('UserName', newuserName);
-  
-      // إضافة صورة البروفايل إذا كانت موجودة
-      if (newprofileImage) {
-        if (Platform.OS === 'web') {
-          // استخدام Blob للويب
-          const profileBlob = base64ToBlob(newprofileImage, 'image/jpeg');
-          formData.append('PictureProfile', profileBlob, 'profile.jpg');
-        } else {
-          // استخدام uri للموبايل
-          formData.append('PictureProfile', {
-            uri: newprofileImage,
-            type: 'image/jpeg',
-            name: 'profile.jpg',
-          });
-        }
-      }
-  
-      // إضافة صورة الغلاف
-      if (newcoverImage) {
-        if (Platform.OS === 'web') {
-          // استخدام Blob للويب
-          const coverBlob = base64ToBlob(newcoverImage, 'image/jpeg');
-          formData.append('CoverImage', coverBlob, 'cover.jpg');
-        } else {
-          // استخدام uri للموبايل
-          formData.append('CoverImage', {
-            uri: newcoverImage,
-            type: 'image/jpeg',
-            name: 'cover.jpg',
-          });
-        }
-      }
-  
-      console.log('Sending updated profile data:', formData);
-  
-      const response = await fetch(`${baseUrl}/user/updateprofile`, {
-        method: 'PATCH',
-        headers: {
-          'Authorization': `Wasan__${token}`,
-        },
-        body: formData, // إرسال البيانات كـ FormData
-      });
-  
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Something went wrong');
-      }
-  
-      const data = await response.json();
-  
-      // تحديث البيانات في الواجهة الأمامية
-      setAbout(data.user.About);
-      seUserName(data.user.UserName);
-      setBio(data.user.Bio);
-      setLocation(data.user.Location);
-      setProfileimage(data.user.PictureProfile?.secure_url || '');
-      setCoverimage(data.user.CoverImage?.secure_url || '');
-      console.log('User profile updated successfully:', data);
-      Alert.alert('Profile updated successfully.');
-  
-      // إرسال التحديث عبر socket بعد نجاح التحديث
-      socket.emit('profileUpdated', data.user); // إرسال التحديث للسيرفر
-  
-    } catch (error) {
-      console.error('Error updating profile:', error.message);
-      setMenuVisible(true);
+const handleUpdateProfile = async (values) => {
+  try {
+    const token = await AsyncStorage.getItem('userToken');
+    if (!token) {
+      console.error('Token not found');
+      return;
     }
-  };
+
+    const formData = new FormData();
+
+    // النصوص
+    formData.append('Bio', newbio);
+    formData.append('Location', newlocation);
+    formData.append('About', newabout);
+    formData.append('UserName', newuserName);
+      console.log("saaaaaaaamaaaaaaaaaaaaaaaa");
+    // صورة البروفايل
+    if (newprofileImage !==profileImage) {
+      if (Platform.OS === 'web') {
+        const profileBlob = base64ToBlob(newprofileImage, 'image/jpeg');
+        formData.append('PictureProfile', profileBlob, 'profile.jpg');
+        console.log("saaaaaaaamaaaaaaaaaaaaaaaa",newprofileImage);
+      } else {
+        formData.append('PictureProfile', {
+          uri: newprofileImage,
+          type: 'image/jpeg',
+          name: 'profile.jpg',
+        });
+      }
+    }else{
+      formData.append('PictureProfile', {
+        uri: profileImage,
+        type: 'image/jpeg',
+        name: 'profile.jpg',
+      });      }
+
+    // صورة الغلاف
+    if (newcoverImage !==CoverImage) {
+      console.log("diffrent Covver",newcoverImage);
+      console.log("diffrent Covver",CoverImage);
+
+      if (Platform.OS === 'web') {
+        console.log("sama",newcoverImage);
+        const coverBlob = base64ToBlob(newcoverImage, 'image/jpeg');
+        formData.append('CoverImage', coverBlob, 'cover.jpg');
+      } else {
+        formData.append('CoverImage', {
+          uri: newcoverImage,
+          type: 'image/jpeg',
+          name: 'cover.jpg',
+        });
+      }
+    }else{
+      
+      formData.append('CoverImage', {
+        uri: CoverImage,
+        type: 'image/jpeg',
+        name: 'cover.jpg',
+      });    }
+
+    console.log('Sending updated profile data:', formData);
+
+    const response = await fetch(`${baseUrl}/user/updateprofile`, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Wasan__${token}`,
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Something went wrong');
+    }
+
+    const data = await response.json();
+
+    setAbout(data.user.About);
+    seUserName(data.user.UserName);
+    setBio(data.user.Bio);
+    setLocation(data.user.Location);
+    setProfileimage(data.user.PictureProfile?.secure_url || '');
+    setCoverimage(data.user.CoverImage?.secure_url || '');
+
+    console.log('User profile updated successfully:', data);
+    Alert.alert('Profile updated successfully.');
+    socket.emit('profileUpdated', data.user);
+  } catch (error) {
+    console.error('Error updating profile:', error.message);
+    setMenuVisible(true);
+  }
+};
+
 
   const handleCreateProfile = async () => {
     try {
@@ -3122,7 +3132,7 @@ useEffect(() => {
                 <Image 
                   source={{ uri: newcoverImage }} 
                   style={{
-                    width: '100%', 
+                    width: Platform.OS === 'web' ? '70%' : '100%',
                     height: 200, 
                     borderRadius: 10, 
                     marginVertical: 10 

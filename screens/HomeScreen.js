@@ -13,6 +13,7 @@ import { Dimensions } from 'react-native';
 import { useFonts } from 'expo-font';
 import { NightModeContext } from './NightModeContext';
 import * as ImagePicker from 'expo-image-picker';
+import io from 'socket.io-client';
 import './../compnent/webCardStyle.css';
 import {
     Colors,
@@ -68,13 +69,16 @@ const editCommentHandler = (commentId, text, image) => {
   setEditingCommentId(commentId);
   setNewCommentText(text); // إعداد النص الحالي للتعليق
  setImageUriComment(image);  // إعداد الصورة الحالية للتعليق
+ setEditingImage(image[0].secure_url);
+ setNewCommentText('');
+ setSelectedCommentImage(null);
 };
 
 const cancelEditHandler = () => {
   setIsEditing(false);
   setEditingCommentId(null);
   setNewCommentText(''); // إعادة تعيين النص
-  setEditingImage(null);  // إعادة تعيين الصورة
+  setImageUriComment(null);  // إعادة تعيين الصورة
 };
 const [imageUriComment, setImageUriComment] = useState('');
 const [newCommentText, setNewCommentText] = useState('');
@@ -83,9 +87,10 @@ const [selectedCommentImage, setSelectedCommentImage] = useState(null);
 const colorScheme = useColorScheme(); // Check if dark mode is enabled
 
 const handleAddComment = () => {
-  addCommentHandler(newCommentText, selectedCommentImage);
+  addCommentHandler();
   setNewCommentText('');
-  setSelectedCommentImage(null);
+  setImageUriComment(null);  // إعادة تعيين الصورة
+
 };
 const base64ToBlob = (base64Data, contentType = 'image/jpeg') => {
   const byteCharacters = atob(base64Data.split(',')[1]);
@@ -104,34 +109,33 @@ const base64ToBlob = (base64Data, contentType = 'image/jpeg') => {
   return new Blob(byteArrays, { type: contentType });
 };
 
-  const pickImageComment = async () => {
-    try {
-      // طلب إذن الوصول إلى مكتبة الصور
-      let permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (permissionResult.granted === false) {
-        Alert.alert('Permission required', 'You need to grant permission to access the gallery.');
-        return;
-      }
-      let result ;
-      result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ['images'],
-        allowsEditing: true,
-        aspect: [8, 5],
-        quality: 1,
-      });
-      console.log(result);
-      // إذا تم اختيار صورة
-      if (!result.canceled) {
-        const selectedImage = result.assets[0];
-        setImageUriComment(selectedImage.uri);
-      
-           } 
-      
-    } catch (error) {
-      console.log('Error picking image: ', error);
+const pickImageComment = async () => {
+  try {
+    // طلب إذن الوصول إلى مكتبة الصور
+    let permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (permissionResult.granted === false) {
+      Alert.alert('Permission required', 'You need to grant permission to access the gallery.');
+      return;
     }
-   
-  };
+    let result ;
+    // اختيار صورة
+     result = await ImagePicker.launchImageLibraryAsync({
+          mediaTypes: ['images'],
+          allowsEditing: true,
+          aspect: [8, 5],
+          quality: 1,
+        });
+    if (!result.canceled) {
+      const selectedImage = result.assets[0];
+      setEditingImage(selectedImage.uri);
+      setImageUriComment(selectedImage.uri); // فقط URI هنا
+      console.log('Selected image URI:', selectedImage.uri);
+    }
+  } catch (error) {
+    console.log('Error picking image: ', error);
+  }
+};
+
 const [isCommentModal,setCommenModal] = useState (false);
 const [commentPost, setCommentPosts]=useState([]);
 const [postIdForComment,setPostIdForComment]=useState([]);
@@ -161,63 +165,134 @@ const toggleModal = () =>setCommenModal(!isCommentModal);
       }
     };
 
+    
     const updateMyComment = async (updatedItem) => {
+      const CommentId = updatedItem;
       try {
         const token = await AsyncStorage.getItem('userToken');
         if (!token) {
           console.error('Token not found');
           return;
         }
-    
         const formData = new FormData();
-        
-        // إضافة الحقول النصية
-        formData.append('Text', newCommentText);
     
-        // إضافة الصور إذا كانت موجودة
-        if (imageUriComment) {
-          if (Platform.OS === 'web') {
+        // إضافة النص إذا كان موجودًا
+        if (newCommentText) {
+          formData.append('Text', newCommentText);
+         }
+        if (Platform.OS === 'web') {
             // استخدام Blob للويب
             const profileBlob = base64ToBlob(imageUriComment, 'image/jpeg');
-            formData.append('images', profileBlob, 'image.jpg');
-          } else {
-            // استخدام uri للموبايل
-            formData.append('images', {
-              uri: imageUriComment,
-              type: 'image/jpeg',
-              name: 'image.jpg',
-            });
-          }
+            formData.append('images', profileBlob, 'images.jpg');
+          } 
+        // إضافة الصور إذا كانت موجودة
+        if (imageUriComment) {
+          console.log('Image URI:', imageUriComment);
+          formData.append('images', {
+            uri: imageUriComment,
+            type: 'image/jpeg', // تأكد من مطابقة نوع الملف
+            name: 'image.jpg', // اسم الملف
+          });
         }
     
-        // إرسال البيانات إلى الخادم
-        const response = await fetch(`${baseUrl}/comment/updatecomment/${updatedItem._id}`, {
+        // طباعة `FormData` للتأكد من الإرسال الصحيح
+        formData.forEach((value, key) => {
+          console.log(`${key}:`, value);
+        });
+    
+        // إرسال الطلب إلى الخادم
+        const response = await fetch(`${baseUrl}/comment/updatecomment/${CommentId}`, {
           method: 'PUT',
           headers: {
             'Authorization': `Wasan__${token}`,
-            // لا حاجة لإضافة Content-Type مع FormData
           },
-          body: formData, // إرسال البيانات كـ FormData
+          body: formData,
         });
     
         if (!response.ok) {
           throw new Error('Failed to update comment');
         }
     
-        // الحصول على البيانات المستلمة من الخادم
         const userData = await response.json();
-        console.log('comment updated successfully');
-        setModalEdittingVisible(false); // إغلاق المودال بعد التحديث
-        setExperiences(userData.comment); // تحديث بيانات التعليقات المعروضة
     
-        // إرسال الحدث عبر socket
-        socket.emit('commentUpdated', userData.comment);
-        handleGetAllPostsComment(postIdForComment); 
+        // تحقق من وجود الحقل comment
+        if (!userData.comment) {
+          console.error('Missing comment field in response:', userData);
+          throw new Error('Comment data not returned from server');
+        }
+    
+        console.log('Comment updated successfully:', userData);
+    
+        // تحديث الحالة المحلية
+        setImageUri(userData.comment.Images?.[0]?.secure_url || null);
+        setNewCommentText(userData.comment.Text || '');
+    
+      //  socket.emit('commentUpdated', userData.comment);
+        handleGetAllPostsComment(postIdForComment);
+        cancelEditHandler();
       } catch (error) {
         console.error('Error updating comment:', error);
       }
     };
+    
+//////////////////Add new Comment///////////
+const addCommentHandler = async () => {
+  try {
+    const token = await AsyncStorage.getItem('userToken');
+    if (!token) {
+      console.error('Token not found');
+      return;
+    }
+    // إعداد البيانات باستخدام FormData
+    const formData = new FormData();
+    //newCommentText, selectedCommentImage
+    // إضافة الحقول النصية
+    formData.append('Text', newCommentText);
+    if (editingImage) {
+      if (Platform.OS === 'web') {
+        // استخدام Blob للويب
+        const profileBlob = base64ToBlob(imageUriComment, 'image/jpeg');
+        formData.append('images', profileBlob, 'images.jpg');
+      } 
+    // إضافة الصور إذا كانت موجودة
+    if (imageUriComment) {
+      console.log('Image URI:', imageUriComment);
+      formData.append('images', {
+        uri: imageUriComment,
+        type: 'image/jpeg', // تأكد من مطابقة نوع الملف
+        name: 'image.jpg', // اسم الملف
+      });
+    }
+
+    }
+
+    console.log('Sending comment data:', formData);
+
+    const response = await fetch(`${baseUrl}/comment/createcomment/${postIdForComment}`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Wasan__${token}`,
+      },
+      body: formData, // إرسال البيانات كـ FormData
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Something went wrong');
+    }
+    handleGetAllPostsComment(postIdForComment);
+  }
+
+  catch (error) {
+    console.error('Error fetching addComment:', error);
+} 
+
+};
+//////////////////////////////////////////
+
+
     const ActionComment = async(postId) =>{
+      setCommentPosts([]);
       handleGetAllPostsComment(postId);
       setCommenModal(true);           // فتح المودال
     };
@@ -259,6 +334,7 @@ const handleGetAllPostsComment = async (postId) => {
     if (data && Array.isArray(data.comments) && data.comments.length > 0) {
       setCommentPosts(data.comments); // تخزين التعليقات في الحالة
       setPostIdForComment(postId);    // تخزين ID المنشور
+      console.log("postid",postId);
     } else {
       console.log('No comments available.');
     }
@@ -1670,87 +1746,86 @@ left: 10, backgroundColor: 'white', padding: 10, borderRadius: 5, zIndex: 20,bot
     </View>
 
     {/* Comments List - FlatList */}
-    <FlatList 
-      style={{ flex: 1 }}
-      data={commentPost}
-      renderItem={({ item }) => {
-        const isOwner = item.UserId === currentUserId; // تحقق إن كان صاحب الحساب
-        return (
-          <View style={[styles.commentItem, isNightMode && styles.commentItemDark]}>
-            <TouchableOpacity onPress={() => handleProfilePress(item.UserId)}>
-              <Image source={{ uri: item.PictureProfile.secure_url }} style={styles.commentUserImage} />
-            </TouchableOpacity>
-            <View style={styles.commentTextContainer}>
-              <Text style={[styles.commentUser, isNightMode && styles.commentUserDark]}>{item.FullName}</Text>
-              <Text>{item.Text}</Text>
-              {item.Images && <Image source={{ uri: item.Images[0].secure_url }} style={styles.commentImage} />}
-              {isOwner && (
-                <View style={styles.commentOptions}>
-                  <TouchableOpacity onPress={() => editCommentHandler(item._id, item.Text, item.Images)}>
-                    <Ionicons name="create" size={20} color={isNightMode ? 'white' : 'gray'} />
-                  </TouchableOpacity>
-                  <TouchableOpacity onPress={() => cancelEditHandler(item._id)}>
-                    <Ionicons name="trash" size={20} color={isNightMode ? 'white' : 'gray'} />
-                  </TouchableOpacity>
-                </View>
-              )}
+    {commentPost && commentPost.length > 0 ? (
+      <FlatList 
+        style={{ flex: 1 }}
+        data={commentPost}
+        renderItem={({ item }) => {
+          const isOwner = item.UserId === currentUserId; // تحقق إن كان صاحب الحساب
+          return (
+            <View style={[styles.commentItem, isNightMode && styles.commentItemDark]}>
+              <TouchableOpacity onPress={() => handleProfilePress(item.UserId)}>
+                {item.PictureProfile && item.PictureProfile.secure_url && (
+                  <Image
+                    source={{ uri: item.PictureProfile.secure_url }}
+                    style={styles.commentUserImage}
+                  />
+                )}
+              </TouchableOpacity>
+              <View style={styles.commentTextContainer}>
+                <Text style={[styles.commentUser, isNightMode && styles.commentUserDark]}>{item.FullName}</Text>
+                {item.Text && (
+                  <Text>{item.Text}</Text>
+                )}
+                {item.Images && item.Images.length > 0 && (
+                  <Image
+                    source={{ uri: item.Images[0].secure_url }}
+                    style={Platform.OS === 'web' ? styles.commentImagewep : styles.commentImage}
+                  />
+                )}
+                {isOwner && (
+                  <View style={styles.commentOptions}>
+                    <TouchableOpacity onPress={() => editCommentHandler(item._id, item.Text, item.Images)}>
+                      <Ionicons name="create" size={20} color={isNightMode ? 'white' : 'gray'} />
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => cancelEditHandler(item._id)}>
+                      <Ionicons name="trash" size={20} color={isNightMode ? 'white' : 'gray'} />
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </View>
             </View>
-          </View>
-        );
-      }}
-      keyExtractor={(item) => item._id ? item._id.toString() : ''}
-      contentContainerStyle={styles.commentList}
-    />
-
-{editingImage && (  // استخدم editingImage بدلاً من selectedCommentImage
-
-    <View  style={styles.imageWrapper}>
-   <TouchableOpacity onPress={cancelEditHandler}  >
-    <Text  style={styles.commentCancelText}>Cancle Edit</Text></TouchableOpacity> 
-    <TouchableOpacity onPress={pickImageComment} >
-      <Image source={{ uri: imageUriComment[0].secure_url }} style={styles.commentImage} />
-      </TouchableOpacity>
-      {/* Remove Image Button */}
-      <TouchableOpacity onPress={() => setEditingImage(null)} style={styles.removeImageButton}>
-        <Ionicons name="close" size={15} color="white" />
-      </TouchableOpacity>
-    </View>
-  )}
+          );
+        }}
+        keyExtractor={(item) => item._id ? item._id.toString() : ''}
+        contentContainerStyle={styles.commentList}
+      />
+    ) : (
+      <Text style={[styles.noCommentsText, isNightMode && styles.noCommentsTextDark]}>No comment yet</Text>
+    )}
 
     {/* Comment Input Section */}
     <View style={[styles.commentInputContainer]}>
-  {/* Text Input with auto-resize */}
-  <TextInput
-    placeholder="Write a comment..."
-    value={newCommentText}
-    onChangeText={setNewCommentText}
-    style={[
-      styles.commentInput,
-      isNightMode && styles.commentInputDark,
-      { minHeight: 40, textAlignVertical: 'top' }, // توسع الحقل مع النص
-    ]}
-    multiline={true} // لجعل الإدخال متعدد الأسطر
-  />
+      {/* Text Input with auto-resize */}
+      <TextInput
+        placeholder="Write a comment..."
+        value={newCommentText}
+        onChangeText={setNewCommentText}
+        style={[
+          styles.commentInput,
+          isNightMode && styles.commentInputDark,
+          { minHeight: 40, textAlignVertical: 'top' }, // توسع الحقل مع النص
+        ]}
+        multiline={true} // لجعل الإدخال متعدد الأسطر
+      />
 
-  {/* Action Buttons */}
-  <View style={styles.actionButtonsContainer}>
-    <TouchableOpacity onPress={pickImageComment} style={styles.imagePickerButton}>
-      <Ionicons name="image" size={30} color={isNightMode ? 'white' : 'gray'} />
-    </TouchableOpacity>
-    <TouchableOpacity
-onPress={isEditing ? () => updateMyComment(editingCommentId) : handleAddComment}
-style={styles.commentSendButton}
-    >
-      <Ionicons name="send" size={15} color="white" />
-    </TouchableOpacity>
-  </View>
-  
-  {/* Image Preview inside Input */}
-  
-</View>
+      {/* Action Buttons */}
+      <View style={styles.actionButtonsContainer}>
+        <TouchableOpacity onPress={pickImageComment} style={styles.imagePickerButton}>
+          <Ionicons name="image" size={30} color={isNightMode ? 'white' : 'gray'} />
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={isEditing ? updateMyComment(editingCommentId) : handleAddComment}
+          style={styles.commentSendButton}
+        >
+          <Ionicons name="send" size={15} color="white" />
+        </TouchableOpacity>
+      </View>
+    </View>
 
   </View>
 </Modal>
+
 
 
 
@@ -1906,6 +1981,12 @@ commentImage: {
   borderRadius: 10,
   marginTop: 10,
 },
+commentImagewep: {
+  width: 400,
+  height: 200,
+  borderRadius: 10,
+  marginTop: 10,
+},
 commentOptions: {
   flexDirection: 'row',
   marginTop: 10,
@@ -2046,7 +2127,17 @@ commentInputContainer: {
     alignItems: 'center',
     marginLeft: 10,
   },
+  noCommentsText: {
+    fontSize: 18,
+    color: 'gray',
+    textAlign: 'center',
+    flex: 1,
+    justifyContent: 'center',  // توسيط النص في الاتجاه العمودي
 
+  },
+  noCommentsTextDark: {
+    color: 'white',  // تغيير اللون إلى الأبيض في وضع الليل
+  },
 });
  
   
