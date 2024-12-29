@@ -235,10 +235,9 @@ export const AddSkills = async (req, res) => {
         const addedSkills = [];
         const failedSkills = [];
 
-        // تحويل المهارات القديمة إلى تنسيق جديد مع Rate
         user.Skills = user.Skills.map(skill => ({
             ...skill,
-            Rate: skill.Rate || 1 // إضافة Rate افتراضي إذا لم يكن موجوداً
+            Rate: skill.Rate || 1 
         }));
 
         for (const { SkillId, Rate } of SkillsWithRates) {
@@ -248,7 +247,6 @@ export const AddSkills = async (req, res) => {
                 continue;
             }
         
-            // تحويل SkillId إلى رقم
             const skillIdNum = parseInt(SkillId);
             const selectedSkill = Skills.find(skill => skill.id === skillIdNum);
             
@@ -269,7 +267,7 @@ export const AddSkills = async (req, res) => {
                 id: selectedSkill.id,
                 name: selectedSkill.name,
                 code: selectedSkill.code,
-                Rate: Rate  // تأكد من استخدام Rate وليس rate
+                Rate: Rate  
             });
         
             addedSkills.push({ ...selectedSkill, Rate: Rate });
@@ -394,57 +392,116 @@ export const GetUserSkills = async (req, res) => {
 export const AddMoreSkills = async (req, res) => {
     try {
         if (!req.user) {
-            console.log("User not authorized: No token provided.");
-            return res.status(401).json({ message: "User not authorized. Please provide a valid token." });
+            return res.status(401).json({ 
+                status: "error",
+                message: "User not authorized. Please provide a valid token." 
+            });
         }
 
         const authUser = req.user;
-        const { SkillIds } = req.body;  
+        const { SkillsWithRates } = req.body;
 
-        if (!authUser || !SkillIds || !Array.isArray(SkillIds)) {
-            console.log("Missing required fields: authUser or SkillIds.");
-            return res.status(400).json({ message: "User ID and an array of Skill IDs are required." });
+        if (!authUser || !Array.isArray(SkillsWithRates) || SkillsWithRates.length === 0) {
+            return res.status(400).json({ 
+                status: "error",
+                message: "User ID and SkillsWithRates are required, and must be a non-empty array." 
+            });
         }
-
-        console.log("Request received:", { authUser, SkillIds });
-
-        const selectedSkills = Skills.filter(skill => SkillIds.includes(skill.id));
-        if (selectedSkills.length === 0) {
-            console.log("No valid skills found.");
-            return res.status(404).json({ message: "No valid skills found." });
-        }
-
-        console.log("Selected skills:", selectedSkills);
 
         const user = await UserModel.findById(authUser);
         if (!user) {
-            console.log("User not found in the database.");
-            return res.status(404).json({ message: "User not found." });
+            return res.status(404).json({ 
+                status: "error",
+                message: "User not found." 
+            });
         }
 
-        console.log("User found:", user);
+        const addedSkills = [];
+        const errors = {
+            existingSkills: [],
+            invalidRates: [],
+            notFoundSkills: []
+        };
 
-        const existingSkills = user.Skills.map(skill => skill.id);
-        const newSkills = selectedSkills.filter(skill => !existingSkills.includes(skill.id));
+        user.Skills = user.Skills.map(skill => ({
+            ...skill,
+            Rate: skill.Rate || 1
+        }));
 
-        if (newSkills.length === 0) {
-            console.log("All skills already exist for user.");
-            return res.status(400).json({ message: "All selected skills are already added." });
+        for (const { SkillId, Rate } of SkillsWithRates) {
+            if (Rate === undefined || Rate < 1 || Rate > 5) {
+                errors.invalidRates.push({
+                    skillId: SkillId,
+                    providedRate: Rate,
+                    message: `Invalid rate: ${Rate}. Rate must be between 1 and 5.`
+                });
+                continue;
+            }
+        
+            const skillIdNum = parseInt(SkillId);
+            const selectedSkill = Skills.find(skill => skill.id === skillIdNum);
+            
+            if (!selectedSkill) {
+                errors.notFoundSkills.push({
+                    skillId: SkillId,
+                    message: `Skill with ID ${SkillId} was not found in the system.`
+                });
+                continue;
+            }
+        
+            const skillExists = user.Skills.some(skill => skill.id === selectedSkill.id);
+            if (skillExists) {
+                errors.existingSkills.push({
+                    skillId: SkillId,
+                    message: `Skill with ID ${SkillId} is already added to user's profile.`
+                });
+                continue;
+            }
+        
+            user.Skills.push({
+                id: selectedSkill.id,
+                name: selectedSkill.name,
+                code: selectedSkill.code,
+                Rate: Rate
+            });
+        
+            addedSkills.push({ ...selectedSkill, Rate: Rate });
         }
-
-        user.Skills.push(...newSkills);
 
         await user.save();
 
-        console.log("Skills added successfully:", newSkills);
         return res.status(200).json({
-            message: "Skills added successfully.",
-            skills: user.Skills
+            status: "success",
+            message: "Skills processing completed",
+            results: {
+                addedSkills: {
+                    count: addedSkills.length,
+                    skills: addedSkills
+                },
+                errors: {
+                    existingSkills: {
+                        count: errors.existingSkills.length,
+                        skills: errors.existingSkills
+                    },
+                    invalidRates: {
+                        count: errors.invalidRates.length,
+                        skills: errors.invalidRates
+                    },
+                    notFoundSkills: {
+                        count: errors.notFoundSkills.length,
+                        skills: errors.notFoundSkills
+                    }
+                },
+                currentUserSkills: user.Skills
+            }
         });
 
     } catch (error) {
-        console.error("Error adding skills: ", error);
-        return res.status(500).json({ message: "Internal Server Error." });
+        return res.status(500).json({ 
+            status: "error",
+            message: "Internal Server Error.",
+            error: error.message 
+        });
     }
 };
 
