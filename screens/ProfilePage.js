@@ -1721,8 +1721,8 @@ useEffect(() => {
       </ScrollView>
     );
   };
-
-
+     
+  
   // Skills List
 
   const SkillsList = ({ skill }) => {
@@ -1730,25 +1730,58 @@ useEffect(() => {
     const filterExperiences = () => {
       return userSkills.slice(2); // تصفية الخبرات بحيث تبدأ من الخبرة الثالثة
     };
+  
     return (
       <ScrollView>
-          {filterExperiences().slice(0,2).map((cert, index) => (
-        <View key={index} style={[styles.experienceItem, { flexDirection: 'row' }]}>
-      <View style={{ flex: 1 }}>
-        <Text style={[styles.experienceTitle, { color: isNightMode ? Colors.primary : Colors.black }]}>
-          {cert.name}
-        </Text>
-            <TouchableOpacity onPress={() => openConfirmDeleteModal('skills',cert)} style={styles.editButton}>
-              <MaterialCommunityIcons name="minus-circle" size={20} color={isNightMode ? Colors.primary : Colors.black} />
-            </TouchableOpacity>
-      </View>
-    </View>
-  ))}
-
-      
+        {filterExperiences().map((cert, index) => {
+          // نحصل على الفهرس الحقيقي من المصفوفة الأصلية
+          const actualIndex = index + 2;
+  
+          return (
+            <View key={actualIndex} style={[styles.experienceItem, { flexDirection: 'row' }]}>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.experienceTitle, { color: isNightMode ? Colors.primary : Colors.black }]}>
+                  {cert.name}
+                </Text>
+  
+                {/* زر الحذف */}
+                <TouchableOpacity style={styles.editButton}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    {/* النجوم هنا */}
+                    {[1, 2, 3, 4, 5].map((starIndex) => (
+                      <TouchableOpacity
+                        key={starIndex}
+                        onPress={() => {
+                          // تحديث تقييم المهارة بناءً على الفهرس الحقيقي
+                          const updatedSkills = [...userSkills];
+                          updatedSkills[actualIndex].rating = starIndex;
+                          setUserSkills(updatedSkills);
+                        }}
+                      >
+                        <MaterialCommunityIcons
+                          name={starIndex <= cert.rating ? 'star' : 'star-outline'}
+                          size={20}
+                          color={starIndex <= cert.rating ? '#F7A8B8' : isNightMode ? Colors.primary : Colors.black}
+                        />
+                      </TouchableOpacity>
+                    ))}
+  
+                    {/* مسافة بسيطة بين النجوم وزر الحذف */}
+                    <TouchableOpacity onPress={() => openConfirmDeleteModal('skills', cert)} style={{ marginLeft: 10 }}>
+                      <MaterialCommunityIcons name="minus-circle" size={20} color={isNightMode ? Colors.primary : Colors.black} />
+                    </TouchableOpacity>
+                  </View>
+                </TouchableOpacity>
+              </View>
+            </View>
+          );
+        })}
       </ScrollView>
     );
   };
+  
+
+  
 
   const CertificationList = ({certification}) => {
     // دالة لتصفية الخبرات وعرض الخبرات من الثالثة فما فوق
@@ -2424,9 +2457,38 @@ useEffect(() => {
         <Text style={[styles.experienceTitle, { color: isNightMode ? Colors.primary : Colors.black }]}>
           {cert.name}
         </Text>
-            <TouchableOpacity onPress={() => openConfirmDeleteModal('skills',cert)} style={styles.editButton}>
-              <MaterialCommunityIcons name="minus-circle" size={20} color={isNightMode ? Colors.primary : Colors.black} />
-            </TouchableOpacity>
+        
+             {/* زر الحذف */}
+             <TouchableOpacity style={styles.editButton}>
+  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+    {/* النجوم هنا */}
+    {[1, 2, 3, 4, 5].map((starIndex) => (
+      <TouchableOpacity
+        key={starIndex}
+        onPress={() => {
+          // تحديث تقييم المهارة فقط
+          const updatedSkills = [...userSkills];
+          updatedSkills[index].rating = starIndex;
+          setUserSkills(updatedSkills);
+        }}
+      >
+        <MaterialCommunityIcons
+          name={starIndex <= cert.rating ? 'star' : 'star-outline'} // ملء النجوم بناءً على التقييم
+          size={20}
+          color={starIndex <= cert.rating ? '#F7A8B8' : isNightMode ? Colors.primary : Colors.black}
+        />
+      </TouchableOpacity>
+    ))}
+
+    {/* مسافة بسيطة بين النجوم وزر الحذف */}
+    <TouchableOpacity onPress={() => openConfirmDeleteModal('skills', cert)} style={{ marginLeft: 10 }}>
+      <MaterialCommunityIcons name="minus-circle" size={20} color={isNightMode ? Colors.primary : Colors.black} />
+    </TouchableOpacity>
+  </View>
+</TouchableOpacity>
+
+
+            
           </View>
          </View>
                       ))}
