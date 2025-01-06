@@ -234,7 +234,7 @@ export const GetFields = (req, res) => {
 };
 
 
-export const AddFields = async (req, res) => {
+export const AddFieldsWithToken = async (req, res) => {
     try {
         if (!req.user) {
             console.log("User not authorized: No token provided.");
@@ -242,9 +242,9 @@ export const AddFields = async (req, res) => {
         }
 
         const authUser = req.user;
-        const { FieldId } = req.body;  // استلام مجال واحد فقط (FieldId)
+        const { FieldId } = req.body;  
 
-        // التحقق من أن المستخدم قد أرسل مجال واحد فقط
+       
         if (!authUser || !FieldId) {
             console.log("Missing required fields: authUser or FieldId.");
             return res.status(400).json({ message: "User ID and Field ID are required." });
