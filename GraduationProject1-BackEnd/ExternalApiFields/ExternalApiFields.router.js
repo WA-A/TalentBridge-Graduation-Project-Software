@@ -7,6 +7,7 @@ const router = express.Router();
 
 router.get('/getfields',ExternalApiFieldsController.GetFields);
  router.post('/addfieldswithtoken',auth(EndPoints.AddFields),ExternalApiFieldsController.AddFieldsWithToken);
+ router.post('/addfieldswithouttoken',ExternalApiFieldsController.AddFieldsWithOutToken);
  router.delete('/deletefields',auth(EndPoints.AddFields),ExternalApiFieldsController.DeleteFields);
  router.get('/getuserfields',auth(EndPoints.AddFields),ExternalApiFieldsController.GetFieldsUser);
 
