@@ -304,19 +304,22 @@ export const AddFieldsWithOutToken = async (FieldId) => {
 
         console.log("Request received:", { FieldId });
 
-        const fieldToAdd = Fields.find(field => field.id === FieldId);
+        const fieldToAdd = Fields.find(field => field.id.toString() === FieldId.toString());
+        
         if (!fieldToAdd) {
+            console.log("Available Fields:", Fields); 
             throw new Error("Field not found in the predefined list.");
         }
 
         console.log("Field found:", fieldToAdd);
-        return fieldToAdd; 
+        return fieldToAdd;
 
     } catch (error) {
         console.error("Error finding Field: ", error.message);
-        throw error; 
+        throw error;
     }
 };
+
 
 
 
