@@ -292,6 +292,44 @@ export const AddFieldsWithToken = async (req, res) => {
     }
 };
 
+export const AddFieldsWithOutToken = async (req, res) => {
+    try {
+        const { FieldId } = req.body;
+
+        if (!FieldId) {
+            console.log("Missing required field: FieldId.");
+            return res.status(400).json({ message: "Field ID is required." });
+        }
+
+        if (Array.isArray(FieldId)) {
+            console.log("FieldId should not be an array. Please send only one FieldId.");
+            return res.status(400).json({ message: "Please provide only one FieldId." });
+        }
+
+        console.log("Request received:", { FieldId });
+
+        
+        const fieldToAdd = Fields.find(field => field.id === FieldId);
+        if (!fieldToAdd) {
+            console.log("Field not found.");
+            return res.status(404).json({ message: "Field not found in the predefined list." });
+        }
+
+        console.log("Field found:", fieldToAdd);
+        return res.status(200).json({
+            message: "Field selected successfully.",
+            field: fieldToAdd
+        });
+
+    } catch (error) {
+        console.error("Error adding Field: ", error);
+        return res.status(500).json({ message: "Internal Server Error." });
+    }
+};
+
+
+
+
 
 export const DeleteFields = async (req, res) => {
     try {
