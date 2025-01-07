@@ -5,32 +5,49 @@ import { customAlphabet, nanoid } from 'nanoid';
 import UserModel from '../../Model/User.Model.js';
 import { SendNotification } from '../../../utls/SendNotfication.js';
 import Notification from '../../Model/Notfication.js';
+import { AddFieldsWithOutToken } from '../../../ExternalApiFields/ExternealApiFields.controller.js';
 
 
 export const SignUp = async (req, res) => {
     console.log('Received data:', req.body);
-    const { FullName, Email, Password, ConfirmPassword, Gender, Role, BirthDate, PhoneNumber, Location, YearsOfExperience, Field } = req.body;
+    const { FullName, Email, Password, ConfirmPassword, Gender, Role, BirthDate, PhoneNumber, Location, YearsOfExperience, FieldId } = req.body;
     const HashedPassword = bcrypt.hashSync(Password, parseInt(process.env.SALTROUND));
     const HashedConfirmPassword = bcrypt.hashSync(ConfirmPassword, parseInt(process.env.SALTROUND)); 
 
     try {
-        if (YearsOfExperience > 0) {
-            const YearsofExperienceN = parseInt(YearsOfExperience);
-            const CreateUser = await UserModel.create({ FullName, Email, Password: HashedPassword, ConfirmPassword:HashedConfirmPassword, Gender, Role, BirthDate, PhoneNumber, Location, YearsOfExperience: YearsofExperienceN, Field });
-            const token = jwt.sign({ Email }, process.env.CONFIRM_EMAILTOKEN);
-            return res.status(201).json({ message: "success", user: CreateUser, token: token });
-        } else {
-            const CreateUser = await UserModel.create({ FullName, Email, Password: HashedPassword, ConfirmPassword:HashedConfirmPassword, Gender, BirthDate, PhoneNumber, Location, YearsOfExperience, Field });
-            const token = jwt.sign({ Email }, process.env.CONFIRM_EMAILTOKEN);
-            return res.status(201).json({ message: "success", user: CreateUser, token: token });
+        if (!FieldId) {
+            return res.status(400).json({ message: "Field ID is required." });
         }
+
+        const fieldToAdd = await AddFieldsWithOutToken(FieldId.toString());
+
+        const userData = {
+            FullName,
+            Email,
+            Password: HashedPassword,
+            ConfirmPassword: HashedConfirmPassword,
+            Gender,
+            Role,
+            BirthDate,
+            PhoneNumber,
+            Location,
+            YearsOfExperience: YearsOfExperience ? parseInt(YearsOfExperience) : 0,
+            Field: [{ 
+                id: fieldToAdd.id, 
+                sub_specialization: fieldToAdd.sub_specialization, 
+                code: fieldToAdd.code 
+            }]
+        };
+
+        const CreateUser = await UserModel.create(userData);
+        const token = jwt.sign({ Email }, process.env.CONFIRM_EMAILTOKEN);
+        return res.status(201).json({ message: "success", user: CreateUser, token: token });
+
     } catch (error) {
         console.error("Error during user creation:", error.message);
         return res.status(error.statusCode || 500).json({ message: error.message || "Server error" });
     }
 };
-
-
 
 
 

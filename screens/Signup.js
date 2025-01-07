@@ -32,20 +32,20 @@ export default function Signup({ navigation }) {
         setDateOfBirth(date || BirthDate);
         setIsDatePickerVisible(false);
     };
-    const jobFields = [
-        { label: 'Software Engineer', value: 'Software Engineer' },
-        { label: 'Data Scientist', value: 'Data Scientist' },
-        { label: 'Product Manager', value: 'Product Manager' },
-        { label: 'UX/UI Designer', value: 'UX/UI Designer' },
-        { label: 'Marketing Specialist', value: 'Marketing Specialist' },
-        { label: 'Business Analyst', value: 'Business Analyst' },
-        { label: 'DevOps Engineer', value: 'DevOps Engineer' },
-        { label: 'QA Tester', value: 'QA Tester' },
-        { label: 'IT', value: 'IT' },
-        { label: 'Digital Marketing', value: 'Digital Marketing' },
-        { label: 'Decor Design', value: 'Decor Design' },
-        { label: 'Graphic Design', value: 'Graphic Design' }
-    ];
+    // const jobFields = [
+    //     { label: 'Software Engineer', value: 'Software Engineer' },
+    //     { label: 'Data Scientist', value: 'Data Scientist' },
+    //     { label: 'Product Manager', value: 'Product Manager' },
+    //     { label: 'UX/UI Designer', value: 'UX/UI Designer' },
+    //     { label: 'Marketing Specialist', value: 'Marketing Specialist' },
+    //     { label: 'Business Analyst', value: 'Business Analyst' },
+    //     { label: 'DevOps Engineer', value: 'DevOps Engineer' },
+    //     { label: 'QA Tester', value: 'QA Tester' },
+    //     { label: 'IT', value: 'IT' },
+    //     { label: 'Digital Marketing', value: 'Digital Marketing' },
+    //     { label: 'Decor Design', value: 'Decor Design' },
+    //     { label: 'Graphic Design', value: 'Graphic Design' }
+    // ];
 
     const [values, setValues] = useState({
         FullName: '', Email: '', Password: '', ConfirmPassword: '', Gender: '', BirthDate: '', PhoneNumber: '', Location: '', YearsofExperience: '', Field: '',
@@ -53,7 +53,7 @@ export default function Signup({ navigation }) {
 
 
     const [selectedJob, setSelectedJob] = useState('Software Engineer');
-
+    const [jobFields, setJobFields] = useState([]); // تخزين الوظائف المحملة من API
     const [hidePassword, setHidePassword] = useState(true);
     const [hideConfirmPassword, setHideConfirmPassword] = useState(true);
 
@@ -63,6 +63,8 @@ export default function Signup({ navigation }) {
 
     const [successMassage, setSuccessMassage] = useState('');
     const [successMassage2, setSuccessMassage2] = useState('');
+
+
 
     //verify
 
@@ -204,65 +206,153 @@ export default function Signup({ navigation }) {
     // Join Api With FrontPage 
     const handleSignup = async (values) => {
         try {
+            // تجهيز البيانات مع التأكد من وجود FieldId
             const dataToSend = {
                 ...values,
-                BirthDate: BirthDate.toISOString(), // تأكد أن BirthDate متوافقة مع التنسيق المناسب
-                Gender: gender,
-                Field: selectedJob,
-                Role: userType,
+                BirthDate: BirthDate.toISOString(), // تحويل التاريخ للتنسيق المناسب
+                Gender: gender, // النوع
+                FieldId: selectedJob, // التأكد من إرسال FieldId من الحقل المختار
+                Role: userType, // نوع المستخدم
             };
-
-            console.log('Sending Signup Data :', dataToSend);
-
-            // تحديد عنوان السيرفر بناءً على النظام الأساسي (web أو mobile)
-            const baseUrl = Platform.OS === 'web'
-                ? 'http://localhost:3000'
-                : 'http://192.168.1.239:3000'; // استخدم IP جهازك المحلي
-
-            // إرسال البيانات باستخدام fetch
+    
+            // التحقق من وجود FieldId قبل الإرسال
+            if (!dataToSend.FieldId) {
+                console.error('FieldId is missing. Please select a job.');
+                setErrorMessage3('Please select a job field.'); // عرض رسالة للمستخدم
+                setMenuVisible(true);
+                return; // منع العملية إذا كان الحقل مفقودًا
+            }
+    
+            console.log('Sending Signup Data:', dataToSend);
+    
+            const baseUrl =
+                Platform.OS === 'web'
+                    ? 'http://localhost:3000'
+                    : 'http://192.168.1.239:3000';
+    
             const response = await fetch(`${baseUrl}/auth/signup`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(dataToSend), // إرسال البيانات كـ JSON
+                body: JSON.stringify(dataToSend),
             });
-
-            // التعامل مع الأخطاء في حالة عدم استجابة 200 OK
+    
+            // التعامل مع الاستجابة
             if (!response.ok) {
                 const errorData = await response.json();
                 if (response.status === 409) {
-                    setErrorMessage3('This email already exists');
+                    setErrorMessage3('This email already exists.');
                     setMenuVisible(true);
                 } else {
-                    setErrorMessage3('Something went wrong');
+                    setErrorMessage3(errorData.message || 'Something went wrong.');
                     setMenuVisible(true);
                 }
-                return; // تأكد من عدم الاستمرار عند حدوث خطأ
+                return;
             }
-
-            // إذا كانت الاستجابة ناجحة
+    
             const result = await response.json();
             console.log('User registered successfully:', result);
+    
             if (result.token) {
-                await AsyncStorage.setItem('userToken', result.token); // تخزين التوكين محليًا
-                console.log('Token saved successfully');
-                navigation.navigate('HomeScreen');  // انتقل إلى الشاشة المطلوبة بعد النجاح
+                await AsyncStorage.setItem('userToken', result.token); // تخزين التوكين
+                navigation.navigate('HomeScreen'); // الانتقال للشاشة الرئيسية
             } else {
-                console.warn('No token found in response');
+                console.warn('No token found in response.');
             }
-
         } catch (error) {
             console.error('Error in Signup Process:', error.message);
-            setErrorMessage3('An unexpected error occurred');
+            setErrorMessage3('An unexpected error occurred.');
             setMenuVisible(true);
+        }
+    };
+    
+    
 
+    const handelGetJobFields = async () => {
+        try {
+            const baseUrl = Platform.OS === 'web' ? 'http://localhost:3000' : 'http://192.168.1.239:3000';
+            
+            const response = await fetch(`${baseUrl}/externalapiFields/getfields`, {
+                method: 'GET', 
+                headers: {
+                    'Content-Type': 'application/json'
+                    // حذفنا Authorization لأنها قد لا تكون ضرورية هنا
+                },
+            });
+    
+            if (!response.ok) {
+                throw new Error('Failed to fetch Fields');
+            }
+    
+            const data = await response.json();
+            console.log('Fetched Fields:', data.Fields); 
+    
+            if (data && data.Fields) {
+                setJobFields(data.Fields.map(field => ({
+                    label: field.sub_specialization,
+                    value: field.id.toString() // تحويل المعرف إلى نص
+                })));
+            }
+        } catch (error) {
+            console.error("Error fetching fields:", error);
+            setError("Failed to load job fields.");
+            setMenuVisible(true);
         }
     };
 
+    const handAddFields = async (fieldId) => {
+        console.log('Field ID to add:', fieldId);
+        try {
+            const baseUrl =
+                Platform.OS === 'web'
+                    ? 'http://localhost:3000'
+                    : 'http://192.168.1.239:3000';
+    
+            const response = await fetch(`${baseUrl}/externalapiFields/addfieldswithouttoken`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ FieldId: fieldId }),
+            });
+    
+            console.log('Response status:', response.status);
+            if (!response.ok) {
+                const errorData = await response.json();
+                console.error('Error response:', errorData);
+                throw new Error(errorData.message || 'Failed to add field');
+            }
+    
+            const result = await response.json();
+            console.log('Field added successfully:', result);
+    
+            // تحديث الحقل المختار بعد الإضافة
+            setSelectedJob(fieldId);
+            setErrorMessage3('Field added successfully!');
+            setMenuVisible(true);
+        } catch (error) {
+            console.error('Error in Adding Field Process:', error.message);
+            setErrorMessage3('An unexpected error occurred.');
+            setMenuVisible(true);
+        }
+    };
+    
+    
+    
+    
+        
+
+        useEffect(() => {
+        handelGetJobFields(); 
+    }, []);
 
 
-
+    // useEffect(() => {
+    //     if (selectedJob) {
+    //         handAddFields(selectedJob);
+    //     }
+    // }, [selectedJob]);
 
 
     return (
@@ -604,35 +694,41 @@ export default function Signup({ navigation }) {
 
                                 {/* اختيار المجال الوظيفي */}
                                 <View style={{ marginBottom: 20 }}>
-                                    <Text style={labelStyle}>Field</Text>
-                                    <View style={styles.container}>
-                                        <View style={styles.pickerWrapper}>
-                                            {Platform.OS === 'web' ? (
-                                                // ستايل مخصص للويب
-                                                <Picker
-                                                    selectedValue={selectedJob}
-                                                    onValueChange={(itemValue) => setSelectedJob(itemValue)}
-                                                    style={styles.pickerWeb}
-                                                >
-                                                    {jobFields.map((field, index) => (
-                                                        <Picker.Item label={field.label} value={field.value} key={index} />
-                                                    ))}
-                                                </Picker>
-                                            ) : (
-                                                // ستايل مخصص للموبايل (أندرويد و iOS)
-                                                <Picker
-                                                    selectedValue={selectedJob}
-                                                    onValueChange={(itemValue) => setSelectedJob(itemValue)}
-                                                >
-                                                    {jobFields.map((field, index) => (
-                                                        <Picker.Item label={field.label} value={field.value} key={index} />
-                                                    ))}
-                                                </Picker>
-                                            )}
-                                        </View>
-                                    </View>
-                                </View>
- 
+    <Text style={labelStyle}>Field</Text>
+    <View style={styles.container}>
+        <View style={styles.pickerWrapper}>
+            {Platform.OS === 'web' ? (
+                // ستايل مخصص للويب
+                <Picker
+                    selectedValue={selectedJob}
+                    onValueChange={(itemValue) => {
+                        setSelectedJob(itemValue); // تحديث الوظيفة المختارة
+                       // handAddFields(itemValue); // استدعاء دالة إضافة المجال
+                    }}
+                    style={styles.pickerWeb}
+                >
+                    {jobFields.map((field, index) => (
+                        <Picker.Item label={field.label} value={field.value} key={index} />
+                    ))}
+                </Picker>
+            ) : (
+                // ستايل مخصص للموبايل (أندرويد و iOS)
+                <Picker
+                    selectedValue={selectedJob}
+                    onValueChange={(itemValue) => {
+                        setSelectedJob(itemValue); // تحديث الوظيفة المختارة
+                      // handAddFields(itemValue); // استدعاء دالة إضافة المجال
+                    }}
+                >
+                    {jobFields.map((field, index) => (
+                        <Picker.Item label={field.label} value={field.value} key={index} />
+                    ))}
+                </Picker>
+            )}
+        </View>
+    </View>
+</View>
+
 
                                 {isMenuVisible && (
                                     <View style={[

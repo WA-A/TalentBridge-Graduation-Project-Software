@@ -234,7 +234,7 @@ export const GetFields = (req, res) => {
 };
 
 
-export const AddFields = async (req, res) => {
+export const AddFieldsWithToken = async (req, res) => {
     try {
         if (!req.user) {
             console.log("User not authorized: No token provided.");
@@ -242,21 +242,25 @@ export const AddFields = async (req, res) => {
         }
 
         const authUser = req.user;
-        const { FieldIds } = req.body;  
+        const { FieldId } = req.body;  
 
-        if (!authUser || !FieldIds || !Array.isArray(FieldIds)) {
-            console.log("Missing required fields: authUser or FieldsIds.");
-            return res.status(400).json({ message: "User ID and Language IDs are required." });
+       
+        if (!authUser || !FieldId) {
+            console.log("Missing required fields: authUser or FieldId.");
+            return res.status(400).json({ message: "User ID and Field ID are required." });
         }
 
-        console.log("Request received:", { authUser, FieldIds });
+        if (Array.isArray(FieldId)) {
+            console.log("FieldId should not be an array. Please send only one FieldId.");
+            return res.status(400).json({ message: "Please provide only one FieldId." });
+        }
 
-        const FieldsToAdd = FieldIds.map(id => Fields.find(field => field.id === id))
-                                        .filter(field => field); 
+        console.log("Request received:", { authUser, FieldId });
 
-        if (FieldsToAdd.length !== FieldIds.length) {
-            console.log("Some Fields were not found.");
-            return res.status(404).json({ message: "Some Fields were not found in the predefined list." });
+        const fieldToAdd = Fields.find(field => field.id === FieldId);
+        if (!fieldToAdd) {
+            console.log("Field not found.");
+            return res.status(404).json({ message: "Field not found in the predefined list." });
         }
 
         const user = await UserModel.findById(authUser);
@@ -268,27 +272,58 @@ export const AddFields = async (req, res) => {
         console.log("User found:", user);
 
         const existingFields = user.Fields.map(field => field.id);
-        const newFields = FieldsToAdd.filter(field => !existingFields.includes(field.id));
-
-        if (newFields.length === 0) {
-            console.log("All selected Fields already added.");
-            return res.status(400).json({ message: "All selected Fields already added." });
+        if (existingFields.includes(fieldToAdd.id)) {
+            console.log("The selected Field has already been added.");
+            return res.status(400).json({ message: "The selected Field has already been added." });
         }
 
-        user.Fields.push(...newFields);
+        user.Fields.push(fieldToAdd);
         await user.save();
 
-        console.log("Fields added successfully:", newFields);
+        console.log("Field added successfully:", fieldToAdd);
         return res.status(200).json({
-            message: "Fields added successfully.",
+            message: "Field added successfully.",
             Fields: user.Fields
         });
 
     } catch (error) {
-        console.error("Error adding Fields: ", error);
+        console.error("Error adding Field: ", error);
         return res.status(500).json({ message: "Internal Server Error." });
     }
 };
+
+export const AddFieldsWithOutToken = async (FieldId) => {
+    try {
+        if (!FieldId) {
+            throw new Error("Field ID is required.");
+        }
+
+        if (Array.isArray(FieldId)) {
+            throw new Error("Please provide only one FieldId.");
+        }
+
+        console.log("Request received:", { FieldId });
+
+        const fieldToAdd = Fields.find(field => field.id.toString() === FieldId.toString());
+        
+        if (!fieldToAdd) {
+            console.log("Available Fields:", Fields); 
+            throw new Error("Field not found in the predefined list.");
+        }
+
+        console.log("Field found:", fieldToAdd);
+        return fieldToAdd;
+
+    } catch (error) {
+        console.error("Error finding Field: ", error.message);
+        throw error;
+    }
+};
+
+
+
+
+
 
 export const DeleteFields = async (req, res) => {
     try {

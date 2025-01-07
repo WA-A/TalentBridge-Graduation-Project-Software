@@ -76,7 +76,7 @@ const UserSchema = new Schema({
       type: String,
       default: false
    },
-   Fields:[
+   Field:[
       {
          id: { type: Number, required: true },
          sub_specialization: { type: String, required: true },
