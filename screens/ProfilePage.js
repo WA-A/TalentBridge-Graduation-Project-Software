@@ -1,6 +1,6 @@
 import React, { useEffect,useState, useContext } from 'react';
 import { View, Text, Image,Pressable, TouchableOpacity,TextInput, StyleSheet,Switch, FlatList,ScrollView, Animated, Button, Alert, Platform } from 'react-native';
-import { Ionicons, Feather, FontAwesome5, EvilIcons, FontAwesome,MaterialIcons,MaterialCommunityIcons
+import { Ionicons, Feather, FontAwesome5, EvilIcons, FontAwesome,MaterialIcons,MaterialCommunityIcons,Entypo
 
 } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
@@ -55,7 +55,52 @@ export default function ProfilePage ({ navigation}) {
   const closeModalEditting = () => {
     setModalEdittingVisible(false);
   };
-  
+      const [isMenuVisible, setMenuVisible] = useState(false); // For the menu visibility
+
+      const handlePressOutside = () => {
+        if (isMenuVisible) {
+            setMenuVisible(false); // Close the menu when touched outside
+        }
+    };
+
+
+    const handleLogout = async () => {
+      setMenuVisible(false); // إغلاق القائمة بعد الضغط على "تسجيل الخروج"
+    
+      if (Platform.OS === 'web') {
+        // إذا كان على الويب، يتم تنفيذ تسجيل الخروج مباشرة
+        try {
+            await AsyncStorage.removeItem('userToken');
+            console.log('User logged out successfully');
+            // العودة إلى شاشة تسجيل الدخول بعد الخروج
+            navigation.navigate('WelcomeScreen');
+        } catch (error) {
+          console.error('Error during logout:', error);
+        }
+      } else {
+        // عرض رسالة التأكيد على الجوال
+        Alert.alert('Logout', 'Are you sure you want to log out?', [
+          { text: 'Cancel', style: 'cancel' }, // إذا تم الضغط على "إلغاء"
+          { 
+            text: 'Logout', 
+            onPress: async () => {
+              try {
+                // مسح التوكن من AsyncStorage
+                await AsyncStorage.removeItem('userToken');
+                console.log('User logged out successfully');
+                // العودة إلى شاشة تسجيل الدخول بعد الخروج
+                navigation.navigate('WelcomeScreen');
+              } catch (error) {
+                console.error('Error during logout:', error);
+              }
+            },
+          },
+        ]);
+      }
+    };
+    
+
+
   
     const nav = useNavigation();
     const { isNightMode, toggleNightMode } = useContext(NightModeContext);
@@ -637,7 +682,7 @@ const addCertification = async () =>{
       },
       body: formData, // إرسال البيانات كـ FormData
     });
-
+   //setCurrentModal(false);
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(errorData.message || 'Something went wrong');
@@ -737,7 +782,7 @@ const handleUpdateProfile = async (values) => {
     socket.emit('profileUpdated', data.user);
   } catch (error) {
     console.error('Error updating profile:', error.message);
-    setMenuVisible(true);
+
   }
 };
 
@@ -1854,10 +1899,11 @@ useEffect(() => {
       </TouchableOpacity>
 
       <TouchableOpacity style={{marginRight: 100 }}
-    onPress={() => nav.navigate('notifications')}>
+    onPress={() => nav.navigate('Notification')}>
             <Ionicons  name="notifications" size={20} color= {isNightMode ? primary : "#000"} />
     </TouchableOpacity>
-    <TouchableOpacity onPress={toggleNightMode} style={{ marginRight:100 }}>
+    <TouchableOpacity onPress={() => setMenuVisible(true)}
+ style={{ marginRight:100 }}>
         <Ionicons name="settings" size={20} color= {isNightMode ? primary : "#000"} />
       </TouchableOpacity>
    
@@ -1918,7 +1964,7 @@ useEffect(() => {
 
     {/* أيقونة الإشعارات */}
     <TouchableOpacity style={{ position: 'relative', width: 50, height: 50 }}
-    onPress={() => nav.navigate('notifications')}>
+    onPress={() => nav.navigate('Notification')}>
             <Ionicons style={{ position: 'absolute', top: 10, right: 18 }} name="notifications" size={27} color={darkLight} />
     </TouchableOpacity>
   </View>
@@ -2368,7 +2414,7 @@ useEffect(() => {
 
     {/* عرض خيار "عرض الكل" إذا كانت هناك أكثر من خبرتين */}
     {certification.length > 2 && !showAllCertification && (
-                <TouchableOpacity onPress={handleShowAllLanguage} style={styles.showAllButton}>
+                <TouchableOpacity onPress={handleShowAllCertification} style={styles.showAllButton}>
                     <Text style={styles.showAllButtonText}>Show All</Text>
                 </TouchableOpacity>
             )}
@@ -2377,7 +2423,7 @@ useEffect(() => {
             {showAllCertification && (
                 <>  
                    <CertificationList certification={certification} />
-                    <TouchableOpacity onPress={handleHideLanguage} style={styles.showAllButton}>
+                    <TouchableOpacity onPress={handleHideCertification} style={styles.showAllButton}>
                         <Text style={styles.showAllButtonText}>Hide</Text>
                     </TouchableOpacity>
                 </>
@@ -2495,7 +2541,7 @@ useEffect(() => {
 
             {showAlllLanguage && (
                 <>  
-                   <LanguageList language={language} />
+                   <LanguageList language ={'language'} />
                     <TouchableOpacity onPress={handleHideLanguage} style={styles.showAllButton}>
                         <Text style={styles.showAllButtonText}>Hide</Text>
                     </TouchableOpacity>
@@ -3314,7 +3360,7 @@ useEffect(() => {
                     zIndex: 10, // لضمان ظهور شريط التنقل فوق المحتوى
                 }}
             >
-                <TouchableOpacity onPress={toggleNightMode}>
+    <TouchableOpacity onPress={() => setMenuVisible(true)}>
                     <Ionicons name="settings" size={25} color="#000" />
                 </TouchableOpacity>
                 <TouchableOpacity onPress={() => nav.navigate('ProjectsSeniorPage')}>
@@ -3354,6 +3400,37 @@ useEffect(() => {
 
       />
     </Modal>
+
+
+            {/* Menu */}
+            {isMenuVisible && (
+          <View style={{
+              position: Platform.OS === 'web' ? 'fixed' : 'absolute', // إذا كان الويب، يبقى ثابت
+left: 10, backgroundColor: 'white', padding: 10, borderRadius: 5, zIndex: 20,bottom:50,width:150,borderColor:fourhColor,borderWidth:1
+          }}>
+          
+          <View style={{
+          flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between'
+
+      }}>
+          <Entypo name="log-out" size={25} color={careysPink} style={{}} />
+              <TouchableOpacity onPress={handleLogout}>
+                  <Text style={{ fontSize: 16, padding: 10,marginRight:40 }}>Logout</Text>
+              </TouchableOpacity>
+              </View>
+                  
+          <View style={{
+          flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between'
+
+      }}>
+              <Ionicons name="close-circle" size={25}  color={careysPink} style={{right:2}} />
+              <TouchableOpacity onPress={() => setMenuVisible(false)}>
+                  <Text style={{ fontSize: 16, padding: 10 ,marginRight:40}}>Cancel</Text>
+              </TouchableOpacity>
+              </View>
+          </View>
+      )}
+
         </View>
     );
 
@@ -3690,14 +3767,15 @@ const styles = StyleSheet.create({
       modalContainer: {
         flex:1,
         justifyContent: 'center',
-        alignItems: 'center',
+        alignItems: 'center'
       },
       modalContent: {
         width: '90%',
         padding: 20,
         backgroundColor: 'white',
         borderRadius: 10,
-        elevation: 5,
+        elevation: 5,borderWidth: 1,
+        borderColor: Colors.fourhColor,
       },
       modalTitle: {
         fontSize: 20,

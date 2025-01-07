@@ -207,3 +207,25 @@ export const DeletePost = async (req, res, next) => {
         return next(error);
     }
 };
+
+export const GetPostById = async (req, res, next) => {
+    try {
+        const { postId } = req.params; // الحصول على معرف المنشور من الرابط
+
+        if (!postId) {
+            return res.status(400).json({ message: "Post ID is required." });
+        }
+
+        const post = await PostModel.findById(postId)
+            .populate('UserId', 'FullName PictureProfile'); // إحضار بيانات المستخدم المرتبطة بالمنشور
+
+        if (!post) {
+            return res.status(404).json({ message: "Post not found." });
+        }
+
+        return res.status(200).json({ message: "Post retrieved successfully", post });
+    } catch (error) {
+        console.error("Error fetching post:", error);
+        return next(error);
+    }
+};

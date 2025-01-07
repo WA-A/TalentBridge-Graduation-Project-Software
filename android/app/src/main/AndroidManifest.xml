@@ -28,6 +28,8 @@
         <category android:name="android.intent.category.BROWSABLE"/>
         <data android:scheme="myapp"/>
         <data android:scheme="com.anonymous.myapp"/>
+        <data android:scheme="dev.expo.notificationsapp"/>
+        <data android:scheme="exp+my-app"/>
       </intent-filter>
     </activity>
   </application>

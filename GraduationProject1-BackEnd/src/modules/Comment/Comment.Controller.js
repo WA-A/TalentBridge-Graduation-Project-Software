@@ -45,10 +45,10 @@ export const CreateComment = async (req, res, next) => {
 export const UpdateComment = async (req, res, next) => {
     try {
         console.log(req.body);
-        console.log(req.Files);
+        console.log(req.files);
 
         const { CommentId } = req.params;
-        const { Text } = req.body;
+        const { Text, existingImages, newImages } = req.body; // استلام النص والصور القديمة والجديدة
 
         // البحث عن التعليق
         const comment = await CommentModel.findById(CommentId);
@@ -61,34 +61,39 @@ export const UpdateComment = async (req, res, next) => {
             comment.Text = Text;
         }
 
-        // دالة لتحديث الملفات (صور، فيديوهات، ملفات) 
-        const updateFiles = async (fileType, existingFiles) => {
-            if (req.files[fileType]) {
-                // إذا كانت هناك ملفات جديدة في الطلب، قم بحذف الملفات القديمة من Cloudinary أولاً
-                await Promise.all(existingFiles.map(async (file) => {
-                    await cloudinary.uploader.destroy(file.public_id);
-                }));
+        // دالة لتحديث الصور (إضافة جديدة أو حذف قديمة)
+        const updatedImages = [];
+        const oldImagesToKeep = JSON.parse(existingImages || "[]"); // الصور التي يريد المستخدم الاحتفاظ بها
 
-                // تحميل الملفات الجديدة إلى Cloudinary
-                return await Promise.all(req.files[fileType].map(async (file) => {
-                    const { secure_url, public_id } = await cloudinary.uploader.upload(file.path, { folder: `GraduationProject1-Software/Comments/${req.user._id}` });
+        // حذف الصور القديمة التي لا يتم الاحتفاظ بها
+        const imagesToDelete = comment.Images.filter(
+            (image) => !oldImagesToKeep.some((oldImage) => oldImage.public_id === image.public_id)
+        );
+
+        await Promise.all(
+            imagesToDelete.map(async (image) => {
+                await cloudinary.uploader.destroy(image.public_id);
+            })
+        );
+
+        // إضافة الصور القديمة التي تم الاحتفاظ بها
+        updatedImages.push(...oldImagesToKeep);
+
+        // رفع الصور الجديدة إذا كانت موجودة
+        if (req.files.images) {
+            const uploadedImages = await Promise.all(
+                req.files.images.map(async (file) => {
+                    const { secure_url, public_id } = await cloudinary.uploader.upload(file.path, {
+                        folder: `GraduationProject1-Software/Comments/${req.user._id}`,
+                    });
                     return { secure_url, public_id };
-                }));
-            } else {
-                // إذا لم يتم إرسال ملفات جديدة، قم بحذف الملفات القديمة من التعليق
-                if (existingFiles && existingFiles.length > 0) {
-                    await Promise.all(existingFiles.map(async (file) => {
-                        await cloudinary.uploader.destroy(file.public_id);
-                    }));
-                }
-                return []; // إعادة مصفوفة فارغة مما يعني إزالة الملفات
-            }
-        };
+                })
+            );
+            updatedImages.push(...uploadedImages);
+        }
 
-        // تحديث الصور والفيديوهات والملفات
-        comment.Images = await updateFiles('images', comment.Images);
-        comment.Videos = await updateFiles('videos', comment.Videos);
-        comment.Files = await updateFiles('files', comment.Files);
+        // تحديث الحقول بالصور الجديدة والصور القديمة
+        comment.Images = updatedImages;
 
         // حفظ التغييرات في التعليق
         await comment.save();

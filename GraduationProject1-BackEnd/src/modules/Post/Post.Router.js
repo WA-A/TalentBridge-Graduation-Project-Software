@@ -27,6 +27,7 @@ router.put('/updatepost/:postId',auth(EndPoints.CreatePost),  fileUpload(FileVal
 router.get('/getpost',auth(EndPoints.CreatePost),PostController.GetUserPosts);
 router.get('/getallpost',auth(EndPoints.CreatePost),PostController.GetAllPosts);
 router.delete('/deletepost/:postId',auth(EndPoints.CreatePost),PostController.DeletePost);
+router.get('/GetPostById/:postId',auth(EndPoints.CreatePost),PostController.GetPostById);
 
 
 router.post(

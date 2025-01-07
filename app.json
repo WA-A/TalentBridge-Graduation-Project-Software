@@ -19,7 +19,8 @@
         "NSPhotoLibraryUsageDescription": "This app requires access to your photo library",
         "NSCameraUsageDescription": "This app requires access to your camera",
         "NSMicrophoneUsageDescription": "This app requires access to your microphone"
-      }
+      },
+      "bundleIdentifier": "com.anonymous.myapp"
     },
     "android": {
       "adaptiveIcon": {
@@ -32,20 +33,36 @@
         "READ_EXTERNAL_STORAGE",
         "WRITE_EXTERNAL_STORAGE"
       ],
-      "package": "com.anonymous.myapp"
+      "package": "dev.expo.notificationsapp",
+      "googleServicesFile": "./google-services.json"
     },
     "web": {
       "bundler": "metro",
       "output": "static",
       "favicon": "./assets/images/favicon.png"
     },
+    
     "plugins": [
+      [
+        "@react-native-firebase/app",
+        {
+          "androidGoogleServicesFile": "./google-services.json"
+        }
+      ],
       "expo-router",
-      "expo-video"
+      "expo-video",
+      "expo-dev-launcher"
     ],
     "experiments": {
       "typedRoutes": true
     },
-    "sdkVersion": "52.0.0"
+    "sdkVersion": "52.0.0",
+    "extra": {
+      "eas": {
+        "projectId": "a2cff3d8-cdf8-4eff-8ed7-fae4603efe8e",
+        "googleServicesFile": "./google-services.json"
+      }
+    },
+    "owner": "sama.abosair"
   }
 }

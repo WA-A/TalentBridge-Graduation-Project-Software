@@ -140,6 +140,10 @@ Skills: [
       Rate: { type: Number, required: true, min: 1, max: 5 }
    }
 ],
+deviceToken: {  // حقل جديد لتخزين توكن الجهاز
+   type: String,
+   default: null,  // يمكن أن يكون null إذا لم يكن هناك توكن
+ },
 
 },
 
