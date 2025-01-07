@@ -1,9 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Text, View, TouchableOpacity, Animated, Alert,Platform,Linking} from 'react-native';
-import { StatusBar } from 'expo-status-bar';
+import { Text, View, TouchableOpacity, Animated, Alert,Platform,Linking, Button,SafeAreaView, StatusBar} from 'react-native';
 import { AnimatedCircles, useLineEffect } from './../compnent/Animation'
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { ThemedText } from "./../components/ThemedText";
+import { ThemedView } from "./../components/ThemedView";
+import { useNotification } from "./../contex/NotificationContext";
+import useThemeColor from './../hooks/useThemeColor';  // المسار النسبي
+import DOMCoolCode from "./../components/DOMCoolCode";
+import * as Updates from "expo-updates";
 import {
     StyledContainer,
     InnerContainer,
@@ -37,11 +42,60 @@ import { Formik } from 'formik';
 const { brand, darkLight, careysPink,black,fourhColor,primary, tertiary } = Colors;
 
 export default function Login({ navigation }) {
+const [pushNotToken,setpushNotToken]=useState('');
+
     const [isMenuVisible, setMenuVisible] = useState(false); // For the menu visibility
     const [errorMessage3, setErrorMessage3] = useState('');
     const lineWidth = useLineEffect(); // الحصول على القيمة المتحركة للعرض
     const [hidePassword1, setHidePassword1] = useState(true);
     const slideAnim = useRef(new Animated.Value(0)).current;
+    ////////////////////////////////////////////not///////////////////////////
+
+    const { notification, expoPushToken, error } = useNotification();
+    const { currentlyRunning, isUpdateAvailable, isUpdatePending } =
+      Updates.useUpdates();
+  
+    const [dummyState, setDummyState] = useState(0);
+  
+    if (error) {
+      return <ThemedText>Error: {error.message}</ThemedText>;
+    }
+  
+    useEffect(() => {
+      if (isUpdatePending) {
+        // Update has successfully downloaded; apply it now
+        // Updates.reloadAsync();
+        // setDummyState(dummyState + 1);
+        // Alert.alert("Update downloaded and applied");
+  
+        dummyFunction();
+      }
+    }, [isUpdatePending]);
+  
+    const dummyFunction = async () => {
+      try {
+        await Updates.reloadAsync();
+      } catch (e) {
+        Alert.alert("Error");
+      }
+  
+      // UNCOMMENT TO REPRODUCE EAS UPDATE ERROR
+      // } finally {
+      //   setDummyState(dummyState + 1);
+      //   console.log("dummyFunction");
+      // }
+    };
+  
+    // If true, we show the button to download and run the update
+    const showDownloadButton = isUpdateAvailable;
+  
+    // Show whether or not we are running embedded code or an update
+    const runTypeMessage = currentlyRunning.isEmbeddedLaunch
+      ? "This app is running from built-in code"
+      : "This app is running an update";
+  
+    //////////////////////////////////////////////////////////////////////
+
 
     useEffect(() => {
         const slideInOut = () => {
@@ -94,7 +148,17 @@ export default function Login({ navigation }) {
             await AsyncStorage.setItem('userToken', result.token); // تخزين التوكين محليًا
             console.log('Token saved successfully');
             navigation.navigate('HomeScreen');
-          } else {
+          }
+          if (expoPushToken) {
+            try {
+              await AsyncStorage.setItem('expoPushToken', expoPushToken); // Save the token in AsyncStorage
+              console.log('Push token saved successfully after login');
+          
+            } catch (error) {
+              console.error('Error saving push token:', error);
+            }
+          }             
+          else {
             console.warn('No token found in response');
           }
     
@@ -103,8 +167,9 @@ export default function Login({ navigation }) {
             setErrorMessage3( error.message);
         }
       };
-    
+
     return (
+      
         <StyledContainer>
             <StatusBar style="dark" />
             <Rectangle top="0px" left="0px" />
@@ -217,6 +282,9 @@ export default function Login({ navigation }) {
                 </Formik>
             </InnerContainer>
         </StyledContainer>
+
+
+
     )
 };
 
