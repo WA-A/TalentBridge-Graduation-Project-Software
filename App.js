@@ -19,6 +19,8 @@ import ProjectsJuniorPage from './screens/ProjectsJuniorPage';
 import AddProjectsPage from './screens/AddProjectsPage';
 import SearchScreen from './screens/SearchScreen';
 import ViewOtherProfile from './screens/ViewOtherProfile';
+import CommentsModal from './screens/CommentsModal.js';
+import RequestToSeniorPage from './screens/RequestToSeniorPage.js';
 import CommentsModal from './screens/CommentsModal';
 import * as Notifications from "expo-notifications";
 import { NotificationProvider } from './contex/NotificationContext';
@@ -33,6 +35,7 @@ Notifications.setNotificationHandler({
       shouldSetBadge: true,
     }),
   });
+
 
 
 const Stack = createStackNavigator();
@@ -84,11 +87,19 @@ export default function App() {
     return null; // لا تحتاج لإرجاع شيء هنا
   }
 
+
+<Stack.Screen name="RequestToSeniorPage" 
+component={RequestToSeniorPage}                    
+ options={{ headerShown: false }}
+ />
+
+
   
   // العودة المبكرة إذا لم تكن الخطوط محملة
   if (!fontsLoaded) {
     return <View><Text>Loading...</Text></View>;
   }
+
 
   return (
     <NotificationProvider>

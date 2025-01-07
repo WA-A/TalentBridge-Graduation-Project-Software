@@ -730,6 +730,15 @@ export default function Signup({ navigation }) {
 </View>
 
 
+                         {userType === 'Senior' && (
+
+                       <StyledButton style={{ backgroundColor: brand, marginBottom: 10}}
+                                    onPress={() => navigation.navigate('RequestToSeniorPage')}
+                                >
+                                    <ButtonText> Request To Senior </ButtonText>
+                                </StyledButton>
+                          )}
+
                                 {isMenuVisible && (
                                     <View style={[
                                         Platform.OS === 'web' ? styles.webStyle : styles.mobileStyle
@@ -755,6 +764,7 @@ export default function Signup({ navigation }) {
                                         </View>
                                     </View>
                                 )}
+
 
 
 
