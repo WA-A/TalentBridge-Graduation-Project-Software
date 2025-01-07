@@ -526,7 +526,7 @@ const handleGetAllPostsComment = async (postId) => {
     console.log('Decoded Token:', decodedToken); 
     const baseUrl = Platform.OS === 'web'
       ? 'http://localhost:3000'
-      : 'http://192.168.1.239:3000';
+      : 'http://192.168.1.239:3000' || 'http://192.168.0.107:3000';
 
     const response = await fetch(`${baseUrl}/comment/getallcomments/${postId}`, {
       method: 'GET',
