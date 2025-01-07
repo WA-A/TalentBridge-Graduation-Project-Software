@@ -41,6 +41,7 @@ router.get('/searchUsers/:user', auth(EndPoints.CreateProfile), UserController.s
 router.post('/addExperience', auth(EndPoints.CreateProfile), UserController.addExperience);
 router.post('/addEducation', auth(EndPoints.CreateProfile), UserController.addEducation);
 router.post('/addLanguage', auth(EndPoints.CreateProfile), UserController.addLanguage);
+router.post('/addDeviceToken',auth(EndPoints.CreateProfile),UserController.addDeviceToken);
 
 router.post(
     '/addCertification',

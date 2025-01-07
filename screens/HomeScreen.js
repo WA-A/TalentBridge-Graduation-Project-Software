@@ -1,7 +1,8 @@
 import React, { useState, useContext,useRef,useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { View, Text, Image,TextInput,TouchableOpacity, StyleSheet, ToastAndroid,useColorScheme, PermissionsAndroid, ScrollView,Animated, Button, Alert, Platform,TouchableWithoutFeedback,Keyboard, FlatList,KeyboardAvoidingView,flatListRef} from 'react-native';
-import { Ionicons, Feather, FontAwesome5, EvilIcons, FontAwesome,Entypo,MaterialIcons
+import { Ionicons, Feather, FontAwesome5, EvilIcons, FontAwesome,Entypo,MaterialIcons,AntDesign
+
 } from '@expo/vector-icons';
 import { jwtDecode } from "jwt-decode";
 import axios from 'axios';
@@ -14,6 +15,8 @@ import { useFonts } from 'expo-font';
 import { NightModeContext } from './NightModeContext';
 import * as ImagePicker from 'expo-image-picker';
 import io from 'socket.io-client';
+import moment from 'moment';
+
 import './../compnent/webCardStyle.css';
 import {
     Colors,
@@ -40,13 +43,32 @@ import * as FileSystem from 'expo-file-system';
 import Video from 'react-native-video';
 //import * as Linking from 'expo-linking';
 import CommentsModal from './CommentsModal';
+import { setIsEnabledAsync } from 'expo-av/build/Audio';
+import { string } from 'prop-types';
+import { use } from 'react';
 
 export default function HomeScreen({ navigation, route}) {
 
 
+  const [likedPosts, setLikedPosts] = useState({});
+
+  const handleLike = (postId) => {
+    setLikedPosts((prev) => ({
+      ...prev,
+      [postId]: !prev[postId],
+    }));
+
+    toggleLike(postId); // استدعاء الدالة الأصلية لتحديث البيانات في الخادم.
+  };
+
+  
+ const [searchQuery, setSearchQuery] = useState('');
+
+const [pushNotToken,setpushNotToken]=useState('');
 const [friends, setFriends] = useState([]);
 const [loading, setLoading] = useState(true);
 const [openedChatId, setOpenedChatId] = useState(null); // لتتبع أي شات مفتوح
+
 
   const [isFocused, setIsFocused] = useState(false);
   const [posts, setPosts] = useState([]);
@@ -64,21 +86,33 @@ const [openedChatId, setOpenedChatId] = useState(null); // لتتبع أي شا�
 const [isEditing, setIsEditing] = useState(false);
 const [editingCommentId, setEditingCommentId] = useState(null); // ID التعليق الجاري تعديله
 const [editingImage, setEditingImage] = useState(null); // صورة التعليق الجاري تعديله
-const editCommentHandler = (commentId, text, image) => {
+const [isedit,setisedt]=useState(false);
+const editCommentHandler = (commentId, text, images) => {
   setIsEditing(true);
   setEditingCommentId(commentId);
-  setNewCommentText(text); // إعداد النص الحالي للتعليق
- setImageUriComment(image);  // إعداد الصورة الحالية للتعليق
- setEditingImage(image[0].secure_url);
- setNewCommentText('');
- setSelectedCommentImage(null);
-};
 
+  // إعداد النص الحالي
+  setNewCommentText(text || '');
+
+  // إعداد الصور الحالية
+  if (images && images.length > 0 && images[0].secure_url) {
+    setImageUriComment(images);
+    setEditingImage(images[0].secure_url);
+  } else {
+    setImageUriComment(null);
+    setEditingImage(null);
+  }
+};
+const removeimgcomment =()=>{
+setImageUriComment(null);
+setEditingImage(null);
+}
 const cancelEditHandler = () => {
   setIsEditing(false);
   setEditingCommentId(null);
   setNewCommentText(''); // إعادة تعيين النص
   setImageUriComment(null);  // إعادة تعيين الصورة
+  setEditingImage(null);
 };
 const [imageUriComment, setImageUriComment] = useState('');
 const [newCommentText, setNewCommentText] = useState('');
@@ -90,7 +124,7 @@ const handleAddComment = () => {
   addCommentHandler();
   setNewCommentText('');
   setImageUriComment(null);  // إعادة تعيين الصورة
-
+  setEditingImage(null);
 };
 const base64ToBlob = (base64Data, contentType = 'image/jpeg') => {
   const byteCharacters = atob(base64Data.split(',')[1]);
@@ -129,6 +163,7 @@ const pickImageComment = async () => {
       const selectedImage = result.assets[0];
       setEditingImage(selectedImage.uri);
       setImageUriComment(selectedImage.uri); // فقط URI هنا
+      setisedt(true);
       console.log('Selected image URI:', selectedImage.uri);
     }
   } catch (error) {
@@ -165,42 +200,51 @@ const toggleModal = () =>setCommenModal(!isCommentModal);
       }
     };
 
-    
-    const updateMyComment = async (updatedItem) => {
-      const CommentId = updatedItem;
+    const updateMyComment = async (CommentId) => {
+   //   console.log("f", newCommentText, imageUriComment);
       try {
         const token = await AsyncStorage.getItem('userToken');
         if (!token) {
           console.error('Token not found');
           return;
         }
+    
         const formData = new FormData();
     
         // إضافة النص إذا كان موجودًا
-        if (newCommentText) {
+        if (newCommentText && newCommentText.trim() !== '') {
           formData.append('Text', newCommentText);
-         }
-        if (Platform.OS === 'web') {
-            // استخدام Blob للويب
-            const profileBlob = base64ToBlob(imageUriComment, 'image/jpeg');
-            formData.append('images', profileBlob, 'images.jpg');
-          } 
-        // إضافة الصور إذا كانت موجودة
-        if (imageUriComment) {
-          console.log('Image URI:', imageUriComment);
-          formData.append('images', {
-            uri: imageUriComment,
-            type: 'image/jpeg', // تأكد من مطابقة نوع الملف
-            name: 'image.jpg', // اسم الملف
-          });
         }
     
-        // طباعة `FormData` للتأكد من الإرسال الصحيح
+        // إضافة الصورة إذا كانت موجودة
+        if (imageUriComment) {
+          if (isedit) {
+            if (Platform.OS === 'web') {
+              const profileBlob = base64ToBlob(imageUriComment, 'image/jpeg');
+              formData.append('images', profileBlob, 'images.jpg');
+            } else {
+              formData.append('images', {
+                uri: imageUriComment,
+                type: 'image/jpeg',
+                name: 'image.jpg',
+              });
+            }
+          } else {
+            // إذا لم يكن هناك تعديل في الصورة (لكن الصورة موجودة بالفعل)، أرسل الرابط
+            console.log("no image edit, sending existing image URI",imageUriComment);
+            const existingImage = imageUriComment; // الحصول على صورة موجودة
+            if (existingImage) {
+              formData.append('images',imageUriComment);
+        //      console.log("dd",formData.images);
+
+                      }          }
+        }
+    
+        // طباعة `FormData` للتأكد
         formData.forEach((value, key) => {
           console.log(`${key}:`, value);
         });
     
-        // إرسال الطلب إلى الخادم
         const response = await fetch(`${baseUrl}/comment/updatecomment/${CommentId}`, {
           method: 'PUT',
           headers: {
@@ -215,7 +259,6 @@ const toggleModal = () =>setCommenModal(!isCommentModal);
     
         const userData = await response.json();
     
-        // تحقق من وجود الحقل comment
         if (!userData.comment) {
           console.error('Missing comment field in response:', userData);
           throw new Error('Comment data not returned from server');
@@ -223,71 +266,241 @@ const toggleModal = () =>setCommenModal(!isCommentModal);
     
         console.log('Comment updated successfully:', userData);
     
-        // تحديث الحالة المحلية
+        // تحديث البيانات المحلية
         setImageUri(userData.comment.Images?.[0]?.secure_url || null);
         setNewCommentText(userData.comment.Text || '');
-    
-      //  socket.emit('commentUpdated', userData.comment);
+        setEditingImage(null);
         handleGetAllPostsComment(postIdForComment);
         cancelEditHandler();
+        setisedt(false);
       } catch (error) {
         console.error('Error updating comment:', error);
       }
     };
+
+
+    const addTokendevice = async () => {
+    try {
+      const deviceToken = await AsyncStorage.getItem('expoPushToken');
+      if (!deviceToken) {
+        console.log('no Token found:',deviceToken );
+        return ;
+      } 
+        // التأكد من تحويل deviceToken إلى سترينغ
+        const tokenString = String(deviceToken);
+
+        const token = await AsyncStorage.getItem('userToken');
+        if (!token) {
+            console.error('Token not found');
+            return;
+        }
+
+        // إرسال بيانات التوكن إلى السيرفر
+        const response = await fetch(`${baseUrl}/user/addDeviceToken`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Wasan__${token}`, // المصادقة باستخدام التوكن
+                'Content-Type': 'application/json', // تحديد نوع البيانات المرسلة
+            },
+            body: JSON.stringify({deviceToken:tokenString}), // إرسال deviceToken كسترينغ
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to add deviceToken');
+        }
+
+        // الحصول على بيانات الاستجابة
+        const userData = await response.json();
+        console.log('deviceToken added successfully:', userData);
+    } catch (error) {
+        console.error('Error adding DeviceToken:', error.message);
+    }
+};
+
+
+const sendPushNotification = async (expoPushToken) => {
+      const message = {
+        to: expoPushToken,
+        sound: 'default',
+        title: 'Original Title',
+        body: 'And here is the body!',
+        data: { someData: 'goes here' },
+      };
+    
+      await fetch('https://exp.host/--/api/v2/push/send', {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'Accept-encoding': 'gzip, deflate',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(message),
+      });
+    }; 
+    
+//////delete Comment ///////////////////////
+const handleDeleteComments = async (CommentId) => {
+  console.log(CommentId);
+  try {
+    const token = await AsyncStorage.getItem('userToken'); // استرجاع التوكن
+    if (!token) {
+      console.error('Token not found');
+      return;
+    }
+    const response = await fetch(`${baseUrl}/comment/deletecomment/${CommentId}`, { // تأكد من المسار الصحيح
+      method: 'DELETE',  // طريقة الحذف يجب أن تكون DELETE
+      headers: {
+        'Authorization': `Wasan__${token}`, // تضمين التوكن في الهيدر
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json(); // إذا كان هناك خطأ في الرد
+      throw new Error(errorData.message || 'Failed to delete language');
+    }
+    handleGetAllPostsComment(postIdForComment);
+    console.log('delete comment'); // تحقق من البيانات
+  } catch (error) {
+    console.error('Error deleting commen:', error.message);
+  }
+};
+
+    /////////ddLike/////////
+    const toggleLike = async (postIdForComment) => {
+      console.log(postIdForComment);
+      try {
+        // استرجاع التوكن
+        const token = await AsyncStorage.getItem('userToken');
+        if (!token) {
+          console.error('Token not found');
+          return;
+        }
+    
+        // فك تشفير التوكن
+        const decodedToken = jwtDecode(token);
+        console.log('Decoded Token:', decodedToken);
+        const loggedInUserId = decodedToken.id;
+    
+        if (!loggedInUserId) {
+          console.error('Failed to extract userId from token');
+          return;
+        }
+    
+        // إرسال طلب toggleLike
+        const response = await fetch(`${baseUrl}/notification/toggleLike`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Wasan__${token}`,
+            'Content-Type': 'application/json', // تأكد من إضافة Content-Type
+          },
+          body: JSON.stringify({
+            userId: loggedInUserId,
+            postId: postIdForComment,
+          }),
+        });
+    
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Something went wrong');
+        }
+    
+        console.log('Toggle like successful',loggedInUserId,postIdForComment);
+        handleGetAllPosts(); 
+      } catch (error) {
+        console.error('Error in toggleLike:', error);
+      }
+    };
     
 //////////////////Add new Comment///////////
+
+
 const addCommentHandler = async () => {
   try {
+    // استرجاع التوكن
     const token = await AsyncStorage.getItem('userToken');
     if (!token) {
       console.error('Token not found');
       return;
     }
+
+    // فك تشفير التوكن باستخدام jwt-decode
+    const decodedToken = jwtDecode(token);
+    console.log('Decoded Token:', decodedToken);
+    const loggedInUserId = decodedToken.id; // تأكد أن `userId` موجود في التوكن
+
+    if (!loggedInUserId) {
+      console.error('Failed to extract userId from token');
+      return;
+    }
+
+    console.log('Logged-in User ID:', loggedInUserId);
+
     // إعداد البيانات باستخدام FormData
     const formData = new FormData();
-    //newCommentText, selectedCommentImage
-    // إضافة الحقول النصية
     formData.append('Text', newCommentText);
+
     if (editingImage) {
       if (Platform.OS === 'web') {
-        // استخدام Blob للويب
         const profileBlob = base64ToBlob(imageUriComment, 'image/jpeg');
         formData.append('images', profileBlob, 'images.jpg');
-      } 
-    // إضافة الصور إذا كانت موجودة
+      }
+    }
+
     if (imageUriComment) {
-      console.log('Image URI:', imageUriComment);
       formData.append('images', {
         uri: imageUriComment,
-        type: 'image/jpeg', // تأكد من مطابقة نوع الملف
-        name: 'image.jpg', // اسم الملف
+        type: 'image/jpeg',
+        name: 'image.jpg',
       });
     }
 
-    }
+    console.log('Sending comment data:', postIdForComment);
 
-    console.log('Sending comment data:', formData);
-
+    // إرسال التعليق
     const response = await fetch(`${baseUrl}/comment/createcomment/${postIdForComment}`, {
       method: 'POST',
       headers: {
         'Authorization': `Wasan__${token}`,
       },
-      body: formData, // إرسال البيانات كـ FormData
+      body: formData,
     });
 
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(errorData.message || 'Something went wrong');
     }
+
+    const responseData = await response.json();
+  
+    console.log('Comment added successfully:', responseData);
+    const commentId = responseData.comment._id;
+    console.log("comment",commentId);
+    // استدعاء دالة إنشاء الإشعار
+    await fetch(`${baseUrl}/notification/createCommentNotification`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Wasan__${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        postId: postIdForComment,
+        commentContent: newCommentText,
+        userId: loggedInUserId, // تمرير معرف المستخدم
+        commentId: commentId,
+      }),
+    });
+
+    console.log('Notification created successfully');
+
+    // تحديث التعليقات
     handleGetAllPostsComment(postIdForComment);
+  } catch (error) {
+    console.error('Error in addCommentHandler:', error);
   }
-
-  catch (error) {
-    console.error('Error fetching addComment:', error);
-} 
-
 };
+
+
 //////////////////////////////////////////
 
 
@@ -298,6 +511,7 @@ const addCommentHandler = async () => {
     };
 
 const handleGetAllPostsComment = async (postId) => {
+  setPostIdForComment(postId);    // تخزين ID المنشور
   console.log("Fetching Comments...");
   setIsLoading(true); // بدء التحميل
   try {
@@ -333,8 +547,6 @@ const handleGetAllPostsComment = async (postId) => {
 
     if (data && Array.isArray(data.comments) && data.comments.length > 0) {
       setCommentPosts(data.comments); // تخزين التعليقات في الحالة
-      setPostIdForComment(postId);    // تخزين ID المنشور
-      console.log("postid",postId);
     } else {
       console.log('No comments available.');
     }
@@ -678,6 +890,22 @@ const handleBubbleMinimize = (person) => {
 
     const [chatId, setchatId] = useState(); // For the menu visibility
 
+    const getToken = async () => {
+      try {
+        const token = await AsyncStorage.getItem('expoPushToken');
+        if (token !== null) {
+          console.log('Token found:', token);
+           setpushNotToken(token);
+          return token;  // يمكنك استخدام التوكن هنا
+        } else {
+          console.log('No token found');
+          return null;
+        }
+      } catch (error) {
+        console.error('Error retrieving token:', error);
+        return null;
+      }
+    };
 const handleLogout = async () => {
   setMenuVisible(false); // إغلاق القائمة بعد الضغط على "تسجيل الخروج"
 
@@ -780,15 +1008,6 @@ const baseUrl = Platform.OS === 'web'
 : 'http://192.168.1.239:3000'; // عنوان IP الشبكة المحلية للجوال
 
 const fetchFriends = async () => {
-  console.log("sama");
- /* if (Platform.OS === 'web') {
-    // على الويب، استخدم localStorage
-    const token = localStorage.getItem('userToken');
-    console.log(token);
-  } else {
-    const token = await AsyncStorage.getItem('userToken'); // الحصول على التوكن من التخزين
-    console.log(token);
-  }*/
   try {
     const token = await AsyncStorage.getItem('userToken'); // الحصول على التوكن من التخزين
     console.log(token);
@@ -904,9 +1123,10 @@ const handleChatSelect = (selectedChatId) => {
 
 
 useEffect(() => {
-
-  fetchFriends();      handleGetAllPosts();
-
+  getToken();
+  addTokendevice();
+  fetchFriends();    
+  handleGetAllPosts();
   console.log('Messages state:', messages);
 
   console.log('Gathered chats:', gatheredChats);
@@ -962,102 +1182,210 @@ const handleSelectedPerson = async (item) => {
 
    
 
-    const handleGetAllPosts = async () => {
-      try {
-        const token = await AsyncStorage.getItem('userToken');
-        console.log('Token:', token); 
-        if (!token) {
-          throw new Error('No token found');
-        }
+const handleGetAllPosts = async () => {
+  try {
+    const token = await AsyncStorage.getItem('userToken');
+    console.log('Token:', token); 
+    if (!token) {
+      throw new Error('No token found');
+    }
+
+    const baseUrl = Platform.OS === 'web'
+      ? 'http://localhost:3000'
+      : 'http://192.168.1.239:3000';
+
+    const response = await fetch(`${baseUrl}/post/getallpost`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Wasan__${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch posts');
+    }
+
+    const data = await response.json();
+
+    if (Array.isArray(data.posts) && data.posts.length > 0) {
+      // إضافة حالة التفاعل لكل منشور
+      const updatedPosts = data.posts.map(post => {
+        const decodedToken = jwtDecode(token);
+        const loggedInUserId = decodedToken.id;
+
+        // التحقق من إذا كان المستخدم قد وضع لايك على هذا المنشور
+        const isLiked = post.like.includes(loggedInUserId);
+
+        // إضافة حالة التفاعل (لايك) إلى المنشور
+        return {
+          ...post,
+          isLiked
+        };
+      });
+
+      setPosts(updatedPosts);
+    } else {
+      console.error('No posts found or data is not an array', data);
+    }
+
+    setIsLoading(false);
+  } catch (error) {
+    console.error('Error fetching posts:', error);
+    setIsLoading(false);
+  }
+};
+
     
-        const baseUrl = Platform.OS === 'web'
-          ? 'http://localhost:3000'
-          : 'http://192.168.1.239:3000';
-    
-          const response = await fetch(`${baseUrl}/post/getallpost`, {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Wasan__${token}`,
-            },
-          });
-          
-          console.log('Response:', response); 
-          
-          if (!response.ok) {
-            throw new Error('Failed to fetch posts');
-          }
-          
-          const data = await response.json();
-          console.log('Fetched posts:', data);
-    
-          if (Array.isArray(data.posts) && data.posts.length > 0) {
-            setPosts(data.posts);
-          } else {
-            console.error('No posts found or data is not an array', data);
-          }
 
-        setIsLoading(false);
-      } catch (error) {
-        console.error('Error fetching posts:', error);
-        setIsLoading(false);
-      }
-    };
-    
-    
-    
+ return(
+  
+<TouchableWithoutFeedback onPress={handlePressOutside}>
+  <View style={{ flex: 1 }}>
 
+  {Platform.OS === 'web' ? (
+     <View style={{
+       flexDirection: 'row',
+       alignItems: 'center',
+       justifyContent: 'space-between',
+       paddingHorizontal: 10,
+       paddingVertical: 10,
+       backgroundColor: isNightMode ? "#000" : secondary,
+       position: 'fixed',
+       top: 0,
+       left: 0,
+       right: 0,
+       zIndex: 10
+     }}>
+   
+       {/* زر الإعدادات وزر المشاريع */}
+       <View style={{ flexDirection: 'row', alignItems: 'center',left: '10%',
+    }}>
+     <TouchableOpacity onPress={() => nav.navigate('HomeScreen')} style={{ marginRight: 100, marginLeft: 80}}>
+           <Ionicons name="home" size={20} color= {isNightMode ? primary : "#000"} />
+         </TouchableOpacity>
+       
+   
+         <TouchableOpacity onPress={() => nav.navigate('ProjectsSeniorPage')} style={{ marginRight: 100 }}>
+           <Ionicons name="folder" size={20} color= {isNightMode ? primary : "#000"} />
+         </TouchableOpacity>
+         <TouchableOpacity onPress={() => nav.navigate('AddPostScreen')} style={{ marginRight:100 }}>
+           <Ionicons name="add-circle" size={25} color= {isNightMode ? primary : "#000"} />
+         </TouchableOpacity>
+   
+         
+   
+         <TouchableOpacity onPress={toggleSidebar} style={{ marginRight:100}}>
+           <EvilIcons name="sc-telegram" size={30} color= {isNightMode ? primary : "#000"} />
+         </TouchableOpacity>
+   
+         <TouchableOpacity style={{marginRight: 100 }}
+       onPress={() => nav.navigate('Notification')}>
+               <Ionicons  name="notifications" size={20} color= {isNightMode ? primary : "#000"} />
+       </TouchableOpacity>
+       <TouchableOpacity onPress={() => setMenuVisible(true)} style={{ marginRight:100 }}>
+           <Ionicons name="settings" size={20} color= {isNightMode ? primary : "#000"} />
+         </TouchableOpacity>
+      
+       </View>
+     
+       {/* عنوان التطبيق */}
+       <Text style={{
+         fontFamily: 'Updock-Regular',
+         fontSize: 30,
+         textAlign: 'center',
+         color: isNightMode ? primary : "#000",
+         position: 'absolute',
+         left: 45,
+         //transform: [{ translateX: -75 }] // لضبط النص في المنتصف
+       }}>
+         Talent Bridge
+       </Text>
+   
+       {/* مربع البحث */}
+       <View style={{ flexDirection: 'row', alignItems: 'center', marginLeft: 80 }}>
+         <Ionicons name="search" size={20} color= {isNightMode ? primary : "#000"} style={{ marginRight: 5 }} />
+         <TextInput
+           style={{
+             height: 30,
+             borderColor: '#000',
+             borderWidth: 1,
+             paddingLeft: 5,
+             borderRadius: 15,
+             padding: 10,
+             width: 300,
+             color:  isNightMode ? '#FFF' : '#000',
+             backgroundColor: isNightMode ? '#5E5A5A' : '#fff'
+           }}
+           placeholder="Search.."
+           placeholderTextColor={isNightMode ? '#fff' : '#888'}
+           value={searchQuery}            // تعيين قيمة البحث
+           onChangeText={setSearchQuery}  // تحديث قيمة البحث عند الكتابة
+         />
+       </View>
+     </View>
+      ) : (
+        <>
 
-    return (
-        <TouchableWithoutFeedback onPress={handlePressOutside}> 
-        <View style={{ flex: 1 }}>
-        <View style={{ height: 20, backgroundColor: isNightMode ? "#000" : secondary }} />
+    <View style={{ height: 0, backgroundColor: isNightMode ? "#000" : secondary }} />
 
-            {/* Header */}
-            <View style={{
-                flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 10, paddingVertical: 10, backgroundColor: isNightMode ? "#000" : secondary,
-                position: Platform.OS === 'web' ? 'fixed' : ' ',
-                top: 0,
-                left: 0,
-                right: 0,
-                zIndex: 10,
+    {/* Header */}
+    <View style={{
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+      paddingHorizontal: 15, paddingVertical: 10, backgroundColor: isNightMode ? "#000" : secondary,
+      position: Platform.OS === 'web' ? 'fixed' : 'relative',
+      top: 0, left: 0, right: 0, zIndex: 10,
+    }}>
+      <Text style={{
+        fontFamily: 'Updock-Regular', fontSize: 30, position: 'absolute', left: 0, right: 0,
+        textAlign: 'center', color: isNightMode ? primary : "#000"
+      }}>
+        Talent Bridge
+      </Text>
 
-            }}>
-                <Text style={{ fontFamily: 'Updock-Regular', fontSize: 30, position: 'absolute', left: 0, right: 0, textAlign: 'center', color: isNightMode ? primary : "#000" }}>
-                    Talent Bridge
-                </Text>
+      {/* Sidebar Toggle Button */}
+      <TouchableOpacity onPress={toggleSidebar}>
+        <EvilIcons name="sc-telegram" size={39} color={careysPink} style={{ position: 'absolute', top: -20, left: 10 }} />
+        <EvilIcons name="sc-telegram" size={37} color={darkLight} style={{ position: 'absolute', top: -20, left: 10 }} />
+      </TouchableOpacity>
 
-                <TouchableOpacity onPress={toggleSidebar}>
-                    <EvilIcons name="sc-telegram" size={39} color={careysPink} style={{ position: 'absolute', top: -20, left: 10 }} />
-                    <EvilIcons name="sc-telegram" size={37} color={darkLight} style={{ position: 'absolute', top: -20, left: 10 }} />
-                </TouchableOpacity>
+      {/* Night Mode Toggle Button */}
+      <TouchableOpacity onPress={toggleNightMode}>
+        <View style={{ position: 'relative', width: 50, height: 50 }}>
+          <Ionicons name={isNightMode ? "sunny" : "moon"} size={25} color={darkLight} style={{ position: 'absolute', top: 9, right: 20 }} />
+          <Ionicons name="cloud" size={30.7} color={isNightMode ? "#000" : secondary} style={{ position: 'absolute', top: 8.7, left: -12 }} />
+          <Ionicons name="cloud" size={27} color={careysPink} style={{ position: 'absolute', top: 11, left: -11 }} />
+        </View>
+      </TouchableOpacity>
+    </View>
 
+    {/* Icon Navigation */}
+    <View style={{
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 15, paddingVertical: 10,
+     backgroundColor: isNightMode ? '#2C2C2C' : '#f0f0f0' , elevation: 3, position: Platform.OS === 'web' ? 'fixed' : 'relative',
+      zIndex: 10, width: '100%', top: Platform.OS === 'web' ? 55 : 0, marginBottom: Platform.OS === 'web' ? 20 : 0,
+    }}>
+        <View style={[styles.container, { backgroundColor: isNightMode ? '#2C2C2C' : '#f0f0f0' }]}>
+      {/* Notification Icon */}
+      <TouchableOpacity style={styles.backButton} onPress={() => nav.navigate('Notification')}>
+        <Ionicons name="notifications" size={20} color={isNightMode ? primary : "#000"} />
+      </TouchableOpacity>
+          <View style={[styles.searchBox, { backgroundColor: isNightMode ? '#5E5A5A' : '#fff' }]}>
+            <Ionicons name="search" size={20} color={isNightMode ? '#fff' : '#888'} style={styles.searchIcon} />
 
-                <TouchableOpacity onPress={toggleNightMode}>
-                    <View style={{ position: 'relative', width: 50, height: 50 }}>
-                        <Ionicons name={isNightMode ? "sunny" : "moon"} size={25} color={darkLight} style={{ position: 'absolute', top: 9, right: 20 }} />
-                        <Ionicons name="cloud" size={30.7} color={isNightMode ? "#000" : secondary} style={{ position: 'absolute', top: 8.7, left: -12 }} />
-                        <Ionicons name="cloud" size={27} color={careysPink} style={{ position: 'absolute', top: 11, left: -11 }} />
-                    </View>
-                </TouchableOpacity>
-            </View>
-
-            {/* Icon Navigation */}
-            <View style={{
-                flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 10, paddingVertical: 10, backgroundColor: fourhColor, elevation: 3
-                , position: Platform.OS === 'web' ? 'fixed' : ' ',
-                zIndex: 10, width: '100%',
-                top: Platform.OS === 'web' ? 55 : ' ',
-                marginBottom: Platform.OS === 'web' ? 20 : ' ',
-
-            }}>
-                <TouchableOpacity onPress={() => nav.navigate('Search')}>
-                    <Ionicons name="search" size={25} color="#000" />
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => nav.navigate('notifications')}>
-                    <Ionicons name="notifications" size={25} color={secondary} />
-                </TouchableOpacity>
-            </View>
+            <TextInput
+              style={[styles.inputSearch, { color: isNightMode ? '#fff' : '#000' }]}
+              placeholder="Search..."
+              placeholderTextColor={isNightMode ? '#ccc' : '#888'}
+              value={searchQuery}  // تعيين قيمة البحث
+              onChangeText={setSearchQuery}  // تحديث قيمة البحث عند الكتابة
+              returnKeyType="search"  // تحويل زر الإدخال في لوحة المفاتيح إلى زر بحث
+              onFocus={() => nav.navigate('SearchScreen', { searchQuery: searchQuery })}  // تنفيذ البحث عند التركيز
+            />
+          </View>
+        </View>
+</View></>
+      )}
 
   {/* الشريط الجانبي */}
   <View style={{ flexDirection: 'row', flex: 1 }}>
@@ -1074,8 +1402,8 @@ const handleSelectedPerson = async (item) => {
     borderColor: '#ccc',
     overflow: 'auto',
     paddingVertical: 10,
-    marginTop: Platform.OS === 'web' ? 80 : 0,
-    height: `calc(100vh - 0px - 150px)`,
+    marginTop: Platform.OS === 'web' ? 50 : 0,
+    height: `calc(110vh - 0px - 100px)`,
     overflowY: 'auto',
   }}>
     <Text style={{
@@ -1170,16 +1498,75 @@ const handleSelectedPerson = async (item) => {
     )}
     scrollEventThrottle={16}
   >
-<Text style={{ fontSize: 28, fontWeight: 'bold', marginBottom: 15, textAlign: 'center', color: isNightMode ? primary : '#000' }}>
-  Posts
-</Text>
+
+  
+<View style={{
+  position: 'absolute',  // يجعل العنصر ثابتًا في المكان المحدد
+  top:5,
+  left: 0,  // يحدد أن يكون العنصر عند أقصى اليسار
+  marginBottom: 15,  // المسافة بين العناصر الأخرى
+  flexDirection: 'row',  // عرض النص والأيقونة بشكل أفقي
+  alignItems: 'center',  // محاذاة النص والأيقونة عموديًا
+}}>
+  <Text style={{
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: isNightMode ? primary : '#000',
+    backgroundColor: isNightMode ? '#000' : '#f9f9f9',
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 20,
+    opacity: 0.7,
+  }}>
+    You might be interested
+  </Text>
+  <AntDesign 
+    name="caretdown" 
+    size={16} 
+    color={isNightMode ? primary  : '#000'} 
+    style={{ marginLeft:1 }}  // المسافة بين النص والأيقونة
+  /></View>
+      {Platform.OS === 'web' ? (
+        <>
+<View style={{
+  position: 'absolute',  // يجعل العنصر ثابتًا في المكان المحدد
+  top:5,
+  right: 0,  // يحدد أن يكون العنصر عند أقصى اليسار
+  marginBottom: 15,  // المسافة بين العناصر الأخرى
+  flexDirection: 'row',  // عرض النص والأيقونة بشكل أفقي
+  alignItems: 'center',  // محاذاة النص والأيقونة عموديًا
+}}>
+  <TouchableOpacity onPress={toggleNightMode}>
+        <View style={{ position: 'relative', width: 50, height: 50 }}>
+          <Ionicons name={isNightMode ? "sunny" : "moon"} size={22} color={darkLight} style={{ position: 'absolute', top: 0, right:13}} />
+          <Ionicons name="cloud" size={28.7} color={isNightMode ? "#000" : secondary} style={{ position: 'absolute', top: -1.9, left: -4 }} />
+          <Ionicons name="cloud" size={25} color={careysPink} style={{ position: 'absolute',  left: -3 }} />
+        </View>
+      </TouchableOpacity>
+      <TouchableOpacity style={{ position: 'relative', width: 50, height: 50 }} onPress={() => nav.navigate('ProfilePage')}>
+                    <Image
+                        source={require('./../assets/img1.jpeg')}
+                        style={{
+                            width: 28,
+                            height: 28,
+                            borderRadius: 30,
+                            borderColor:isNightMode ? '#000' : '#000',
+                            borderWidth: 2,
+                            bottom:3
+                        }}
+                    />
+                </TouchableOpacity>
+</View></>
+      ):('')}
+
+
 {posts.map((post, index) => (
   <React.Fragment key={index}>
     <View
       style={{
         width: Platform.OS === 'web' ? '50%' : '100%',
         alignItems: 'center',
-        marginBottom: 15,
+        marginBottom: 15,marginTop: 30,
       }}
     >
       <View
@@ -1278,24 +1665,28 @@ const handleSelectedPerson = async (item) => {
   </TouchableOpacity>
 ))}
 
+<View style={{ flexDirection: 'row', justifyContent: 'space-around', marginTop: 10 }}>
+  {/* Like Button */}
+  <TouchableOpacity onPress={() => handleLike(post._id, post.like)} style={{ flexDirection: 'column', alignItems: 'center', marginRight: 0 }}>
+    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+    <Text style={{ color: isNightMode ? primary : '#000', fontSize: 14, marginLeft: 0, fontWeight: 'bold',marginTop: 0 }}>
+        {post.like.length}
+      </Text>
+      <Ionicons name="heart-circle" size={27} color={post.isLiked ? '#ff0000' : '#ccc34'} />
+     
+    </View>
+  </TouchableOpacity>
 
-        {/* Actions */}
-        <View style={{ flexDirection: 'row', justifyContent: 'space-around', marginTop: 10 }}>
-          <TouchableOpacity style={{ alignItems: 'center' }}>
-            <Ionicons name="heart-circle" size={30} color={isNightMode ? secondary : Colors.brand} />
-            <Text style={{ color: isNightMode ? primary : '#000', fontSize: 14 }}>Like</Text>
-          </TouchableOpacity>
           <TouchableOpacity 
   onPress={() => ActionComment(post._id)} // تمرير الدالة بدون تنفيذها مباشرة
   style={{ alignItems: 'center' }}
 >
   <Ionicons 
     name="chatbubbles" 
-    size={28} 
-    color={isNightMode ? secondary : Colors.brand} 
+    size={26} 
+    color={isNightMode ? secondary : '#ccc34'} 
   />
   <Text style={{ color: isNightMode ? primary : '#000', fontSize: 14 }}>
-    Comment
   </Text>
 </TouchableOpacity>
 
@@ -1323,7 +1714,7 @@ const handleSelectedPerson = async (item) => {
       position: 'fixed',
       left: 0,
       right: 0,
-      bottom: 45,
+      bottom: 0,
       backgroundColor: 'transparent',
       padding: 10,
       marginLeft: '93%',
@@ -1359,7 +1750,7 @@ const handleSelectedPerson = async (item) => {
         margin: 8,
         borderWidth: 1,
         borderColor: '#ccc',
-        marginBottom: 15,
+        marginBottom: 5,
         flexDirection: 'column',
       }}
       onPress={() => handleBubbleClick(chat._id)}
@@ -1414,9 +1805,9 @@ const handleSelectedPerson = async (item) => {
       position: 'fixed',
       left: 0,
       right: 0,
-      bottom: 45,
+      bottom: 0,
       backgroundColor: 'transparent',
-      padding: 10,
+      paddingLeft: 10,
       marginLeft: Platform.OS === 'web' && isSidebarVisible ? '30%' : 0,
       marginRight: '7%',
     }}
@@ -1623,49 +2014,49 @@ const handleSelectedPerson = async (item) => {
 </View>
   
 
-
-            {/* Bottom Navigation Bar */}
-            <Animated.View
-                style={{
-                    transform: [{ translateY: bottomBarTranslate }],
-                    backgroundColor: isNightMode ?  "#454545":secondary,
-                    flexDirection: 'row',
-                    justifyContent: 'space-around',
-                    padding: 10,
-                    elevation: 3,
-                    position: Platform.OS === 'web' ? 'fixed' : 'absolute', // إذا كان الويب، يبقى ثابت
-                    bottom: 0,
-                    width: '100%',
-                    zIndex: 10, 
-                }}
-            >
-              <TouchableOpacity onPress={() => setMenuVisible(true)}>
-                    <Ionicons name="settings" size={25} color ='#000'/>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() =>navigation.navigate('ProjectsSeniorPage', { userField }) }  >
-                    <Ionicons name="folder" size={25} color ='#000' />
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => nav.navigate('ProfilePage')}>
-                    <Image
-                        source={require('./../assets/img1.jpeg')}
-                        style={{
-                            width: 33,
-                            height: 33,
-                            borderRadius: 30,
-                            borderColor:isNightMode ? '#000' : '#000',
-                            borderWidth: 2,
-                            bottom:3
-                        }}
-                    />
-                </TouchableOpacity>
-                
-                <TouchableOpacity onPress={() => nav.navigate('AddPostScreen')}>
-                    <Ionicons name="add-circle" size={28} color ='#000'/>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => nav.navigate('HomeScreen')}>
-                    <Ionicons name="home" size={25} color ='#000' />
-                </TouchableOpacity>
-            </Animated.View>
+{/* Bottom Navigation Bar */}
+{Platform.OS === 'web' ? null : (
+  <Animated.View
+    style={{
+      transform: [{ translateY: bottomBarTranslate }],
+      backgroundColor: isNightMode ? "#454545" : secondary,
+      flexDirection: 'row',
+      justifyContent: 'space-around',
+      padding: 10,
+      elevation: 3,
+      position: Platform.OS === 'web' ? 'fixed' : 'absolute', // إذا كان الويب، يبقى ثابت
+      bottom: 0,
+      width: '100%',
+      zIndex: 10,
+    }}
+  >
+    <TouchableOpacity onPress={() => setMenuVisible(true)}>
+      <Ionicons name="settings" size={25} color='#000' />
+    </TouchableOpacity>
+    <TouchableOpacity onPress={() => navigation.navigate('ProjectsSeniorPage', { userField })}>
+      <Ionicons name="folder" size={25} color='#000' />
+    </TouchableOpacity>
+    <TouchableOpacity onPress={() => nav.navigate('ProfilePage')}>
+      <Image
+        source={require('./../assets/img1.jpeg')}
+        style={{
+          width: 33,
+          height: 33,
+          borderRadius: 30,
+          borderColor: isNightMode ? '#000' : '#000',
+          borderWidth: 2,
+          bottom: 3,
+        }}
+      />
+    </TouchableOpacity>
+    <TouchableOpacity onPress={() => nav.navigate('AddPostScreen')}>
+      <Ionicons name="add-circle" size={28} color='#000' />
+    </TouchableOpacity>
+    <TouchableOpacity onPress={() => nav.navigate('HomeScreen')}>
+      <Ionicons name="home" size={25} color='#000' />
+    </TouchableOpacity>
+  </Animated.View>
+)}
 
 
 
@@ -1723,6 +2114,7 @@ left: 10, backgroundColor: 'white', padding: 10, borderRadius: 5, zIndex: 20,bot
         />
       </Modal>
 
+
       <Modal 
   isVisible={isCommentModal} 
   onBackdropPress={handleCloseModal} 
@@ -1734,7 +2126,9 @@ left: 10, backgroundColor: 'white', padding: 10, borderRadius: 5, zIndex: 20,bot
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     padding: 20,
-    height: '80%',  // نسبة مئوية للارتفاع
+    height: Platform.OS === 'web' ? '80%' : '80%',  // إذا كانت ويب، عرض المودال بنصف الصفحة
+    margin: Platform.OS === 'web' ? '5%' : '',  // إذا كانت ويب، عرض المودال بنصف الصفحة
+    borderRadius: Platform.OS === 'web' ? 20 : '',  // إذا كانت ويب، عرض المودال بنصف الصفحة
     flexDirection: 'column',
   }}>
     {/* Header */}
@@ -1764,22 +2158,28 @@ left: 10, backgroundColor: 'white', padding: 10, borderRadius: 5, zIndex: 20,bot
               </TouchableOpacity>
               <View style={styles.commentTextContainer}>
                 <Text style={[styles.commentUser, isNightMode && styles.commentUserDark]}>{item.FullName}</Text>
+                <Text style={[styles.commentDate, isNightMode && styles.commentDateDark]}>
+                  {moment(item.createdAt).format('MMM Do YYYY,[at] h:mm a')}
+                </Text>
                 {item.Text && (
-                  <Text>{item.Text}</Text>
+                  <Text style={[styles.commentText,isNightMode && styles.noCommentsTextDark]}>{item.Text}</Text>
                 )}
                 {item.Images && item.Images.length > 0 && (
-                  <Image
-                    source={{ uri: item.Images[0].secure_url }}
-                    style={Platform.OS === 'web' ? styles.commentImagewep : styles.commentImage}
-                  />
+                  <TouchableOpacity onPress={() => openImageViewer(item.Images[0]?.secure_url)}>
+                    <Image
+                      source={{ uri: item.Images[0].secure_url }}
+                      style={Platform.OS === 'web' ? styles.commentImagewep : styles.commentImage}
+                    />
+                  </TouchableOpacity>
                 )}
+
                 {isOwner && (
                   <View style={styles.commentOptions}>
                     <TouchableOpacity onPress={() => editCommentHandler(item._id, item.Text, item.Images)}>
-                      <Ionicons name="create" size={20} color={isNightMode ? 'white' : 'gray'} />
+                      <Ionicons name="create" size={15} color={isNightMode ? 'white' : 'gray'} />
                     </TouchableOpacity>
-                    <TouchableOpacity onPress={() => cancelEditHandler(item._id)}>
-                      <Ionicons name="trash" size={20} color={isNightMode ? 'white' : 'gray'} />
+                    <TouchableOpacity onPress={() => handleDeleteComments(item._id)}>
+                      <Ionicons name="trash" size={15} color={isNightMode ? 'white' : 'gray'} />
                     </TouchableOpacity>
                   </View>
                 )}
@@ -1792,6 +2192,18 @@ left: 10, backgroundColor: 'white', padding: 10, borderRadius: 5, zIndex: 20,bot
       />
     ) : (
       <Text style={[styles.noCommentsText, isNightMode && styles.noCommentsTextDark]}>No comment yet</Text>
+    )}
+
+    {editingImage && editingImage.length > 0 && (
+      <View style={styles.imageWrapper}>
+        <TouchableOpacity onPress={pickImageComment}>
+          <Image source={{ uri: editingImage }} style={Platform.OS === 'web' ? styles.commentImagewep : styles.commentImage} />
+        </TouchableOpacity>
+        {/* Remove Image Button */}
+        <TouchableOpacity onPress={() => removeimgcomment()} style={styles.removeImageButton}>
+          <Ionicons name="close" size={15} color="white" />
+        </TouchableOpacity>
+      </View>
     )}
 
     {/* Comment Input Section */}
@@ -1815,7 +2227,11 @@ left: 10, backgroundColor: 'white', padding: 10, borderRadius: 5, zIndex: 20,bot
           <Ionicons name="image" size={30} color={isNightMode ? 'white' : 'gray'} />
         </TouchableOpacity>
         <TouchableOpacity
-          onPress={isEditing ? updateMyComment(editingCommentId) : handleAddComment}
+          onPress={() => {
+            if (newCommentText.trim() || editingImage) {
+              isEditing ? updateMyComment(editingCommentId) : handleAddComment();
+            } 
+          }}
           style={styles.commentSendButton}
         >
           <Ionicons name="send" size={15} color="white" />
@@ -1825,7 +2241,6 @@ left: 10, backgroundColor: 'white', padding: 10, borderRadius: 5, zIndex: 20,bot
 
   </View>
 </Modal>
-
 
 
 
@@ -2138,6 +2553,42 @@ commentInputContainer: {
   noCommentsTextDark: {
     color: 'white',  // تغيير اللون إلى الأبيض في وضع الليل
   },
+  commentDate: {
+  fontSize: 9,
+  color: 'gray',
+  marginTop: 5,
+},
+commentDateDark: {
+  color: 'lightgray',
+},
+commentText: {
+  color: '#000',
+},
+searchBox: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  flex: 1,
+  paddingHorizontal: 10,
+  borderRadius: 10,
+  borderWidth: 1,
+  borderColor: '#ccc',
+},
+searchIcon: {
+  marginRight: 10,
+},
+inputSearch: {
+  flex: 1,
+  height: 40,
+  fontSize: 16,
+},
+container: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  padding: 5,
+},
+backButton: {
+  marginRight: 10,
+},
 });
  
   

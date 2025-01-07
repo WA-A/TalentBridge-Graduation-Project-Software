@@ -66,6 +66,50 @@ export const CreateProfile = async (req, res) => {
     }
 };
 
+export const addDeviceToken = async (req, res) => {
+    try {
+        console.log("Body:", req.body);
+
+        const { deviceToken } = req.body;  // الحصول على deviceToken من الـ body
+
+        // الحصول على توكن المستخدم من الهيدر
+        const authuser = req.user;
+        console.log(authuser);
+        
+        if (!authuser) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        // التحقق من أن توكن الجهاز موجود
+        if (!deviceToken) {
+            return res.status(400).json({ message: "Device token is required" });
+        }
+
+        // التحقق إذا كان توكن الجهاز الجديد يختلف عن التوكن المخزن في قاعدة البيانات
+        if (authuser.deviceToken === deviceToken) {
+            return res.status(200).json({ message: "Device token is already up-to-date" });
+        }
+
+        // إذا كان التوكن مختلفًا، قم بتحديثه
+        const updatedUser = await UserModel.findByIdAndUpdate(
+            authuser._id,
+            { deviceToken: String(deviceToken) },  // تأكد من أن التوكن هو سترنغ
+            { new: true }
+        );
+
+        if (!updatedUser) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        return res.status(200).json({
+            message: "Device token updated successfully",
+            user: updatedUser,
+        });
+    } catch (error) {
+        console.error("Error in addDeviceToken:", error);
+        return res.status(500).json({ message: "Internal server error", error: error.message });
+    }
+};
 
 export const addCertification = async (req, res) => {
     try {

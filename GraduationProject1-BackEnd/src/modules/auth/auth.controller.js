@@ -50,11 +50,9 @@ export const SignUp = async (req, res) => {
 };
 
 
-
-
 export const SignIn = async (req, res) => {
     console.log('Received data:', req.body);
-    const { Email, Password } = req.body;
+    const { Email, Password} = req.body;  // إضافة deviceToken
 
     try {
         const user = await UserModel.findOne({ Email });

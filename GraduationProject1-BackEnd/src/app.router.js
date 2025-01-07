@@ -7,8 +7,8 @@ import CommentRouter from './modules/Comment/Comment.Router.js'
 import ChatRouter from "./modules/Chat/Chat.Router.js"
 import ExternalApiLanguagesRouter from "./../ExternalApiLanguages/ExternalApiLanguages.router.js"
 import ExternalApiSkillsRouter from "./../ExternalApiSkills/ExternalApiSkills.router.js"
-import ExternalApiFieldsRouter from "./../ExternalApiFields/ExternalApiFields.router.js"
-
+import ExternalApiFieldsRouter from './../ExternalApiFields/ExternalApiFields.router.js'
+import NotificationRouter from './modules/Notification/Notification.Router.js'
 
 import ApplicationTrainRouter from "./modules/Application/Application.router.js"
 import cors from 'cors';
@@ -30,6 +30,7 @@ const Appinit = (app,express)=>{
     app.use('/externalapiSkills',ExternalApiSkillsRouter);
     app.use('/externalapiFields',ExternalApiFieldsRouter);
     app.use('/applicationtrain',ApplicationTrainRouter);
+    app.use('/notification',NotificationRouter);
 
 
 
