@@ -22,6 +22,7 @@ import AddProjectsPage from './screens/AddProjectsPage';
 import SearchScreen from './screens/SearchScreen.js';
 import ViewOtherProfile from './screens/ViewOtherProfile';
 import CommentsModal from './screens/CommentsModal.js';
+import RequestToSeniorPage from './screens/RequestToSeniorPage.js';
 const Stack = createStackNavigator();
 
 const linking = Platform.OS === 'web' ? {
@@ -133,6 +134,11 @@ component={ResetPassword}
 
 <Stack.Screen name="CommentsModal" 
 component={CommentsModal}                    
+ options={{ headerShown: false }}
+ />
+
+<Stack.Screen name="RequestToSeniorPage" 
+component={RequestToSeniorPage}                    
  options={{ headerShown: false }}
  />
 
