@@ -48,12 +48,14 @@ export default function Signup({ navigation }) {
     // ];
 
     const [values, setValues] = useState({
-        FullName: '', Email: '', Password: '', ConfirmPassword: '', Gender: '', BirthDate: '', PhoneNumber: '', Location: '', YearsofExperience: '', Field: '',
+        FullName: '', Email: '', Password: '', ConfirmPassword: '', Gender: '', BirthDate: '', PhoneNumber: '', Location: '', YearsofExperience: '', Field: '',SeniorAccountStatus:'',
     });
 
 
     const [selectedJob, setSelectedJob] = useState('Software Engineer');
+    const [selectedSkill, setselectedSkill] = useState('Python');
     const [jobFields, setJobFields] = useState([]); // تخزين الوظائف المحملة من API
+    const [skills, setskills] = useState([]); // تخزين مهارات المحملة من API
     const [hidePassword, setHidePassword] = useState(true);
     const [hideConfirmPassword, setHideConfirmPassword] = useState(true);
 
@@ -214,7 +216,13 @@ export default function Signup({ navigation }) {
                 FieldId: selectedJob, // التأكد من إرسال FieldId من الحقل المختار
                 Role: userType, // نوع المستخدم
             };
-    
+               
+
+            if (userType === 'Senior') {
+                dataToSend.SeniorAccountStatus = 'Pending';
+            }
+
+
             // التحقق من وجود FieldId قبل الإرسال
             if (!dataToSend.FieldId) {
                 console.error('FieldId is missing. Please select a job.');
@@ -254,9 +262,13 @@ export default function Signup({ navigation }) {
             const result = await response.json();
             console.log('User registered successfully:', result);
     
-            if (result.token) {
+            if (userType === 'Senior') {
+                console.log('Senior user registered with status Pending');
+                navigation.navigate('RequestToSeniorPage');
+            } else if (result.token) {
+                // إذا كان المستخدم من نوع Junior
                 await AsyncStorage.setItem('userToken', result.token); // تخزين التوكين
-                navigation.navigate('HomeScreen'); // الانتقال للشاشة الرئيسية
+                navigation.navigate('HomeScreen'); 
             } else {
                 console.warn('No token found in response.');
             }
@@ -277,7 +289,6 @@ export default function Signup({ navigation }) {
                 method: 'GET', 
                 headers: {
                     'Content-Type': 'application/json'
-                    // حذفنا Authorization لأنها قد لا تكون ضرورية هنا
                 },
             });
     
@@ -300,6 +311,40 @@ export default function Signup({ navigation }) {
             setMenuVisible(true);
         }
     };
+
+
+    const handelGetSkills = async () => {
+        try {
+            const baseUrl = Platform.OS === 'web' ? 'http://localhost:3000' : 'http://192.168.1.239:3000';
+            
+            const response = await fetch(`${baseUrl}/externalapiSkills/getskills`, {
+                method: 'GET', 
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+            });
+    
+            if (!response.ok) {
+                throw new Error('Failed to fetch Skills');
+            }
+    
+            const data = await response.json();
+            console.log('Fetched Skills:', data.Skills); 
+    
+            if (data && data.Skills) {
+                setskills(data.Skills.map(skill => ({
+                    label: skill.name,
+                    value: skill.id.toString(), // تحويل المعرف إلى نص
+                 //   Rate: skill.Rate || 0, 
+                })));
+            }
+        } catch (error) {
+            console.error("Error fetching Skills:", error);
+            setError("Failed to load job Skills.");
+            setMenuVisible(true);
+        }
+    };
+
 
     const handAddFields = async (fieldId) => {
         console.log('Field ID to add:', fieldId);
@@ -338,14 +383,12 @@ export default function Signup({ navigation }) {
         }
     };
     
-    
-    
-    
-        
-
         useEffect(() => {
         handelGetJobFields(); 
+        handelGetSkills();
     }, []);
+
+    
 
 
     // useEffect(() => {
@@ -395,7 +438,7 @@ export default function Signup({ navigation }) {
                         </TouchableOpacity>
                     </View>
                     <Formik
-                        initialValues={{ FullName: '', Email: '', Password: '', ConfirmPassword: '', Gender: '', BirthDate: '', PhoneNumber: '', Location: '', YearsOfExperience: '', Field: '' }}
+                        initialValues={{ FullName: '', Email: '', Password: '', ConfirmPassword: '', Gender: '', BirthDate: '', PhoneNumber: '', Location: '', YearsOfExperience: '', Field: '',SeniorAccountStatus:'' }}
                         onSubmit={(values) => {
                             setValues({
                                 FullName: formikValues.FullName,
@@ -690,46 +733,82 @@ export default function Signup({ navigation }) {
 
 
 
-
-
                                 {/* اختيار المجال الوظيفي */}
                                 <View style={{ marginBottom: 20 }}>
-    <Text style={labelStyle}>Field</Text>
-    <View style={styles.container}>
-        <View style={styles.pickerWrapper}>
-            {Platform.OS === 'web' ? (
-                // ستايل مخصص للويب
-                <Picker
-                    selectedValue={selectedJob}
-                    onValueChange={(itemValue) => {
-                        setSelectedJob(itemValue); // تحديث الوظيفة المختارة
-                       // handAddFields(itemValue); // استدعاء دالة إضافة المجال
-                    }}
-                    style={styles.pickerWeb}
-                >
-                    {jobFields.map((field, index) => (
-                        <Picker.Item label={field.label} value={field.value} key={index} />
-                    ))}
-                </Picker>
-            ) : (
-                // ستايل مخصص للموبايل (أندرويد و iOS)
-                <Picker
-                    selectedValue={selectedJob}
-                    onValueChange={(itemValue) => {
-                        setSelectedJob(itemValue); // تحديث الوظيفة المختارة
-                      // handAddFields(itemValue); // استدعاء دالة إضافة المجال
-                    }}
-                >
-                    {jobFields.map((field, index) => (
-                        <Picker.Item label={field.label} value={field.value} key={index} />
-                    ))}
-                </Picker>
-            )}
-        </View>
-    </View>
-</View>
+                                <Text style={labelStyle}>Field</Text>
+                             <View style={styles.container}>
+                               <View style={styles.pickerWrapper}>
+                                {Platform.OS === 'web' ? (
+                                   // ستايل مخصص للويب
+                                      <Picker
+                                     selectedValue={selectedJob}
+                                    onValueChange={(itemValue) => {
+                                        setSelectedJob(itemValue); // تحديث الوظيفة المختارة
+                                       }}
+                                  style={styles.pickerWeb}
+                                  >
+                                  {jobFields.map((field, index) => (
+                                <Picker.Item label={field.label} value={field.value} key={index} />
+                               ))}
+                             </Picker>
+                              ) : (
+                          // ستايل مخصص للموبايل (أندرويد و iOS)
+                                    <Picker
+                                        selectedValue={selectedJob}
+                                    onValueChange={(itemValue) => {
+                                     setSelectedJob(itemValue); // تحديث الوظيفة المختارة
+                                 }}
+                                   >
+                                        {jobFields.map((field, index) => (
+                                       <Picker.Item label={field.label} value={field.value} key={index} />
+                                          ))}
+                                    </Picker>
+                                 )}
+                            </View>
+                                </View>
+                                   </View>
 
 
+
+                                    {/* اختيار المهارة الوظيفي */}
+                                <View style={{ marginBottom: 20 }}>
+                                <Text style={labelStyle}>Skills</Text>
+                                <View style={styles.container}>
+                               <View style={styles.pickerWrapper}>
+                                {Platform.OS === 'web' ? (
+                                   // ستايل مخصص للويب
+                                      <Picker
+                                     selectedValue={selectedSkill}
+                                    onValueChange={(SitemValue) => {
+                                        setselectedSkill(SitemValue); // تحديث المهارة المختارة
+                                       }}
+                                  style={styles.pickerWeb}
+                                  >
+                                  {skills.map((skill, index) => (
+                                <Picker.Item label={skill.label} value={skill.value} key={index} />
+                               ))}
+                             </Picker>
+                              ) : (
+                          // ستايل مخصص للموبايل (أندرويد و iOS)
+                                    <Picker
+                                        selectedValue={selectedSkill}
+                                    onValueChange={(SitemValue) => {
+                                        setselectedSkill(SitemValue); // تحديث المهارة المختارة
+                                 }}
+                                   >
+                                        {skills.map((skill, index) => (
+                                       <Picker.Item label={skill.label} value={skill.value} key={index} /> //Rate={skill.Rate}
+                                          ))}
+                                    </Picker>
+                                 )}
+                                          </View>
+                                             </View>
+                                               </View>
+
+
+
+
+                                  {/* Request senior to sdmin */}
                          {userType === 'Senior' && (
 
                        <StyledButton style={{ backgroundColor: brand, marginBottom: 10}}
@@ -791,6 +870,7 @@ export default function Signup({ navigation }) {
 
                                         console.log('Button Pressed');
                                         handleSignup(finalValues);
+                                        navigation.navigate('RequestToSeniorPage');
                                     }}
                                 >
                                     <ButtonText>Sign Up as a  {userType}</ButtonText>

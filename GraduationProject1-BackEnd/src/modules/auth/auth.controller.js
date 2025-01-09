@@ -34,6 +34,7 @@ export const SignUp = async (req, res) => {
                 PhoneNumber,
                 Location,
                 YearsOfExperience: YearsofExperienceN,
+                SeniorAccountStatus: "Pending",
                 Fields: [{ id: fieldToAdd.id, sub_specialization: fieldToAdd.sub_specialization, code: fieldToAdd.code }]
             });
             const token = jwt.sign({ Email }, process.env.CONFIRM_EMAILTOKEN);
