@@ -48,7 +48,7 @@ export default function Signup({ navigation }) {
     // ];
 
     const [values, setValues] = useState({
-        FullName: '', Email: '', Password: '', ConfirmPassword: '', Gender: '', BirthDate: '', PhoneNumber: '', Location: '', YearsofExperience: '', Field: '',
+        FullName: '', Email: '', Password: '', ConfirmPassword: '', Gender: '', BirthDate: '', PhoneNumber: '', Location: '', YearsofExperience: '', Field: '',SeniorAccountStatus:'',
     });
 
 
@@ -214,7 +214,13 @@ export default function Signup({ navigation }) {
                 FieldId: selectedJob, // التأكد من إرسال FieldId من الحقل المختار
                 Role: userType, // نوع المستخدم
             };
-    
+               
+
+            if (userType === 'Senior') {
+                dataToSend.SeniorAccountStatus = 'Pending';
+            }
+
+
             // التحقق من وجود FieldId قبل الإرسال
             if (!dataToSend.FieldId) {
                 console.error('FieldId is missing. Please select a job.');
@@ -254,9 +260,13 @@ export default function Signup({ navigation }) {
             const result = await response.json();
             console.log('User registered successfully:', result);
     
-            if (result.token) {
+            if (userType === 'Senior') {
+                console.log('Senior user registered with status Pending');
+                navigation.navigate('RequestToSeniorPage');
+            } else if (result.token) {
+                // إذا كان المستخدم من نوع Junior
                 await AsyncStorage.setItem('userToken', result.token); // تخزين التوكين
-                navigation.navigate('HomeScreen'); // الانتقال للشاشة الرئيسية
+                navigation.navigate('HomeScreen'); 
             } else {
                 console.warn('No token found in response.');
             }
@@ -395,7 +405,7 @@ export default function Signup({ navigation }) {
                         </TouchableOpacity>
                     </View>
                     <Formik
-                        initialValues={{ FullName: '', Email: '', Password: '', ConfirmPassword: '', Gender: '', BirthDate: '', PhoneNumber: '', Location: '', YearsOfExperience: '', Field: '' }}
+                        initialValues={{ FullName: '', Email: '', Password: '', ConfirmPassword: '', Gender: '', BirthDate: '', PhoneNumber: '', Location: '', YearsOfExperience: '', Field: '',SeniorAccountStatus:'' }}
                         onSubmit={(values) => {
                             setValues({
                                 FullName: formikValues.FullName,
@@ -703,7 +713,6 @@ export default function Signup({ navigation }) {
                     selectedValue={selectedJob}
                     onValueChange={(itemValue) => {
                         setSelectedJob(itemValue); // تحديث الوظيفة المختارة
-                       // handAddFields(itemValue); // استدعاء دالة إضافة المجال
                     }}
                     style={styles.pickerWeb}
                 >
@@ -717,7 +726,6 @@ export default function Signup({ navigation }) {
                     selectedValue={selectedJob}
                     onValueChange={(itemValue) => {
                         setSelectedJob(itemValue); // تحديث الوظيفة المختارة
-                      // handAddFields(itemValue); // استدعاء دالة إضافة المجال
                     }}
                 >
                     {jobFields.map((field, index) => (
@@ -791,6 +799,7 @@ export default function Signup({ navigation }) {
 
                                         console.log('Button Pressed');
                                         handleSignup(finalValues);
+                                        navigation.navigate('RequestToSeniorPage');
                                     }}
                                 >
                                     <ButtonText>Sign Up as a  {userType}</ButtonText>
