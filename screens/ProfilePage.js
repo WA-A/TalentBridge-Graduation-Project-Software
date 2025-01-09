@@ -1549,22 +1549,21 @@ const handleDeleteSkills = async () => {
 
 const handleAddSkills = async () => {
   try {
+    console.log("Selected Skills:", selectedSkills);
+
+    // تحويل البيانات إلى الشكل المطلوب
+    const SkillsWithRates = selectedSkills.map(skill => ({
+      SkillId: skill.id, // استخدام id كـ SkillId
+      Rate: skill.Rate, // استخدام Rate
+    }));
+
+    console.log("SkillsWithRates:", SkillsWithRates);
+
     const token = await AsyncStorage.getItem('userToken'); // استرجاع التوكن
     if (!token) {
       console.error('Token not found');
       return;
     }
-
-    // إعداد البيانات مع التقييم
-    const SkillsWithRates = selectedSkills.map((skill) => {
-      const rate = RateselectedSkills.find((_, index) => selectedSkills[index]?.id === skill.id) || 1;
-      return {
-        SkillId: skill.id,       // معرف المهارة
-        Rate: rate,              // التقييم (افتراضيًا 1 إذا لم يُحدد)
-      };
-    });
-            
-    console.log("Skills with Rates: ", SkillsWithRates);
 
     const response = await fetch(`${baseUrl}/externalapiSkills/addskills`, {
       method: 'POST',
@@ -1572,7 +1571,9 @@ const handleAddSkills = async () => {
         'Authorization': `Wasan__${token}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ SkillsWithRates }), // إرسال المهارات مع التقييمات
+      body: JSON.stringify({
+        SkillsWithRates, // إرسال المهارات مع التقييمات بالتنسيق المطلوب
+      }),
     });
 
     if (!response.ok) {
@@ -1585,9 +1586,11 @@ const handleAddSkills = async () => {
     closeModal();
     console.log('Skills added successfully');
   } catch (error) {
+    console.error("Error adding skills:", error.message);
     setError(error.message);
   }
 };
+
 
 
 
@@ -1774,7 +1777,6 @@ useEffect(() => {
      
   
   // Skills List
-
   const SkillsList = ({ skill }) => {
     // دالة لتصفية الخبرات وعرض الخبرات من الثالثة فما فوق
     const filterExperiences = () => {
@@ -1794,25 +1796,36 @@ useEffect(() => {
                   {cert.name}
                 </Text>
   
-                {/* زر الحذف */}
                 <TouchableOpacity style={styles.editButton}>
-                {userSkills.map((skill, index) => (
-  <View key={skill.id} style={styles.skillItem}>
-    <Text style={styles.skillName}>{skill.name}</Text>
-    <View style={styles.starsContainer}>
-      {[1, 2, 3, 4, 5].map((starIndex) => (
+  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+    {/* النجوم هنا */}
+    {[1, 2, 3, 4, 5].map((starIndex) => (
+      <TouchableOpacity
+        key={starIndex}
+        onPress={() => {
+          // تحديث تقييم المهارة فقط
+          const updatedSkills = [...userSkills];
+          updatedSkills[index].rating = starIndex; // تحديث تقييم المهارة
+          setUserSkills(updatedSkills);
+        }}
+      >
         <MaterialCommunityIcons
-          key={starIndex}
-          name={starIndex <= (skill.rating || 0) ? 'star' : 'star-outline'}
+          name={starIndex <= cert.Rate ? 'star' : 'star-outline'} // ملء النجوم بناءً على cert.rating
           size={20}
-          color={starIndex <= (skill.rating || 0) ? '#F7A8B8' : Colors.grey}
+          color={starIndex <= cert.Rate ? '#F7A8B8' : isNightMode ? Colors.primary : Colors.black}
         />
-      ))}
-    </View>
-  </View>
-))}
+      </TouchableOpacity>
+    ))}
 
-                </TouchableOpacity>
+    {/* مسافة بسيطة بين النجوم وزر الحذف */}
+    <TouchableOpacity onPress={() => openConfirmDeleteModal('skills', cert)} style={{ marginLeft: 10 }}>
+      <MaterialCommunityIcons name="minus-circle" size={20} color={isNightMode ? Colors.primary : Colors.black} />
+    </TouchableOpacity>
+  </View>
+</TouchableOpacity>
+
+
+            
               </View>
             </View>
           );
@@ -2500,7 +2513,6 @@ useEffect(() => {
           {cert.name}
         </Text>
         
-             {/* زر الحذف */}
              <TouchableOpacity style={styles.editButton}>
   <View style={{ flexDirection: 'row', alignItems: 'center' }}>
     {/* النجوم هنا */}
@@ -2510,14 +2522,14 @@ useEffect(() => {
         onPress={() => {
           // تحديث تقييم المهارة فقط
           const updatedSkills = [...userSkills];
-          updatedSkills[index].rating = starIndex;
+          updatedSkills[index].rating = starIndex; // تحديث تقييم المهارة
           setUserSkills(updatedSkills);
         }}
       >
         <MaterialCommunityIcons
-          name={starIndex <= cert.rating ? 'star' : 'star-outline'} // ملء النجوم بناءً على التقييم
+          name={starIndex <= cert.Rate ? 'star' : 'star-outline'} // ملء النجوم بناءً على cert.rating
           size={20}
-          color={starIndex <= cert.rating ? '#F7A8B8' : isNightMode ? Colors.primary : Colors.black}
+          color={starIndex <= cert.Rate ? '#F7A8B8' : isNightMode ? Colors.primary : Colors.black}
         />
       </TouchableOpacity>
     ))}
@@ -2830,7 +2842,8 @@ useEffect(() => {
               </>
             )}
  {/* محتويات Modal Skills */}
- {currentModal === 'skills' && (
+ {/* محتويات Modal Skills */}
+{currentModal === 'skills' && (
   <>
     {/* عنوان النافذة */}
     <Text style={[styles.modalTitle, { marginTop: 0 }]}>Select Skill(s)</Text>
@@ -2848,6 +2861,7 @@ useEffect(() => {
             id: itemId,
             name: Skills.find((s) => s.id === itemId).name,
             rating: 0, // التقييم الافتراضي 0
+            Rate: 0, // إضافة خاصية التقييم
           };
         });
         setSelectedSkills(updatedSkills);
@@ -2902,33 +2916,33 @@ useEffect(() => {
         {/* عرض نظام النجوم للتقييم */}
         <View style={{ flexDirection: 'row', flex: 1 }}>
           {[1, 2, 3, 4, 5].map((starIndex) => (
-           <TouchableOpacity
-           key={starIndex}
-           onPress={() => {
-             const updatedSkills = [...selectedSkills];
-             updatedSkills[index].rating = starIndex;
-             setSelectedSkills(updatedSkills);
-           }}
-         >
-           <MaterialCommunityIcons
-             name={starIndex <= skill.rating ? 'star' : 'star-outline'}
-             size={20}
-             color={
-               starIndex <= skill.rating
-                 ? '#F7A8B8'
-                 : isNightMode
-                 ? Colors.primary
-                 : Colors.black
-             }
-         />
-         </TouchableOpacity>
+            <TouchableOpacity
+              key={starIndex}
+              onPress={() => {
+                const updatedSkills = [...selectedSkills];
+                updatedSkills[index].rating = starIndex; // تحديث التقييم في rating
+                updatedSkills[index].Rate = starIndex;   // تخزين التقييم في Rate
+                setSelectedSkills(updatedSkills);
+              }}
+            >
+              <MaterialCommunityIcons
+                name={starIndex <= skill.rating ? 'star' : 'star-outline'}
+                size={20}
+                color={
+                  starIndex <= skill.rating
+                    ? '#F7A8B8'
+                    : isNightMode
+                    ? Colors.primary
+                    : Colors.black
+                }
+              />
+            </TouchableOpacity>
           ))}
         </View>
       </View>
     ))}
   </>
 )}
-
 
 
             {currentModal === 'language' && (

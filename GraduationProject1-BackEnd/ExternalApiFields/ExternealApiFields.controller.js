@@ -153,7 +153,7 @@ const Fields = [
     { id: 147, sub_specialization: "Dam Engineering", code: "ENG_DAM_DAM" },
     { id: 148, sub_specialization: "Immunology", code: "IMM_IMM_IMM" },
     { id: 149, sub_specialization: "Neuroscience", code: "NEURO_NEURO_NEURO" },
-    { id: 150, sub_specialization: "Bioprocess Engineering", code: "ENG_BIO_BIO" }, 
+    { id: 150, sub_specialization: "Bioprocess Engineering", code: "ENG_BIO_BIO" },
 
     // Business & Management (151-200)
     { id: 151, sub_specialization: "Business Administration", code: "BUS_BA_BA" },
@@ -216,7 +216,7 @@ const Fields = [
     { id: 208, sub_specialization: "Biophysics", code: "BIOPH_BIOPH_BIOPH" },
     { id: 209, sub_specialization: "Microbiology", code: "MICRO_MICRO_MICRO" },
     { id: 210, sub_specialization: "Genetics", code: "GEN_GEN_GEN" },
-    
+
 ]
 
 
@@ -242,9 +242,9 @@ export const AddFieldsWithToken = async (req, res) => {
         }
 
         const authUser = req.user;
-        const { FieldId } = req.body;  
+        const { FieldId } = req.body;
 
-       
+
         if (!authUser || !FieldId) {
             console.log("Missing required fields: authUser or FieldId.");
             return res.status(400).json({ message: "User ID and Field ID are required." });
@@ -305,9 +305,9 @@ export const AddFieldsWithOutToken = async (FieldId) => {
         console.log("Request received:", { FieldId });
 
         const fieldToAdd = Fields.find(field => field.id.toString() === FieldId.toString());
-        
+
         if (!fieldToAdd) {
-            console.log("Available Fields:", Fields); 
+            console.log("Available Fields:", Fields);
             throw new Error("Field not found in the predefined list.");
         }
 
@@ -371,7 +371,6 @@ export const DeleteFields = async (req, res) => {
         return res.status(500).json({ message: "Internal Server Error." });
     }
 };
-
 export const GetFieldsUser = async (req, res) => {
     try {
         if (!req.user) {
@@ -381,17 +380,20 @@ export const GetFieldsUser = async (req, res) => {
 
         const authUser = req.user;
 
+        // جلب المستخدم
         const user = await UserModel.findById(authUser);
         if (!user) {
             console.log("User not found in the database.");
             return res.status(404).json({ message: "User not found." });
         }
 
+
+
         return res.status(200).json({
             message: "Fields fetched successfully.",
-            Fields: user.Fields 
+            Fields: user.Fields
         });
-        
+
     } catch (error) {
         console.error("Error fetching Fields: ", error);
         return res.status(500).json({ message: "Internal Server Error." });

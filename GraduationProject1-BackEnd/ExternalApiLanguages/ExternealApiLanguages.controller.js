@@ -118,6 +118,7 @@ export const GetLanguages = (req, res) => {
 
 export const DeleteLanguages = async (req, res) => {
     try {
+        // تحقق من وجود توكن للمستخدم
         if (!req.user) {
             console.log("User not authorized: No token provided.");
             return res.status(401).json({ message: "User not authorized. Please provide a valid token." });
@@ -125,7 +126,8 @@ export const DeleteLanguages = async (req, res) => {
 
         const authUser = req.user;
         const { LanguageId } = req.body;
-
+        console.log(authUser,LanguageId);
+        // تحقق من أن المستخ دم و LanguageId موجودين
         if (!authUser || !LanguageId) {
             console.log("Missing required fields: authUser or LanguageId.");
             return res.status(400).json({ message: "User ID and Language ID are required." });
@@ -133,6 +135,7 @@ export const DeleteLanguages = async (req, res) => {
 
         console.log("Request received to delete language:", { authUser, LanguageId });
 
+        // جلب المستخدم من قاعدة البيانات
         const user = await UserModel.findById(authUser);
         if (!user) {
             console.log("User not found in the database.");
@@ -141,17 +144,35 @@ export const DeleteLanguages = async (req, res) => {
 
         console.log("User found:", user);
 
-        const languageIndex = user.Languages.findIndex(lang => lang.id === LanguageId);
+        // تحقق من أن LanguageId هو نوع number
+        const languageIdAsNumber = Number(LanguageId);
+        console.log("Converted LanguageId to number:", languageIdAsNumber);
+
+        // التحقق من أن LanguageId صالح
+        if (isNaN(languageIdAsNumber)) {
+            console.log("Invalid LanguageId: It must be a valid number.");
+            return res.status(400).json({ message: "Invalid Language ID type. It must be a number." });
+        }
+
+        // البحث عن لغة في قائمة اللغات
+        const languageIndex = user.Languages.findIndex(lang => lang.id === languageIdAsNumber);
+        console.log("Language index found:", languageIndex);
+
         if (languageIndex === -1) {
             console.log("Language not found in user's languages.");
             return res.status(404).json({ message: "Language not found for the user." });
         }
 
+        console.log("Language found at index:", languageIndex);
+
+        // حذف اللغة من قائمة اللغات
         user.Languages.splice(languageIndex, 1);
+        console.log("Language deleted, new languages list:", user.Languages);
 
+        // حفظ التغييرات في قاعدة البيانات
         await user.save();
+        console.log("User data saved after language deletion.");
 
-        console.log("Language deleted successfully. Remaining languages:", user.Languages);
         return res.status(200).json({
             message: "Language deleted successfully.",
             languages: user.Languages
@@ -162,6 +183,7 @@ export const DeleteLanguages = async (req, res) => {
         return res.status(500).json({ message: "Internal Server Error." });
     }
 };
+
 
 
 // دالة GET لاسترجاع اللغات الخاصة بالمستخدم
