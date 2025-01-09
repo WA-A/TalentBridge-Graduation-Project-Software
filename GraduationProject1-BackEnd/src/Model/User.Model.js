@@ -144,6 +144,11 @@ deviceToken: {  // حقل جديد لتخزين توكن الجهاز
    type: String,
    default: null,  // يمكن أن يكون null إذا لم يكن هناك توكن
  },
+ SeniorAccountStatus: {
+   type: String,
+   default: 'Pending',
+   enum: ['Active', 'Blocked', 'Pending']
+},
 
 },
 

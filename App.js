@@ -21,7 +21,6 @@ import SearchScreen from './screens/SearchScreen';
 import ViewOtherProfile from './screens/ViewOtherProfile';
 import CommentsModal from './screens/CommentsModal.js';
 import RequestToSeniorPage from './screens/RequestToSeniorPage.js';
-import CommentsModal from './screens/CommentsModal';
 import * as Notifications from "expo-notifications";
 import { NotificationProvider } from './contex/NotificationContext';
 import Notification from './screens/Notification';
@@ -182,11 +181,6 @@ component={RequestToSeniorPage}
             component={ResetPassword}
             options={{ headerShown: false }}
           />
-          <Stack.Screen
-            name="CommentsModal"
-            component={CommentsModal}
-            options={{ headerShown: false }}
-          />
            <Stack.Screen
             name="Notification"
             component={Notification}
@@ -195,6 +189,12 @@ component={RequestToSeniorPage}
             <Stack.Screen
             name="PostFRomNotification"
             component={PostFRomNotification}
+            options={{ headerShown: false }}
+          />
+
+             <Stack.Screen
+            name="RequestToSeniorPage"
+            component={RequestToSeniorPage}
             options={{ headerShown: false }}
           />
         </Stack.Navigator>
