@@ -63,6 +63,7 @@
     "react-native-image-zoom-viewer": "^3.0.1",
     "react-native-modal": "^13.0.1",
     "react-native-modal-datetime-picker": "^18.0.0",
+    "react-native-multi-select": "^0.1.1",
     "react-native-multiple-select": "^0.5.12",
     "react-native-pdf": "^6.7.6",
     "react-native-permissions": "^5.2.1",

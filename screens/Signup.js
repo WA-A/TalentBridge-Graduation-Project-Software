@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, Platform, ScrollView, StyleSheet } from '
 import DateTimePickerModal from '@react-native-community/datetimepicker';  // للموبايل
 import { StatusBar } from 'expo-status-bar';
 import { Formik } from 'formik';
-import { Feather, FontAwesome, Ionicons, Entypo } from '@expo/vector-icons';
+import { Feather, FontAwesome, Ionicons, Entypo,MaterialCommunityIcons } from '@expo/vector-icons';
 import { Picker } from '@react-native-picker/picker'
 import { Colors, StyledContainer, InnerContainer, PageLogo, StyledFormArea, StyledButton, ButtonText, StyledTextInputSignUp, LeftIcon, labelStyle, RightIcon, RightIcon2 } from './../compnent/Style';
 import axios from 'axios';
@@ -214,6 +214,7 @@ export default function Signup({ navigation }) {
                 BirthDate: BirthDate.toISOString(), // تحويل التاريخ للتنسيق المناسب
                 Gender: gender, // النوع
                 FieldId: selectedJob, // التأكد من إرسال FieldId من الحقل المختار
+                //:selectedSkill
                 Role: userType, // نوع المستخدم
             };
                
@@ -770,40 +771,90 @@ export default function Signup({ navigation }) {
 
 
 
-                                    {/* اختيار المهارة الوظيفي */}
-                                <View style={{ marginBottom: 20 }}>
-                                <Text style={labelStyle}>Skills</Text>
-                                <View style={styles.container}>
-                               <View style={styles.pickerWrapper}>
-                                {Platform.OS === 'web' ? (
-                                   // ستايل مخصص للويب
-                                      <Picker
-                                     selectedValue={selectedSkill}
-                                    onValueChange={(SitemValue) => {
-                                        setselectedSkill(SitemValue); // تحديث المهارة المختارة
-                                       }}
-                                  style={styles.pickerWeb}
-                                  >
-                                  {skills.map((skill, index) => (
-                                <Picker.Item label={skill.label} value={skill.value} key={index} />
-                               ))}
-                             </Picker>
-                              ) : (
-                          // ستايل مخصص للموبايل (أندرويد و iOS)
-                                    <Picker
-                                        selectedValue={selectedSkill}
-                                    onValueChange={(SitemValue) => {
-                                        setselectedSkill(SitemValue); // تحديث المهارة المختارة
-                                 }}
-                                   >
-                                        {skills.map((skill, index) => (
-                                       <Picker.Item label={skill.label} value={skill.value} key={index} /> //Rate={skill.Rate}
-                                          ))}
-                                    </Picker>
-                                 )}
-                                          </View>
-                                             </View>
-                                               </View>
+                          {/* اختيار المهارة مع النجوم بجانب المهارة */}
+<View style={{ marginBottom: 20 }}>
+  <Text style={labelStyle}>Skills</Text>
+  <View style={styles.container}>
+    <View style={styles.pickerWrapper}>
+      {Platform.OS === 'web' ? (
+        <Picker
+          selectedValue={selectedSkill}
+          onValueChange={(SitemValue) => {
+            setselectedSkill(SitemValue); // تحديث المهارة المختارة
+          }}
+          style={styles.pickerWeb}
+        >
+          {skills.map((skill) => (
+            <Picker.Item
+              label={skill.label} // عرض اسم المهارة فقط
+              value={skill.value}
+              key={skill.value}
+            />
+          ))}
+        </Picker>
+      ) : (
+        <Picker
+          selectedValue={selectedSkill}
+          onValueChange={(SitemValue) => {
+            setselectedSkill(SitemValue); // تحديث المهارة المختارة
+          }}
+        >
+          {skills.map((skill) => (
+            <Picker.Item
+              label={skill.label} // عرض اسم المهارة فقط
+              value={skill.value}
+              key={skill.value}
+            />
+          ))}
+        </Picker>
+      )}
+    </View>
+  </View>
+
+  {/* إضافة التقييم بعد اختيار المهارة */}
+  {selectedSkill && (
+    <View style={{ marginTop: 20 }}>
+      <Text style={{ fontSize: 16, fontWeight: 'bold', marginBottom: 10 }}>
+        Rate the selected skill:
+      </Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        {[1, 2, 3, 4, 5].map((starIndex) => (
+          <TouchableOpacity
+            key={starIndex}
+            onPress={() => {
+              const updatedSkills = skills.map((skill) =>
+                skill.value === selectedSkill
+                  ? { ...skill, rating: starIndex } // تحديث تقييم المهارة المحددة
+                  : skill
+              );
+              setskills(updatedSkills);
+            }}
+          >
+            <MaterialCommunityIcons
+              name={
+                starIndex <=
+                (skills.find((skill) => skill.value === selectedSkill)?.rating || 0)
+                  ? 'star'
+                  : 'star-outline'
+              }
+              size={24}
+              color={
+                starIndex <=
+                (skills.find((skill) => skill.value === selectedSkill)?.rating || 0)
+                  ? '#F7A8B8'
+                  : '#ccc'
+              }
+            />
+          </TouchableOpacity>
+        ))}
+      </View>
+    </View>
+  )}
+</View>
+
+
+
+
 
 
 
