@@ -21,7 +21,6 @@ export const SignUp = async (req, res) => {
             return res.status(400).json({ message: "Field ID is required." });
         }
 
-        // تحقق من وجود الـ Rate مع المهارة
         console.log('Requesting Field data with FieldId:', FieldId);
         const fieldToAdd = await AddFieldsWithOutToken(FieldId.toString());
         console.log('Field data:', fieldToAdd);
