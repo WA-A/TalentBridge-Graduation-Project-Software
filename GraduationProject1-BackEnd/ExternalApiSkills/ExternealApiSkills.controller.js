@@ -207,7 +207,7 @@ const Skills = [
 ];
 
 
-export const AddSkills = async (req, res) => {
+export const AddSkills = async (req, res) => {     // Wuth Token
     try {
         if (!req.user) {
             console.log("User not authorized: No token provided.");
@@ -288,6 +288,38 @@ export const AddSkills = async (req, res) => {
         return res.status(500).json({ message: "Internal Server Error." });
     }
 };
+
+
+export const AddSkillWithoutToken = async (req, res) => {     
+    try {
+        const { SkillId, Rate } = req.body;  
+
+        if (!SkillId || Rate === undefined) {
+            return res.status(400).json({ message: "SkillId and Rate are required." });
+        }
+
+        if (Rate < 1 || Rate > 5) {
+            return res.status(400).json({ message: "Rate must be between 1 and 5." });
+        }
+
+        const skillIdNum = parseInt(SkillId);
+        const selectedSkill = Skills.find(skill => skill.id === skillIdNum);
+        
+        if (!selectedSkill) {
+            return res.status(404).json({ message: `Skill not found for SkillId: ${SkillId}` });
+        }
+
+        return res.status(200).json({
+            message: "Skill and Rate selected successfully.",
+            selectedSkill: { ...selectedSkill, Rate: Rate }
+        });
+
+    } catch (error) {
+        console.error("Error selecting skill:", error);
+        return res.status(500).json({ message: "Internal Server Error." });
+    }
+};
+
 
 
 

@@ -66,11 +66,7 @@ export default function Signup({ navigation }) {
     const [successMassage, setSuccessMassage] = useState('');
     const [successMassage2, setSuccessMassage2] = useState('');
 
-
-
     //verify
-
-
 
     const [name, setName] = useState('');
     const [nameVerfy, setNameVerfy] = useState(false);
