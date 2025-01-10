@@ -53,7 +53,7 @@ export default function Signup({ navigation }) {
 
 
     const [selectedJob, setSelectedJob] = useState('Software Engineer');
-    const [selectedSkill, setselectedSkill] = useState('Python');
+    const [selectedSkill, setselectedSkill] = useState([]);  
     const [jobFields, setJobFields] = useState([]); // تخزين الوظائف المحملة من API
     const [skills, setskills] = useState([]); // تخزين مهارات المحملة من API
     const [hidePassword, setHidePassword] = useState(true);
@@ -204,28 +204,36 @@ export default function Signup({ navigation }) {
     // Join Api With FrontPage 
     const handleSignup = async (values) => {
         try {
-            // تجهيز البيانات مع التأكد من وجود FieldId
+            // استخراج المهارة المختارة (التي تحتوي على المعرف والتقييم)
+            const selectedSkillData = selectedSkill[0]; 
+    
             const dataToSend = {
                 ...values,
-                BirthDate: BirthDate.toISOString(), // تحويل التاريخ للتنسيق المناسب
-                Gender: gender, // النوع
-                FieldId: selectedJob, // التأكد من إرسال FieldId من الحقل المختار
-                //:selectedSkill
-                Role: userType, // نوع المستخدم
+                BirthDate: BirthDate.toISOString(),
+                Gender: gender,
+                FieldId: selectedJob,
+                Role: userType,
+                SkillId: selectedSkillData?.id,  // إرسال SkillId فقط
+                Rate: selectedSkillData?.Rate,  // إرسال Rate فقط
             };
-               
-
+    
             if (userType === 'Senior') {
                 dataToSend.SeniorAccountStatus = 'Pending';
             }
-
-
-            // التحقق من وجود FieldId قبل الإرسال
+    
+            // تحقق من وجود FieldId و SkillId و Rate
             if (!dataToSend.FieldId) {
                 console.error('FieldId is missing. Please select a job.');
-                setErrorMessage3('Please select a job field.'); // عرض رسالة للمستخدم
+                setErrorMessage3('Please select a job field.');
                 setMenuVisible(true);
-                return; // منع العملية إذا كان الحقل مفقودًا
+                return;
+            }
+    
+            if (!dataToSend.SkillId || !dataToSend.Rate) {
+                console.error('SkillId or Rate is missing.');
+                setErrorMessage3('Please select a skill and rate it.');
+                setMenuVisible(true);
+                return;
             }
     
             console.log('Sending Signup Data:', dataToSend);
@@ -243,7 +251,6 @@ export default function Signup({ navigation }) {
                 body: JSON.stringify(dataToSend),
             });
     
-            // التعامل مع الاستجابة
             if (!response.ok) {
                 const errorData = await response.json();
                 if (response.status === 409) {
@@ -263,9 +270,8 @@ export default function Signup({ navigation }) {
                 console.log('Senior user registered with status Pending');
                 navigation.navigate('RequestToSeniorPage');
             } else if (result.token) {
-                // إذا كان المستخدم من نوع Junior
                 await AsyncStorage.setItem('userToken', result.token); // تخزين التوكين
-                navigation.navigate('HomeScreen'); 
+                navigation.navigate('HomeScreen');
             } else {
                 console.warn('No token found in response.');
             }
@@ -768,37 +774,39 @@ export default function Signup({ navigation }) {
 
 
                           {/* اختيار المهارة مع النجوم بجانب المهارة */}
-<View style={{ marginBottom: 20 }}>
+                          <View style={{ marginBottom: 20 }}>
   <Text style={labelStyle}>Skills</Text>
   <View style={styles.container}>
     <View style={styles.pickerWrapper}>
       {Platform.OS === 'web' ? (
         <Picker
-          selectedValue={selectedSkill}
+          selectedValue={selectedSkill[0]?.id}  // عرض المهارة المختارة
           onValueChange={(SitemValue) => {
-            setselectedSkill(SitemValue); // تحديث المهارة المختارة
+            // تحديث المهارة المختارة مع الريت
+            setselectedSkill([{ id: SitemValue, Rate: 0 }]);
           }}
           style={styles.pickerWeb}
         >
           {skills.map((skill) => (
             <Picker.Item
-              label={skill.label} // عرض اسم المهارة فقط
-              value={skill.value}
+              label={skill.label}  // عرض اسم المهارة
+              value={skill.value}  // القيمة التي يتم تخزينها في selectedSkill
               key={skill.value}
             />
           ))}
         </Picker>
       ) : (
         <Picker
-          selectedValue={selectedSkill}
+          selectedValue={selectedSkill[0]?.id}  // عرض المهارة المختارة
           onValueChange={(SitemValue) => {
-            setselectedSkill(SitemValue); // تحديث المهارة المختارة
+            // تحديث المهارة المختارة مع الريت
+            setselectedSkill([{ id: SitemValue, Rate: 0 }]);
           }}
         >
           {skills.map((skill) => (
             <Picker.Item
-              label={skill.label} // عرض اسم المهارة فقط
-              value={skill.value}
+              label={skill.label}  // عرض اسم المهارة
+              value={skill.value}  // القيمة التي يتم تخزينها في selectedSkill
               key={skill.value}
             />
           ))}
@@ -808,7 +816,7 @@ export default function Signup({ navigation }) {
   </View>
 
   {/* إضافة التقييم بعد اختيار المهارة */}
-  {selectedSkill && (
+  {selectedSkill.length > 0 && selectedSkill[0]?.id && (
     <View style={{ marginTop: 20 }}>
       <Text style={{ fontSize: 16, fontWeight: 'bold', marginBottom: 10 }}>
         Rate the selected skill:
@@ -818,28 +826,18 @@ export default function Signup({ navigation }) {
           <TouchableOpacity
             key={starIndex}
             onPress={() => {
-              const updatedSkills = skills.map((skill) =>
-                skill.value === selectedSkill
-                  ? { ...skill, rating: starIndex } // تحديث تقييم المهارة المحددة
-                  : skill
-              );
-              setskills(updatedSkills);
+              const updatedSkill = { ...selectedSkill[0], Rate: starIndex };
+              setselectedSkill([updatedSkill]);  // تحديث الـ selectedSkill
             }}
           >
             <MaterialCommunityIcons
               name={
-                starIndex <=
-                (skills.find((skill) => skill.value === selectedSkill)?.rating || 0)
+                starIndex <= selectedSkill[0]?.Rate
                   ? 'star'
                   : 'star-outline'
               }
               size={24}
-              color={
-                starIndex <=
-                (skills.find((skill) => skill.value === selectedSkill)?.rating || 0)
-                  ? '#F7A8B8'
-                  : '#ccc'
-              }
+              color={starIndex <= selectedSkill[0]?.Rate ? '#F7A8B8' : '#ccc'}
             />
           </TouchableOpacity>
         ))}
@@ -847,11 +845,6 @@ export default function Signup({ navigation }) {
     </View>
   )}
 </View>
-
-
-
-
-
 
 
 
