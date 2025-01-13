@@ -219,7 +219,6 @@ export default function ProfilePage({ navigation }) {
   const [UniversityName, setUniversityName] = useState('Najah');
   const [Degree, setDegree] = useState('BS');
   const [FieldOfStudy, setFieldOfStudy] = useState('CE');
-
   const [profileData, setProfileData] = useState(null); // حالة لتخزين بيانات البروفايل
   const [bio, setBio] = useState(''); // لتخزين التعديل على Bio
   const [about, setAbout] = useState(''); // لتخزين التعديل على About
@@ -625,6 +624,7 @@ export default function ProfilePage({ navigation }) {
       setNewFullName(FullName);
       setNewUserName(userName);
       setSearchQuery(data.FullName);
+      setRole(data.Role);
       socket.emit('profileUpdated', data.user); // إرسال التحديث للسيرفر
 
 
@@ -1484,8 +1484,6 @@ export default function ProfilePage({ navigation }) {
 
       const data = await response.json(); // تحويل الرد إلى JSON
       setSkills(data.Skills); // تخزين اللغات في الحالة لعرضها
-      console.log(Skills);
-      console.log('Fetched skills:', data.Skills); // تحقق من البيانات
     } catch (error) {
       console.error('Error fetching skills:', error.message);
     }
@@ -1932,9 +1930,37 @@ export default function ProfilePage({ navigation }) {
             </TouchableOpacity>
 
 
-            <TouchableOpacity onPress={() => nav.navigate('ProjectsSeniorPage')} style={{ marginRight: 100 }}>
-              <Ionicons name="folder" size={20} color={isNightMode ? primary : "#000"} />
-            </TouchableOpacity>
+            <TouchableOpacity
+  onPress={async () => {
+    try {
+      const token = await AsyncStorage.getItem('userToken'); // استرجاع التوكن
+      if (!token) {
+        console.error('Token not found');
+        return;
+      }
+
+      // إزالة المقدمة "Wasan__" وفك التوكن
+      const jwt = token.replace('Wasan__', ''); // حذف المقدمة
+      const payload = JSON.parse(atob(jwt.split('.')[1])); // فك تشفير الـ payload
+
+      const userRole = payload.role; // الحصول على الدور
+     console.log(userRole);
+      // التحقق من الدور والتنقل
+      if (userRole === 'Senior') {
+        nav.navigate('ProjectsSeniorPage'); // الانتقال لصفحة Senior
+      } else if (userRole === 'Junior') {
+        nav.navigate('ProjectsJuniorPage'); // الانتقال لصفحة Junior
+      } else {
+        console.error('Invalid role');
+      }
+    } catch (error) {
+      console.error('Error processing token:', error.message);
+    }
+  }}
+  style={{ marginRight: 100 }}
+>
+  <Ionicons name="folder" size={20} color={isNightMode ? primary : "#000"} />
+</TouchableOpacity>
             <TouchableOpacity onPress={() => nav.navigate('AddPostScreen')} style={{ marginRight: 100 }}>
               <Ionicons name="add-circle" size={25} color={isNightMode ? primary : "#000"} />
             </TouchableOpacity>
@@ -2120,6 +2146,11 @@ export default function ProfilePage({ navigation }) {
                 >
                   {'@' + userName || 'Username'}
                 </Text>
+                <Text  style={{
+                    fontSize: 14,
+                    color: isNightMode ? Colors.fourhColor : Colors.fifthColor,
+                    flexShrink: 1, fontWeight: 'bold'
+                  }}>{role || 'role'}</Text>
               </View>
 
               {/* أيقونة التعديل */}
@@ -2138,6 +2169,7 @@ export default function ProfilePage({ navigation }) {
 
             {/* عرض أو تعديل رابط GitHub */}
             {isEditing ? (
+              /*
               <View style={styles.githubEditWrapper}>
                 <TextInput
                   placeholder="Enter GitHub URL"
@@ -2156,9 +2188,11 @@ export default function ProfilePage({ navigation }) {
                   style={styles.saveButton}>
                   <Text style={styles.saveButtonText}>Save</Text>
                 </TouchableOpacity>
-              </View>
-            ) : (
-              <TouchableOpacity
+              
+              
+              </View>*/''
+            ) : ( ''
+       /*       <TouchableOpacity
                 onPress={() => {
                   if (githubLink) {
                     Linking.openURL(githubLink);
@@ -2168,7 +2202,7 @@ export default function ProfilePage({ navigation }) {
                 }}
                 style={styles.githubIcon}>
                 <Ionicons name="logo-github" size={30} color="#000" />
-              </TouchableOpacity>
+              </TouchableOpacity>*/
             )}
           </View>
 
@@ -3498,9 +3532,36 @@ export default function ProfilePage({ navigation }) {
           <TouchableOpacity onPress={() => setMenuVisible(true)}>
             <Ionicons name="settings" size={25} color="#000" />
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => nav.navigate('ProjectsSeniorPage')}>
-            <Ionicons name="folder" size={25} color="#000" />
-          </TouchableOpacity>
+          <TouchableOpacity
+  onPress={async () => {
+    try {
+      const token = await AsyncStorage.getItem('userToken'); // استرجاع التوكن
+      if (!token) {
+        console.error('Token not found');
+        return;
+      }
+
+      // إزالة المقدمة "Wasan__" وفك التوكن
+      const jwt = token.replace('Wasan__', ''); // حذف المقدمة
+      const payload = JSON.parse(atob(jwt.split('.')[1])); // فك تشفير الـ payload
+
+      const userRole = payload.role; // الحصول على الدور
+     console.log(userRole);
+      // التحقق من الدور والتنقل
+      if (userRole === 'Senior') {
+        nav.navigate('ProjectsSeniorPage'); // الانتقال لصفحة Senior
+      } else if (userRole === 'Junior') {
+        nav.navigate('ProjectsJuniorPage'); // الانتقال لصفحة Junior
+      } else {
+        console.error('Invalid role');
+      }
+    } catch (error) {
+      console.error('Error processing token:', error.message);
+    }
+  }}
+>
+  <Ionicons name="folder" size={25} color={isNightMode ? primary : "#000"} />
+</TouchableOpacity>
           <TouchableOpacity onPress={() => nav.navigate('ProfilePage')}>
             <Image
               source={{

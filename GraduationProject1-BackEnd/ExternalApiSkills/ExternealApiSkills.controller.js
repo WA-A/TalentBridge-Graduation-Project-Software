@@ -505,3 +505,4 @@ export const AddMoreSkills = async (req, res) => {
     }
 };
 
+export default Skills;

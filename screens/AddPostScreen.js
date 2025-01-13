@@ -300,9 +300,36 @@ const AddPostScreen = () => {
           <TouchableOpacity onPress={() => nav.navigate('Settings')}>
             <Ionicons name="settings" size={25} color="#000" />
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => nav.navigate('Projects')}>
-            <Ionicons name="folder" size={25} color="#000" />
-          </TouchableOpacity>
+          <TouchableOpacity
+  onPress={async () => {
+    try {
+      const token = await AsyncStorage.getItem('userToken'); // استرجاع التوكن
+      if (!token) {
+        console.error('Token not found');
+        return;
+      }
+
+      // إزالة المقدمة "Wasan__" وفك التوكن
+      const jwt = token.replace('Wasan__', ''); // حذف المقدمة
+      const payload = JSON.parse(atob(jwt.split('.')[1])); // فك تشفير الـ payload
+
+      const userRole = payload.role; // الحصول على الدور
+     console.log(userRole);
+      // التحقق من الدور والتنقل
+      if (userRole === 'Senior') {
+        nav.navigate('ProjectsSeniorPage'); // الانتقال لصفحة Senior
+      } else if (userRole === 'Junior') {
+        nav.navigate('ProjectsJuniorPage'); // الانتقال لصفحة Junior
+      } else {
+        console.error('Invalid role');
+      }
+    } catch (error) {
+      console.error('Error processing token:', error.message);
+    }
+  }}
+>
+  <Ionicons name="folder" size={25} color={isNightMode ? primary : "#000"} />
+</TouchableOpacity>
           <TouchableOpacity onPress={() => nav.navigate('ProjectsSeniorPage')}>
             <Ionicons name="add-circle" size={28} color="#000" />
           </TouchableOpacity>
