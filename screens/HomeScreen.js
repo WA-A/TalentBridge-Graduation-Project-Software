@@ -16,6 +16,7 @@ import { NightModeContext } from './NightModeContext';
 import * as ImagePicker from 'expo-image-picker';
 import io from 'socket.io-client';
 import moment from 'moment';
+import { decode as atob } from 'base-64'; // إذا كنت تستخدم React Native
 
 import './../compnent/webCardStyle.css';
 import {
@@ -48,8 +49,33 @@ import { string } from 'prop-types';
 import { use } from 'react';
 
 export default function HomeScreen({ navigation, route}) {
+  const [profile,setprofileimg] = useState('');
+  const handleViewProfile = async () => {
+    try {
+      const token = await AsyncStorage.getItem('userToken'); // الحصول على التوكن من التخزين
+      console.log(token);
+      if (!token) {
+        console.error('Token not found');
+        return;
+      }
 
+      const response = await fetch(`${baseUrl}/User/ViewOwnProfile`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Wasan__${token}`, // تأكد من كتابة التوكن بالشكل الصحيح
+        },
+      });
 
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      setprofileimg(data.PictureProfile?.secure_url || '');
+    } catch (error) {
+      console.error('Error fetching ProfileData:', error);
+    }
+  };
   const [likedPosts, setLikedPosts] = useState({});
 
   const handleLike = (postId) => {
@@ -1127,6 +1153,7 @@ useEffect(() => {
   addTokendevice();
   fetchFriends();    
   handleGetAllPosts();
+  handleViewProfile();
   console.log('Messages state:', messages);
 
   console.log('Gathered chats:', gatheredChats);
@@ -1266,9 +1293,39 @@ const handleGetAllPosts = async () => {
          </TouchableOpacity>
        
    
-         <TouchableOpacity onPress={() => nav.navigate('ProjectsSeniorPage')} style={{ marginRight: 100 }}>
-           <Ionicons name="folder" size={20} color= {isNightMode ? primary : "#000"} />
-         </TouchableOpacity>
+
+         <TouchableOpacity
+  onPress={async () => {
+    try {
+      const token = await AsyncStorage.getItem('userToken'); // استرجاع التوكن
+      if (!token) {
+        console.error('Token not found');
+        return;
+      }
+
+      // إزالة المقدمة "Wasan__" وفك التوكن
+      const jwt = token.replace('Wasan__', ''); // حذف المقدمة
+      const payload = JSON.parse(atob(jwt.split('.')[1])); // فك تشفير الـ payload
+
+      const userRole = payload.role; // الحصول على الدور
+     console.log(userRole);
+      // التحقق من الدور والتنقل
+      if (userRole === 'Senior') {
+        nav.navigate('ProjectsSeniorPage'); // الانتقال لصفحة Senior
+      } else if (userRole === 'Junior') {
+        nav.navigate('ProjectsJuniorPage'); // الانتقال لصفحة Junior
+      } else {
+        console.error('Invalid role');
+      }
+    } catch (error) {
+      console.error('Error processing token:', error.message);
+    }
+  }}
+  style={{ marginRight: 100 }}
+>
+  <Ionicons name="folder" size={20} color={isNightMode ? primary : "#000"} />
+</TouchableOpacity>
+
          <TouchableOpacity onPress={() => nav.navigate('AddPostScreen')} style={{ marginRight:100 }}>
            <Ionicons name="add-circle" size={25} color= {isNightMode ? primary : "#000"} />
          </TouchableOpacity>
@@ -2033,13 +2090,42 @@ const handleGetAllPosts = async () => {
     <TouchableOpacity onPress={() => setMenuVisible(true)}>
       <Ionicons name="settings" size={25} color='#000' />
     </TouchableOpacity>
-    <TouchableOpacity onPress={() => navigation.navigate('ProjectsSeniorPage', { userField })}>
-      <Ionicons name="folder" size={25} color='#000' />
-    </TouchableOpacity>
+    <TouchableOpacity
+  onPress={async () => {
+    try {
+      const token = await AsyncStorage.getItem('userToken'); // استرجاع التوكن
+      if (!token) {
+        console.error('Token not found');
+        return;
+      }
+
+      // إزالة المقدمة "Wasan__" وفك التوكن
+      const jwt = token.replace('Wasan__', ''); // حذف المقدمة
+      const payload = JSON.parse(atob(jwt.split('.')[1])); // فك تشفير الـ payload
+
+      const userRole = payload.role; // الحصول على الدور
+     console.log(userRole);
+      // التحقق من الدور والتنقل
+      if (userRole === 'Senior') {
+        nav.navigate('ProjectsSeniorPage'); // الانتقال لصفحة Senior
+      } else if (userRole === 'Junior') {
+        nav.navigate('ProjectsJuniorPage'); // الانتقال لصفحة Junior
+      } else {
+        console.error('Invalid role');
+      }
+    } catch (error) {
+      console.error('Error processing token:', error.message);
+    }
+  }}
+>
+  <Ionicons name="folder" size={25} color={isNightMode ? primary : "#000"} />
+</TouchableOpacity>
     <TouchableOpacity onPress={() => nav.navigate('ProfilePage')}>
+      
       <Image
-        source={require('./../assets/img1.jpeg')}
-        style={{
+ source={{
+                          uri:profile || 'https://via.placeholder.com/80',
+                        }}        style={{
           width: 33,
           height: 33,
           borderRadius: 30,
@@ -2052,16 +2138,11 @@ const handleGetAllPosts = async () => {
     <TouchableOpacity onPress={() => nav.navigate('AddPostScreen')}>
       <Ionicons name="add-circle" size={28} color='#000' />
     </TouchableOpacity>
-    <TouchableOpacity onPress={() => nav.navigate('HomeScreen')}>
+    <TouchableOpacity onPress={() => handleGetAllPosts()}>
       <Ionicons name="home" size={25} color='#000' />
     </TouchableOpacity>
   </Animated.View>
 )}
-
-
-
-
-   
 
             {/* Menu */}
             {isMenuVisible && (

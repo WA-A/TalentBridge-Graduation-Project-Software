@@ -11,8 +11,8 @@ import fileUpload, { FileValue } from "./../../../utls/Multer.js";
 
 router.post('/createproject',auth(EndPoints.CreateProject),fileUpload(FileValue.file).fields([{ name:'FileProject'}]),ProjectController.CreateProject);
 router.get('/viewownprojectcreated',auth(EndPoints.CreateProject),ProjectController.GetProjectsBySenior);
-router.put('/updateownprojectcreated/:ProjectId',auth(EndPoints.CreateProject),fileUpload(FileValue.file).fields([{ name:'FileProject'}]),ProjectController.UpdateProjectBySenior);
+router.put('/updateownprojectcreated',auth(EndPoints.CreateProject),fileUpload(FileValue.file).fields([{ name:'FileProject'}]),ProjectController.UpdateProjectBySenior);
 router.delete('/deleteownprojectcreated/:ProjectId',Validation(schema.DeleteProjectSchema),auth(EndPoints.CreateProject),ProjectController.DeleteProjectBySenior);
-router.get('/viewprojectbyfiled',Validation(schema.GetProjectsByFieldSchema),auth(EndPoints.CreateProject),ProjectController.GetProjectsByField);
+router.get('/viewprojectbyfiled/:FieldId',Validation(schema.GetProjectsByFieldSchema),auth(EndPoints.CreateProject),ProjectController.GetProjectsByField);
 
 export default router

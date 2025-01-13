@@ -19,14 +19,12 @@ import ProjectsJuniorPage from './screens/ProjectsJuniorPage';
 import AddProjectsPage from './screens/AddProjectsPage';
 import SearchScreen from './screens/SearchScreen';
 import ViewOtherProfile from './screens/ViewOtherProfile';
-import CommentsModal from './screens/CommentsModal.js';
 import RequestToSeniorPage from './screens/RequestToSeniorPage.js';
 import * as Notifications from "expo-notifications";
 import { NotificationProvider } from './contex/NotificationContext';
 import Notification from './screens/Notification';
 import PostFRomNotification from './screens/PostFRomNotification';
 import { useNavigation } from '@react-navigation/native';
-
 Notifications.setNotificationHandler({
     handleNotification: async () => ({
       shouldShowAlert: true,
@@ -84,13 +82,8 @@ export default function App() {
     }, [navigation]); // إضافة navigation في التبعيات
   
     return null; // لا تحتاج لإرجاع شيء هنا
-  }
+  };
 
-
-<Stack.Screen name="RequestToSeniorPage" 
-component={RequestToSeniorPage}                    
- options={{ headerShown: false }}
- />
 
 
   
@@ -104,7 +97,7 @@ component={RequestToSeniorPage}
     <NotificationProvider>
     <NightModeProvider>
       <NavigationContainer linking={linking}>
-      <NotificationHandler /> {/* هنا نضيف المكون الفرعي الذي يراقب الإشعارات */}
+      <NotificationHandler/> 
         <Stack.Navigator initialRouteName="SplashScreen">
           <Stack.Screen
             name="SplashScreen"
@@ -197,6 +190,8 @@ component={RequestToSeniorPage}
             component={RequestToSeniorPage}
             options={{ headerShown: false }}
           />
+          
+
         </Stack.Navigator>
       </NavigationContainer>
     </NightModeProvider></NotificationProvider>

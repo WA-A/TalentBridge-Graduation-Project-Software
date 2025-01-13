@@ -48,6 +48,7 @@
         {
           "androidGoogleServicesFile": "./google-services.json"
         }
+       
       ],
       "expo-router",
       "expo-video",
