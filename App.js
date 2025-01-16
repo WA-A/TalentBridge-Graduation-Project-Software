@@ -88,6 +88,8 @@ export default function App() {
   };
 
 
+
+
   
   // العودة المبكرة إذا لم تكن الخطوط محملة
   if (!fontsLoaded) {
