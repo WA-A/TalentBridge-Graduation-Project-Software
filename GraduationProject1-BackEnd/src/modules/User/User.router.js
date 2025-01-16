@@ -70,4 +70,6 @@ router.put(
 router.get('/getAllExperiences', auth(EndPoints.CreateProfile), UserController.getAllExperiences);
 router.get('/getAllCertifications', auth(EndPoints.CreateProfile), UserController.getAllCertifications);
 router.get('/getAllEducation', auth(EndPoints.CreateProfile), UserController.getAllEducation);
+router.get('/getUserFeild', auth(EndPoints.CreateProfile), UserController.getUserFeild);
+
 export default router
