@@ -85,7 +85,8 @@ export default function App() {
     }, [navigation]); // إضافة navigation في التبعيات
   
     return null; // لا تحتاج لإرجاع شيء هنا
-  }
+  };
+
 
   
   // العودة المبكرة إذا لم تكن الخطوط محملة
@@ -98,7 +99,7 @@ export default function App() {
     <NotificationProvider>
     <NightModeProvider>
       <NavigationContainer linking={linking}>
-      <NotificationHandler /> {/* هنا نضيف المكون الفرعي الذي يراقب الإشعارات */}
+      <NotificationHandler/> 
         <Stack.Navigator initialRouteName="SplashScreen">
           <Stack.Screen
             name="SplashScreen"
@@ -191,6 +192,8 @@ export default function App() {
             component={RequestSeniorToAdminPage}
             options={{ headerShown: false }}
           />
+          
+
         </Stack.Navigator>
       </NavigationContainer>
     </NightModeProvider></NotificationProvider>
