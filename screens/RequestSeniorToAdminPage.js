@@ -86,7 +86,7 @@ const RequestSeniorToAdminPage = () => {
 
                                 <Text style={labelStyle}> Previous Experiences</Text>
                                 <MyTextInput
-                                    icon="book-open"
+                                    icon="briefcase"
                                     placeholder="previousExperiences"
                                     placeholderTextColor={darkLight}
                                     onChangeText={handleChange('previousExperiences')}
@@ -115,7 +115,7 @@ const RequestSeniorToAdminPage = () => {
 
                                 <Text style={labelStyle}>Motivation</Text>
                                 <MyTextInput
-                                    icon="bulb-outline"
+                                  icon="lightbulb-o"
                                     placeholder="motivation"
                                     placeholderTextColor={darkLight}
                                     onChangeText={handleChange('motivation')}
@@ -144,7 +144,7 @@ const RequestSeniorToAdminPage = () => {
                                 {/* كيف يمكنه المساهمة في تطوير الفرق الجينيور*/}
                                 <Text style={labelStyle}>Contribution</Text>
                                 <MyTextInput
-                                    icon="hands-helping"
+                                    icon="users"
                                     placeholderTextColor={darkLight}
                                     onChangeText={handleChange('contribution')}
                                     onBlur={handleBlur('contribution')}
@@ -166,7 +166,7 @@ const RequestSeniorToAdminPage = () => {
 
                                    <Text style={labelStyle}>Major</Text>
                                 <MyTextInput
-                                    icon="bulb-outline"
+                                    icon="book"
                                     placeholder="major"
                                     placeholderTextColor={darkLight}
                                     onChangeText={handleChange('major')}
