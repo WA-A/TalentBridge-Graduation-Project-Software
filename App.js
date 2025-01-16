@@ -19,12 +19,15 @@ import ProjectsJuniorPage from './screens/ProjectsJuniorPage';
 import AddProjectsPage from './screens/AddProjectsPage';
 import SearchScreen from './screens/SearchScreen';
 import ViewOtherProfile from './screens/ViewOtherProfile';
-import RequestToSeniorPage from './screens/RequestToSeniorPage.js';
+import CommentsModal from './screens/CommentsModal.js';
 import * as Notifications from "expo-notifications";
 import { NotificationProvider } from './contex/NotificationContext';
 import Notification from './screens/Notification';
 import PostFRomNotification from './screens/PostFRomNotification';
 import { useNavigation } from '@react-navigation/native';
+import RequestSeniorToAdminPage from './screens/RequestSeniorToAdminPage.js';
+
+
 Notifications.setNotificationHandler({
     handleNotification: async () => ({
       shouldShowAlert: true,
@@ -83,7 +86,6 @@ export default function App() {
   
     return null; // لا تحتاج لإرجاع شيء هنا
   };
-
 
 
   
@@ -186,8 +188,8 @@ export default function App() {
           />
 
              <Stack.Screen
-            name="RequestToSeniorPage"
-            component={RequestToSeniorPage}
+            name="RequestSeniorToAdminPage"
+            component={RequestSeniorToAdminPage}
             options={{ headerShown: false }}
           />
           

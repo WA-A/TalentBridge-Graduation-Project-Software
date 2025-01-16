@@ -848,11 +848,11 @@ export default function Signup({ navigation }) {
 
 
 
-                                  {/* Request senior to sdmin */}
+                                  {/* Request senior to admin */}
                          {userType === 'Senior' && (
 
                        <StyledButton style={{ backgroundColor: brand, marginBottom: 10}}
-                                    onPress={() => navigation.navigate('RequestToSeniorPage')}
+                                    onPress={() => navigation.navigate('RequestSeniorToAdminPage')}
                                 >
                                     <ButtonText> Request To Senior </ButtonText>
                                 </StyledButton>
@@ -910,7 +910,7 @@ export default function Signup({ navigation }) {
 
                                         console.log('Button Pressed');
                                         handleSignup(finalValues);
-                                        navigation.navigate('RequestToSeniorPage');
+                                        navigation.navigate('RequestSeniorToAdminPage');
                                     }}
                                 >
                                     <ButtonText>Sign Up as a  {userType}</ButtonText>

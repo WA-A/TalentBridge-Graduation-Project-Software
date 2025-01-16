@@ -44,7 +44,7 @@ import {
 const { brand, darkLight, careysPink, firstColor, secColor, thirdColor, fourhColor, fifthColor, primary, tertiary, secondary,black } = Colors;
 const { width } = Dimensions.get('window');
 
-const RequestToSeniorPage = () => {
+const RequestSeniorToAdminPage = () => {
   const nav = useNavigation();
     const [selectedFile, setSelectedFile] = useState(null);
         console.log('Selected File:', selectedFile);
@@ -161,12 +161,36 @@ const RequestToSeniorPage = () => {
 
                                  
 
+                                   {/* التخصص*/}
 
+
+                                   <Text style={labelStyle}>Major</Text>
+                                <MyTextInput
+                                    icon="bulb-outline"
+                                    placeholder="major"
+                                    placeholderTextColor={darkLight}
+                                    onChangeText={handleChange('major')}
+                                    onBlur={handleBlur('major')}
+                                    // onChange={e => handlemajor(e)}
+                                    // value={values.major}
+                                    // rightIcon22={
+                                    //     email.length < 1 ? null : emailVerfy ? (
+                                    //         <RightIcon2 style={{ top: 6 }} >
+                                    //             <Feather name="check-circle" color="green" size={20} />
+                                    //         </RightIcon2>
+                                    //     ) : (
+                                    //         <RightIcon2 style={{ top: 6 }} >
+                                    //             <Feather name="x-circle" color="red" size={20} />
+                                    //         </RightIcon2>
+                                    //     )}
+
+                                />
+                               
                                  
                                              {/* الوثائق والشهادات*/}
       
       
-                                 
+                               
                                        
 
                                 
@@ -291,4 +315,4 @@ const styles = StyleSheet.create({
     },
 });
 
-export default RequestToSeniorPage;
+export default RequestSeniorToAdminPage;
