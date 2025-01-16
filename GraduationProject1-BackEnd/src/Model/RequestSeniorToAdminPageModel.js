@@ -1,7 +1,7 @@
 import mongoose, { Schema, model } from 'mongoose';
 
 
-const RequestSeniorToAdminPageSchema = new Schema({
+const RequestSeniorToAdminSchema = new Schema({
     PreviousExperiences: { // 'خبرات سابقة'
         type: String, 
         required: true, 
@@ -34,5 +34,5 @@ const RequestSeniorToAdminPageSchema = new Schema({
 );
 
 
-const RequestSeniorToAdminPageModel = model('RequestSeniorToAdminPage', RequestSeniorToAdminPageSchema);
-export default RequestSeniorToAdminPageModel;
+const RequestSeniorToAdminModel = model('RequestSeniorToAdmin', RequestSeniorToAdminSchema);
+export default RequestSeniorToAdminModel;
