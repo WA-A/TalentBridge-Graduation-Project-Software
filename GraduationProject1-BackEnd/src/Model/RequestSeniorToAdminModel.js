@@ -14,10 +14,12 @@ const RequestSeniorToAdminSchema = new Schema({
         type: String,
         required: true,
       },
-      Certifications: { 
-        type: [String], 
-        required: false, 
-      },
+      Certifications: [
+        {
+          type: Object,
+          required: false,
+        },
+      ],
       Major: { 
         type: String, 
         required: true, 
