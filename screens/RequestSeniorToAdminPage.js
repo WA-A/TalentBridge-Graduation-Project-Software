@@ -5,7 +5,7 @@ import { useNavigation } from '@react-navigation/native';
 import { Formik } from 'formik';
 import { Dimensions } from 'react-native';
 import { useFonts } from 'expo-font';
-import * as DocumentPicker from 'expo-document-picker';
+import * as DocumentPicker from "expo-document-picker";
 import { launchImageLibrary } from 'react-native-image-picker'; // لإختيار الصور
 //import { Video } from 'react-native-video'; // لإختيار الفيديوهات إذا كنت تريد عرض الفيديوهات
 import { Video } from 'expo-av';
@@ -48,6 +48,34 @@ const RequestSeniorToAdminPage = () => {
   const nav = useNavigation();
     const [selectedFile, setSelectedFile] = useState(null);
         console.log('Selected File:', selectedFile);
+
+            const [file, setFile] = useState(null);
+        
+
+         const handleFilePicker = async () => {
+                    try {
+                      const result = await DocumentPicker.getDocumentAsync({
+                        type: 'application/pdf', // فقط ملفات PDF
+                      });
+                      console.log(result.uri);
+                      console.log(result);
+                      // التأكد من أن المستخدم لم يلغي العملية
+                      if (result.canceled) {
+                        console.log('User canceled file selection');
+                      } else {
+                        // التعامل مع النتيجة
+                        const pickedFile = result.assets ? result.assets[0] : null;
+                        if (pickedFile) {
+                          setFile(pickedFile);
+                          console.log('File URI:', pickedFile.uri);  // عرض مسار الملف
+                        }
+                      }
+                    } catch (error) {
+                      console.error('Error picking file:', error);
+                    }
+                  };
+
+
     return (
         <View style={{ flex: 1, backgroundColor: secondary, paddingTop: 20 }}>
         {/* الشريط العلوي */}
@@ -189,7 +217,19 @@ const RequestSeniorToAdminPage = () => {
                                  
                                              {/* الوثائق والشهادات*/}
       
-      
+                                 <Text style={labelStyle}>Certifications</Text>
+
+                                      <TouchableOpacity style={styles.fileButton} onPress={handleFilePicker}>
+                                        <Text style={styles.submitText}>Select Certifications/Document</Text>
+                                      </TouchableOpacity>
+                                
+                                      {file && (
+                                        <View style={styles.fileInfo}>
+                                          <Text>File Name: {file.name}</Text>
+                                        </View>
+                                      )} 
+                                
+                                   
                                
                                        
 
@@ -307,12 +347,19 @@ const styles = StyleSheet.create({
             marginTop: 10,
         },
    fileButton: {
-        backgroundColor: careysPink,
+        backgroundColor: brand,
         paddingVertical: 15,
         borderRadius: 8,
         alignItems: 'center',
         marginVertical: 20,
     },
+    label: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        marginBottom: 5,
+        color: brand,
+    },
+
 });
 
 export default RequestSeniorToAdminPage;
