@@ -1057,7 +1057,7 @@ const fetchFriends = async () => {
   console.log('Friends:',data );
     setFriends(data.users); 
   } catch (error) {
-    console.error('Error fetching friends:', error);
+ //   console.error('Error fetching friends:', error);
 }
 finally {
   setLoading(false);

@@ -25,7 +25,9 @@ import { NotificationProvider } from './contex/NotificationContext';
 import Notification from './screens/Notification';
 import PostFRomNotification from './screens/PostFRomNotification';
 import { useNavigation } from '@react-navigation/native';
+import ProjectPage from './screens/ProjectPage.js';
 import RequestSeniorToAdminPage from './screens/RequestSeniorToAdminPage.js';
+
 
 
 Notifications.setNotificationHandler({
@@ -54,6 +56,7 @@ const linking = {
       EnterCode: 'enter-code',
       WelcomeScreen: 'WelcomeScreen',
       Notifications:'Notifications',
+      ProjectPage :'ProjectPage',
     },
   },
 };
@@ -194,7 +197,11 @@ export default function App() {
             component={RequestSeniorToAdminPage}
             options={{ headerShown: false }}
           />
-          
+            <Stack.Screen
+            name="ProjectPage"
+            component={ProjectPage}
+            options={{ headerShown: false }}
+          />
 
         </Stack.Navigator>
       </NavigationContainer>
