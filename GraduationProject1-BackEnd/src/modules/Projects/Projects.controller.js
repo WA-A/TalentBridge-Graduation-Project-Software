@@ -1,6 +1,6 @@
 import ProjectsModel from "../../Model/ProjectsModel.js";
 import cloudinary from '../../../utls/Cloudinary.js';
-
+import UserModel from "../../Model/User.Model.js";
 import { AddFieldsWithOutToken } from '../../../ExternalApiFields/ExternealApiFields.controller.js';
 import  Skills  from "../../../ExternalApiSkills/ExternealApiSkills.controller.js";
 
@@ -284,25 +284,36 @@ export const DeleteProjectBySenior = async (req, res) => {
 
  export const GetProjectsByField = async (req, res) => {
     try {
-        const { FieldId } = req.params; // استخراج FieldId من المعاملات (params)
+        const { FieldId } = req.params;
 
-        // التحقق من وجود FieldId
         if (!FieldId) {
             return res.status(400).json({ message: "Field ID is required." });
         }
 
-        // البحث عن المشاريع بناءً على FieldId
-        const projects = await ProjectsModel.find({ "Fields.id": FieldId });
+        console.log("FieldId received:", FieldId);
 
-        // التحقق إذا لم يتم العثور على مشاريع
+        const projects = await ProjectsModel.find({ "Fields.id": FieldId })
+            .populate("CreatedBySenior", "FullName PictureProfile Email PhoneNumber");
+
+        console.log("Projects found:", projects);
+
         if (!projects || projects.length === 0) {
-            return res.status(404).json({ message: "No projects found for the given Field ID." });
+            return res.status(200).json({ message: "No projects found for the given Field ID." });
         }
 
-        // إرجاع المشاريع
         return res.status(200).json({
             message: "Projects retrieved successfully",
-            projects,
+            projects: { 
+                filteredProjects: projects.map(project => ({
+                    ...project.toObject(),
+                    senior: project.CreatedBySenior ? {
+                        name: project.CreatedBySenior.FullName,
+                        picture: project.CreatedBySenior.PictureProfile?.secure_url || "https://via.placeholder.com/150",
+                        email: project.CreatedBySenior.Email || "No email provided",
+                        phone: project.CreatedBySenior.PhoneNumber || "No phone number provided",
+                    } : null,
+                })),
+            },
         });
     } catch (error) {
         console.error("Error retrieving projects by FieldId:", error.message);
@@ -313,6 +324,87 @@ export const DeleteProjectBySenior = async (req, res) => {
     }
 };
 
+export const GetProjectsByFieldAndSkills = async (req, res) => { 
+    try {
+        console.log(req.user);
+        const userId = req.user._id;
 
- 
- 
+        // الحصول على بيانات المستخدم
+        const user = await UserModel.findById(userId);
+
+        if (!user) {
+            return res.status(404).json({ message: "User not found." });
+        }
+
+        // استخراج الفيلد والمعارات
+        const fieldIds = user.Fields.map(field => field.id);
+        const userSkillsWithRate = user.Skills.map(skill => ({
+            id: skill.id,
+            rate: parseInt(skill.Rate) // تحويل الريت إلى عدد صحيح
+        }));
+
+        // التحقق من وجود الفيلد والمعارات
+        if (!fieldIds.length && !userSkillsWithRate.length) {
+            return res.status(400).json({ message: "User has no field or skills." });
+        }
+
+        // البحث عن المشاريع المطابقة بناءً على الفيلد والمعارات
+        const projects = await ProjectsModel.find({
+            $or: [
+                { "Fields.id": { $in: fieldIds } },  // التحقق من الفيلد
+                { "RequiredSkills.id": { $in: userSkillsWithRate.map(skill => skill.id) } }  // التحقق من المعارات
+            ]
+        }).populate("CreatedBySenior", "FullName PictureProfile Email PhoneNumber"); // إضافة populate لجلب بيانات السينيور
+
+        if (!projects || projects.length === 0) {
+            return res.status(404).json({ message: "No projects found for the user's fields and skills." });
+        }
+
+        // تصفية المشاريع بناءً على الريت
+        const filteredProjects = projects.filter(project => {
+            return project.RequiredSkills.some(requiredSkill => {
+                const requiredRate = parseInt(requiredSkill.Rate); // تحويل الريت إلى عدد صحيح
+                const userSkill = userSkillsWithRate.find(skill => skill.id === requiredSkill.id); // العثور على المهارة المطابقة
+                return userSkill && userSkill.rate >= requiredRate; // تحقق من الريت
+            });
+        });
+
+        // تصفية المشاريع التي تتطابق بها المعارات (حتى لو لم تطابق الريت)
+        const matchingSkillProjects = projects.filter(project => {
+            return project.RequiredSkills.some(requiredSkill => {
+                return userSkillsWithRate.some(userSkill => userSkill.id === requiredSkill.id);
+            });
+        });
+
+        // إذا لم يتم العثور على مشاريع
+        if (!filteredProjects.length && !matchingSkillProjects.length) {
+            return res.status(404).json({ message: "No projects found matching user's fields and skills." });
+        }
+
+        // إعادة النتيجة مع تفاصيل السينيور
+        return res.status(200).json({
+            message: "Projects retrieved successfully",
+            projects: {
+                filteredProjects: filteredProjects.map(project => ({
+                    ...project.toObject(), // تحويل المشروع إلى كائن عادي لتعديل القيم
+                    senior: project.CreatedBySenior ? {
+                        name: project.CreatedBySenior.FullName,
+                        picture: project.CreatedBySenior.PictureProfile || "https://via.placeholder.com/150", // صورة السينيور
+                        email: project.CreatedBySenior.Email || "No email provided",  // الإيميل
+                        phone: project.CreatedBySenior.PhoneNumber || "No phone number provided", // رقم الهاتف
+                    } : null,
+                }))
+            },
+            userSkillsAndFields: {
+                skills: userSkillsWithRate,
+                fields: user.Fields,
+            }
+        });
+    } catch (error) {
+        console.error("Error retrieving projects by FieldId and skills:", error.message);
+        return res.status(500).json({
+            message: "Error retrieving projects",
+            error: error.message,
+        });
+    }
+};

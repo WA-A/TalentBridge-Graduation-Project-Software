@@ -13,6 +13,7 @@ router.post('/createproject',auth(EndPoints.CreateProject),fileUpload(FileValue.
 router.get('/viewownprojectcreated',auth(EndPoints.CreateProject),ProjectController.GetProjectsBySenior);
 router.put('/updateownprojectcreated',auth(EndPoints.CreateProject),fileUpload(FileValue.file).fields([{ name:'FileProject'}]),ProjectController.UpdateProjectBySenior);
 router.delete('/deleteownprojectcreated/:ProjectId',Validation(schema.DeleteProjectSchema),auth(EndPoints.CreateProject),ProjectController.DeleteProjectBySenior);
-router.get('/viewprojectbyfiled/:FieldId',Validation(schema.GetProjectsByFieldSchema),auth(EndPoints.CreateProject),ProjectController.GetProjectsByField);
+router.get('/GetProjectsByFieldAndSkills',auth(EndPoints.getProject),ProjectController.GetProjectsByFieldAndSkills);
+router.get('/viewprojectbyfiled/:FieldId',auth(EndPoints.getProject),ProjectController.GetProjectsByField);
 
 export default router

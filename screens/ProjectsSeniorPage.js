@@ -11,155 +11,213 @@ import { TextInput } from 'react-native-gesture-handler';
 const { tertiary, firstColor, secColor,fifthColor,secondary, primary, darkLight, fourhColor, careysPink} = Colors;
 import { EvilIcons} from '@expo/vector-icons';
 import MultiSelect from 'react-native-multiple-select';
-const fields = [
-    'IT',
-    'Digital Marketing',
-    'Graphic Design',
-    'Data Science',
-    'Web Development',
-    'Mobile Development',
-    'Cybersecurity',
-    'Machine Learning',
-    'Blockchain',
-    'Cloud Computing',
-    'Artificial Intelligence',
-    'Project Management',
-    'Content Writing',
-];
+import { useSharedValue, useAnimatedStyle, withSpring } from "react-native-reanimated";
+import { Dimensions } from "react-native";
+import * as Animatable from "react-native-animatable";
 
-const projects = [
-    { id: '1', title: 'Project Alpha', description: 'An AI-based project', RequiredSkills: ['Python', 'Machine Learning'], DurationInMonths: 6, PositionRole: 'Developer', Field: 'AI', CreatedBySenior: 'John Doe', Status: 'Active' },
-    { id: '2', title: 'Beta Marketing', description: 'Digital Marketing Strategies', RequiredSkills: ['SEO', 'Content Writing'], DurationInMonths: 4, PositionRole: 'Marketer', Field: 'Digital Marketing', CreatedBySenior: 'Jane Smith', Status: 'Inactive' },
-    { id: '3', title: 'Gamma Design', description: 'UI/UX Design Concepts', RequiredSkills: ['Figma', 'UX Research'], DurationInMonths: 3, PositionRole: 'Designer', Field: 'Design', CreatedBySenior: 'Mark Lee', Status: 'Active' },
-    { id: '4', title: 'Delta Data', description: 'Data Science Analysis', RequiredSkills: ['SQL', 'Data Visualization'], DurationInMonths: 12, PositionRole: 'Data Analyst', Field: 'Data Science', CreatedBySenior: 'Sarah Brown', Status: 'Active' },
-];
+const { width } = Dimensions.get("window");
 
-export default function  ProjectsSeniorPage ({ navigation, route }) {
+
+export default function  ProjectsJuniorPage ({ navigation, route }) {
+
     const baseUrl = Platform.OS === 'web'
-    ? 'http://localhost:3000'
-    : 'http://192.168.1.239:3000' || 'http://192.168.0.107:3000';
-      const [selectedFeilds, setSelectedFeilds] = useState([]);
-      const [Feilds, setFeilds] = useState([]);
-const [currentModal, setCurrentModal] = useState('');
-const [modalVisible, setModalVisible] = useState(false);
-const [error, setError] = useState('');
-
-const openModal = (modalName) => {
-  setCurrentModal(modalName);
-  setModalVisible(true);
-  setError('');
-  setSelectedField([]);
-};
-  // إغلاق الـ Modal
-  const closeModal = () => {
-    setModalVisible(false);
-    setCurrentModal('');
+      ? 'http://localhost:3000'
+      : 'http://192.168.1.239:3000' || 'http://192.168.0.107:3000';
+        const [selectedFeilds, setSelectedFeilds] = useState([]);
+        const [Feilds, setFeilds] = useState([]);
+  const [currentModal, setCurrentModal] = useState('');
+  const [modalVisible, setModalVisible] = useState(false);
+  const [error, setError] = useState('');
+const [project,setProject]=useState();
+  const openModal = (modalName) => {
+    setCurrentModal(modalName);
+    setModalVisible(true);
+    setError('');
+    setSelectedField([]);
   };
-  const onSelectedItemsChange = (selectedItems) => {
-    setSelectedFeilds(selectedItems); // تحديث حالة اللغات المحددة
-
-  };
-
-
-      const handleGetFeilds = async () => {
-        try {
-          const token = await AsyncStorage.getItem('userToken'); // استرجاع التوكن
-          if (!token) {
-            console.error('Token not found');
-            return;
+    // إغلاق الـ Modal
+    const closeModal = () => {
+      setModalVisible(false);
+      setCurrentModal('');
+    };
+    const onSelectedItemsChange = (selectedItems) => {
+      setSelectedFeilds(selectedItems); // تحديث حالة اللغات المحددة
+  
+    };
+  
+  
+        const handleGetFeilds = async () => {
+          try {
+            const token = await AsyncStorage.getItem('userToken'); // استرجاع التوكن
+            if (!token) {
+              console.error('Token not found');
+              return;
+            }
+      
+            const response = await fetch(`${baseUrl}/externalapiFields/getfields`, {
+              method: 'GET',
+              headers: {
+                'Authorization': `Wasan__${token}`, // تضمين التوكن في الهيدر
+              },
+            });
+      
+            if (!response.ok) {
+              const errorData = await response.json(); // إذا كان هناك خطأ في الرد
+              throw new Error(errorData.message || 'Failed to fetch skills');
+            }
+      
+            const data = await response.json(); // تحويل الرد إلى JSON
+            setFeilds(data.Fields); // تخزين اللغات في الحالة لعرضها
+     //       console.log('Fetched Feilds:', data.Fields); // تحقق من البيانات
+          } catch (error) {
+            console.error('Error fetching Feilds:', error.message);
           }
-    
-          const response = await fetch(`${baseUrl}/externalapiFields/getfields`, {
-            method: 'GET',
-            headers: {
-              'Authorization': `Wasan__${token}`, // تضمين التوكن في الهيدر
-            },
-          });
-    
-          if (!response.ok) {
-            const errorData = await response.json(); // إذا كان هناك خطأ في الرد
-            throw new Error(errorData.message || 'Failed to fetch skills');
+        };
+      
+        const handleGetProjectByFeildOrSkills = async () => {
+          try {
+            const token = await AsyncStorage.getItem('userToken'); // استرجاع التوكن
+            console.log('Retrieved Token:', token); // تحقق من التوكن
+            if (!token) { 
+              console.error('Token not found');
+              return;
+            }
+        
+            const response = await fetch(`${baseUrl}/project/GetProjectsByFieldAndSkills`, {
+              method: 'GET',
+              headers: {
+                'Authorization': `Wasan__${token}`, // تأكد من التنسيق الصحيح هنا
+              },
+            });
+        
+            if (!response.ok) {
+              const errorData = await response.json(); // إذا كان هناك خطأ في الرد
+              throw new Error(errorData.message || 'Failed to fetch skills');
+            }
+        
+            const data = await response.json(); // تحويل الرد إلى JSON
+            if (data.projects && data.projects.length > 0) {
+              setProject(data.projects);
+              console.log('Fetched Project:', data.projects); // تحقق من البيانات
+            } else {
+              console.log('No projects found'); // يمكن إضافة رسالة هنا إذا أردت إظهار إشعار بعدم وجود مشاريع
+            }
+        
+          } catch (error) {
+          //  console.error('Error fetching Project:', error.message);
           }
-    
-          const data = await response.json(); // تحويل الرد إلى JSON
-          setFeilds(data.Fields); // تخزين اللغات في الحالة لعرضها
-          console.log('Fetched Feilds:', data.Fields); // تحقق من البيانات
-        } catch (error) {
-          console.error('Error fetching Feilds:', error.message);
-        }
-      };
-    
+        };
+        
+        const navigateToProjectDetails = (project) => {
+          // Implement navigation logic here, e.g., navigation.navigate('ProjectDetails', { project });
+          console.log('Navigate to Project Details:', project);
+        };
+      
+        const navigateToSeniorProfile = async (senior) => {
+          await handleViewOtherProfile(senior._id);  // الانتظار حتى يتم تحميل البيانات
+          // التأكد من تحميل البيانات قبل الانتقال
+          if (profileUser) {
+            console.log('Navigate to Senior Profile:',profileUser);
+            navigation.navigate('ViewOtherProfile', { userData: profileUser });
+          } else {
+            console.log('No profile data available');
+          }
+        };
+        
+      
+        const handleSave = async () => {
 
-      const handleSave = async () => {
+          if (currentModal === 'Feild') {
+            // إذا كان النوع "experience" (التجربة)
+       //     await addExperience();
+          }
+      
+        };
+      
 
-        if (currentModal === 'Feild') {
-          // إذا كان النوع "experience" (التجربة)
-     //     await addExperience();
-        }
-    
-      };
-    
+  const [profile,setprofileimg] = useState('');
+  const [profileUser,setOtherProfile] = useState('');
 
-const [profile,setprofileimg] = useState('');
-const handleViewProfile = async () => {
-  try {
-    const token = await AsyncStorage.getItem('userToken'); // الحصول على التوكن من التخزين
-    console.log(token);
-    if (!token) {
-      console.error('Token not found');
-      return;
+  const handleViewProfile = async () => {
+    try {
+      const token = await AsyncStorage.getItem('userToken'); // الحصول على التوكن من التخزين
+      console.log(token);
+      if (!token) {
+        console.error('Token not found');
+        return;
+      }
+
+      const response = await fetch(`${baseUrl}/User/ViewOwnProfile`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Wasan__${token}`, // تأكد من كتابة التوكن بالشكل الصحيح
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      setprofileimg(data.PictureProfile?.secure_url || '');
+
+
+    } catch (error) {
+      console.error('Error fetching ProfileData:', error);
     }
+  };
 
-    const response = await fetch(`${baseUrl}/User/ViewOwnProfile`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Wasan__${token}`, // تأكد من كتابة التوكن بالشكل الصحيح
-      },
+
+
+  const handleViewOtherProfile = async (userId) => {
+    console.log(userId);
+    try {
+      const token = await AsyncStorage.getItem('userToken'); // الحصول على التوكن من التخزين
+      console.log(token);
+      if (!token) {
+        console.error('Token not found');
+        return;
+      }
+  
+      const response = await fetch(`${baseUrl}/User/viewotherprofile/${userId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Wasan__${token}`, // تأكد من كتابة التوكن بالشكل الصحيح
+        },
+      });
+  
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+  
+      const data = await response.json();
+      setOtherProfile(data);  // تحديث حالة البروفايل
+      console.log('senior', data);
+  
+    } catch (error) {
+      console.error('Error fetching ProfileData:', error);
+    }
+  };
+  
+    const nav = useNavigation();
+    const { isNightMode, toggleNightMode } = useContext(NightModeContext);
+    const [selectFieldModalVisible, setSelectFieldModalVisible] = useState(false); 
+    const [applyNowModalVisible, setApplyNowModalVisible] = useState(false);  
+    const [selectedField, setSelectedField] = useState('');
+    const [NumberOfTrain ,setNumberOfTrain] = useState('');
+    const [ProfileLink ,setProfileLink] = useState('');
+  const [scrollY] = useState(new Animated.Value(0));
+    let [fontsLoaded] = useFonts({
+        'Updock-Regular': require('./../compnent/fonts/Updock-Regular.ttf'),
+        'Lato-Bold': require('./../compnent/fonts/Lato-Bold.ttf'),
+        'Lato-Regular': require('./../compnent/fonts/Lato-Regular.ttf'),
     });
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+    if (!fontsLoaded) {
+        return <View><Text>Loading...</Text></View>;
     }
-    const data = await response.json();
-    setprofileimg(data.PictureProfile?.secure_url || '');
 
-
-  } catch (error) {
-    console.error('Error fetching ProfileData:', error);
-  }
-};
-  const nav = useNavigation();
-  const { isNightMode, toggleNightMode } = useContext(NightModeContext);
-  const [selectFieldModalVisible, setSelectFieldModalVisible] = useState(false); 
-  const [applyNowModalVisible, setApplyNowModalVisible] = useState(false);  
-  const [selectedField, setSelectedField] = useState('');
-  const [NumberOfTrain ,setNumberOfTrain] = useState('');
-  const [ProfileLink ,setProfileLink] = useState('');
-const [scrollY] = useState(new Animated.Value(0));
-  let [fontsLoaded] = useFonts({
-      'Updock-Regular': require('./../compnent/fonts/Updock-Regular.ttf'),
-      'Lato-Bold': require('./../compnent/fonts/Lato-Bold.ttf'),
-      'Lato-Regular': require('./../compnent/fonts/Lato-Regular.ttf'),
-  });
-
-  if (!fontsLoaded) {
-      return <View><Text>Loading...</Text></View>;
-  }
-
-
-  // Load custom fonts
-  const bottomBarTranslate = scrollY.interpolate({
-    inputRange: [0, 50],
-    outputRange: [0, 100], // 100 to move it off-screen
-    extrapolate: 'clamp',
-  });
-const [searchQuery, setSearchQuery] = useState('');
-
-useEffect(() => {
-  handleViewProfile();
-  handleGetFeilds();
-}, []);
     const handleFieldSelect = (field) => {
         selectFieldModalVisible(field);
         setSelectFieldModalVisible(false);
@@ -171,6 +229,37 @@ useEffect(() => {
       setApplyNowModalVisible(true);
   };
 
+    // Load custom fonts
+    const bottomBarTranslate = scrollY.interpolate({
+      inputRange: [0, 50],
+      outputRange: [0, 100], // 100 to move it off-screen
+      extrapolate: 'clamp',
+    });
+  const [searchQuery, setSearchQuery] = useState('');
+
+  useEffect(() => {
+    handleViewProfile();
+    handleGetFeilds();
+    handleGetProjectByFeildOrSkills();
+  }, []);
+  
+
+
+  const cardScale = useSharedValue(1);
+
+  const handlePressIn = () => {
+    cardScale.value = withSpring(0.95);
+  };
+
+  const handlePressOut = () => {
+    cardScale.value = withSpring(1);
+  };
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: cardScale.value }],
+  }));
+
+  const isMobile = width <= 768;
     return (
       <View style={{ flex: 1 }}>
       <View style={{
@@ -232,9 +321,11 @@ useEffect(() => {
 >
   <Ionicons name="folder" size={20} color={isNightMode ? primary : "#000"} />
 </TouchableOpacity>
-            <TouchableOpacity onPress={() => nav.navigate('AddPostScreen')} style={{ marginRight: 100 }}>
-              <Ionicons name="add-circle" size={25} color={isNightMode ? primary : "#000"} />
-            </TouchableOpacity>
+         
+          <TouchableOpacity onPress={() => nav.navigate('AddProjects')}>
+<Ionicons name="create-outline" size={28} color="#000"   style={{ marginRight: 100 }}
+ />
+</TouchableOpacity>
 
 
 
@@ -338,134 +429,94 @@ useEffect(() => {
         )}
                
                
-        <View>
+       <View>
   <TouchableOpacity onPress={() => openModal('Feild')}>
     <Text style={{ color: "#000", fontSize: 18 }}>
-    {selectedField || "Select Field"}
+      Select Field
     </Text>
   </TouchableOpacity>
 </View>
 
-
-
-  <Modal
-    animationType="slide"
-    transparent={true}
-    visible={selectFieldModalVisible}
-    onRequestClose={() => setSelectFieldModalVisible(false)}
-  >
-    <View style={styles.modalContainer}>
-      <View style={styles.modalContent}>
-        <FlatList
-          data={fields}
-          keyExtractor={(item) => item}
-          renderItem={({ item }) => (
-            <TouchableOpacity 
-              onPress={() => handleFieldSelect(item)} 
-              style={styles.fieldItem}
-            >
-              <Text style={styles.fieldText}>{item}</Text>
-            </TouchableOpacity>
-          )}
-        />
-        <TouchableOpacity 
-          onPress={() => setSelectFieldModalVisible(false)} 
-          style={styles.closeButton}
-        >
-          <Text style={styles.closeButtonText}>Close</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  </Modal>
-
-
-            {/* Projects List in Center */}
-         <ScrollView contentContainerStyle={{ padding: 10, backgroundColor: firstColor }}>
-  {projects && projects.length > 0 ? (
-    <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' }}>
-      {projects.map((project) => (
-        <Card key={project.id} style={styles.card}>
-          <UserInfo style={styles.cardContent}>
-            <UserInfoText>
-              <UserName style={styles.projectTitle}>{project.title}</UserName>
-              <PostText style={{ color: darkLight, marginBottom: 10 }}>
-                {project.description}
-              </PostText>
-            </UserInfoText>
-          </UserInfo>
-
-          <View style={{ marginBottom: 5 }}>
-            <Text style={{ color: tertiary, fontWeight: 'bold' }}>Required Skills:</Text>
-            <Text style={{ color: darkLight }}>
-              {project.RequiredSkills?.length > 0 ? project.RequiredSkills.join(', ') : 'Not specified'}
-            </Text>
-          </View>
-
-          <View style={{ marginBottom: 5 }}>
-            <Text style={{ color: tertiary, fontWeight: 'bold' }}>Duration:</Text>
-            <Text style={{ color: darkLight }}>{project.DurationInMonths || 'N/A'} months</Text>
-          </View>
-
-          <View style={{ marginBottom: 5 }}>
-            <Text style={{ color: tertiary, fontWeight: 'bold' }}>Role:</Text>
-            <Text style={{ color: darkLight }}>{project.PositionRole || 'N/A'}</Text>
-          </View>
-
-          <View style={{ marginBottom: 5 }}>
-            <Text style={{ color: tertiary, fontWeight: 'bold' }}>Field:</Text>
-            <Text style={{ color: darkLight }}>{project.Field || 'N/A'}</Text>
-          </View>
-
-          <View style={{ marginBottom: 5 }}>
-            <Text style={{ color: tertiary, fontWeight: 'bold' }}>Created By:</Text>
-            <Text style={{ color: darkLight }}>{project.CreatedBySenior || 'N/A'}</Text>
-          </View>
-
-          <View style={{ marginBottom: 10 }}>
-            <Text style={{ color: careysPink, fontWeight: 'bold' }}>Status:</Text>
-            <Text style={{ color: darkLight }}>{project.Status || 'N/A'}</Text>
-          </View>
-
-          <TouchableOpacity onPress={() => setApplyNowModalVisible(true)} style={styles.styledButton}>
-    <Text style={styles.buttonText}>Apply Now</Text>
-    <Modal
-        transparent={true}
-        visible={applyNowModalVisible}
-        onRequestClose={() => setApplyNowModalVisible(false)}
+<ScrollView 
+  contentContainerStyle={[styles.container, { backgroundColor: isNightMode ? "#000" : "#fff" }]}
+>
+  {project && project.filteredProjects.length > 0 ? (
+    <View
+      style={[
+        styles.grid,
+        { flexDirection: isMobile ? "column" : "row", justifyContent: isMobile ? "flex-start" : "space-between" },
+      ]}
     >
-        <View style={styles.modalContainer}>
-            <View style={styles.modalContent}>
-                <TouchableOpacity style={styles.input}>
-                    <TextInput
-                        style={styles.inputField}
-                        placeholder="Number Of Train"
-                        value={NumberOfTrain}
-                        onChangeText={setNumberOfTrain}
-                    />
-                    <TextInput
-                        style={styles.inputField}
-                        placeholder="Profile Link"
-                        value={ProfileLink}
-                        onChangeText={setProfileLink}
-                    />
-                </TouchableOpacity>
+      {project.filteredProjects.map((project, index) => (
+        <Animatable.View
+          key={project._id}
+          animation="zoomIn"
+          delay={index * 100} // تأخير كل بطاقة 100ms لتظهر بالتتابع
+          duration={500} // مدة تأثير الزوم
+          style={[isMobile ? styles.cardMobile : styles.cardWeb]} // تنسيق مخصص لكل منصة
+        >
+          <TouchableOpacity
+            style={isMobile ? styles.cardMobileContent : styles.cardWebContent}
+            onPress={() => navigateToProjectDetails(project)}
+          >
+          
+        
+            <View style={styles.cardDetails}>
+            
+             
+              <Text style={styles.projectName}>{project.ProjectName}</Text>
+              <Text style={styles.projectDescription}>
+                {project.Description.slice(0, 50)}...
+              </Text>
+              <Text style={styles.projectCreatedAt}>
+                Created on: {new Date(project.created_at).toLocaleDateString('en-US')}
+              </Text>
+              <Text style={styles.projectStatus}>
+                Status: {project.Status}
+              </Text>
+              <Text style={styles.projectPrice}>
+                Price: ${project.Price}
+              </Text>
+                       <View style={styles.divider} />
+           
 
-                <TouchableOpacity onPress={() => setApplyNowModalVisible(false)} style={styles.closeButton}>
-                    <Text style={styles.closeButtonText}>Close</Text>
-                </TouchableOpacity>
-            </View>
-        </View>
-    </Modal>
+              <View style={styles.seniorInfo}>
+              <TouchableOpacity style={styles.seniorInfo}
+  onPress={() => navigateToSeniorProfile(project.CreatedBySenior)}
+>
+<Image
+  source={{
+    uri: project.CreatedBySenior?.PictureProfile?.secure_url || "https://via.placeholder.com/50",
+  }}
+  style={styles.seniorAvatar}
+/>
+
+  <Text style={styles.seniorName}>
+    {project.CreatedBySenior ? project.CreatedBySenior.FullName : "Unknown Senior"}
+  </Text>
 </TouchableOpacity>
 
-
-        </Card>
+</View>
+              {/* "See More" Button */}
+            
+            </View>
+          </TouchableOpacity>
+        </Animatable.View>
       ))}
     </View>
   ) : (
-    <Text style={{ color: darkLight, textAlign: 'center', marginTop: 20 }}>No projects available.</Text>
+    <Text style={styles.noProjects}>
+      No projects available.
+    </Text>
   )}
 </ScrollView>
+
+
+
+  
+
+
+
 {Platform.OS === 'web' ? (null) : (
         <Animated.View
           style={{
@@ -603,214 +654,304 @@ useEffect(() => {
 
 
 const styles = StyleSheet.create({
-styledButton: {
-  backgroundColor: fifthColor,  // لون خلفية الزر
-  paddingVertical: 12,  // زيادة الحشو ليصبح الزر أكبر
-  paddingHorizontal: 20,
-  borderRadius: 8,  // زوايا دائرية للزر
-  alignItems: 'center',  // محاذاة النص في الوسط
-  justifyContent: 'center',  // محاذاة النص في الوسط
-  marginTop: 20,  // مسافة فوق الزر
-},
-
-buttonText: {
-  color: '#fff',  // لون النص الأبيض
-  fontSize: 18,  // حجم النص
-  fontWeight: 'bold',  // جعل النص عريضًا
-},
-
-modalContainer: {
-  flex: 1,
-  justifyContent: 'center',
-  alignItems: 'center',
-  backgroundColor: 'rgba(0, 0, 0, 0.5)',  // خلفية مظلمة خفيفة
-},
-
-modalContent: {
-  width: '80%',  // جعل المودال أصغر في العرض
-  backgroundColor: '#fff',  // خلفية بيضاء
-  padding: 20,
-  borderRadius: 10,  // زوايا دائرية للمودال
-  alignItems: 'center',
-},
-
-input: {
-  width: '100%',
-},
-
-inputField: {
-  height: 45,
-  fontSize: 16,
-  color: '#333',
-  paddingHorizontal: 10,
-  marginBottom: 20,
-  borderWidth: 1,  // إضافة حدود حول الحقول
-  borderColor: '#ccc',  // لون الحدود
-  borderRadius: 5,  // زوايا دائرية
-},
-
-closeButton: {
-  marginTop: 10,
-  backgroundColor: careysPink,  // لون زر الإغلاق
-  paddingVertical: 10,
-  paddingHorizontal: 20,
-  borderRadius: 8,
-},
-
-closeButtonText: {
-  color: '#fff',  // لون النص الأبيض
-  fontSize: 16,
-  fontWeight: 'bold',
-},
-    card: {
-        width: '48%', // يجعل الكروت بحجم أصغر وتكون بجانب بعضها
-        marginBottom: 15, // المسافة بين الكروت
-        shadowColor: '#7C7692', // اللون البنفسجي للظل
-        shadowOffset: { width: 0, height: 4 }, // اتجاه الظل
-        shadowOpacity: 0.5, // شدة الظل
-        shadowRadius: 6, // طول الظل
-        elevation: 5, // لتحسين الظل في Android
-        borderRadius: 10, // حواف مستديرة
-        padding: 10,
-        backgroundColor: '#fff', // خلفية الكارد
-        justifyContent: 'center', // توسيط المحتوى عموديًا
-        alignItems: 'center', // توسيط المحتوى أفقيًا
-      },
-      cardContent: {
-        alignItems: 'center', // توسيط النص داخل الكارد
-        justifyContent: 'center',
-        textAlign: 'center', // لضمان أن النص يكون في المنتصف بشكل صحيح
-      },
-      projectTitle: {
-        color: tertiary, // استخدام اللون المخصص للعناوين
-        fontWeight: 'bold',
-        fontSize: 18, // حجم الخط المناسب للعنوان
-        textAlign: 'center', // تأكيد توسيط النص داخل الكارد
-        marginBottom: 10,
-      },
-    container: {
-        padding: 10,
-        backgroundColor: '#FFF',
-      },
-    fieldItem: {
-        padding: 15,
-        borderBottomWidth: 1,
-        borderBottomColor: '#ccc',
-    },
-    fieldText: {
-        fontSize: 18,
-    },
-      projectsContainer: {
-      padding: 10,
-      alignItems: 'center',
-        },
-        projectCard: {
-            backgroundColor: '#fff',
-            borderRadius: 10,
-            padding: 15,
-            marginVertical: 10,
-            width: '90%',
-            shadowColor: '#000',
-            shadowOpacity: 0.1,
-            shadowRadius: 10,
-            elevation: 3,
-        },
-        projectDescription: {
-            fontSize: 14,
-            color: '#666',
-            marginBottom: 10,
-        },
-        projectField: {
-            fontSize: 14,
-            marginBottom: 5,
-        },
-        projectStatus: {
-            fontSize: 14,
-            fontWeight: 'bold',
-            color: 'green',
-            marginTop: 10,
-        },
-        container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 10,
+  styledButton: {
+    backgroundColor: fifthColor,  // لون خلفية الزر
+    paddingVertical: 12,  // زيادة الحشو ليصبح الزر أكبر
+    paddingHorizontal: 20,
+    borderRadius: 8,  // زوايا دائرية للزر
+    alignItems: 'center',  // محاذاة النص في الوسط
+    justifyContent: 'center',  // محاذاة النص في الوسط
+    marginTop: 20,  // مسافة فوق الزر
   },
-  backButton: {
-    marginRight: 10,
+  
+  buttonText: {
+    color: '#fff',  // لون النص الأبيض
+    fontSize: 18,  // حجم النص
+    fontWeight: 'bold',  // جعل النص عريضًا
   },
-  searchBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-    paddingHorizontal: 10,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#ccc',
-  },
-  searchIcon: {
-    marginRight: 10,
-  },
-  inputSearch: {
-    flex: 1,
-    height: 40,
-    fontSize: 16,
-  },
-  scrollableItemsContainer: {
-    flex: 1
-  },  modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 15,
-  },
+  
   modalContainer: {
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'center'
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',  // خلفية مظلمة خفيفة
   },
+  
   modalContent: {
-    width: '90%',
+    width: '80%',  // جعل المودال أصغر في العرض
+    backgroundColor: '#fff',  // خلفية بيضاء
     padding: 20,
-    backgroundColor: 'white',
-    borderRadius: 10,
-    elevation: 5, borderWidth: 1,
-    borderColor: Colors.fourhColor,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 15,
-  },
-  closeButton: {
-    backgroundColor: '#dc3545',
-    padding: 10,
-    borderRadius: 5,
+    borderRadius: 10,  // زوايا دائرية للمودال
     alignItems: 'center',
   },
-  closeButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
+  
+  input: {
+    width: '100%',
   },
-  buttonsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 20,
-  },
-  saveButton: {
-    backgroundColor: fifthColor,
-    padding: 10,
-    borderRadius: 5,
-    width: '45%',
-    alignItems: 'center',
-  },
-  saveButtonText: {
-    color: 'white',
+  
+  inputField: {
+    height: 45,
     fontSize: 16,
+    color: '#333',
+    paddingHorizontal: 10,
+    marginBottom: 20,
+    borderWidth: 1,  // إضافة حدود حول الحقول
+    borderColor: '#ccc',  // لون الحدود
+    borderRadius: 5,  // زوايا دائرية
   },
+  
   closeButton: {
-    backgroundColor: fourhColor,
-    padding: 10,
-    borderRadius: 5,
-    width: '45%',
-    alignItems: 'center',
+    marginTop: 10,
+    backgroundColor: careysPink,  // لون زر الإغلاق
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
   },
-});
+  
+  closeButtonText: {
+    color: '#fff',  // لون النص الأبيض
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+      
+        projectsContainer: {
+        padding: 10,
+        alignItems: 'center',
+          },
+          projectCard: {
+              backgroundColor: '#fff',
+              borderRadius: 10,
+              padding: 15,
+              marginVertical: 10,
+              width: '90%',
+              shadowColor: '#000',
+              shadowOpacity: 0.1,
+              shadowRadius: 10,
+              elevation: 3,
+          },
+          projectDescription: {
+              fontSize: 14,
+              color: '#666',
+              marginBottom: 10,
+          },
+          projectField: {
+              fontSize: 14,
+              marginBottom: 5,
+          },
+          projectStatus: {
+              fontSize: 14,
+              fontWeight: 'bold',
+              color: 'green',
+              marginTop: 10,
+          },
+          container: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      padding: 10,
+    },
+    backButton: {
+      marginRight: 10,
+    },
+    searchBox: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      flex: 1,
+      paddingHorizontal: 10,
+      borderRadius: 10,
+      borderWidth: 1,
+      borderColor: '#ccc',
+    },
+    searchIcon: {
+      marginRight: 10,
+    },
+    inputSearch: {
+      flex: 1,
+      height: 40,
+      fontSize: 16,
+    },
+    scrollableItemsContainer: {
+      flex: 1
+    },  modalTitle: {
+      fontSize: 20,
+      fontWeight: 'bold',
+      marginBottom: 15,
+    },
+    modalContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center'
+    },
+    modalContent: {
+      width: '90%',
+      padding: 20,
+      backgroundColor: 'white',
+      borderRadius: 10,
+      elevation: 5, borderWidth: 1,
+      borderColor: Colors.fourhColor,
+    },
+    modalTitle: {
+      fontSize: 20,
+      fontWeight: 'bold',
+      marginBottom: 15,
+    },
+    closeButton: {
+      backgroundColor: '#dc3545',
+      padding: 10,
+      borderRadius: 5,
+      alignItems: 'center',
+    },
+    closeButtonText: {
+      color: '#fff',
+      fontWeight: 'bold',
+    },
+    buttonsContainer: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginTop: 20,
+    },
+    saveButton: {
+      backgroundColor: fifthColor,
+      padding: 10,
+      borderRadius: 5,
+      width: '45%',
+      alignItems: 'center',
+    },
+    saveButtonText: {
+      color: 'white',
+      fontSize: 16,
+    },
+    closeButton: {
+      backgroundColor: fourhColor,
+      padding: 10,
+      borderRadius: 5,
+      width: '45%',
+      alignItems: 'center',
+    },
+  
+    grid: {
+      flexWrap: "wrap",
+      alignItems: "flex-start",marginBottom:40,
+    },
+    cardMobile: {
+      marginBottom: 20,
+      marginHorizontal: 5, // تقليل المسافة بين البطاقات
+      width: width - 20, // تأكيد أن عرض البطاقة يتناسب مع عرض الشاشة
+    },
+    cardWeb: {
+      marginBottom: 20,
+      marginHorizontal: 10,
+      width: "22%", // تحديد عرض ثابت للبطاقات في الويب
+      height: 300, // تثبيت الارتفاع للويب
+      width:400,
+    },
+    cardMobileContent: {
+      backgroundColor: "#fff",
+      borderRadius: 10,
+      shadowColor: "#000",
+      shadowOpacity: 0.2,
+      shadowRadius: 10,
+      shadowOffset: { width: 0, height: 5 },
+      elevation: 5,
+      overflow: "hidden",
+      justifyContent: "space-between",
+    },
+    cardWebContent: {
+      backgroundColor: "#fff",
+      borderRadius: 10,
+      shadowColor: "#000",
+      shadowOpacity: 0.2,
+      shadowRadius: 10,
+      shadowOffset: { width: 0, height: 5 },
+      elevation: 5,
+      overflow: "hidden",
+      justifyContent: "space-between",
+    },
+    projectImage: {
+      width: "100%",
+      height: 150,
+    },
+    cardDetails: {
+      padding: 10,
+      flex: 1,
+    },
+    projectName: {
+      fontSize: 18,
+      fontWeight: "bold",
+      marginBottom: 5,
+    },
+    projectDescription: {
+      fontSize: 14,
+      color: "#666",
+      marginBottom: 10,
+    },
+    seniorInfo: {
+      flexDirection: "row",
+      alignItems: "center",
+      marginTop: 10,
+    },
+    seniorAvatar: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      marginRight: 10,
+    },
+    seniorName: {
+      fontSize: 14,fontWeight:'bold',
+      color:Colors.fifthColor,
+    },
+    noProjects: {
+      textAlign: "center",
+      color: "#aaa",
+      marginTop: 20,
+    },
+    projectDescription: {
+      fontSize: 14,
+      color: '#555',
+      marginBottom: 5,
+    },
+   
+    projectPrice: {
+      fontSize: 14,
+      color: '#007bff',fontWeight:'bold',
+      marginBottom: 5,
+    },
+    projectCreatedAt: {
+      fontSize: 12,
+      color: '#888',
+      marginBottom: 0,
+    },
+    seniorInfo: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 5,
+    },
+    seniorAvatar: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      marginRight: 10,
+    },  seeMoreContainer: {
+      flexDirection: 'row',
+      justifyContent: 'flex-end', // هذا سيضع النص على الجهة اليمنى
+      marginTop: 15,
+    },
+    seeMoreText: {
+      fontSize: 14,
+      color: Colors.fifthColor, // لون النص ليكون مشابه للروابط
+      fontWeight: 'bold',
+    },divider: {
+      height: 3,
+      backgroundColor: '#ddd',
+      marginVertical: 8,
+    },
+    divider1: {
+      height: 5,
+      backgroundColor: Colors.fourhColor,
+      marginVertical: 8,
+    },
+    divider3: {
+      height: 1,
+      backgroundColor: Colors.fourhColor,
+      marginVertical: 8,
+    },
+  });

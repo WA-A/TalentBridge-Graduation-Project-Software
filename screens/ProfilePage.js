@@ -1485,7 +1485,7 @@ export default function ProfilePage({ navigation }) {
       const data = await response.json(); // تحويل الرد إلى JSON
       setSkills(data.Skills); // تخزين اللغات في الحالة لعرضها
     } catch (error) {
-      console.error('Error fetching skills:', error.message);
+    //  console.error('Error fetching skills:', error.message);
     }
   };
 

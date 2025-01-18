@@ -9,31 +9,14 @@ import { Colors } from './../compnent/Style';
 import { Card,UserInfoText, UserName, ContainerCard, PostText, UserInfo, ButtonText, StyledButton} from './../compnent/Style.js';
 import { TextInput } from 'react-native-gesture-handler';
 const { tertiary, firstColor, secColor,fifthColor,secondary, primary, darkLight, fourhColor, careysPink} = Colors;
-import { EvilIcons} from '@expo/vector-icons';
+import { EvilIcons,AntDesign} from '@expo/vector-icons';
 import MultiSelect from 'react-native-multiple-select';
+import { useSharedValue, useAnimatedStyle, withSpring } from "react-native-reanimated";
+import { Dimensions } from "react-native";
+import * as Animatable from "react-native-animatable";
 
-const fields = [
-    'IT',
-    'Digital Marketing',
-    'Graphic Design',
-    'Data Science',
-    'Web Development',
-    'Mobile Development',
-    'Cybersecurity',
-    'Machine Learning',
-    'Blockchain',
-    'Cloud Computing',
-    'Artificial Intelligence',
-    'Project Management',
-    'Content Writing',
-];
+const { width } = Dimensions.get("window");
 
-const projects = [
-    { id: '1', title: 'Project Alpha', description: 'An AI-based project', RequiredSkills: ['Python', 'Machine Learning'], DurationInMonths: 6, PositionRole: 'Developer', Field: 'AI', CreatedBySenior: 'John Doe', Status: 'Active' },
-    { id: '2', title: 'Beta Marketing', description: 'Digital Marketing Strategies', RequiredSkills: ['SEO', 'Content Writing'], DurationInMonths: 4, PositionRole: 'Marketer', Field: 'Digital Marketing', CreatedBySenior: 'Jane Smith', Status: 'Inactive' },
-    { id: '3', title: 'Gamma Design', description: 'UI/UX Design Concepts', RequiredSkills: ['Figma', 'UX Research'], DurationInMonths: 3, PositionRole: 'Designer', Field: 'Design', CreatedBySenior: 'Mark Lee', Status: 'Active' },
-    { id: '4', title: 'Delta Data', description: 'Data Science Analysis', RequiredSkills: ['SQL', 'Data Visualization'], DurationInMonths: 12, PositionRole: 'Data Analyst', Field: 'Data Science', CreatedBySenior: 'Sarah Brown', Status: 'Active' },
-];
 
 export default function  ProjectsJuniorPage ({ navigation, route }) {
 
@@ -45,7 +28,7 @@ export default function  ProjectsJuniorPage ({ navigation, route }) {
   const [currentModal, setCurrentModal] = useState('');
   const [modalVisible, setModalVisible] = useState(false);
   const [error, setError] = useState('');
-
+const [project,setProject]=useState();
   const openModal = (modalName) => {
     setCurrentModal(modalName);
     setModalVisible(true);
@@ -85,24 +68,108 @@ export default function  ProjectsJuniorPage ({ navigation, route }) {
       
             const data = await response.json(); // تحويل الرد إلى JSON
             setFeilds(data.Fields); // تخزين اللغات في الحالة لعرضها
-            console.log('Fetched Feilds:', data.Fields); // تحقق من البيانات
+     //       console.log('Fetched Feilds:', data.Fields); // تحقق من البيانات
           } catch (error) {
             console.error('Error fetching Feilds:', error.message);
           }
         };
       
 
-        const handleSave = async () => {
+        const handleGetProjectByFeildOrSkills = async () => {
+          try {
+            const token = await AsyncStorage.getItem('userToken'); // استرجاع التوكن
+            console.log('Retrieved Token:', token); // تحقق من التوكن
+            if (!token) { 
+              console.error('Token not found');
+              return;
+            }
+      
+            const response = await fetch(`${baseUrl}/project/GetProjectsByFieldAndSkills`, {
+              method: 'GET',
+              headers: {
+                'Authorization': `Wasan__${token}`, // تأكد من التنسيق الصحيح هنا
+              },
+            });
+      
+            if (!response.ok) {
+              const errorData = await response.json(); // إذا كان هناك خطأ في الرد
+              throw new Error(errorData.message || 'Failed to fetch skills');
+            }
+      
+            const data = await response.json(); // تحويل الرد إلى JSON
+            setProject(data.projects);
+
+            console.log('Fetched Project:', data.projects); // تحقق من البيانات
+
+          } catch (error) {
+            console.error('Error fetching Project:', error.message);
+          }
+        };
+        const GetProjectsByField = async (id) => {
+          console.log(id);
+          try {
+            const token = await AsyncStorage.getItem('userToken'); // استرجاع التوكن
+            console.log('Retrieved Token:', token); // تحقق من التوكن
+            if (!token) { 
+              console.error('Token not found');
+              return;
+            }
+      
+            const response = await fetch(`${baseUrl}/project/viewprojectbyfiled/${id}`, {
+              method: 'GET',
+              headers: {
+                'Authorization': `Wasan__${token}`, // تأكد من التنسيق الصحيح هنا
+              },
+            });
+      
+            if (!response.ok) {
+              const errorData = await response.json(); // إذا كان هناك خطأ في الرد
+              throw new Error(errorData.message || 'Failed to fetch skills');
+            }
+      
+            const data = await response.json(); // تحويل الرد إلى JSON
+            setProject(data.projects);
+            if(data.projects == null){
+              console.log("no project");
+              setProject(null);
+            }
+            console.log('Fetched Project:', data.projects); // تحقق من البيانات
+                  setModalVisible(false);
+          } catch (error) {
+            console.error('Error fetching Project:', error.message);
+          }
+        };
+        const navigateToProjectDetails = (project) => {
+          // Implement navigation logic here, e.g., navigation.navigate('ProjectDetails', { project });
+          console.log('Navigate to Project Details:', project);
+          navigation.navigate('ProjectPage', { userData: project });
+        };
+      
+        const navigateToSeniorProfile = async (senior) => {
+          await handleViewOtherProfile(senior._id);  // الانتظار حتى يتم تحميل البيانات
+          // التأكد من تحميل البيانات قبل الانتقال
+          if (profileUser) {
+            console.log('Navigate to Senior Profile:',profileUser);
+            navigation.navigate('ViewOtherProfile', { userData: profileUser });
+          } else {
+            console.log('No profile data available');
+          }
+        };
+        
+      
+        const handleSave = async (selectedFeilds) => {
 
           if (currentModal === 'Feild') {
-            // إذا كان النوع "experience" (التجربة)
-       //     await addExperience();
+       console.log(selectedFeilds);
+       GetProjectsByField(selectedFeilds[0]);
           }
       
         };
       
 
   const [profile,setprofileimg] = useState('');
+  const [profileUser,setOtherProfile] = useState('');
+
   const handleViewProfile = async () => {
     try {
       const token = await AsyncStorage.getItem('userToken'); // الحصول على التوكن من التخزين
@@ -131,6 +198,40 @@ export default function  ProjectsJuniorPage ({ navigation, route }) {
       console.error('Error fetching ProfileData:', error);
     }
   };
+
+
+
+  const handleViewOtherProfile = async (userId) => {
+    console.log(userId);
+    try {
+      const token = await AsyncStorage.getItem('userToken'); // الحصول على التوكن من التخزين
+      console.log(token);
+      if (!token) {
+        console.error('Token not found');
+        return;
+      }
+  
+      const response = await fetch(`${baseUrl}/User/viewotherprofile/${userId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Wasan__${token}`, // تأكد من كتابة التوكن بالشكل الصحيح
+        },
+      });
+  
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+  
+      const data = await response.json();
+      setOtherProfile(data);  // تحديث حالة البروفايل
+      console.log('senior', data);
+  
+    } catch (error) {
+      console.error('Error fetching ProfileData:', error);
+    }
+  };
+  
     const nav = useNavigation();
     const { isNightMode, toggleNightMode } = useContext(NightModeContext);
     const [selectFieldModalVisible, setSelectFieldModalVisible] = useState(false); 
@@ -171,12 +272,35 @@ export default function  ProjectsJuniorPage ({ navigation, route }) {
   useEffect(() => {
     handleViewProfile();
     handleGetFeilds();
+    handleGetProjectByFeildOrSkills();
   }, []);
   
+
+
+  const cardScale = useSharedValue(1);
+
+  const handlePressIn = () => {
+    cardScale.value = withSpring(0.95);
+  };
+
+  const handlePressOut = () => {
+    cardScale.value = withSpring(1);
+  };
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: cardScale.value }],
+  }));
+
+  const isMobile = width <= 768;
+  const [isDropdownVisible, setDropdownVisible] = useState(false);
+
+  const toggleDropdown = () => {
+    setDropdownVisible(!isDropdownVisible);
+  };
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1,backgroundColor: isNightMode ? "#000" :"#ffff" }}>
       <View style={{
-        height: Platform.OS === 'web' ? 50 : 20, backgroundColor: isNightMode ? "#000" : secondary
+        height: Platform.OS === 'web' ? 50 : 20, backgroundColor: isNightMode ? "#000" :secondary
 
       }} />
       {Platform.OS === 'web' ? (
@@ -232,7 +356,7 @@ export default function  ProjectsJuniorPage ({ navigation, route }) {
   }}
   style={{ marginRight: 100 }}
 >
-  <Ionicons name="folder" size={20} color={isNightMode ? primary : "#000"} />
+  <Ionicons name="folder" size={20} color={isNightMode ? "#000" : "#fff"} />
 </TouchableOpacity>
             <TouchableOpacity onPress={() => nav.navigate('AddPostScreen')} style={{ marginRight: 100 }}>
               <Ionicons name="add-circle" size={25} color={isNightMode ? primary : "#000"} />
@@ -339,104 +463,135 @@ export default function  ProjectsJuniorPage ({ navigation, route }) {
           </>
         )}
                
-               
-        <View>
-  <TouchableOpacity onPress={() => openModal('Feild')}>
-    <Text style={{ color: "#000", fontSize: 18 }}>
-      Select Field
-    </Text>
-  </TouchableOpacity>
-</View>
+              
 
+ <View style={{
+  top:5,
+  left: 0,  // يحدد أن يكون العنصر عند أقصى اليسار
+  marginBottom: 15,  // المسافة بين العناصر الأخرى
+  flexDirection: 'row',  // عرض النص والأيقونة بشكل أفقي
+  alignItems: 'center',  // محاذاة النص والأيقونة عموديًا
+}}>
+          <TouchableOpacity onPress={()=>handleGetProjectByFeildOrSkills()}>
 
-            {/* Projects List in Center */}
-         <ScrollView contentContainerStyle={{ padding: 10, backgroundColor: firstColor }}>
-  {projects && projects.length > 0 ? (
-    <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' }}>
-      {projects.map((project) => (
-        <Card key={project.id} style={styles.card}>
-          <UserInfo style={styles.cardContent}>
-            <UserInfoText>
-              <UserName style={styles.projectTitle}>{project.title}</UserName>
-              <PostText style={{ color: darkLight, marginBottom: 10 }}>
-                {project.description}
-              </PostText>
-            </UserInfoText>
-          </UserInfo>
+  <Text style={{
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: isNightMode ? primary : '#000',
+    backgroundColor: isNightMode ? '#000' : '#f9f9f9',
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 20,
+    opacity: 0.7,
+  }}>
+Suggested for you  </Text></TouchableOpacity>
+<TouchableOpacity onPress={toggleDropdown}>
 
-          <View style={{ marginBottom: 5 }}>
-            <Text style={{ color: tertiary, fontWeight: 'bold' }}>Required Skills:</Text>
-            <Text style={{ color: darkLight }}>
-              {project.RequiredSkills?.length > 0 ? project.RequiredSkills.join(', ') : 'Not specified'}
+  <AntDesign 
+    name="caretdown" 
+    size={16} 
+    color={isNightMode ? primary  : '#000'} 
+    style={{ marginLeft:1 }}  // المسافة بين النص والأيقونة
+  /></TouchableOpacity>
+
+{isDropdownVisible && (
+        <View >
+          <TouchableOpacity onPress={() =>openModal('Feild')}>
+          <Text style={{
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: isNightMode ? primary : '#000',
+    backgroundColor: isNightMode ? '#000' : Colors.fifthColor,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 14,
+    opacity: 0.7,
+  }}>
+              Select Project By Field
             </Text>
-          </View>
-
-          <View style={{ marginBottom: 5 }}>
-            <Text style={{ color: tertiary, fontWeight: 'bold' }}>Duration:</Text>
-            <Text style={{ color: darkLight }}>{project.DurationInMonths || 'N/A'} months</Text>
-          </View>
-
-          <View style={{ marginBottom: 5 }}>
-            <Text style={{ color: tertiary, fontWeight: 'bold' }}>Role:</Text>
-            <Text style={{ color: darkLight }}>{project.PositionRole || 'N/A'}</Text>
-          </View>
-
-          <View style={{ marginBottom: 5 }}>
-            <Text style={{ color: tertiary, fontWeight: 'bold' }}>Field:</Text>
-            <Text style={{ color: darkLight }}>{project.Field || 'N/A'}</Text>
-          </View>
-
-          <View style={{ marginBottom: 5 }}>
-            <Text style={{ color: tertiary, fontWeight: 'bold' }}>Created By:</Text>
-            <Text style={{ color: darkLight }}>{project.CreatedBySenior || 'N/A'}</Text>
-          </View>
-
-          <View style={{ marginBottom: 10 }}>
-            <Text style={{ color: careysPink, fontWeight: 'bold' }}>Status:</Text>
-            <Text style={{ color: darkLight }}>{project.Status || 'N/A'}</Text>
-          </View>
-
-          <TouchableOpacity onPress={() => setApplyNowModalVisible(true)} style={styles.styledButton}>
-    <Text style={styles.buttonText}>Apply Now</Text>
-    <Modal
-        transparent={true}
-        visible={applyNowModalVisible}
-        onRequestClose={() => setApplyNowModalVisible(false)}
-    >
-        <View style={styles.modalContainer}>
-            <View style={styles.modalContent}>
-                <TouchableOpacity style={styles.input}>
-                    <TextInput
-                        style={styles.inputField}
-                        placeholder="Number Of Train"
-                        value={NumberOfTrain}
-                        onChangeText={setNumberOfTrain}
-                    />
-                    <TextInput
-                        style={styles.inputField}
-                        placeholder="Profile Link"
-                        value={ProfileLink}
-                        onChangeText={setProfileLink}
-                    />
-                </TouchableOpacity>
-
-                <TouchableOpacity onPress={() => setApplyNowModalVisible(false)} style={styles.closeButton}>
-                    <Text style={styles.closeButtonText}>Close</Text>
-                </TouchableOpacity>
-            </View>
+          </TouchableOpacity>
         </View>
-    </Modal>
+      )}
+</View>
+      <View style={styles.divider1} />
+                  
+
+<ScrollView 
+  contentContainerStyle={[styles.container, { backgroundColor: isNightMode ? "#000" : "#fff" }]}
+>
+  {project && project.filteredProjects.length > 0 ? (
+    <View
+      style={[
+        styles.grid,
+        { flexDirection: isMobile ? "column" : "row", justifyContent: isMobile ? "flex-start" : "space-between" },
+      ]}
+    >
+      {project.filteredProjects.map((project, index) => (
+        <Animatable.View
+          key={project._id}
+          animation="zoomIn"
+          delay={index * 100} // تأخير كل بطاقة 100ms لتظهر بالتتابع
+          duration={500} // مدة تأثير الزوم
+          style={[isMobile ? styles.cardMobile : styles.cardWeb]} // تنسيق مخصص لكل منصة
+        >
+          <TouchableOpacity
+            style={isMobile ? styles.cardMobileContent : styles.cardWebContent}
+            onPress={() => navigateToProjectDetails(project)}
+          >
+          
+        
+            <View style={styles.cardDetails}>
+            
+             
+              <Text style={styles.projectName}>{project.ProjectName}</Text>
+              <Text style={styles.projectDescription}>
+                {project.Description.slice(0, 50)}...
+              </Text>
+              <Text style={styles.projectCreatedAt}>
+                Created on: {new Date(project.created_at).toLocaleDateString('en-US')}
+              </Text>
+              <Text style={styles.projectStatus}>
+                Status: {project.Status}
+              </Text>
+              <Text style={styles.projectPrice}>
+                Price: ${project.Price}
+              </Text>
+                       <View style={styles.divider} />
+           
+
+              <View style={styles.seniorInfo}>
+              <TouchableOpacity style={styles.seniorInfo}
+  onPress={() => navigateToSeniorProfile(project.CreatedBySenior)}
+>
+<Image
+  source={{
+    uri: project.CreatedBySenior?.PictureProfile?.secure_url || "https://via.placeholder.com/50",
+  }}
+  style={styles.seniorAvatar}
+/>
+
+  <Text style={styles.seniorName}>
+    {project.CreatedBySenior ? project.CreatedBySenior.FullName : "Unknown Senior"}
+  </Text>
 </TouchableOpacity>
 
-
-        </Card>
+</View>
+              {/* "See More" Button */}
+            
+            </View>
+          </TouchableOpacity>
+        </Animatable.View>
       ))}
     </View>
   ) : (
-    <Text style={{ color: darkLight, textAlign: 'center', marginTop: 20 }}>No projects available.</Text>
+    <Text style={styles.noProjects}>
+      No projects available.
+    </Text>
   )}
 </ScrollView>
 
+
+  
             
             {/* Bottom Navigation Bar */}
  {/* Bottom Navigation Bar */}
@@ -558,7 +713,7 @@ export default function  ProjectsJuniorPage ({ navigation, route }) {
                                     </>
               
                   <View style={styles.buttonsContainer}>
-                                  <TouchableOpacity onPress={handleSave} style={styles.saveButton}>
+                                  <TouchableOpacity onPress={()=>handleSave(selectedFeilds)} style={styles.saveButton}>
                                     <Text style={styles.saveButtonText}>Save</Text>
                                   </TouchableOpacity>
                                   <TouchableOpacity onPress={closeModal} style={styles.closeButton}>
@@ -635,44 +790,7 @@ closeButtonText: {
   fontSize: 16,
   fontWeight: 'bold',
 },
-    card: {
-        width: '48%', // يجعل الكروت بحجم أصغر وتكون بجانب بعضها
-        marginBottom: 15, // المسافة بين الكروت
-        shadowColor: '#7C7692', // اللون البنفسجي للظل
-        shadowOffset: { width: 0, height: 4 }, // اتجاه الظل
-        shadowOpacity: 0.5, // شدة الظل
-        shadowRadius: 6, // طول الظل
-        elevation: 5, // لتحسين الظل في Android
-        borderRadius: 10, // حواف مستديرة
-        padding: 10,
-        backgroundColor: '#fff', // خلفية الكارد
-        justifyContent: 'center', // توسيط المحتوى عموديًا
-        alignItems: 'center', // توسيط المحتوى أفقيًا
-      },
-      cardContent: {
-        alignItems: 'center', // توسيط النص داخل الكارد
-        justifyContent: 'center',
-        textAlign: 'center', // لضمان أن النص يكون في المنتصف بشكل صحيح
-      },
-      projectTitle: {
-        color: tertiary, // استخدام اللون المخصص للعناوين
-        fontWeight: 'bold',
-        fontSize: 18, // حجم الخط المناسب للعنوان
-        textAlign: 'center', // تأكيد توسيط النص داخل الكارد
-        marginBottom: 10,
-      },
-    container: {
-        padding: 10,
-        backgroundColor: '#FFF',
-      },
-    fieldItem: {
-        padding: 15,
-        borderBottomWidth: 1,
-        borderBottomColor: '#ccc',
-    },
-    fieldText: {
-        fontSize: 18,
-    },
+    
       projectsContainer: {
       padding: 10,
       alignItems: 'center',
@@ -785,5 +903,132 @@ closeButtonText: {
     borderRadius: 5,
     width: '45%',
     alignItems: 'center',
+  },
+
+  grid: {
+    flexWrap: "wrap",
+    alignItems: "flex-start",marginBottom:40,
+  },
+  cardMobile: {
+    marginBottom: 20,
+    marginHorizontal: 5, // تقليل المسافة بين البطاقات
+    width: width - 20, // تأكيد أن عرض البطاقة يتناسب مع عرض الشاشة
+  },
+  cardWeb: {
+    marginBottom: 20,
+    marginHorizontal: 10,
+    width: "22%", // تحديد عرض ثابت للبطاقات في الويب
+    height: 300, // تثبيت الارتفاع للويب
+    width:400,
+  },
+  cardMobileContent: {
+    backgroundColor: "#fff",
+    borderRadius: 10,
+    shadowColor: "#000",
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 5 },
+    elevation: 5,
+    overflow: "hidden",
+    justifyContent: "space-between",
+  },
+  cardWebContent: {
+    backgroundColor: "#fff",
+    borderRadius: 10,
+    shadowColor: "#000",
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 5 },
+    elevation: 5,
+    overflow: "hidden",
+    justifyContent: "space-between",
+  },
+  projectImage: {
+    width: "100%",
+    height: 150,
+  },
+  cardDetails: {
+    padding: 10,
+    flex: 1,
+  },
+  projectName: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 5,
+  },
+  projectDescription: {
+    fontSize: 14,
+    color: "#666",
+    marginBottom: 10,
+  },
+  seniorInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 10,
+  },
+  seniorAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 10,
+  },
+  seniorName: {
+    fontSize: 14,fontWeight:'bold',
+    color:Colors.fifthColor,
+  },
+  noProjects: {
+    textAlign: "center",
+    color: "#aaa",
+    marginTop: 20,
+  },
+  projectDescription: {
+    fontSize: 14,
+    color: '#555',
+    marginBottom: 5,
+  },
+ 
+  projectPrice: {
+    fontSize: 14,
+    color: '#007bff',fontWeight:'bold',
+    marginBottom: 5,
+  },
+  projectCreatedAt: {
+    fontSize: 12,
+    color: '#888',
+    marginBottom: 0,
+  },
+  seniorInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 5,
+  },
+  seniorAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 10,
+  },  seeMoreContainer: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end', // هذا سيضع النص على الجهة اليمنى
+    marginTop: 15,
+  },
+  seeMoreText: {
+    fontSize: 14,
+    color: Colors.fifthColor, // لون النص ليكون مشابه للروابط
+    fontWeight: 'bold',
+  },divider: {
+    height: 3,
+    backgroundColor: '#ddd',
+    marginVertical: 8,
+  },
+  divider1: {
+    height: 5,
+    backgroundColor: Colors.fourhColor,
+    marginVertical: 8,
+  },
+  divider3: {
+    height: 1,
+    backgroundColor: Colors.fourhColor,
+    marginVertical: 8,
   },
 });

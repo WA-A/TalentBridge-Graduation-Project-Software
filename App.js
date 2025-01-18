@@ -25,6 +25,7 @@ import { NotificationProvider } from './contex/NotificationContext';
 import Notification from './screens/Notification';
 import PostFRomNotification from './screens/PostFRomNotification';
 import { useNavigation } from '@react-navigation/native';
+import ProjectPage from './screens/ProjectPage.js';
 Notifications.setNotificationHandler({
     handleNotification: async () => ({
       shouldShowAlert: true,
@@ -51,6 +52,7 @@ const linking = {
       EnterCode: 'enter-code',
       WelcomeScreen: 'WelcomeScreen',
       Notifications:'Notifications',
+      ProjectPage :'ProjectPage',
     },
   },
 };
@@ -190,7 +192,11 @@ export default function App() {
             component={RequestToSeniorPage}
             options={{ headerShown: false }}
           />
-          
+            <Stack.Screen
+            name="ProjectPage"
+            component={ProjectPage}
+            options={{ headerShown: false }}
+          />
 
         </Stack.Navigator>
       </NavigationContainer>
