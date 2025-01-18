@@ -76,7 +76,7 @@ const UserSchema = new Schema({
       type: String,
       default: false
    },
-   Field:[
+   Fields:[
       {
          id: { type: Number, required: true },
          sub_specialization: { type: String, required: true },
@@ -132,7 +132,7 @@ Languages: [
    }
 ],
 
-Skill: [
+Skills: [
    {
       id: { type: Number, required: true },
       name: { type: String, required: true },
