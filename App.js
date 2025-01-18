@@ -27,7 +27,7 @@ import PostFRomNotification from './screens/PostFRomNotification';
 import { useNavigation } from '@react-navigation/native';
 import ProjectPage from './screens/ProjectPage.js';
 import RequestSeniorToAdminPage from './screens/RequestSeniorToAdminPage.js';
-
+import AdminHomePage from './screens/AdminHomePage.js';
 
 
 Notifications.setNotificationHandler({
@@ -200,6 +200,12 @@ export default function App() {
             <Stack.Screen
             name="ProjectPage"
             component={ProjectPage}
+            options={{ headerShown: false }}
+          />
+
+<Stack.Screen
+            name="AdminHomePage"
+            component={AdminHomePage}
             options={{ headerShown: false }}
           />
 
