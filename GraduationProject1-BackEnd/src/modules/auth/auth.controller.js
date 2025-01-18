@@ -47,8 +47,8 @@ export const SignUp = async (req, res) => {
                 Location,
                 YearsOfExperience: YearsofExperienceN,
                 SeniorAccountStatus: "Pending",
-                Field: [{ id: fieldToAdd.id, sub_specialization: fieldToAdd.sub_specialization, code: fieldToAdd.code }],
-                Skill: [{ id: skillWithRate.id, name: skillWithRate.name, code: skillWithRate.code, Rate: skillWithRate.Rate }]
+                Fields: [{ id: fieldToAdd.id, sub_specialization: fieldToAdd.sub_specialization, code: fieldToAdd.code }],
+                Skills: [{ id: skillWithRate.id, name: skillWithRate.name, code: skillWithRate.code, Rate: skillWithRate.Rate }]
             });
             const token = jwt.sign({ Email }, process.env.CONFIRM_EMAILTOKEN);
             return res.status(201).json({ message: "success", user: CreateUser, token: token });

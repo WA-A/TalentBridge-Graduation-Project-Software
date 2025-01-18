@@ -235,7 +235,7 @@ export const AddSkills = async (req, res) => {     // With Token
         const addedSkills = [];
         const failedSkills = [];
 
-        user.Skill = user.Skill.map(skill => ({
+        user.Skills = user.Skills.map(skill => ({
             ...skill,
             Rate: skill.Rate || 1 
         }));
@@ -256,14 +256,14 @@ export const AddSkills = async (req, res) => {     // With Token
                 continue;
             }
         
-            const skillExists = user.Skill.some(skill => skill.id === selectedSkill.id);
+            const skillExists = user.Skills.some(skill => skill.id === selectedSkill.id);
             if (skillExists) {
                 console.log(`Skill already exists for user: ${SkillId}`);
                 failedSkills.push(SkillId);
                 continue;
             }
         
-            user.Skill.push({
+            user.Skills.push({
                 id: selectedSkill.id,
                 name: selectedSkill.name,
                 code: selectedSkill.code,
