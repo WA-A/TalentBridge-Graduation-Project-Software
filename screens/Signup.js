@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, Platform, ScrollView, StyleSheet } from '
 import DateTimePickerModal from '@react-native-community/datetimepicker';  // للموبايل
 import { StatusBar } from 'expo-status-bar';
 import { Formik } from 'formik';
-import { Feather, FontAwesome, Ionicons, Entypo } from '@expo/vector-icons';
+import { Feather, FontAwesome, Ionicons, Entypo,MaterialCommunityIcons } from '@expo/vector-icons';
 import { Picker } from '@react-native-picker/picker'
 import { Colors, StyledContainer, InnerContainer, PageLogo, StyledFormArea, StyledButton, ButtonText, StyledTextInputSignUp, LeftIcon, labelStyle, RightIcon, RightIcon2 } from './../compnent/Style';
 import axios from 'axios';
@@ -53,7 +53,7 @@ export default function Signup({ navigation }) {
 
 
     const [selectedJob, setSelectedJob] = useState('Software Engineer');
-    const [selectedSkill, setselectedSkill] = useState('Python');
+    const [selectedSkill, setselectedSkill] = useState([]);  
     const [jobFields, setJobFields] = useState([]); // تخزين الوظائف المحملة من API
     const [skills, setskills] = useState([]); // تخزين مهارات المحملة من API
     const [hidePassword, setHidePassword] = useState(true);
@@ -66,11 +66,7 @@ export default function Signup({ navigation }) {
     const [successMassage, setSuccessMassage] = useState('');
     const [successMassage2, setSuccessMassage2] = useState('');
 
-
-
     //verify
-
-
 
     const [name, setName] = useState('');
     const [nameVerfy, setNameVerfy] = useState(false);
@@ -208,27 +204,36 @@ export default function Signup({ navigation }) {
     // Join Api With FrontPage 
     const handleSignup = async (values) => {
         try {
-            // تجهيز البيانات مع التأكد من وجود FieldId
+            // استخراج المهارة المختارة (التي تحتوي على المعرف والتقييم)
+            const selectedSkillData = selectedSkill[0]; 
+    
             const dataToSend = {
                 ...values,
-                BirthDate: BirthDate.toISOString(), // تحويل التاريخ للتنسيق المناسب
-                Gender: gender, // النوع
-                FieldId: selectedJob, // التأكد من إرسال FieldId من الحقل المختار
-                Role: userType, // نوع المستخدم
+                BirthDate: BirthDate.toISOString(),
+                Gender: gender,
+                FieldId: selectedJob,
+                Role: userType,
+                SkillId: selectedSkillData?.id,  // إرسال SkillId فقط
+                Rate: selectedSkillData?.Rate,  // إرسال Rate فقط
             };
-               
-
+    
             if (userType === 'Senior') {
                 dataToSend.SeniorAccountStatus = 'Pending';
             }
-
-
-            // التحقق من وجود FieldId قبل الإرسال
+    
+            // تحقق من وجود FieldId و SkillId و Rate
             if (!dataToSend.FieldId) {
                 console.error('FieldId is missing. Please select a job.');
-                setErrorMessage3('Please select a job field.'); // عرض رسالة للمستخدم
+                setErrorMessage3('Please select a job field.');
                 setMenuVisible(true);
-                return; // منع العملية إذا كان الحقل مفقودًا
+                return;
+            }
+    
+            if (!dataToSend.SkillId || !dataToSend.Rate) {
+                console.error('SkillId or Rate is missing.');
+                setErrorMessage3('Please select a skill and rate it.');
+                setMenuVisible(true);
+                return;
             }
     
             console.log('Sending Signup Data:', dataToSend);
@@ -246,7 +251,6 @@ export default function Signup({ navigation }) {
                 body: JSON.stringify(dataToSend),
             });
     
-            // التعامل مع الاستجابة
             if (!response.ok) {
                 const errorData = await response.json();
                 if (response.status === 409) {
@@ -266,9 +270,8 @@ export default function Signup({ navigation }) {
                 console.log('Senior user registered with status Pending');
                 navigation.navigate('RequestToSeniorPage');
             } else if (result.token) {
-                // إذا كان المستخدم من نوع Junior
                 await AsyncStorage.setItem('userToken', result.token); // تخزين التوكين
-                navigation.navigate('HomeScreen'); 
+                navigation.navigate('HomeScreen');
             } else {
                 console.warn('No token found in response.');
             }
@@ -770,49 +773,86 @@ export default function Signup({ navigation }) {
 
 
 
-                                    {/* اختيار المهارة الوظيفي */}
-                                <View style={{ marginBottom: 20 }}>
-                                <Text style={labelStyle}>Skills</Text>
-                                <View style={styles.container}>
-                               <View style={styles.pickerWrapper}>
-                                {Platform.OS === 'web' ? (
-                                   // ستايل مخصص للويب
-                                      <Picker
-                                     selectedValue={selectedSkill}
-                                    onValueChange={(SitemValue) => {
-                                        setselectedSkill(SitemValue); // تحديث المهارة المختارة
-                                       }}
-                                  style={styles.pickerWeb}
-                                  >
-                                  {skills.map((skill, index) => (
-                                <Picker.Item label={skill.label} value={skill.value} key={index} />
-                               ))}
-                             </Picker>
-                              ) : (
-                          // ستايل مخصص للموبايل (أندرويد و iOS)
-                                    <Picker
-                                        selectedValue={selectedSkill}
-                                    onValueChange={(SitemValue) => {
-                                        setselectedSkill(SitemValue); // تحديث المهارة المختارة
-                                 }}
-                                   >
-                                        {skills.map((skill, index) => (
-                                       <Picker.Item label={skill.label} value={skill.value} key={index} /> //Rate={skill.Rate}
-                                          ))}
-                                    </Picker>
-                                 )}
-                                          </View>
-                                             </View>
-                                               </View>
+                          {/* اختيار المهارة مع النجوم بجانب المهارة */}
+                          <View style={{ marginBottom: 20 }}>
+  <Text style={labelStyle}>Skills</Text>
+  <View style={styles.container}>
+    <View style={styles.pickerWrapper}>
+      {Platform.OS === 'web' ? (
+        <Picker
+          selectedValue={selectedSkill[0]?.id}  // عرض المهارة المختارة
+          onValueChange={(SitemValue) => {
+            // تحديث المهارة المختارة مع الريت
+            setselectedSkill([{ id: SitemValue, Rate: 0 }]);
+          }}
+          style={styles.pickerWeb}
+        >
+          {skills.map((skill) => (
+            <Picker.Item
+              label={skill.label}  // عرض اسم المهارة
+              value={skill.value}  // القيمة التي يتم تخزينها في selectedSkill
+              key={skill.value}
+            />
+          ))}
+        </Picker>
+      ) : (
+        <Picker
+          selectedValue={selectedSkill[0]?.id}  // عرض المهارة المختارة
+          onValueChange={(SitemValue) => {
+            // تحديث المهارة المختارة مع الريت
+            setselectedSkill([{ id: SitemValue, Rate: 0 }]);
+          }}
+        >
+          {skills.map((skill) => (
+            <Picker.Item
+              label={skill.label}  // عرض اسم المهارة
+              value={skill.value}  // القيمة التي يتم تخزينها في selectedSkill
+              key={skill.value}
+            />
+          ))}
+        </Picker>
+      )}
+    </View>
+  </View>
+
+  {/* إضافة التقييم بعد اختيار المهارة */}
+  {selectedSkill.length > 0 && selectedSkill[0]?.id && (
+    <View style={{ marginTop: 20 }}>
+      <Text style={{ fontSize: 16, fontWeight: 'bold', marginBottom: 10 }}>
+        Rate the selected skill:
+      </Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        {[1, 2, 3, 4, 5].map((starIndex) => (
+          <TouchableOpacity
+            key={starIndex}
+            onPress={() => {
+              const updatedSkill = { ...selectedSkill[0], Rate: starIndex };
+              setselectedSkill([updatedSkill]);  // تحديث الـ selectedSkill
+            }}
+          >
+            <MaterialCommunityIcons
+              name={
+                starIndex <= selectedSkill[0]?.Rate
+                  ? 'star'
+                  : 'star-outline'
+              }
+              size={24}
+              color={starIndex <= selectedSkill[0]?.Rate ? '#F7A8B8' : '#ccc'}
+            />
+          </TouchableOpacity>
+        ))}
+      </View>
+    </View>
+  )}
+</View>
 
 
 
-
-                                  {/* Request senior to sdmin */}
+                                  {/* Request senior to admin */}
                          {userType === 'Senior' && (
 
                        <StyledButton style={{ backgroundColor: brand, marginBottom: 10}}
-                                    onPress={() => navigation.navigate('RequestToSeniorPage')}
+                                    onPress={() => navigation.navigate('RequestSeniorToAdminPage')}
                                 >
                                     <ButtonText> Request To Senior </ButtonText>
                                 </StyledButton>
@@ -870,7 +910,7 @@ export default function Signup({ navigation }) {
 
                                         console.log('Button Pressed');
                                         handleSignup(finalValues);
-                                        navigation.navigate('RequestToSeniorPage');
+                                        navigation.navigate('RequestSeniorToAdminPage');
                                     }}
                                 >
                                     <ButtonText>Sign Up as a  {userType}</ButtonText>
