@@ -40,17 +40,20 @@ import {
     labelStyle
 
 } from '../compnent/Style';
+import { set } from 'mongoose';
 //color
 const { brand, darkLight, careysPink, firstColor, secColor, thirdColor, fourhColor, fifthColor, primary, tertiary, secondary,black } = Colors;
 const { width } = Dimensions.get('window');
 
 const RequestSeniorToAdminPage = () => {
   const nav = useNavigation();
-    const [selectedFile, setSelectedFile] = useState(null);
-        console.log('Selected File:', selectedFile);
+    
 
+            const [PreviousExperiences, setPreviousExperiences] = useState('');
+            const [Motivation, setMotivation] = useState('');
+            const [Contribution, setContribution] = useState('');
+            const [Major, setMajor] = useState('');
             const [file, setFile] = useState(null);
-        
 
          const handleFilePicker = async () => {
                     try {
@@ -74,6 +77,58 @@ const RequestSeniorToAdminPage = () => {
                       console.error('Error picking file:', error);
                     }
                   };
+   
+
+                  const handleRequestSeniorToAdmin = async () => {
+                    try {
+                
+                        const baseUrl = Platform.OS === 'web'
+                            ? 'http://localhost:3000'
+                            : 'http://192.168.1.239:3000';
+                
+                        const formData = new FormData();
+                
+                        formData.append('PreviousExperiences', PreviousExperiences);
+                        formData.append('Motivation', Motivation);
+                        formData.append('Contribution', Contribution);
+                        formData.append('Major', Major);
+                       
+                        if (file) {
+                            let fileUri = file.uri;
+                        
+                            // إذا كان التطبيق على الويب
+                            if (Platform.OS === 'web' && fileUri.startsWith('file://')) {
+                                // في الويب لا نحتاج إلى "file://"
+                                fileUri = fileUri.replace('file://', '');
+                            }
+                        
+                            formData.append('Certifications', {
+                                uri: fileUri,
+                                name: file.name,
+                                type: file.mimeType || 'application/pdf',
+                            });
+                        }
+                        
+                        console.log('FormData before sending:', formData);
+                
+                        const response = await fetch(`${baseUrl}/requestseniortoadmin/createrequestseniortoadmin`, {
+                            method: 'POST',
+                            body: formData,
+                        });
+                
+            
+                        if (!response.ok) {
+                            const errorData = await response.json();
+                            throw new Error(errorData.message || 'Something went wrong');
+                        }
+                
+                        const result = await response.json();
+                        console.log('Request Send successfully:', result);
+                    } catch (error) {
+                        console.error('Error Sending Request :', error);
+                    }
+                };
+
 
 
     return (
@@ -117,28 +172,11 @@ const RequestSeniorToAdminPage = () => {
                                     icon="briefcase"
                                     placeholder="previousExperiences"
                                     placeholderTextColor={darkLight}
-                                    onChangeText={handleChange('previousExperiences')}
+                                    onChangeText={setPreviousExperiences}
                                     onBlur={handleBlur('previousExperiences')}
-                                    // onChange={e => handlepreviousExperiences(e)}
-                                    // value={values.FullName}
-                                    // rightIcon22={
-                                    //     name.length < 1 ? null : nameVerfy ? (
-                                    //         <RightIcon2 style={{ top: 6 }} >
-                                    //             <Feather name="check-circle" color="green" size={20} />
-                                    //         </RightIcon2>
-                                    //     ) : (
-                                    //         <RightIcon2 style={{ top: 6 }} >
-                                    //             <Feather name="x-circle" color="red" size={20} />
-                                    //         </RightIcon2>
-                                    //     )}
                                 />
 
-                                {/* {
-                                    name.length < 1 ? null : nameVerfy ? null :
-                                        <Text style={{ marginLeft: 20, marginTop: -20, marginBottom: 10, color: 'red', }}>
-                                            Name should be more then 1 characters.</Text>
-                                } */}
-
+                                
                                 {/* لماذا يريد الشخص أن يصبح سينيور */}
 
                                 <Text style={labelStyle}>Motivation</Text>
@@ -146,27 +184,12 @@ const RequestSeniorToAdminPage = () => {
                                   icon="lightbulb-o"
                                     placeholder="motivation"
                                     placeholderTextColor={darkLight}
-                                    onChangeText={handleChange('motivation')}
+                                    onChangeText={setMotivation}
                                     onBlur={handleBlur('motivation')}
-                                    // onChange={e => handlemotivation(e)}
-                                    // value={values.motivation}
-                                    // rightIcon22={
-                                    //     email.length < 1 ? null : emailVerfy ? (
-                                    //         <RightIcon2 style={{ top: 6 }} >
-                                    //             <Feather name="check-circle" color="green" size={20} />
-                                    //         </RightIcon2>
-                                    //     ) : (
-                                    //         <RightIcon2 style={{ top: 6 }} >
-                                    //             <Feather name="x-circle" color="red" size={20} />
-                                    //         </RightIcon2>
-                                    //     )}
+                                    
 
                                 />
-                                {/* {
-                                    email.length < 1 ? null : emailVerfy ? null :
-                                        <Text style={{ marginLeft: 20, marginTop: -20, marginBottom: 10, color: 'red', fontWeight: 'bold' }}>
-                                            Enter Proper Email Address.</Text>
-                                } */}
+                                
 
 
                                 {/* كيف يمكنه المساهمة في تطوير الفرق الجينيور*/}
@@ -174,20 +197,13 @@ const RequestSeniorToAdminPage = () => {
                                 <MyTextInput
                                     icon="users"
                                     placeholderTextColor={darkLight}
-                                    onChangeText={handleChange('contribution')}
+                                    onChangeText={setContribution}
                                     onBlur={handleBlur('contribution')}
                                     placeholder="contribution"
-                                    // onChange={e => handlecontribution(e)}
-                                    // value={values.contribution}
+                                    
 
                                 />
-                                {/* {errorMessage ? (
-                                    <Text style={styles.error}>{errorMessage}</Text>
-                                ) : (
-                                    <Text style={styles.success}>{successMassage}</Text>
-                                )} */}
-
-                                 
+                                
 
                                    {/* التخصص*/}
 
@@ -197,27 +213,15 @@ const RequestSeniorToAdminPage = () => {
                                     icon="book"
                                     placeholder="major"
                                     placeholderTextColor={darkLight}
-                                    onChangeText={handleChange('major')}
+                                    onChangeText={setMajor}
                                     onBlur={handleBlur('major')}
-                                    // onChange={e => handlemajor(e)}
-                                    // value={values.major}
-                                    // rightIcon22={
-                                    //     email.length < 1 ? null : emailVerfy ? (
-                                    //         <RightIcon2 style={{ top: 6 }} >
-                                    //             <Feather name="check-circle" color="green" size={20} />
-                                    //         </RightIcon2>
-                                    //     ) : (
-                                    //         <RightIcon2 style={{ top: 6 }} >
-                                    //             <Feather name="x-circle" color="red" size={20} />
-                                    //         </RightIcon2>
-                                    //     )}
 
                                 />
                                
                                  
                                              {/* الوثائق والشهادات*/}
       
-                                 <Text style={labelStyle}>Certifications</Text>
+                                 <Text style={labelStyle}>Certifications/Document</Text>
 
                                       <TouchableOpacity style={styles.fileButton} onPress={handleFilePicker}>
                                         <Text style={styles.submitText}>Select Certifications/Document</Text>
@@ -225,22 +229,15 @@ const RequestSeniorToAdminPage = () => {
                                 
                                       {file && (
                                         <View style={styles.fileInfo}>
-                                          <Text>File Name: {file.name}</Text>
+                                          <Text>Certifications/Document Name: {file.name}</Text>
                                         </View>
                                       )} 
                                 
-                                   
-                               
-                                       
+                                <StyledButton>
 
-                                
-                            
-
-
-                                <StyledButton
-                                    onPress={() => {}}
-                                >
-                                    <ButtonText>Submit a Request to the Admin</ButtonText>
+                                <TouchableOpacity style={styles.submitButton} onPress={handleRequestSeniorToAdmin}>
+                                                    <Text style={styles.submitText}>Submit a Request to the Admin</Text>
+                                                </TouchableOpacity>
                                 </StyledButton>
 
 
