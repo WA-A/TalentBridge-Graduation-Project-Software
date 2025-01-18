@@ -116,18 +116,18 @@ const [pushNotToken,setpushNotToken]=useState('');
     });
     
     
-      const handleLogin = async (values) => {
+    const handleLogin = async (values) => {
         try {
           const dataToSend = {
             ...values,
           };
           console.log('Sending login Data:', dataToSend);
-    
+      
           // تحديد عنوان الخادم بناءً على المنصة
           const baseUrl = Platform.OS === 'web' 
             ? 'http://localhost:3000' 
             : 'http://192.168.1.239:3000'; // عنوان IP الشبكة المحلية للجوال
-    
+      
           const response = await fetch(`${baseUrl}/auth/signin`, {
             method: 'POST',
             headers: {
@@ -135,38 +135,56 @@ const [pushNotToken,setpushNotToken]=useState('');
             },
             body: JSON.stringify(dataToSend),
           });
-    
+      
           if (!response.ok) {
             const errorData = await response.json();
+            console.error('Error response:', errorData);
             throw new Error(errorData.message || 'Something went wrong');
           }
-    
+      
           const result = await response.json();
-          console.log('User login successfully:', result);    
-          // حفظ التوكين في AsyncStorage
+          console.log('User login successfully:', result);
+      
+          // التحقق من وجود التوكين
           if (result.token) {
             await AsyncStorage.setItem('userToken', result.token); // تخزين التوكين محليًا
             console.log('Token saved successfully');
-            navigation.navigate('HomeScreen');
+      
+            // الوصول إلى الدور داخل الكائن user
+            if (result.user && result.user.Role) {
+              console.log('User role:', result.user.Role);
+      
+              if (result.user.Role === 'Admin') {
+                console.log('Navigating to AdminHome');
+                navigation.navigate('AdminHomePage');
+              } else {
+                console.log('Navigating to HomeScreen');
+                navigation.navigate('HomeScreen');
+              }
+            } else {
+              console.warn('Role is not defined or user object is missing in the response');
+            }
+          } else {
+            console.warn('No token found in response');
           }
+      
+          // حفظ expoPushToken إذا كان موجودًا
           if (expoPushToken) {
             try {
               await AsyncStorage.setItem('expoPushToken', expoPushToken); // Save the token in AsyncStorage
               console.log('Push token saved successfully after login');
-          
             } catch (error) {
               console.error('Error saving push token:', error);
             }
-          }             
-          else {
-            console.warn('No token found in response');
           }
-    
+      
         } catch (error) {
-            setMenuVisible(true);
-            setErrorMessage3( error.message);
+          console.error('Login Error:', error);
+          setMenuVisible(true);
+          setErrorMessage3(error.message);
         }
       };
+      
 
     return (
       
