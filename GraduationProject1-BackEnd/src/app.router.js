@@ -9,7 +9,7 @@ import ExternalApiLanguagesRouter from "./../ExternalApiLanguages/ExternalApiLan
 import ExternalApiSkillsRouter from "./../ExternalApiSkills/ExternalApiSkills.router.js"
 import ExternalApiFieldsRouter from './../ExternalApiFields/ExternalApiFields.router.js'
 import NotificationRouter from './modules/Notification/Notification.Router.js'
-
+import RequestSeniorToAdminRouter from './modules/RequestSeniorToAdmin/RequestSeniorToAdmin.router.js'
 import ApplicationTrainRouter from "./modules/Application/Application.router.js"
 import cors from 'cors';
 import dotenv from 'dotenv';
@@ -31,8 +31,7 @@ const Appinit = (app,express)=>{
     app.use('/externalapiFields',ExternalApiFieldsRouter);
     app.use('/applicationtrain',ApplicationTrainRouter);
     app.use('/notification',NotificationRouter);
-
-
+    app.use('/requestseniortoadmin',RequestSeniorToAdminRouter);
 
 
     

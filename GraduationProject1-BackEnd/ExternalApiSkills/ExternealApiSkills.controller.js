@@ -207,7 +207,7 @@ const Skills = [
 ];
 
 
-export const AddSkills = async (req, res) => {
+export const AddSkills = async (req, res) => {     // With Token
     try {
         if (!req.user) {
             console.log("User not authorized: No token provided.");
@@ -235,7 +235,7 @@ export const AddSkills = async (req, res) => {
         const addedSkills = [];
         const failedSkills = [];
 
-        user.Skills = user.Skills.map(skill => ({
+        user.Skill = user.Skill.map(skill => ({
             ...skill,
             Rate: skill.Rate || 1 
         }));
@@ -256,14 +256,14 @@ export const AddSkills = async (req, res) => {
                 continue;
             }
         
-            const skillExists = user.Skills.some(skill => skill.id === selectedSkill.id);
+            const skillExists = user.Skill.some(skill => skill.id === selectedSkill.id);
             if (skillExists) {
                 console.log(`Skill already exists for user: ${SkillId}`);
                 failedSkills.push(SkillId);
                 continue;
             }
         
-            user.Skills.push({
+            user.Skill.push({
                 id: selectedSkill.id,
                 name: selectedSkill.name,
                 code: selectedSkill.code,
@@ -288,6 +288,43 @@ export const AddSkills = async (req, res) => {
         return res.status(500).json({ message: "Internal Server Error." });
     }
 };
+
+
+export const AddSkillWithoutToken = async ( SkillId, Rate ) => {
+    try {
+
+       // const { SkillId, Rate } = req.body;
+
+        if (!SkillId || Rate === undefined) {
+            return { status: 400, message: "SkillId and Rate are required." };
+        }
+
+        if (Rate < 1 || Rate > 5) {
+            return { status: 400, message: "Rate must be between 1 and 5." };
+        }
+
+        console.log("Request received:", { SkillId, Rate });
+
+        const skillToAdd = Skills.find(skill => skill.id.toString() === SkillId.toString());
+
+        if (!skillToAdd) {
+            console.log("Available Skills:", Skills);
+            return { status: 404, message: "Skill not found for SkillId." };
+        }
+
+        console.log("Skill found:", skillToAdd);
+        //return skillToAdd;
+        return { id: skillToAdd.id, name: skillToAdd.name, code: skillToAdd.code, Rate: Rate };
+
+       //return res.status(400).json({id: skillToAdd.id, name: skillToAdd.name, code: skillToAdd.code, Rate});
+
+    } catch (error) {
+        console.error("Error selecting skill:", error.message);
+        throw error;
+    }
+};
+
+
 
 
 
