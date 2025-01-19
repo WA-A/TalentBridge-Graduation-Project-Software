@@ -71,139 +71,139 @@ const Skills = [
     { id: 68, name: "Blockchain", code: "bc" },
     { id: 69, name: "IoT", code: "iot" },
     { id: 70, name: "AR/VR Development", code: "arvr" },
-        { id: 71, name: "Business Analysis", code: "ba" },
-        { id: 72, name: "Project Management", code: "pm" },
-        { id: 73, name: "Agile Methodologies", code: "am" },
-        { id: 74, name: "Scrum", code: "sc" },
-        { id: 75, name: "DevOps", code: "dv" },
-        { id: 76, name: "Microservices", code: "ms" },
-        { id: 77, name: "Event-Driven Architecture", code: "eda" },
-        { id: 78, name: "RESTful APIs", code: "api" },
-        { id: 79, name: "Software Testing", code: "st" },
-        { id: 80, name: "Test Automation", code: "ta" },
-        { id: 81, name: "Quality Assurance", code: "qa" },
-        { id: 82, name: "Integration Testing", code: "it" },
-        { id: 83, name: "Load Testing", code: "lt" },
-        { id: 84, name: "UI/UX Design", code: "ux" },
-        { id: 85, name: "Wireframing", code: "wf" },
-        { id: 86, name: "Prototyping", code: "pt" },
-        { id: 87, name: "Digital Marketing", code: "dm" },
-        { id: 88, name: "SEO", code: "seo" },
-        { id: 89, name: "Content Marketing", code: "cm" },
-        { id: 90, name: "Social Media Marketing", code: "smm" },
-        { id: 91, name: "Email Marketing", code: "em" },
-        { id: 92, name: "Copywriting", code: "cw" },
-        { id: 93, name: "Affiliate Marketing", code: "af" },
-        { id: 94, name: "Brand Management", code: "bm" },
-        { id: 95, name: "E-commerce", code: "ec" },
-        { id: 96, name: "CRM Tools", code: "crm" },
-        { id: 97, name: "Data Visualization", code: "dvz" },
-        { id: 98, name: "Big Data", code: "bd" },
-        { id: 99, name: "Data Mining", code: "dmn" },
-        { id: 100, name: "Natural Language Processing", code: "nlp" },
-        { id: 101, name: "Image Processing", code: "ip" },
-        { id: 102, name: "Computer Vision", code: "cv" },
-        { id: 103, name: "Reinforcement Learning", code: "rl" },
-        { id: 104, name: "Speech Recognition", code: "sr" },
-        { id: 105, name: "Audio Signal Processing", code: "asp" },
-        { id: 106, name: "Video Editing", code: "ve" },
-        { id: 107, name: "Animation", code: "an" },
-        { id: 108, name: "Game Design", code: "gd" },
-        { id: 109, name: "Game Development", code: "gdev" },
-        { id: 110, name: "3D Modeling", code: "3d" },
-        { id: 111, name: "Motion Graphics", code: "mg" },
-        { id: 112, name: "Augmented Reality", code: "ar" },
-        { id: 113, name: "Virtual Reality", code: "vr" },
-        { id: 114, name: "ERP Systems", code: "erp" },
-        { id: 115, name: "SAP", code: "sap" },
-        { id: 116, name: "Oracle E-Business Suite", code: "oe" },
-        { id: 117, name: "Risk Management", code: "rm" },
-        { id: 118, name: "Financial Analysis", code: "fa" },
-        { id: 119, name: "Accounting", code: "acc" },
-        { id: 120, name: "Investment Management", code: "im" },
-        { id: 121, name: "Forex Trading", code: "fx" },
-        { id: 122, name: "Cryptocurrency", code: "crypto" },
-        { id: 123, name: "Quantitative Analysis", code: "qa" },
-        { id: 124, name: "Human Resources", code: "hr" },
-        { id: 125, name: "Recruitment", code: "rec" },
-        { id: 126, name: "Talent Management", code: "tm" },
-        { id: 127, name: "Training and Development", code: "td" },
-        { id: 128, name: "Employee Relations", code: "er" },
-        { id: 129, name: "Payroll Management", code: "pm" },
-        { id: 130, name: "Healthcare Management", code: "hm" },
-        { id: 131, name: "Public Health", code: "ph" },
-        { id: 132, name: "Clinical Research", code: "cr" },
-        { id: 133, name: "Pharmaceuticals", code: "pharm" },
-        { id: 134, name: "Biotechnology", code: "bio" },
-        { id: 135, name: "Environmental Science", code: "es" },
-        { id: 136, name: "Renewable Energy", code: "re" },
-        { id: 137, name: "Sustainable Development", code: "sd" },
-        { id: 138, name: "Civil Engineering", code: "ce" },
-        { id: 139, name: "Mechanical Engineering", code: "me" },
-        { id: 140, name: "Electrical Engineering", code: "ee" },
-        { id: 141, name: "Chemical Engineering", code: "che" },
-        { id: 142, name: "Aerospace Engineering", code: "ae" },
-        { id: 143, name: "Industrial Design", code: "id" },
-        { id: 144, name: "Urban Planning", code: "up" },
-        { id: 145, name: "Architecture", code: "arch" },
-        { id: 146, name: "Interior Design", code: "intd" },
-        { id: 147, name: "Fashion Design", code: "fd" },
-        { id: 148, name: "Event Planning", code: "ep" },
-        { id: 149, name: "Photography", code: "photo" },
-        { id: 150, name: "Videography", code: "video" },
-            { id: 151, name: "Audio Engineering", code: "audio" },
-            { id: 152, name: "Music Production", code: "music" },
-            { id: 153, name: "Songwriting", code: "song" },
-            { id: 154, name: "Voice Acting", code: "va" },
-            { id: 155, name: "Public Speaking", code: "ps" },
-            { id: 156, name: "Negotiation", code: "neg" },
-            { id: 157, name: "Conflict Resolution", code: "cr" },
-            { id: 158, name: "Leadership", code: "lead" },
-            { id: 159, name: "Team Management", code: "tm" },
-            { id: 160, name: "Strategic Planning", code: "sp" },
-            { id: 161, name: "Time Management", code: "time" },
-            { id: 162, name: "Critical Thinking", code: "ct" },
-            { id: 163, name: "Problem Solving", code: "psolve" },
-            { id: 164, name: "Decision Making", code: "dm" },
-            { id: 165, name: "Creative Writing", code: "cw" },
-            { id: 166, name: "Technical Writing", code: "tw" },
-            { id: 167, name: "Grant Writing", code: "gw" },
-            { id: 168, name: "Editing", code: "edit" },
-            { id: 169, name: "Proofreading", code: "proof" },
-            { id: 170, name: "Translation", code: "trans" },
-            { id: 171, name: "Interpretation", code: "interp" },
-            { id: 172, name: "Foreign Languages", code: "fl" },
-            { id: 173, name: "Teaching", code: "teach" },
-            { id: 174, name: "Curriculum Development", code: "cd" },
-            { id: 175, name: "Instructional Design", code: "id" },
-            { id: 176, name: "E-learning Development", code: "elearn" },
-            { id: 177, name: "Tutoring", code: "tutor" },
-            { id: 178, name: "Coaching", code: "coach" },
-            { id: 179, name: "Mentorship", code: "mentor" },
-            { id: 180, name: "Life Coaching", code: "lc" },
-            { id: 181, name: "Personal Development", code: "pd" },
-            { id: 182, name: "Fitness Training", code: "ft" },
-            { id: 183, name: "Yoga Instruction", code: "yoga" },
-            { id: 184, name: "Nutrition Planning", code: "np" },
-            { id: 185, name: "Wellness Coaching", code: "wc" },
-            { id: 186, name: "Physical Therapy", code: "pt" },
-            { id: 187, name: "Occupational Therapy", code: "ot" },
-            { id: 188, name: "Speech Therapy", code: "st" },
-            { id: 189, name: "Nursing", code: "nurse" },
-            { id: 190, name: "Pharmacy", code: "pharm" },
-            { id: 191, name: "Healthcare Administration", code: "ha" },
-            { id: 192, name: "Clinical Psychology", code: "cp" },
-            { id: 193, name: "Counseling", code: "counsel" },
-            { id: 194, name: "Social Work", code: "sw" },
-            { id: 195, name: "Childcare", code: "cc" },
-            { id: 196, name: "Elder Care", code: "ec" },
-            { id: 197, name: "Pet Care", code: "pc" },
-            { id: 198, name: "Veterinary Medicine", code: "vet" },
-            { id: 199, name: "Zoology", code: "zoo" },
-            { id: 200, name: "Marine Biology", code: "mb" }
-    
-        
-    
+    { id: 71, name: "Business Analysis", code: "ba" },
+    { id: 72, name: "Project Management", code: "pm" },
+    { id: 73, name: "Agile Methodologies", code: "am" },
+    { id: 74, name: "Scrum", code: "sc" },
+    { id: 75, name: "DevOps", code: "dv" },
+    { id: 76, name: "Microservices", code: "ms" },
+    { id: 77, name: "Event-Driven Architecture", code: "eda" },
+    { id: 78, name: "RESTful APIs", code: "api" },
+    { id: 79, name: "Software Testing", code: "st" },
+    { id: 80, name: "Test Automation", code: "ta" },
+    { id: 81, name: "Quality Assurance", code: "qa" },
+    { id: 82, name: "Integration Testing", code: "it" },
+    { id: 83, name: "Load Testing", code: "lt" },
+    { id: 84, name: "UI/UX Design", code: "ux" },
+    { id: 85, name: "Wireframing", code: "wf" },
+    { id: 86, name: "Prototyping", code: "pt" },
+    { id: 87, name: "Digital Marketing", code: "dm" },
+    { id: 88, name: "SEO", code: "seo" },
+    { id: 89, name: "Content Marketing", code: "cm" },
+    { id: 90, name: "Social Media Marketing", code: "smm" },
+    { id: 91, name: "Email Marketing", code: "em" },
+    { id: 92, name: "Copywriting", code: "cw" },
+    { id: 93, name: "Affiliate Marketing", code: "af" },
+    { id: 94, name: "Brand Management", code: "bm" },
+    { id: 95, name: "E-commerce", code: "ec" },
+    { id: 96, name: "CRM Tools", code: "crm" },
+    { id: 97, name: "Data Visualization", code: "dvz" },
+    { id: 98, name: "Big Data", code: "bd" },
+    { id: 99, name: "Data Mining", code: "dmn" },
+    { id: 100, name: "Natural Language Processing", code: "nlp" },
+    { id: 101, name: "Image Processing", code: "ip" },
+    { id: 102, name: "Computer Vision", code: "cv" },
+    { id: 103, name: "Reinforcement Learning", code: "rl" },
+    { id: 104, name: "Speech Recognition", code: "sr" },
+    { id: 105, name: "Audio Signal Processing", code: "asp" },
+    { id: 106, name: "Video Editing", code: "ve" },
+    { id: 107, name: "Animation", code: "an" },
+    { id: 108, name: "Game Design", code: "gd" },
+    { id: 109, name: "Game Development", code: "gdev" },
+    { id: 110, name: "3D Modeling", code: "3d" },
+    { id: 111, name: "Motion Graphics", code: "mg" },
+    { id: 112, name: "Augmented Reality", code: "ar" },
+    { id: 113, name: "Virtual Reality", code: "vr" },
+    { id: 114, name: "ERP Systems", code: "erp" },
+    { id: 115, name: "SAP", code: "sap" },
+    { id: 116, name: "Oracle E-Business Suite", code: "oe" },
+    { id: 117, name: "Risk Management", code: "rm" },
+    { id: 118, name: "Financial Analysis", code: "fa" },
+    { id: 119, name: "Accounting", code: "acc" },
+    { id: 120, name: "Investment Management", code: "im" },
+    { id: 121, name: "Forex Trading", code: "fx" },
+    { id: 122, name: "Cryptocurrency", code: "crypto" },
+    { id: 123, name: "Quantitative Analysis", code: "qa" },
+    { id: 124, name: "Human Resources", code: "hr" },
+    { id: 125, name: "Recruitment", code: "rec" },
+    { id: 126, name: "Talent Management", code: "tm" },
+    { id: 127, name: "Training and Development", code: "td" },
+    { id: 128, name: "Employee Relations", code: "er" },
+    { id: 129, name: "Payroll Management", code: "pm" },
+    { id: 130, name: "Healthcare Management", code: "hm" },
+    { id: 131, name: "Public Health", code: "ph" },
+    { id: 132, name: "Clinical Research", code: "cr" },
+    { id: 133, name: "Pharmaceuticals", code: "pharm" },
+    { id: 134, name: "Biotechnology", code: "bio" },
+    { id: 135, name: "Environmental Science", code: "es" },
+    { id: 136, name: "Renewable Energy", code: "re" },
+    { id: 137, name: "Sustainable Development", code: "sd" },
+    { id: 138, name: "Civil Engineering", code: "ce" },
+    { id: 139, name: "Mechanical Engineering", code: "me" },
+    { id: 140, name: "Electrical Engineering", code: "ee" },
+    { id: 141, name: "Chemical Engineering", code: "che" },
+    { id: 142, name: "Aerospace Engineering", code: "ae" },
+    { id: 143, name: "Industrial Design", code: "id" },
+    { id: 144, name: "Urban Planning", code: "up" },
+    { id: 145, name: "Architecture", code: "arch" },
+    { id: 146, name: "Interior Design", code: "intd" },
+    { id: 147, name: "Fashion Design", code: "fd" },
+    { id: 148, name: "Event Planning", code: "ep" },
+    { id: 149, name: "Photography", code: "photo" },
+    { id: 150, name: "Videography", code: "video" },
+    { id: 151, name: "Audio Engineering", code: "audio" },
+    { id: 152, name: "Music Production", code: "music" },
+    { id: 153, name: "Songwriting", code: "song" },
+    { id: 154, name: "Voice Acting", code: "va" },
+    { id: 155, name: "Public Speaking", code: "ps" },
+    { id: 156, name: "Negotiation", code: "neg" },
+    { id: 157, name: "Conflict Resolution", code: "cr" },
+    { id: 158, name: "Leadership", code: "lead" },
+    { id: 159, name: "Team Management", code: "tm" },
+    { id: 160, name: "Strategic Planning", code: "sp" },
+    { id: 161, name: "Time Management", code: "time" },
+    { id: 162, name: "Critical Thinking", code: "ct" },
+    { id: 163, name: "Problem Solving", code: "psolve" },
+    { id: 164, name: "Decision Making", code: "dm" },
+    { id: 165, name: "Creative Writing", code: "cw" },
+    { id: 166, name: "Technical Writing", code: "tw" },
+    { id: 167, name: "Grant Writing", code: "gw" },
+    { id: 168, name: "Editing", code: "edit" },
+    { id: 169, name: "Proofreading", code: "proof" },
+    { id: 170, name: "Translation", code: "trans" },
+    { id: 171, name: "Interpretation", code: "interp" },
+    { id: 172, name: "Foreign Languages", code: "fl" },
+    { id: 173, name: "Teaching", code: "teach" },
+    { id: 174, name: "Curriculum Development", code: "cd" },
+    { id: 175, name: "Instructional Design", code: "id" },
+    { id: 176, name: "E-learning Development", code: "elearn" },
+    { id: 177, name: "Tutoring", code: "tutor" },
+    { id: 178, name: "Coaching", code: "coach" },
+    { id: 179, name: "Mentorship", code: "mentor" },
+    { id: 180, name: "Life Coaching", code: "lc" },
+    { id: 181, name: "Personal Development", code: "pd" },
+    { id: 182, name: "Fitness Training", code: "ft" },
+    { id: 183, name: "Yoga Instruction", code: "yoga" },
+    { id: 184, name: "Nutrition Planning", code: "np" },
+    { id: 185, name: "Wellness Coaching", code: "wc" },
+    { id: 186, name: "Physical Therapy", code: "pt" },
+    { id: 187, name: "Occupational Therapy", code: "ot" },
+    { id: 188, name: "Speech Therapy", code: "st" },
+    { id: 189, name: "Nursing", code: "nurse" },
+    { id: 190, name: "Pharmacy", code: "pharm" },
+    { id: 191, name: "Healthcare Administration", code: "ha" },
+    { id: 192, name: "Clinical Psychology", code: "cp" },
+    { id: 193, name: "Counseling", code: "counsel" },
+    { id: 194, name: "Social Work", code: "sw" },
+    { id: 195, name: "Childcare", code: "cc" },
+    { id: 196, name: "Elder Care", code: "ec" },
+    { id: 197, name: "Pet Care", code: "pc" },
+    { id: 198, name: "Veterinary Medicine", code: "vet" },
+    { id: 199, name: "Zoology", code: "zoo" },
+    { id: 200, name: "Marine Biology", code: "mb" }
+
+
+
 ];
 
 
@@ -215,7 +215,7 @@ export const AddSkills = async (req, res) => {     // With Token
         }
 
         const authUser = req.user;
-        const { SkillsWithRates } = req.body;  
+        const { SkillsWithRates } = req.body;
 
         if (!authUser || !Array.isArray(SkillsWithRates) || SkillsWithRates.length === 0) {
             console.log("Missing required fields: authUser or SkillsWithRates.");
@@ -237,7 +237,7 @@ export const AddSkills = async (req, res) => {     // With Token
 
         user.Skills = user.Skills.map(skill => ({
             ...skill,
-            Rate: skill.Rate || 1 
+            Rate: skill.Rate || 1
         }));
 
         for (const { SkillId, Rate } of SkillsWithRates) {
@@ -246,30 +246,30 @@ export const AddSkills = async (req, res) => {     // With Token
                 failedSkills.push(SkillId);
                 continue;
             }
-        
+
             const skillIdNum = parseInt(SkillId);
             const selectedSkill = Skills.find(skill => skill.id === skillIdNum);
-            
+
             if (!selectedSkill) {
                 console.log(`Skill not found: ${SkillId}`);
                 failedSkills.push(SkillId);
                 continue;
             }
-        
+
             const skillExists = user.Skills.some(skill => skill.id === selectedSkill.id);
             if (skillExists) {
                 console.log(`Skill already exists for user: ${SkillId}`);
                 failedSkills.push(SkillId);
                 continue;
             }
-        
+
             user.Skills.push({
                 id: selectedSkill.id,
                 name: selectedSkill.name,
                 code: selectedSkill.code,
-                Rate: Rate  
+                Rate: Rate
             });
-        
+
             addedSkills.push({ ...selectedSkill, Rate: Rate });
         }
 
@@ -290,10 +290,10 @@ export const AddSkills = async (req, res) => {     // With Token
 };
 
 
-export const AddSkillWithoutToken = async ( SkillId, Rate ) => {
+export const AddSkillWithoutToken = async (SkillId, Rate) => {
     try {
 
-       // const { SkillId, Rate } = req.body;
+        // const { SkillId, Rate } = req.body;
 
         if (!SkillId || Rate === undefined) {
             return { status: 400, message: "SkillId and Rate are required." };
@@ -316,7 +316,7 @@ export const AddSkillWithoutToken = async ( SkillId, Rate ) => {
         //return skillToAdd;
         return { id: skillToAdd.id, name: skillToAdd.name, code: skillToAdd.code, Rate: Rate };
 
-       //return res.status(400).json({id: skillToAdd.id, name: skillToAdd.name, code: skillToAdd.code, Rate});
+        //return res.status(400).json({id: skillToAdd.id, name: skillToAdd.name, code: skillToAdd.code, Rate});
 
     } catch (error) {
         console.error("Error selecting skill:", error.message);
@@ -359,7 +359,7 @@ export const DeleteSkill = async (req, res) => {
             return res.status(404).json({ message: "Skill not found." });
         }
 
-        user.Skills.splice(skillIndex, 1); 
+        user.Skills.splice(skillIndex, 1);
 
         await user.save();
 
@@ -429,9 +429,9 @@ export const GetUserSkills = async (req, res) => {
 export const AddMoreSkills = async (req, res) => {
     try {
         if (!req.user) {
-            return res.status(401).json({ 
+            return res.status(401).json({
                 status: "error",
-                message: "User not authorized. Please provide a valid token." 
+                message: "User not authorized. Please provide a valid token."
             });
         }
 
@@ -439,17 +439,17 @@ export const AddMoreSkills = async (req, res) => {
         const { SkillsWithRates } = req.body;
 
         if (!authUser || !Array.isArray(SkillsWithRates) || SkillsWithRates.length === 0) {
-            return res.status(400).json({ 
+            return res.status(400).json({
                 status: "error",
-                message: "User ID and SkillsWithRates are required, and must be a non-empty array." 
+                message: "User ID and SkillsWithRates are required, and must be a non-empty array."
             });
         }
 
         const user = await UserModel.findById(authUser);
         if (!user) {
-            return res.status(404).json({ 
+            return res.status(404).json({
                 status: "error",
-                message: "User not found." 
+                message: "User not found."
             });
         }
 
@@ -474,10 +474,10 @@ export const AddMoreSkills = async (req, res) => {
                 });
                 continue;
             }
-        
+
             const skillIdNum = parseInt(SkillId);
             const selectedSkill = Skills.find(skill => skill.id === skillIdNum);
-            
+
             if (!selectedSkill) {
                 errors.notFoundSkills.push({
                     skillId: SkillId,
@@ -485,7 +485,7 @@ export const AddMoreSkills = async (req, res) => {
                 });
                 continue;
             }
-        
+
             const skillExists = user.Skills.some(skill => skill.id === selectedSkill.id);
             if (skillExists) {
                 errors.existingSkills.push({
@@ -494,14 +494,14 @@ export const AddMoreSkills = async (req, res) => {
                 });
                 continue;
             }
-        
+
             user.Skills.push({
                 id: selectedSkill.id,
                 name: selectedSkill.name,
                 code: selectedSkill.code,
                 Rate: Rate
             });
-        
+
             addedSkills.push({ ...selectedSkill, Rate: Rate });
         }
 
@@ -534,10 +534,10 @@ export const AddMoreSkills = async (req, res) => {
         });
 
     } catch (error) {
-        return res.status(500).json({ 
+        return res.status(500).json({
             status: "error",
             message: "Internal Server Error.",
-            error: error.message 
+            error: error.message
         });
     }
 };

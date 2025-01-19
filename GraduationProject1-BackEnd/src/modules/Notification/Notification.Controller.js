@@ -336,3 +336,109 @@ export const createLikeNotification = async (postId, userId) => {
       console.error("Error creating notification:", error.message);
     }
   };
+
+  export const createApprovalRequestNotification = async (req, res) => {
+    try {
+      // استخراج userId من التوكن (موجود في req.user بعد التحقق من التوكن)
+      const userId = req.user._id; // الـ userId تم التحقق منه في الـ middleware
+      const { seniorId, requestContent, requestId } = req.body;
+  
+      // الحصول على بيانات السينيور وصاحب الطلب
+      const senior = await UserModel.findById(seniorId).select('FullName deviceToken');
+      if (!senior) {
+        return res.status(404).json({ message: "Senior user not found" });
+      }
+  
+      const requestingUser = await UserModel.findById(userId).select('FullName');
+      if (!requestingUser) {
+        return res.status(404).json({ message: "Requesting user not found" });
+      }
+  
+      // إنشاء إشعار في قاعدة البيانات للسينيور
+      const newNotification = new Notification({
+        userId: senior._id,
+        type: 'approval_request',
+        title: 'New approval request',
+        message: `${requestingUser.FullName} has sent an approval request: "${requestContent}"`,
+        action: `/requests/${requestId}/approve`,
+        data: { requestId, seniorId, userId },
+        priority: 'high',
+      });
+  
+      await newNotification.save();
+  
+      // إرسال الإشعار باستخدام Expo Push Notifications
+      await sendPushNotification(
+        senior.deviceToken,
+        'New Approval Request',
+        `${requestingUser.FullName} has sent an approval request: "${requestContent}"`,
+        { requestId, seniorId, userId, notificationType: 'approval_request' }
+      );
+  
+      return res.status(201).json({
+        message: "Approval request notification created and sent successfully",
+        notification: newNotification,
+      });
+    } catch (error) {
+      console.error("Error creating approval request notification:", error);
+      return res.status(500).json({ message: "Internal server error" });
+    }
+  };
+
+  export const approveRequest = async (req, res) => {
+    try {
+      // استخراج userId من التوكن (موجود في req.user بعد التحقق من التوكن)
+      const userId = req.user._id; // الـ userId تم التحقق منه في الـ middleware
+      const { requestId, seniorId } = req.body;
+  
+      // العثور على الطلب في قاعدة البيانات
+      const request = await RequestModel.findById(requestId);
+      if (!request) {
+        return res.status(404).json({ message: "Request not found" });
+      }
+  
+      // التحقق من أن السينيور هو من يوافق على الطلب
+      if (request.seniorId.toString() !== seniorId) {
+        return res.status(403).json({ message: "Only the assigned senior can approve this request" });
+      }
+  
+      // تحديث حالة الطلب إلى "approved"
+      request.status = 'approved';
+      await request.save();
+  
+      // إرسال إشعار للمستخدم الذي قدم الطلب
+      const requestingUser = await UserModel.findById(userId).select('FullName deviceToken');
+      if (!requestingUser) {
+        return res.status(404).json({ message: "Requesting user not found" });
+      }
+  
+      // إنشاء إشعار للموافقة
+      const approvalNotification = new Notification({
+        userId: requestingUser._id,
+        type: 'request_approved',
+        title: 'Your request has been approved',
+        message: `Your approval request has been successfully approved by ${requestingUser.FullName}`,
+        action: `/requests/${requestId}`,
+        data: { requestId, seniorId, userId },
+        priority: 'high',
+      });
+  
+      await approvalNotification.save();
+  
+      // إرسال الإشعار للمستخدم الذي قدم الطلب
+      await sendPushNotification(
+        requestingUser.deviceToken,
+        'Request Approved',
+        `Your approval request has been successfully approved by ${requestingUser.FullName}`,
+        { requestId, seniorId, userId, notificationType: 'request_approved' }
+      );
+  
+      return res.status(200).json({
+        message: "Request approved successfully and notification sent",
+        notification: approvalNotification,
+      });
+    } catch (error) {
+      console.error("Error approving request:", error);
+      return res.status(500).json({ message: "Internal server error" });
+    }
+  };

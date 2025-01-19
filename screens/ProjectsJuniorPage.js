@@ -356,7 +356,7 @@ const [project,setProject]=useState();
   }}
   style={{ marginRight: 100 }}
 >
-  <Ionicons name="folder" size={20} color={isNightMode ? "#000" : "#fff"} />
+  <Ionicons name="folder" size={20} color= {isNightMode ? Colors.fifthColor : Colors.fifthColor}  />
 </TouchableOpacity>
             <TouchableOpacity onPress={() => nav.navigate('AddPostScreen')} style={{ marginRight: 100 }}>
               <Ionicons name="add-circle" size={25} color={isNightMode ? primary : "#000"} />
@@ -523,7 +523,7 @@ Suggested for you  </Text></TouchableOpacity>
     <View
       style={[
         styles.grid,
-        { flexDirection: isMobile ? "column" : "row", justifyContent: isMobile ? "flex-start" : "space-between" },
+        { flexDirection: isMobile ? "column" : "row", justifyContent: isMobile ? "flex-start" : "space-between" },{backgroundColor: isNightMode ? "#000" : Colors.primary }
       ]}
     >
       {project.filteredProjects.map((project, index) => (
@@ -641,7 +641,7 @@ Suggested for you  </Text></TouchableOpacity>
     }
   }}
 >
-  <Ionicons name="folder" size={25} color={isNightMode ? primary : "#000"} />
+  <Ionicons name="folder" size={25} color= {isNightMode ? Colors.fifthColor : Colors.fifthColor}  />
 </TouchableOpacity>
           <TouchableOpacity onPress={() => nav.navigate('ProfilePage')}>
             <Image
@@ -904,23 +904,27 @@ closeButtonText: {
     width: '45%',
     alignItems: 'center',
   },
+grid: {
+  flexDirection: "row",
+  flexWrap: "wrap",
+  justifyContent: "space-between", // يجعل البطاقات تبدأ بجانب بعضها
+  marginBottom: 40,
+flex:"1",  gap: 20, // توفير مسافة ثابتة بين البطاقات
+},
 
-  grid: {
-    flexWrap: "wrap",
-    alignItems: "flex-start",marginBottom:40,
-  },
   cardMobile: {
     marginBottom: 20,
-    marginHorizontal: 5, // تقليل المسافة بين البطاقات
     width: width - 20, // تأكيد أن عرض البطاقة يتناسب مع عرض الشاشة
   },
-  cardWeb: {
-    marginBottom: 20,
-    marginHorizontal: 10,
-    width: "22%", // تحديد عرض ثابت للبطاقات في الويب
-    height: 300, // تثبيت الارتفاع للويب
-    width:400,
-  },
+cardWeb: {
+  marginBottom: 20,
+  flexBasis: "30%", // تحديد نسبة العرض للبطاقة
+  width: '50%',
+  height: "auto", // السماح للارتفاع بالتكيف مع المحتوى
+  flex: 1, 
+},
+
+
   cardMobileContent: {
     backgroundColor: "#fff",
     borderRadius: 10,
@@ -932,17 +936,19 @@ closeButtonText: {
     overflow: "hidden",
     justifyContent: "space-between",
   },
-  cardWebContent: {
-    backgroundColor: "#fff",
-    borderRadius: 10,
-    shadowColor: "#000",
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 5 },
-    elevation: 5,
-    overflow: "hidden",
-    justifyContent: "space-between",
-  },
+cardWebContent: {
+  height: "auto", // السماح للارتفاع بالتكيف
+  padding: 10,
+  backgroundColor: "#fff",
+  borderRadius: 10,
+  shadowColor: "#000",
+  shadowOpacity: 0.2,
+  shadowRadius: 10,
+  shadowOffset: { width: 0, height: 5 },
+  elevation: 5,
+},
+
+
   projectImage: {
     width: "100%",
     height: 150,
@@ -951,11 +957,15 @@ closeButtonText: {
     padding: 10,
     flex: 1,
   },
-  projectName: {
-    fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 5,
-  },
+projectName: {
+  fontSize: 18,
+  fontWeight: "bold",
+  marginBottom: 5,
+  whiteSpace: "nowrap",
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+},
+
   projectDescription: {
     fontSize: 14,
     color: "#666",

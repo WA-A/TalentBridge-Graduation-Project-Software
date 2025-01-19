@@ -4,7 +4,7 @@ const NotificationSchema = new mongoose.Schema({
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },  // مرجع للمستخدم
     type: { 
         type: String, 
-        enum: ['message', 'update', 'reminder', 'warning', 'system','comment','like'],  // أنواع الإشعارات الممكنة
+        enum: ['message', 'update', 'reminder', 'warning', 'system','comment','like','request_approved','approval_request'],  // أنواع الإشعارات الممكنة
         required: true 
     },
     title: { type: String, required: true },  // عنوان الإشعار
