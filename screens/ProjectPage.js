@@ -1,5 +1,5 @@
 import React, { useState, useContext,useEffect } from 'react';
-import { View, Text, TouchableOpacity,StyleSheet, Modal, FlatList, ScrollView, Image,Platform,Animated} from 'react-native';
+import { View, Text, TouchableOpacity,StyleSheet, Modal, FlatList, ScrollView, Image,Platform,Animated,Button} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
@@ -9,18 +9,19 @@ import { Colors } from './../compnent/Style';
 import { Card,UserInfoText, UserName, ContainerCard, PostText, UserInfo, ButtonText, StyledButton} from './../compnent/Style.js';
 import { TextInput } from 'react-native-gesture-handler';
 const { tertiary, firstColor, secColor,fifthColor,secondary, primary, darkLight, fourhColor, careysPink} = Colors;
-import { EvilIcons} from '@expo/vector-icons';
+import { EvilIcons,MaterialCommunityIcons} from '@expo/vector-icons';
 import MultiSelect from 'react-native-multiple-select';
 import { useSharedValue, useAnimatedStyle, withSpring } from "react-native-reanimated";
 import { Dimensions } from "react-native";
 import * as Animatable from "react-native-animatable";
+import { Picker } from '@react-native-picker/picker'
+import { colors } from 'react-native-elements';
 
 const { width } = Dimensions.get("window");
 
 
 export default function ProjectPage({ navigation, route }) {
     const { userData } = route.params || {}; 
-    console.log("project",userData);
     const baseUrl = Platform.OS === 'web'
       ? 'http://localhost:3000'
       : 'http://192.168.1.239:3000' || 'http://192.168.0.107:3000';
@@ -46,7 +47,99 @@ const [project,setProject]=useState();
   
     };
   
-  
+    const [isApplicationModalVisible, setIsApplicationModalVisible] = useState(false);  // تغيير اسم المتغير هنا
+    const [selectedRole, setSelectedRole] = useState("");
+    const [notes, setNotes] = useState("");
+    const [numberOfTrain, setNumberOfTrain] = useState("3");
+
+    const toggleModal = () => {
+      setIsApplicationModalVisible(!isApplicationModalVisible);  // تغيير اسم المتغير هنا
+    };
+
+
+    
+
+
+
+    // دالة لإنشاء الطلب
+    const handleCreateApplication = async (applicationData) => {
+      try {
+        // استرجاع التوكن
+        const token = await AsyncStorage.getItem('userToken');
+        if (!token) {
+          console.error('Token not found');
+          return;
+        }
+    
+        // إرسال الطلب إلى الخادم
+        const response = await fetch(`${baseUrl}/applicationtrain/createapplicationtrain`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Wasan__${token}`,
+          },
+          body: JSON.stringify(applicationData), // بيانات الطلب
+        });
+    
+        // التحقق من الرد
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Failed to create application');
+        }
+    
+        const result = await response.json();
+    
+        console.log('Application created successfully:', result);
+    
+        // إرسال الإشعار بعد نجاح إنشاء الطلب
+        await sendApprovalNotification(result.application._id, result.application.roleId, token);
+    
+        alert('Application created and notification sent successfully');
+      } catch (error) {
+        console.error('Error creating application:', error.message);
+        alert('Failed to create application. Please try again.');
+      }
+    };
+    
+    // دالة لإرسال الإشعار
+    const sendApprovalNotification = async (applicationId, roleId, token) => {
+      try {
+        const notificationResponse = await fetch(`${baseUrl}/notification/createApprovalRequestNotification`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Wasan__${token}`,
+          },
+          body: JSON.stringify({
+            requestId: applicationId,
+            requestContent: 'New application request',seniorId:userData.CreatedBySenior._id,
+          }),
+        });
+    
+        if (!notificationResponse.ok) {
+          const errorData = await notificationResponse.json();
+          throw new Error(errorData.message || 'Failed to send notification');
+        }
+    
+        console.log('Notification sent successfully');
+      } catch (error) {
+        console.error('Error sending notification:', error.message);
+      }
+    };
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
         const handleGetFeilds = async () => {
           try {
             const token = await AsyncStorage.getItem('userToken'); // استرجاع التوكن
@@ -75,37 +168,6 @@ const [project,setProject]=useState();
           }
         };
       
-
-        const handleGetProjectByFeildOrSkills = async () => {
-          try {
-            const token = await AsyncStorage.getItem('userToken'); // استرجاع التوكن
-            console.log('Retrieved Token:', token); // تحقق من التوكن
-            if (!token) { 
-              console.error('Token not found');
-              return;
-            }
-      
-            const response = await fetch(`${baseUrl}/project/GetProjectsByFieldAndSkills`, {
-              method: 'GET',
-              headers: {
-                'Authorization': `Wasan__${token}`, // تأكد من التنسيق الصحيح هنا
-              },
-            });
-      
-            if (!response.ok) {
-              const errorData = await response.json(); // إذا كان هناك خطأ في الرد
-              throw new Error(errorData.message || 'Failed to fetch skills');
-            }
-      
-            const data = await response.json(); // تحويل الرد إلى JSON
-            setProject(data.projects);
-
-            console.log('Fetched Project:', data.projects); // تحقق من البيانات
-
-          } catch (error) {
-            console.error('Error fetching Project:', error.message);
-          }
-        };
 
         const navigateToProjectDetails = (project) => {
           // Implement navigation logic here, e.g., navigation.navigate('ProjectDetails', { project });
@@ -204,7 +266,6 @@ const [project,setProject]=useState();
     const [selectFieldModalVisible, setSelectFieldModalVisible] = useState(false); 
     const [applyNowModalVisible, setApplyNowModalVisible] = useState(false);  
     const [selectedField, setSelectedField] = useState('');
-    const [NumberOfTrain ,setNumberOfTrain] = useState('');
     const [ProfileLink ,setProfileLink] = useState('');
   const [scrollY] = useState(new Animated.Value(0));
     let [fontsLoaded] = useFonts({
@@ -217,15 +278,24 @@ const [project,setProject]=useState();
         return <View><Text>Loading...</Text></View>;
     }
 
-    const handleFieldSelect = (field) => {
-        selectFieldModalVisible(field);
-        setSelectFieldModalVisible(false);
-    };
-
-    const handleApplyNow = () => {
-      setNumberOfTrain();
-      setProfileLink();
-      setApplyNowModalVisible(true);
+   
+    const handleApplyNow = (selectedRole, notes,id,numberOfTrain) => {
+      console.log(selectedRole);
+      if (!selectedRole) {
+        console.error('Role is required');
+        return;
+      }
+    
+      // إعداد البيانات لتنسيق الطلب
+      const applicationData = {
+        projectId:id,  // معرّف المشروع (يجب تغييره حسب السياق)
+        roleId: selectedRole,  // الدور الذي اختاره المستخدم
+        NumberOfTrain: numberOfTrain,  // عدد التدريبات (يمكن تغييره وفقًا للمدخلات الأخرى إن لزم الأمر)
+        notes: notes,  // الملاحظات التي أضافها المستخدم
+      };
+    
+      // استدعاء دالة إنشاء الطلب مع البيانات المدخلة
+      handleCreateApplication(applicationData);
   };
 
     // Load custom fonts
@@ -237,7 +307,7 @@ const [project,setProject]=useState();
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
-    setProject(userData);
+    console.log(userData);
     handleViewProfile();
     handleGetFeilds();
   }, []);
@@ -259,7 +329,12 @@ const [project,setProject]=useState();
   }));
 
   const isMobile = width <= 768;
-
+  const handleApply = (projectId) => {
+    // يمكنك تعديل الوظيفة حسب متطلباتك
+    console.log(`User applied for project ID: ${projectId}`);
+    alert("You have successfully applied for this project!");
+  };
+  
   return (
     <View style={{ flex: 1,backgroundColor: isNightMode ? "#000" :"#ffff" }}>
       <View style={{
@@ -427,89 +502,191 @@ const [project,setProject]=useState();
         )}
                
                
-        <View>
-  <TouchableOpacity onPress={() => openModal('Feild')}>
-    <Text style={{ color: "#000", fontSize: 18 }}>
-      Select Field
-    </Text>
-  </TouchableOpacity>
-</View>
 
-<ScrollView 
-  contentContainerStyle={[styles.container, { backgroundColor: isNightMode ? "#000" : "#fff" }]}
+        <ScrollView
+  contentContainerStyle={[
+    styles.container,
+    { backgroundColor: isNightMode ? "#000" : "#fff" },
+  ]}
 >
-  {project && project.filteredProjects.length > 0 ? (
-    <View
+  {userData && userData._id ? (
+    <Animatable.View
+      key={userData._id}
+      animation="zoomIn"
+      delay={100}
+      duration={500}
       style={[
-        styles.grid,
-        { flexDirection: isMobile ? "column" : "row", justifyContent: isMobile ? "flex-start" : "space-between" },
+        styles.card,
+        isMobile ? styles.cardMobile : styles.cardWeb, // تطبيق أحجام مختلفة حسب الجهاز
       ]}
     >
-      {project.filteredProjects.map((project, index) => (
-        <Animatable.View
-          key={project._id}
-          animation="zoomIn"
-          delay={index * 100} // تأخير كل بطاقة 100ms لتظهر بالتتابع
-          duration={500} // مدة تأثير الزوم
-          style={[isMobile ? styles.cardMobile : styles.cardWeb]} // تنسيق مخصص لكل منصة
-        >
+      <TouchableOpacity
+        style={isMobile ? styles.cardMobileContent : styles.cardWebContent}
+      >
+        <View style={styles.cardDetails}>
+          <View style={styles.projectHeader}>
+            <Text style={styles.projectName}>{userData.ProjectName}</Text>
+            <TouchableOpacity
+              style={styles.applyButton}
+              onPress={() => {toggleModal()}}
+            >
+              <Text style={styles.applyButtonText}>Apply</Text>
+            </TouchableOpacity>
+          </View>
+          <Text style={styles.projectDescription}>
+            {userData.Description}
+          </Text>
+          <Text style={styles.projectCreatedAt}>
+            Created on:{" "}
+            {new Date(userData.created_at).toLocaleDateString("en-US")}
+          </Text>
+          <Text style={styles.projectDuration}>
+            Duration: {userData.DurationInMounths} months
+          </Text>
+          <Text style={styles.projectStatus}>
+            Status: {userData.Status}
+          </Text>
+          <Text style={styles.projectPrice}>
+            Price: ${userData.Price}
+          </Text>
+          <Text style={styles.projectLocation}>
+            Work Location: {userData.WorkLoaction}
+          </Text>
+          <View style={styles.divider} />
+
+          <Text style={styles.sectionTitle}>Benefits:</Text>
+          <Text style={styles.projectBenefits}>
+            {userData.Benefits}
+          </Text>
+
+          <Text style={styles.sectionTitle}>Required Skills:</Text>
+          {userData.RequiredSkills.map((skill, index) => (
+            <View key={skill._id} style={styles.skillContainer}>
+              <Text style={styles.skillName}>{skill.name}</Text>
+              <View style={styles.skillRating}>
+                {[1, 2, 3, 4, 5].map((starIndex) => (
+                  <MaterialCommunityIcons
+                    key={starIndex}
+                    name={
+                      starIndex <= skill.Rate ? "star" : "star-outline"
+                    }
+                    size={20}
+                    color={
+                      starIndex <= skill.Rate
+                        ? "#F7A8B8"
+                        : isNightMode
+                        ? Colors.primary
+                        : Colors.black
+                    }
+                  />
+                ))}
+              </View>
+            </View>
+          ))}
+
+          <Text style={styles.sectionTitle}>Roles:</Text>
+          {userData.Roles.map((role) => (
+            <Text key={role._id} style={styles.roleName}>
+              {role.roleName}
+            </Text>
+          ))}
+
+          <View style={styles.divider} />
+
+          <Text style={styles.sectionTitle}>Created By:</Text>
           <TouchableOpacity
-            style={isMobile ? styles.cardMobileContent : styles.cardWebContent}
-            onPress={() => navigateToProjectDetails(project)}
+            onPress={() => navigateToSeniorProfile(userData.CreatedBySenior)}
+            style={styles.seniorInfo}
           >
-          
-        
-            <View style={styles.cardDetails}>
-            
-             
-              <Text style={styles.projectName}>{project.ProjectName}</Text>
-              <Text style={styles.projectDescription}>
-                {project.Description.slice(0, 50)}...
+            <Image
+              source={{
+                uri:
+                  userData.CreatedBySenior?.PictureProfile?.secure_url ||
+                  "https://via.placeholder.com/50",
+              }}
+              style={styles.seniorAvatar}
+            />
+            <View>
+              <Text style={styles.seniorName}>
+                {userData.CreatedBySenior?.FullName || "Unknown Senior"}
               </Text>
-              <Text style={styles.projectCreatedAt}>
-                Created on: {new Date(project.created_at).toLocaleDateString('en-US')}
+              <Text style={styles.seniorEmail}>
+                Email: {userData.CreatedBySenior?.Email || "N/A"}
               </Text>
-              <Text style={styles.projectStatus}>
-                Status: {project.Status}
+              <Text style={styles.seniorPhone}>
+                Phone: {userData.CreatedBySenior?.PhoneNumber || "N/A"}
               </Text>
-              <Text style={styles.projectPrice}>
-                Price: ${project.Price}
-              </Text>
-                       <View style={styles.divider} />
-           
-
-              <View style={styles.seniorInfo}>
-              <TouchableOpacity style={styles.seniorInfo}
-  onPress={() => navigateToSeniorProfile(project.CreatedBySenior)}
->
-<Image
-  source={{
-    uri: project.CreatedBySenior?.PictureProfile?.secure_url || "https://via.placeholder.com/50",
-  }}
-  style={styles.seniorAvatar}
-/>
-
-  <Text style={styles.seniorName}>
-    {project.CreatedBySenior ? project.CreatedBySenior.FullName : "Unknown Senior"}
-  </Text>
-</TouchableOpacity>
-
-</View>
-              {/* "See More" Button */}
-            
             </View>
           </TouchableOpacity>
-        </Animatable.View>
-      ))}
-    </View>
+          <Modal
+                animationType="slide"
+                transparent={true}
+                visible={isApplicationModalVisible}  // تغيير اسم المتغير هنا
+                onRequestClose={toggleModal}
+              >
+                <View style={styles.modalOverlay}>
+                  <View style={styles.modalContent}>
+                    <Text style={styles.modalTitle}>Apply for Project</Text>
+                    <Text style={styles.projectName}>{userData.ProjectName}</Text>
+
+                    {/* قائمة منسدلة لاختيار الدور */}
+                    <Text style={styles.label}>Select Role:</Text>
+                    <Picker
+                      selectedValue={selectedRole}
+                      style={styles.picker}
+                      onValueChange={(itemValue) => setSelectedRole(itemValue)}
+                    >
+                      {userData.Roles.map((role) => (
+                        <Picker.Item key={role._id} label={role.roleName} value={role._id} />
+                      ))}
+                    </Picker>
+
+                    {/* حقل الملاحظات */}
+                    <Text style={styles.label}>Notes:</Text>
+                    <TextInput
+                      style={styles.textInput}
+                      multiline
+                      numberOfLines={4}
+                      value={notes}
+                      onChangeText={setNotes}
+                      placeholder="Enter your notes"
+                    />
+
+                    {/* حقل عدد التدريب */}
+                    <Text style={styles.label}>Number of Train:</Text>
+                    <TextInput
+                      style={styles.textInput}
+                      value={numberOfTrain}
+                      onChangeText={setNumberOfTrain}
+                      keyboardType="numeric"
+                      placeholder="Enter number of train"
+                    />
+<TouchableOpacity
+  style={styles.modalButton}
+  onPress={() => {
+    handleApplyNow(selectedRole, notes,userData._id,numberOfTrain);
+    toggleModal();
+  }}
+>
+  <Text style={styles.modalButtonText}>Submit Application</Text>
+</TouchableOpacity>
+                   
+<TouchableOpacity
+  style={styles.modalButton}
+  onPress={toggleModal}
+>
+  <Text style={styles.modalButtonText}>Cancel</Text>
+</TouchableOpacity>
+                  </View>
+                </View>
+              </Modal>
+        </View>
+      </TouchableOpacity>
+    </Animatable.View>
   ) : (
-    <Text style={styles.noProjects}>
-      No projects available.
-    </Text>
+    <Text>No project data available</Text>
   )}
 </ScrollView>
-
-
 
   
             
@@ -743,7 +920,7 @@ closeButtonText: {
         },
         container: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'center',justifyContent:"center",
     padding: 10,
   },
   backButton: {
@@ -827,19 +1004,17 @@ closeButtonText: {
 
   grid: {
     flexWrap: "wrap",
-    alignItems: "flex-start",marginBottom:40,
+    alignItems: "center",marginBottom:40,justifyContent:"center"
   },
   cardMobile: {
-    marginBottom: 20,
-    marginHorizontal: 5, // تقليل المسافة بين البطاقات
-    width: width - 20, // تأكيد أن عرض البطاقة يتناسب مع عرض الشاشة
+    marginBottom: 50,
+    marginHorizontal: 2, // تقليل المسافة بين البطاقات
+    width: width - 22, // تأكيد أن عرض البطاقة يتناسب مع عرض الشاشة
   },
   cardWeb: {
-    marginBottom: 20,
-    marginHorizontal: 10,
-    width: "22%", // تحديد عرض ثابت للبطاقات في الويب
-    height: 300, // تثبيت الارتفاع للويب
-    width:400,
+    width: "60%", // عرض البطاقة على الأجهزة المكتبية
+    minWidth: 600, // الحد الأدنى للعرض
+    maxWidth: 800, marginTop:20,
   },
   cardMobileContent: {
     backgroundColor: "#fff",
@@ -951,4 +1126,168 @@ closeButtonText: {
     backgroundColor: Colors.fourhColor,
     marginVertical: 8,
   },
+  
+  projectName: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#333",
+    marginBottom: 8,
+  },
+  projectDescription: {
+    fontSize: 14,
+    color: "#666",
+    marginBottom: 10,
+  },
+  projectCreatedAt: {
+    fontSize: 12,
+    color: "#888",
+    marginBottom: 5,
+  },
+  projectDuration: {
+    fontSize: 12,
+    color: "#888",
+    marginBottom: 5,
+  },
+  projectStatus: {
+    fontSize: 14,
+    color: "#28a745", // لون مختلف بناءً على الحالة
+    marginBottom: 8,
+  },
+  projectPrice: {
+    fontSize: 14,
+    fontWeight: "bold",
+    color: "#000",
+    marginBottom: 8,
+  },
+  projectLocation: {
+    fontSize: 14,
+    color: "#555",
+    marginBottom: 8,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: "#ddd",
+    marginVertical: 10,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#444",
+    marginBottom: 8,
+  },
+  projectBenefits: {
+    fontSize: 14,
+    color: "#666",
+    marginBottom: 10,
+  },
+  skillContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 5,
+  },
+  skillName: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: "#555",
+    marginRight: 10,
+  },
+  skillRating: {
+    flexDirection: "row",
+  },
+  roleName: {
+    fontSize: 14,
+    color: "#555",
+    marginBottom: 5,
+  },
+  seniorInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 10,
+  },
+  seniorAvatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginRight: 10,
+  },
+  seniorName: {
+    fontSize: 14,
+    fontWeight: "bold",
+    color: "#333",
+  },
+  seniorEmail: {
+    fontSize: 12,
+    color: "#555",
+  },
+  seniorPhone: {
+    fontSize: 12,
+    color: "#555",
+  },
+  applyButton: {
+  alignSelf: "flex-end",
+  backgroundColor:Colors.fourhColor, // لون الزر
+  paddingVertical: 8,
+  paddingHorizontal: 15,
+  borderRadius: 5,
+  marginBottom: 10,
+},
+applyButtonText: {
+  color: "#fff",
+  fontSize: 14,
+  fontWeight: "bold",
+  textAlign: "center",
+},  projectHeader: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  marginBottom: 10, // مسافة بين الصف وزر التقديم
+},
+modalOverlay: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
+  modalContent: {
+    width: "80%",
+    backgroundColor: "#fff",
+    padding: 20,
+    borderRadius: 10,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 15,
+  },
+  label: {
+    fontSize: 16,
+    marginBottom: 5,
+    marginTop: 10,
+  },
+  picker: {
+  borderRadius: 5,         // زوايا مستديرة
+  borderBottomWidth: 2,       // سمك السطر السفلي
+},
+  textInput: {
+    height: 40,
+    borderColor: "#ccc",
+    borderWidth: 1,
+    borderRadius: 5,
+    paddingLeft: 10,
+    marginBottom: 15,
+  },modalButton: {
+  backgroundColor:fourhColor,  // اللون الأزرق
+  paddingVertical: 10,         // ارتفاع الزر
+  paddingHorizontal: 20,       // عرض الزر
+  borderRadius: 5,             // زوايا مستديرة
+  alignItems: "center",        // محاذاة النص في المنتصف
+  marginVertical: 5,           // مسافة بين الأزرار
+},
+modalButtonText: {
+  color: "#fff",               // لون النص أبيض
+  fontSize: 16,                // حجم النص
+  fontWeight: "bold",          // سماكة النص
+},
+
+
 });

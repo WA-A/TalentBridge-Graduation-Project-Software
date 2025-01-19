@@ -1289,7 +1289,7 @@ const handleGetAllPosts = async () => {
        <View style={{ flexDirection: 'row', alignItems: 'center',left: '10%',
     }}>
      <TouchableOpacity onPress={() => nav.navigate('HomeScreen')} style={{ marginRight: 100, marginLeft: 80}}>
-           <Ionicons name="home" size={20} color= {isNightMode ? primary : "#000"} />
+           <Ionicons name="home" size={20} color= {isNightMode ? Colors.fifthColor : Colors.fifthColor} />
          </TouchableOpacity>
        
    
@@ -1323,7 +1323,7 @@ const handleGetAllPosts = async () => {
   }}
   style={{ marginRight: 100 }}
 >
-  <Ionicons name="folder" size={20} color={isNightMode ? primary : "#000"} />
+  <Ionicons name="folder" size={20} color={isNightMode ? "#000": "#000"} />
 </TouchableOpacity>
 
          <TouchableOpacity onPress={() => nav.navigate('AddPostScreen')} style={{ marginRight:100 }}>
@@ -2118,7 +2118,7 @@ const handleGetAllPosts = async () => {
     }
   }}
 >
-  <Ionicons name="folder" size={25} color={isNightMode ? primary : "#000"} />
+  <Ionicons name="folder" size={25} color={isNightMode ?"#000" : "#000"} />
 </TouchableOpacity>
     <TouchableOpacity onPress={() => nav.navigate('ProfilePage')}>
       
@@ -2139,7 +2139,7 @@ const handleGetAllPosts = async () => {
       <Ionicons name="add-circle" size={28} color='#000' />
     </TouchableOpacity>
     <TouchableOpacity onPress={() => handleGetAllPosts()}>
-      <Ionicons name="home" size={25} color='#000' />
+      <Ionicons name="home" size={25} color= {isNightMode ? Colors.fifthColor : Colors.fifthColor}  />
     </TouchableOpacity>
   </Animated.View>
 )}

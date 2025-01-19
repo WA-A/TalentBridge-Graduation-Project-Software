@@ -11,4 +11,7 @@ router.post('/createCommentNotificationforweb',auth(EndPoints.CreateNotification
 router.get('/getUserNotifications',auth(EndPoints.CreateNotification),NotificationController.getUserNotifications);
 router.patch('/UpdateNotificationStatus/:notificationId',auth(EndPoints.CreateNotification),NotificationController.UpdateNotificationStatus);
 router.post('/toggleLike',auth(EndPoints.CreateNotification),NotificationController.toggleLike);
+router.post('/createApprovalRequestNotification',auth(EndPoints.CreateNotification),NotificationController.createApprovalRequestNotification);//postman
+router.post('/approveRequest',auth(EndPoints.CreateNotification),NotificationController.approveRequest); //postman
+
 export default router;
