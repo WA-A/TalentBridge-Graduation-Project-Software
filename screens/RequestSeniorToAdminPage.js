@@ -55,7 +55,7 @@ const RequestSeniorToAdminPage = () => {
             const [Major, setMajor] = useState('');
             const [file, setFile] = useState(null);
 
-         const handleFilePicker = async () => {
+             const handleFilePicker = async () => {
                     try {
                       const result = await DocumentPicker.getDocumentAsync({
                         type: 'application/pdf', // فقط ملفات PDF
@@ -77,6 +77,52 @@ const RequestSeniorToAdminPage = () => {
                       console.error('Error picking file:', error);
                     }
                   };
+                  const convertFileToBase64 = async (fileUri) => {
+                    console.log("filebefore",fileUri)
+                    try {
+                        // Fetch the file from its URI
+                        const response = await fetch(fileUri);
+                        const blob = await response.blob();
+                
+                        return new Promise((resolve, reject) => {
+                            const reader = new FileReader();
+                            
+                            // Triggered when the reading is completed
+                            reader.onloadend = () => {
+                                resolve(reader.result); // Base64 data
+                            };
+                
+                            // Triggered on error
+                            reader.onerror = (error) => {
+                                reject(`Error converting file to Base64: ${error}`);
+                            };
+                
+                            // Read the blob as a Base64 string
+                            reader.readAsDataURL(blob);
+                        });
+                    } catch (error) {
+                        console.error('Error fetching or converting file:', error);
+                        throw error;
+                    }
+                };
+                function base64ToBlob(base64Data, mimeType) {
+                    const byteCharacters = atob(base64Data.split(',')[1]);  // إزالة الـ prefix 'data:application/pdf;base64,'
+                    const byteArrays = [];
+                
+                    for (let offset = 0; offset < byteCharacters.length; offset += 1024) {
+                        const slice = byteCharacters.slice(offset, offset + 1024);
+                        const byteNumbers = new Array(slice.length);
+                
+                        for (let i = 0; i < slice.length; i++) {
+                            byteNumbers[i] = slice.charCodeAt(i);
+                        }
+                
+                        const byteArray = new Uint8Array(byteNumbers);
+                        byteArrays.push(byteArray);
+                    }
+                
+                    return new Blob(byteArrays, { type: mimeType });
+                }
    
 
                   const handleRequestSeniorToAdmin = async () => {
@@ -97,16 +143,19 @@ const RequestSeniorToAdminPage = () => {
                             let fileUri = file.uri;
                         
                             // إذا كان التطبيق على الويب
-                            if (Platform.OS === 'web' && fileUri.startsWith('file://')) {
-                                // في الويب لا نحتاج إلى "file://"
-                                fileUri = fileUri.replace('file://', '');
-                            }
+                             if (Platform.OS === 'web') {
+                                                // تحويل البيانات إلى Blob (بيانات الـ PDF المشفرة بتنسيق Base64)
+                                                const pdfBlob = base64ToBlob(file.uri, 'application/pdf');
+                                                formData.append('Certifications', pdfBlob, 'Certifications.pdf');  // اسم الملف الذي سيتم حفظه
+                                            
+                                            }
                         
-                            formData.append('Certifications', {
+                            else {formData.append('Certifications', {
                                 uri: fileUri,
                                 name: file.name,
                                 type: file.mimeType || 'application/pdf',
                             });
+                        }
                         }
                         
                         console.log('FormData before sending:', formData);
