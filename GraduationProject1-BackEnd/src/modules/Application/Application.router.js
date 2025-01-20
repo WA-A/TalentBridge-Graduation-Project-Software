@@ -15,4 +15,5 @@ router.get('/getApplicationById/:applicationId',auth(EndPoints.CreateApplication
 router.delete('/deleteApplication/:applicationId',auth(EndPoints.CreateApplication),ApplicationController.deleteApplication);//jenior senior
 router.put('/approveApplication/:applicationId',auth(EndPoints.getApplication),ApplicationController.approveApplication); //senior
 router.get('/getProjectByApplicationId/:applicationId',auth(EndPoints.CreateApplication),ApplicationController.getProjectByApplicationId); //jenior //senior
+router.get('/getPendingRequests',auth(EndPoints.CreateApplication),ApplicationController.getPendingRequests);
 export default router

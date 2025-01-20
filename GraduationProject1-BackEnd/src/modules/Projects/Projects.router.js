@@ -15,5 +15,6 @@ router.put('/updateownprojectcreated',auth(EndPoints.CreateProject),fileUpload(F
 router.delete('/deleteownprojectcreated/:ProjectId',Validation(schema.DeleteProjectSchema),auth(EndPoints.CreateProject),ProjectController.DeleteProjectBySenior);
 router.get('/GetProjectsByFieldAndSkills',auth(EndPoints.getProject),ProjectController.GetProjectsByFieldAndSkills);
 router.get('/viewprojectbyfiled/:FieldId',auth(EndPoints.getProject),ProjectController.GetProjectsByField);
+router.get('/filterprojects', auth(EndPoints.getProject), ProjectController.GetProjectsByFilters);
 
 export default router

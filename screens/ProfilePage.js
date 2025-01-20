@@ -15,6 +15,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import io from 'socket.io-client';
 import Modal from 'react-native-modal';
 import ImageViewer from 'react-native-image-zoom-viewer';
+import * as Animatable from "react-native-animatable";
 
 import {
   Colors,
@@ -43,6 +44,25 @@ const { width, height } = Dimensions.get('window');
 
 
 export default function ProfilePage({ navigation }) {
+
+
+
+
+
+
+
+
+
+
+
+
+    // دالة سيتم استدعائها عند الضغط على البطاقة
+    const handleCardPress = (requestId) => {
+      // يمكنك إضافة الوظائف التي تريدها هنا
+      Alert.alert('Request pressed', `Request ID: ${requestId}`);
+    };
+  const [pendingRequests,setpendingRequests]=useState();
+
   const [selectedItem, setSelectedItem] = useState(null);
   const [modalVisibleEditting, setModalEdittingVisible] = useState(false);
   const [currentModalEditting, setCurrentModalEditting] = useState('');
@@ -584,7 +604,36 @@ export default function ProfilePage({ navigation }) {
 
 
   /////////////////////////////////////////////////////////////////
+  const handlegetPendingRequests = async () => {
+    try {
+      const token = await AsyncStorage.getItem('userToken'); // الحصول على التوكن من التخزين
+      console.log(token);
+      if (!token) {
+        console.error('Token not found');
+        return;
+      }
 
+      const response = await fetch(`${baseUrl}/applicationtrain/getPendingRequests`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Wasan__${token}`, // تأكد من كتابة التوكن بالشكل الصحيح
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+     setpendingRequests(data.data);
+
+    } catch (error) {
+      console.error('Error fetching ProfileData:', error);
+    }
+    finally {
+      setIsLoading(false);
+    }
+  };
 
 
   const handleViewProfile = async () => {
@@ -1610,6 +1659,7 @@ export default function ProfilePage({ navigation }) {
     getAllCertifications();
     handleGetLanguagesUser();
     handleGetSkillsUser();
+    handlegetPendingRequests();
     socket.on('profileUpdated', (updatedUserData) => {
       console.log('Profile updated:', updatedUserData);
 
@@ -3265,7 +3315,7 @@ export default function ProfilePage({ navigation }) {
           <View style={{ flex: 1, marginBottom: 50 }}>
             {/* قائمة التبويبات */}
             <View style={styles.tabContainer}>
-              {['Messages', 'Connect', 'Posts', 'Comments'].map((tab) => (
+              {['Messages', 'Connect', 'Posts', 'Request'].map((tab) => (
                 <TouchableOpacity
                   key={tab}
                   onPress={() => setActiveTab(tab)}
@@ -3278,12 +3328,47 @@ export default function ProfilePage({ navigation }) {
             </View>
 
             {/* عرض محتوى التبويب المختار */}
-            <View style={[styles.content, { backgroundColor: isNightMode ? Colors.black : Colors.primary }]}>
-              {activeTab === 'Messages' && <Text style={[styles.tabContent, { color: isNightMode ? Colors.primary : Colors.black }]}>Messages Content</Text>}
-              {activeTab === 'Connect' && <Text style={[styles.tabContent, { color: isNightMode ? Colors.primary : Colors.black }]}>Connect Content</Text>}
-              {activeTab === 'Posts' && <Text style={[styles.tabContent, { color: isNightMode ? Colors.primary : Colors.black }]}>Posts Content</Text>}
-              {activeTab === 'Comments' && <Text style={[styles.tabContent, { color: isNightMode ? Colors.primary : Colors.black }]}>Comments Content</Text>}
-            </View>
+            {/* عرض محتوى التبويب المختار */}
+      <View style={[styles.content, { backgroundColor: isNightMode ? Colors.black : Colors.primary }]}>
+        {activeTab === 'Messages' && <Text style={[styles.tabContent, { color: isNightMode ? Colors.primary : Colors.black }]}>Messages Content</Text>}
+        {activeTab === 'Connect' && <Text style={[styles.tabContent, { color: isNightMode ? Colors.primary : Colors.black }]}>Connect Content</Text>}
+        {activeTab === 'Posts' && <Text style={[styles.tabContent, { color: isNightMode ? Colors.primary : Colors.black }]}>Posts Content</Text>}
+
+        {activeTab === 'Request' && (
+  <View style={styles.requestsContainer}>
+    {pendingRequests.length > 0 ? (
+      pendingRequests.map((request, index) => (  // إضافة `index` هنا
+        <>
+          <TouchableOpacity>
+            <Animatable.View
+              key={request._id}
+              animation="zoomIn"
+              delay={index * 100}  // تأخير كل بطاقة 100ms لتظهر بالتتابع
+              duration={500}  // مدة تأثير الزوم
+              style={styles.requestCard}>
+              <Text style={[styles.requestName, { color: isNightMode ? Colors.primary : Colors.black }]}>
+                {request.roleName}
+              </Text>
+              <TouchableOpacity
+                onPress={() => handleCardPress(request._id)}
+                style={styles.deleteIcon}
+              >
+                <Ionicons name="remove-circle-sharp" size={24} color="red" />
+              </TouchableOpacity>
+            </Animatable.View>
+          </TouchableOpacity>
+          <View style={styles.divider} />
+        </>
+      ))
+    ) : (
+      <Text style={[styles.noRequestsText, { color: isNightMode ? Colors.primary : Colors.black }]}>
+        No pending requests
+      </Text>
+    )}
+  </View>
+)}
+
+      </View>
           </View>
 
         </Animated.ScrollView>
@@ -4205,6 +4290,31 @@ const styles = StyleSheet.create({
   },
   scrollableItemsContainer: {
     flex: 1
+  },
+  requestsContainer: {
+    marginTop: 20,marginBottom: 20,
+    width: width - 20, // تأكيد أن عرض البطاقة يتناسب مع عرض الشاشة
+  },
+  requestCard: {
+    shadowColor: fifthColor,
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 5,
+    overflow: "hidden",margin:5,
+    justifyContent: "space-between",flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    marginBottom: 10,
+    padding: 15,
+    borderRadius: 10,
+  },
+  requestName: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  deleteIcon: {
+    padding: 5,
   },
 
 

@@ -9,7 +9,7 @@ import { Colors } from './../compnent/Style';
 import { Card,UserInfoText, UserName, ContainerCard, PostText, UserInfo, ButtonText, StyledButton} from './../compnent/Style.js';
 import { TextInput } from 'react-native-gesture-handler';
 const { tertiary, firstColor, secColor,fifthColor,secondary, primary, darkLight, fourhColor, careysPink} = Colors;
-import { EvilIcons} from '@expo/vector-icons';
+import { EvilIcons,AntDesign,MaterialIcons,MaterialCommunityIcons} from '@expo/vector-icons';
 import MultiSelect from 'react-native-multiple-select';
 import { useSharedValue, useAnimatedStyle, withSpring } from "react-native-reanimated";
 import { Dimensions } from "react-native";
@@ -44,7 +44,11 @@ const [project,setProject]=useState();
       setSelectedFeilds(selectedItems); // تحديث حالة اللغات المحددة
   
     };
+    const [isDropdownVisible, setDropdownVisible] = useState(false);
   
+    const toggleDropdown = () => {
+      setDropdownVisible(!isDropdownVisible);
+    };
   
         const handleGetFeilds = async () => {
           try {
@@ -74,7 +78,7 @@ const [project,setProject]=useState();
           }
         };
       
-        const handleGetProjectByFeildOrSkills = async () => {
+        const viewownprojectcreated = async () => {
           try {
             const token = await AsyncStorage.getItem('userToken'); // استرجاع التوكن
             console.log('Retrieved Token:', token); // تحقق من التوكن
@@ -83,7 +87,7 @@ const [project,setProject]=useState();
               return;
             }
         
-            const response = await fetch(`${baseUrl}/project/GetProjectsByFieldAndSkills`, {
+            const response = await fetch(`${baseUrl}/project/viewownprojectcreated`, {
               method: 'GET',
               headers: {
                 'Authorization': `Wasan__${token}`, // تأكد من التنسيق الصحيح هنا
@@ -107,12 +111,7 @@ const [project,setProject]=useState();
           //  console.error('Error fetching Project:', error.message);
           }
         };
-        
-        const navigateToProjectDetails = (project) => {
-          // Implement navigation logic here, e.g., navigation.navigate('ProjectDetails', { project });
-          console.log('Navigate to Project Details:', project);
-        };
-      
+   
         const navigateToSeniorProfile = async (senior) => {
           await handleViewOtherProfile(senior._id);  // الانتظار حتى يتم تحميل البيانات
           // التأكد من تحميل البيانات قبل الانتقال
@@ -124,16 +123,57 @@ const [project,setProject]=useState();
           }
         };
         
+        const GetProjectsByField = async (id) => {
+          console.log("Feild",id);
+          try {
+            const token = await AsyncStorage.getItem('userToken'); // استرجاع التوكن
+            console.log('Retrieved Token:', token); // تحقق من التوكن
+            if (!token) { 
+              console.error('Token not found');
+              return;
+            }
       
-        const handleSave = async () => {
+            const response = await fetch(`${baseUrl}/project/viewprojectbyfiled/${id}`, {
+              method: 'GET',
+              headers: {
+                'Authorization': `Wasan__${token}`, // تأكد من التنسيق الصحيح هنا
+              },
+            });
+      
+            if (!response.ok) {
+              const errorData = await response.json(); // إذا كان هناك خطأ في الرد
+              throw new Error(errorData.message || 'Failed to fetch skills');
+            }
+      
+            const data = await response.json(); // تحويل الرد إلى JSON
+            setProject(data.projects);
+            if(data.projects == null){
+              console.log("no project");
+              setProject(null);
+            }
+            console.log('Fetched Project:', data.projects); // تحقق من البيانات
+                  setModalVisible(false);
+          } catch (error) {
+            console.error('Error fetching Project:', error.message);
+          }
+        };
+        const navigateToProjectDetails = (project) => {
+          // Implement navigation logic here, e.g., navigation.navigate('ProjectDetails', { project });
+          console.log('Navigate to Project Details:', project);
+          navigation.navigate('ProjectPage', { userData: project });
+        };
+      
+       
+        const handleSave = async (selectedFeilds) => {
 
           if (currentModal === 'Feild') {
-            // إذا كان النوع "experience" (التجربة)
-       //     await addExperience();
+       console.log(selectedFeilds);
+       GetProjectsByField(selectedFeilds[0]);
           }
       
         };
       
+
 
   const [profile,setprofileimg] = useState('');
   const [profileUser,setOtherProfile] = useState('');
@@ -240,7 +280,7 @@ const [project,setProject]=useState();
   useEffect(() => {
     handleViewProfile();
     handleGetFeilds();
-    handleGetProjectByFeildOrSkills();
+    viewownprojectcreated();
   }, []);
   
 
@@ -429,25 +469,68 @@ const [project,setProject]=useState();
         )}
                
                
-       <View>
-  <TouchableOpacity onPress={() => openModal('Feild')}>
-    <Text style={{ color: "#000", fontSize: 18 }}>
-      Select Field
-    </Text>
-  </TouchableOpacity>
+        <View style={{
+  top:5,
+  left: 0,  // يحدد أن يكون العنصر عند أقصى اليسار
+  marginBottom: 15,  // المسافة بين العناصر الأخرى
+  flexDirection: 'row',  // عرض النص والأيقونة بشكل أفقي
+  alignItems: 'center',  // محاذاة النص والأيقونة عموديًا
+}}>
+          <TouchableOpacity onPress={()=>viewownprojectcreated()}>
+
+  <Text style={{
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: isNightMode ? primary : '#000',
+    backgroundColor: isNightMode ? '#000' : '#f9f9f9',
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 20,
+    opacity: 0.7,
+  }}>
+Your projects </Text></TouchableOpacity>
+<TouchableOpacity onPress={toggleDropdown}>
+
+  <AntDesign 
+    name="caretdown" 
+    size={16} 
+    color={isNightMode ? primary  : '#000'} 
+    style={{ marginLeft:1 }}  // المسافة بين النص والأيقونة
+  /></TouchableOpacity>
+
+{isDropdownVisible && (
+        <View >
+          <TouchableOpacity onPress={() =>openModal('Feild')}>
+          <Text style={{
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: isNightMode ? primary : '#000',
+    backgroundColor: isNightMode ? '#000' : Colors.fifthColor,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 14,
+    opacity: 0.7,
+  }}>
+              Select Project By Field
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
 </View>
+      <View style={styles.divider1} />
+                  
 
 <ScrollView 
   contentContainerStyle={[styles.container, { backgroundColor: isNightMode ? "#000" : "#fff" }]}
 >
-  {project && project.filteredProjects.length > 0 ? (
+  {project && project.length > 0 ? (
     <View
       style={[
         styles.grid,
-        { flexDirection: isMobile ? "column" : "row", justifyContent: isMobile ? "flex-start" : "space-between" },
+        { flexDirection: isMobile ? "column" : "row", justifyContent: isMobile ? "flex-start" : "space-between" },{backgroundColor: isNightMode ? "#000" : Colors.primary }
       ]}
     >
-      {project.filteredProjects.map((project, index) => (
+      {project.map((project, index) => (
         <Animatable.View
           key={project._id}
           animation="zoomIn"
@@ -463,8 +546,16 @@ const [project,setProject]=useState();
         
             <View style={styles.cardDetails}>
             
-             
-              <Text style={styles.projectName}>{project.ProjectName}</Text>
+            <View style={styles.experienceHeader}>
+              <TouchableOpacity  style={styles.editButton}>
+                <MaterialIcons name="edit" size={20} color={isNightMode ? Colors.primary : Colors.black} />
+              </TouchableOpacity>
+              <TouchableOpacity  style={styles.deleteButton}>
+                <MaterialCommunityIcons name="minus-circle" size={20} color={isNightMode ? Colors.primary : Colors.black} />
+              </TouchableOpacity>
+            </View>
+            <Text style={styles.projectName}>{project.ProjectName}</Text>
+
               <Text style={styles.projectDescription}>
                 {project.Description.slice(0, 50)}...
               </Text>
@@ -635,7 +726,7 @@ const [project,setProject]=useState();
                                     </>
               
                   <View style={styles.buttonsContainer}>
-                                  <TouchableOpacity onPress={handleSave} style={styles.saveButton}>
+                                  <TouchableOpacity onPress={()=>handleSave(selectedFeilds)} style={styles.saveButton}>
                                     <Text style={styles.saveButtonText}>Save</Text>
                                   </TouchableOpacity>
                                   <TouchableOpacity onPress={closeModal} style={styles.closeButton}>
@@ -953,5 +1044,19 @@ const styles = StyleSheet.create({
       height: 1,
       backgroundColor: Colors.fourhColor,
       marginVertical: 8,
-    },
+    }, experienceHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 10,marginTop:9,
+    },editButton: {
+    position: 'absolute',
+    right: 0, /* موقع الأيقونة من اليمين */
+    cursor: 'pointer',
+  },
+  deleteButton: {
+    position: 'absolute',
+    right: 25, /* موقع الأيقونة من اليمين */
+    cursor: 'pointer',
+  },
   });
