@@ -408,3 +408,83 @@ export const GetProjectsByFieldAndSkills = async (req, res) => {
         });
     }
 };
+
+
+
+export const GetProjectsByFilters = async (req, res) => {
+    try {
+        const { projectName, priceRange, seniorName, requiredSkills, benefits, status } = req.query;
+
+        // إعداد كائن الفلترة
+        let filter = {};
+
+        // فلترة حسب اسم المشروع
+        if (projectName) {
+            filter.ProjectName = { $regex: projectName, $options: "i" }; // البحث باستخدام النص الجزئي (غير حساس لحالة الأحرف)
+        }
+
+        // فلترة حسب السعر (نطاق السعر)
+        if (priceRange) {
+            const [minPrice, maxPrice] = priceRange.split("-").map(Number);
+            filter.Price = { $gte: minPrice, $lte: maxPrice }; // البحث ضمن نطاق السعر
+        }
+
+        // فلترة حسب اسم السينيور
+        if (seniorName) {
+            const seniors = await UserModel.find({
+                FullName: { $regex: seniorName, $options: "i" }, // البحث باستخدام النص الجزئي
+            }).select("_id");
+            filter.CreatedBySenior = { $in: seniors.map(senior => senior._id) };
+        }
+
+        // فلترة حسب المهارات المطلوبة
+        if (requiredSkills) {
+            const skillsArray = requiredSkills.split(",").map(skill => skill.trim());
+            filter["RequiredSkills.name"] = { $in: skillsArray }; // التحقق من وجود المهارات ضمن القائمة
+        }
+
+        // فلترة حسب الفوائد
+        if (benefits) {
+            filter.Benefits = { $regex: benefits, $options: "i" }; // البحث باستخدام النص الجزئي
+        }
+
+        // فلترة حسب الحالة
+        if (status) {
+            filter.Status = status; // التحقق من مطابقة الحالة
+        }
+
+        // البحث عن المشاريع باستخدام الفلاتر
+        const projects = await ProjectsModel.find(filter)
+            .populate("CreatedBySenior", "FullName PictureProfile Email PhoneNumber");
+
+        // التحقق من وجود مشاريع
+        if (!projects || projects.length === 0) {
+            return res.status(404).json({ message: "No projects found with the specified filters." });
+        }
+
+        // إعداد البيانات للإرجاع
+        const  filteredProjects= projects.map(project => ({
+            ...project.toObject(),
+            senior: project.CreatedBySenior ? {
+                name: project.CreatedBySenior.FullName,
+                picture: project.CreatedBySenior.PictureProfile || "https://via.placeholder.com/150",
+                email: project.CreatedBySenior.Email || "No email provided",
+                phone: project.CreatedBySenior.PhoneNumber || "No phone number provided",
+            } : null,
+        }));
+
+        // إرسال النتيجة
+        return res.status(200).json({
+            message: "Projects retrieved successfully",
+            projects: { filteredProjects },
+        });
+    } catch (error) {
+        console.error("Error retrieving projects with filters:", error.message);
+        return res.status(500).json({
+            message: "Error retrieving projects",
+            error: error.message,
+        });
+    }
+};
+
+

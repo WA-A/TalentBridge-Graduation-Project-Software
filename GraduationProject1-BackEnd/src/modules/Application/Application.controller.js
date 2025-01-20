@@ -241,3 +241,32 @@ export const approveApplication = async (req, res) => {
      throw new Error(`Error fetching project: ${error.message}`);
    }
  };
+
+
+ export const getPendingRequests = async (req, res) => {
+  try {
+    // استخراج userId من التوكن بعد التحقق في الـ middleware
+    const userId = req.user._id;
+
+    // استرجاع جميع الطلبات المعلقة للمستخدم الذي يملك الـ userId
+    const pendingRequests = await ApplicationTrainModel.find({
+      userId: userId,      // التحقق من الـ userId
+      Status: 'Pending',    // تحديد أن الحالة "معلقة"
+      IsDeleted: false,     // التحقق من أن الطلب ليس محذوفًا
+    }).exec();
+
+    // التحقق من وجود طلبات معلقة
+    if (pendingRequests.length === 0) {
+      return res.status(404).json({ message: 'No pending requests found' });
+    }
+
+    // إرسال استجابة تحتوي على جميع البيانات المسترجعة
+    return res.status(200).json({
+      message: 'Pending requests retrieved successfully',
+      data: pendingRequests,
+    });
+  } catch (error) {
+    console.error("Error fetching pending requests:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};

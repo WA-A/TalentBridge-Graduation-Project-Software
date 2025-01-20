@@ -14,6 +14,8 @@ import MultiSelect from 'react-native-multiple-select';
 import { useSharedValue, useAnimatedStyle, withSpring } from "react-native-reanimated";
 import { Dimensions } from "react-native";
 import * as Animatable from "react-native-animatable";
+import Slider from '@react-native-community/slider';
+import RangeSlider from 'react-native-range-slider-expo';
 
 const { width } = Dimensions.get("window");
 
@@ -45,6 +47,49 @@ const [project,setProject]=useState();
   
     };
   
+    /////////////////////////////////////////// Filter /////////////////////////////////////////////////////
+    const [isModalVisible, setIsModalVisible] = useState(false);
+   
+  
+    const toggleModal = () => setIsModalVisible(!isModalVisible);
+  
+
+      const [selectedFilters, setSelectedFilters] = useState({
+        projectName: "",
+        seniorName: "",
+        minPrice: 0,
+        maxPrice: 1000,
+        field: "",
+        status: "",
+      });
+      const [filterType, setFilterType] = useState(null); // نوع الفلترة المختار
+    
+      const [activeFilters, setActiveFilters] = useState([]); // قائمة الفلاتر النشطة
+
+      const toggleFilter = (filterType) => {
+        if (activeFilters.includes(filterType)) {
+          setActiveFilters((prev) => prev.filter((filter) => filter !== filterType));
+        } else {
+          setActiveFilters((prev) => [...prev, filterType]);
+        }
+      };
+      const handleSliderChange = (minPrice, maxPrice) => {
+        setSelectedFilters({ minPrice, maxPrice });
+      };
+      const resetFilters = () => {
+        setSelectedFilters({
+          projectName: "",
+          seniorName: "",
+          minPrice: 0,
+          maxPrice: 1000,
+          field: "",
+          status: "",
+        });
+        setActiveFilters([]);
+      };
+    
+   
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////
   
         const handleGetFeilds = async () => {
           try {
@@ -105,6 +150,58 @@ const [project,setProject]=useState();
             console.error('Error fetching Project:', error.message);
           }
         };
+
+        const handleFilter = async () => {
+          console.log("sama");
+          try {
+            const token = await AsyncStorage.getItem("userToken"); // استرجاع التوكن
+            if (!token) {
+              setError("Token not found. Please log in.");
+              return;
+            }
+        
+            // بناء استعلام الفلاتر بناءً على الفلاتر المحددة
+            const queryParams = new URLSearchParams({
+              ...(selectedFilters.projectName && { projectName: selectedFilters.projectName }),
+              ...(selectedFilters.minPrice && selectedFilters.maxPrice && { priceRange: `${selectedFilters.minPrice}-${selectedFilters.maxPrice}` }),
+              ...(selectedFilters.seniorName && { seniorName: selectedFilters.seniorName }),
+              ...(selectedFilters.field && { field: selectedFilters.field }),
+              ...(selectedFilters.status && { status: selectedFilters.status }),
+            }).toString();
+        
+            const response = await fetch(`${baseUrl}/project/filterprojects?${queryParams}`,
+              {
+                method: "GET",
+                headers: {
+                  Authorization: `Wasan__${token}`,
+                },
+              }
+            );
+        
+            if (!response.ok) {
+              const errorData = await response.json();
+              throw new Error(errorData.message || "Failed to fetch projects.");
+            }
+        
+            const data = await response.json(); // تحويل الرد إلى JSON
+            setProject(data.projects);
+            if(data.projects.filteredProjects == null){
+              console.log(data.message);
+              setProject(null);
+            }
+            console.log('Fetched Project:', data.projects); // تحقق من البيانات
+                  setModalVisible(false);
+          } catch (error) {
+            console.error('Error fetching Project:', error.message);
+          }
+        };
+        
+        const applyFilters = () => {
+          console.log('Filters applied:', selectedFilters);
+          handleFilter(); // استدعاء دالة الفلترة التي تقوم بإرسال الفلاتر إلى الخادم
+          toggleModal(); // إغلاق المودال بعد تطبيق الفلاتر
+        };
+         
         const GetProjectsByField = async (id) => {
           console.log(id);
           try {
@@ -515,7 +612,9 @@ Suggested for you  </Text></TouchableOpacity>
 </View>
       <View style={styles.divider1} />
                   
-
+      <TouchableOpacity onPress={toggleModal} style={styles.openModalButton}>
+        <Text style={styles.buttonText}>Open Filters</Text>
+      </TouchableOpacity>
 <ScrollView 
   contentContainerStyle={[styles.container, { backgroundColor: isNightMode ? "#000" : "#fff" }]}
 >
@@ -724,6 +823,173 @@ Suggested for you  </Text></TouchableOpacity>
                               </View>
                           </Modal>
 
+
+
+                            {/* المودال */}
+                            <Modal
+      animationType="slide"
+      transparent={true}
+      visible={isModalVisible}
+      onRequestClose={toggleModal}
+    >
+      <View style={styles.modalContainer}>
+        <View style={styles.modalContent}>
+          <Text style={styles.modalTitle}>Filter Options</Text>
+
+          {/* قائمة اختيار الفلاتر */}
+          <View >
+            <Text style={styles.label}>Select Filters:</Text>
+            {["Project Name", "Senior Name", "Price Range", "Field", "Status"].map(
+              (type) => (
+                <TouchableOpacity
+                  key={type}
+                  style={[
+                    styles.filterOption,
+                    activeFilters.includes(type) && styles.activeFilterOption,
+                  ]}
+                  onPress={() => toggleFilter(type)}
+                >
+                  <Ionicons
+                    name={
+                      activeFilters.includes(type) ? "checkbox" : "square-outline"
+                    }
+                    size={24}
+                    color={activeFilters.includes(type) ? Colors.tertiary : Colors.brand}
+                  />
+                  <Text style={styles.filterText}>{type}</Text>
+                </TouchableOpacity>
+              )
+            )}
+          </View>
+          <View style={styles.divider} />
+
+          {/* حقول الفلاتر النشطة */}
+          {activeFilters.includes("Project Name") && (
+            <View style={styles.filterOptionContainer}>
+              <TextInput
+                style={styles.input}
+                placeholder="Enter project name"
+                value={selectedFilters.projectName}
+                onChangeText={(text) =>
+                  setSelectedFilters((prev) => ({ ...prev, projectName: text }))
+                }
+              />
+            </View>
+  
+          )}
+
+          {activeFilters.includes("Senior Name") && (
+          <View style={styles.filterOptionContainer}>
+              <TextInput
+                style={styles.input}
+                placeholder="Enter senior name"
+                value={selectedFilters.seniorName}
+                onChangeText={(text) =>
+                  setSelectedFilters((prev) => ({ ...prev, seniorName: text }))
+                }
+              />
+            </View>          
+          )}
+
+        {activeFilters.includes("Price Range") && (
+  <View style={styles.filterOptionContainer}>
+    <Text style={styles.label}>Price Range (in $):</Text>
+    <View style={styles.priceRange}>
+      <Text style={styles.priceLabel}>${selectedFilters.minPrice}</Text>
+      <Slider
+        style={{ flex: 1 }}
+        minimumValue={0}
+        maximumValue={1000}
+        value={selectedFilters.minPrice}
+        onValueChange={(value) =>
+          setSelectedFilters((prev) => ({
+            ...prev,
+            minPrice: Math.round(value),
+          }))
+        }
+      />
+      <Text style={styles.priceLabel}>${selectedFilters.maxPrice}</Text>
+      <Slider
+        style={{ flex: 1 }}
+        minimumValue={0}
+        maximumValue={1000}
+        value={selectedFilters.maxPrice}
+        onValueChange={(value) =>
+          setSelectedFilters((prev) => ({
+            ...prev,
+            maxPrice: Math.round(value),
+          }))
+        }
+      />
+    </View>
+  </View>
+)}
+
+
+          {activeFilters.includes("Field") && (
+            
+            <View style={styles.filterOptionContainer}>
+              <View >
+          <TouchableOpacity onPress={() =>openModal('Feild')}>
+          <Text style={{
+    fontWeight: 'bold',
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 8,
+    opacity: 0.7,
+  }}>
+Select Field           </Text>
+          </TouchableOpacity>
+        </View>
+              
+            </View>
+          )}
+
+          {activeFilters.includes("Status") && (
+            <View style={styles.filterOptionContainer}>
+              <Text style={styles.label}>Select Status:</Text>
+              {["Open", "In Progress", "Completed"].map((status) => (
+                <TouchableOpacity
+                  key={status}
+                  style={[
+                    styles.statusOption,
+                    selectedFilters.status === status && styles.selectedStatus,
+                  ]}
+                  onPress={() =>
+                    setSelectedFilters((prev) => ({ ...prev, status }))
+                  }
+                >
+                
+                  <Text style={styles.statusText}>{status}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            
+          )}
+
+          {/* أزرار التحكم بالمودال */}
+          <View style={styles.modalButtons}>
+            <TouchableOpacity
+              onPress={() => {
+                toggleModal();
+                resetFilters();
+              }}
+              style={styles.cancelButton}
+            >
+              <Ionicons name="close-circle" size={24} color="red" />
+              <Text style={styles.buttonText}>Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={applyFilters}
+              style={styles.applyButton}
+            >
+              <Ionicons name="checkmark-circle" size={24} color= {fifthColor} />
+              <Text style={styles.buttonText}>Apply</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </Modal>
       {/*///////////////////////////////////////////////Show Feild////////////////////////////*/}
 
 </View>
@@ -731,6 +997,81 @@ Suggested for you  </Text></TouchableOpacity>
 };
 
 const styles = StyleSheet.create({
+  openModalButton: {
+    backgroundColor: '#6200ea',
+    padding: 10,
+    borderRadius: 5,
+  },
+  buttonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContainer: {
+    width: '90%',
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 15,
+    textAlign: 'center',
+  },
+  filterOption: {
+    marginBottom: 20,
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 5,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 5,
+    padding: 10,
+    fontSize: 16,
+  },
+  priceRange: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  priceLabel: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#6200ea',
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  cancelButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 10,
+  },
+  applyButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 10,
+  },
+  filterContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
 styledButton: {
   backgroundColor: fifthColor,  // لون خلفية الزر
   paddingVertical: 12,  // زيادة الحشو ليصبح الزر أكبر
@@ -1041,4 +1382,87 @@ projectName: {
     backgroundColor: Colors.fourhColor,
     marginVertical: 8,
   },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    marginBottom: 15,
+    color: Colors.white,
+  },
+  filterOption: {
+    marginBottom: 15,
+  },
+  label: {
+    fontSize: 16,
+    marginBottom: 5,
+    color: Colors.white,
+  },
+  input: {
+    backgroundColor: Colors.white,
+    borderRadius: 5,
+    padding: 10,
+  },
+  priceRange: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  priceLabel: {
+    marginHorizontal: 10,
+    fontSize: 14,
+    color: Colors.white,
+  },
+  statusOptions: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+  },
+  statusOption: {
+    padding: 5,
+    borderRadius: 5,
+    backgroundColor: Colors.secondary,margin:2
+  },
+  selectedStatus: {
+    backgroundColor: Colors.darkLight,
+  },
+  statusText: {
+    color: Colors.tertiary,
+    fontSize: 14,
+  },
+  modalButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 20,
+  },
+  cancelButton: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  applyButton: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  buttonText: {
+    marginLeft: 5,
+    color: Colors.white,
+    fontSize: 16,
+  },  filterOption: { flexDirection: "row", alignItems: "center", padding: 10 },
+  activeFilterOption: { backgroundColor: Colors.fourhColor},
+  filterText: { marginLeft: 10 },filterOptionContainer: {
+  marginVertical: 4,
+  paddingHorizontal: 10,
+  paddingVertical: 5,
+  backgroundColor: '#f9f9f9',
+  borderRadius: 8,
+  shadowColor: '#000',
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.1,
+  shadowRadius: 6,
+  elevation: 3, // For Android shadow
+}, 
+filterOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 2,padding:5,  borderRadius: 8,
+
+  },
+  
+
 });
