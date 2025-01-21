@@ -95,15 +95,15 @@ export const CreateProject = async (req, res) => {
             
             const tasksArray = [];
         Object.keys(req.body).forEach((key) => {
-            const match = key.match(/^Tasks\[(\d+)\]\.(PhaseName|TaskName|Description|AssignedTo|TaskRoleName|TaskStatus|Priority|StartDate|EndDate)$/); // مطابقة المفتاح Tasks[i].PhaseName أو Tasks[i].TaskName
+            const match = key.match(/^Tasks\[(\d+)\]\.(PhaseName|TaskName|Description|TaskRoleName|Priority|StartDate|EndDate)$/); 
             if (match) {
-                const index = parseInt(match[1], 10); // استخراج رقم المهمة
-                const field = match[2]; // استخراج الحقل
+                const index = parseInt(match[1], 10); 
+                const field = match[2]; 
 
                 if (!tasksArray[index]) {
-                    tasksArray[index] = {}; // إنشاء عنصر جديد إذا لم يكن موجودًا
+                    tasksArray[index] = {}; 
                 }
-                tasksArray[index][field] = req.body[key]; // تعيين القيمة للحقل المناسب
+                tasksArray[index][field] = req.body[key]; 
             }
         });
 
