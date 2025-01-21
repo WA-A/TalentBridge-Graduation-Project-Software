@@ -1,5 +1,4 @@
-import mongoose, { Schema, model,Types } from 'mongoose';
-
+import mongoose, { Schema, model } from 'mongoose';
 
 const ProjectsSchema = new Schema(
   {
@@ -20,12 +19,12 @@ const ProjectsSchema = new Schema(
     },
     RequiredSkills: [
       {
-          id: { type: Number, required: true },
-          name: { type: String, required: true },
-          code: { type: String, required: true },
-          Rate: { type: Number, required: true, min: 1, max: 5 }
-      }
-  ],
+        id: { type: Number, required: true },
+        name: { type: String, required: true },
+        code: { type: String, required: true },
+        Rate: { type: Number, required: true, min: 1, max: 5 },
+      },
+    ],
     Fields: [
       {
         id: { type: Number, required: true },
@@ -35,16 +34,16 @@ const ProjectsSchema = new Schema(
     ],
     Roles: [
       {
-        roleName: { type: String, required: true }, // اسم الدور (مثال: 'Backend', 'Frontend')
+        roleName: { type: String, required: true },
         users: [
           {
-            userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" }, // معرف المستخدم
+            userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
             status: {
               type: String,
               enum: ["Pending", "Approved", "Rejected"],
               default: "Pending",
             },
-            appliedAt: { type: Date, default: Date.now }, // تاريخ الطلب
+            appliedAt: { type: Date, default: Date.now },
           },
         ],
       },
@@ -76,6 +75,51 @@ const ProjectsSchema = new Schema(
     Price: {
       type: Number,
     },
+    Tasks: [
+      {
+        PhaseName: { type: String, required: true },
+        TaskName: { type: String, required: true, trim: true },
+        Description: { type: String, required: false, trim: true },
+        AssignedTo: { type: mongoose.Schema.Types.ObjectId, ref: "User", 
+          //required: true 
+          },
+        TaskRoleName: { type: String, required: true },
+        TaskStatus: {
+          type: String,
+          enum: ["Pending", "In Progress", "Completed"],
+          default: "Pending",
+        },
+        Priority: {
+          type: String,
+          enum: ["Low", "Medium", "High"],
+          default: "Medium",
+        },
+        StartDate: { 
+          type: Date, required: true 
+        },
+        EndDate: { 
+          type: Date, required: true 
+        },
+      TaskFile: [
+        {
+          type: Object,
+          required: false,
+        },
+      ],
+  DeliveryTaskMethod: {
+      type: String,
+      enum: ["Online", "On-site"],
+      //required: true,
+  },
+  BenefitFromPhase: { 
+      type: String, 
+      required: false,
+      trim: true
+  },
+        created_at: { type: Date, default: Date.now },
+        updated_at: { type: Date, default: Date.now },
+      },
+    ],
     created_at: {
       type: Date,
       default: Date.now,
@@ -93,13 +137,5 @@ const ProjectsSchema = new Schema(
   }
 );
 
-
-// // Middleware to update the 'updated_at' field automatically before each save
-// ProjectsSchema.pre('save', function (next) {
-//   this.updated_at = Date.now();
-//   next();
-// });
-
-
-const ProjectsModel = model('Projects',ProjectsSchema); 
+const ProjectsModel = model('Projects', ProjectsSchema);
 export default ProjectsModel;
