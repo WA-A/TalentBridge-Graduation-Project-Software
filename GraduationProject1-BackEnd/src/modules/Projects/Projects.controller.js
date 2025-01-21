@@ -24,6 +24,9 @@ export const CreateProject = async (req, res) => {
             return res.status(400).json({ message: "Field ID is required." });
         }
 
+        // تحويل السعر إلى رقم عشري قبل تخزينه
+        const price = parseFloat(Price);  // تأكد من أن السعر رقم عشري
+
         // استخراج المهارات (skillsArray) من req.body
         const skillsArray = [];
         Object.keys(req.body).forEach((key) => {
@@ -99,7 +102,7 @@ export const CreateProject = async (req, res) => {
             DurationInMounths,
             WorkLoaction,
             Benefits,
-            Price,
+            Price: price, // استخدام السعر المحول
             FileProject,
         });
 
@@ -413,7 +416,10 @@ export const GetProjectsByFieldAndSkills = async (req, res) => {
 
 export const GetProjectsByFilters = async (req, res) => {
     try {
-        const { projectName, priceRange, seniorName, requiredSkills, benefits, status } = req.query;
+        const { projectName, priceRange, seniorName, requiredSkills, benefits, status, FieldId } = req.query;
+        
+        // تسجيل الفلاتر للتحقق منها
+        console.log("Filters received:", { projectName, priceRange, seniorName, requiredSkills, benefits, status, FieldId });
 
         // إعداد كائن الفلترة
         let filter = {};
@@ -425,7 +431,7 @@ export const GetProjectsByFilters = async (req, res) => {
 
         // فلترة حسب السعر (نطاق السعر)
         if (priceRange) {
-            const [minPrice, maxPrice] = priceRange.split("-").map(Number);
+            const [minPrice, maxPrice] = priceRange.split("-").map(price => parseFloat(price.trim())); // تحويل النص إلى أرقام
             filter.Price = { $gte: minPrice, $lte: maxPrice }; // البحث ضمن نطاق السعر
         }
 
@@ -453,17 +459,17 @@ export const GetProjectsByFilters = async (req, res) => {
             filter.Status = status; // التحقق من مطابقة الحالة
         }
 
+        // فلترة حسب الرقم الميداني (FieldId)
+        if (FieldId) {
+            filter.Fields = { $elemMatch: { id: FieldId } }; // فلترة بحسب الرقم الميداني في قائمة الحقول
+        }
+
         // البحث عن المشاريع باستخدام الفلاتر
         const projects = await ProjectsModel.find(filter)
             .populate("CreatedBySenior", "FullName PictureProfile Email PhoneNumber");
 
-        // التحقق من وجود مشاريع
-        if (!projects || projects.length === 0) {
-            return res.status(404).json({ message: "No projects found with the specified filters." });
-        }
-
         // إعداد البيانات للإرجاع
-        const  filteredProjects= projects.map(project => ({
+        const filteredProjects = projects.map(project => ({
             ...project.toObject(),
             senior: project.CreatedBySenior ? {
                 name: project.CreatedBySenior.FullName,
@@ -486,5 +492,3 @@ export const GetProjectsByFilters = async (req, res) => {
         });
     }
 };
-
-

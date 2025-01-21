@@ -9,12 +9,12 @@ import { Colors } from './../compnent/Style';
 import { Card,UserInfoText, UserName, ContainerCard, PostText, UserInfo, ButtonText, StyledButton} from './../compnent/Style.js';
 import { TextInput } from 'react-native-gesture-handler';
 const { tertiary, firstColor, secColor,fifthColor,secondary, primary, darkLight, fourhColor, careysPink} = Colors;
-import { EvilIcons,AntDesign,MaterialIcons,MaterialCommunityIcons} from '@expo/vector-icons';
+import { EvilIcons,AntDesign,MaterialIcons,MaterialCommunityIcons,Feather} from '@expo/vector-icons';
 import MultiSelect from 'react-native-multiple-select';
 import { useSharedValue, useAnimatedStyle, withSpring } from "react-native-reanimated";
 import { Dimensions } from "react-native";
 import * as Animatable from "react-native-animatable";
-
+import Slider from '@react-native-community/slider';
 const { width } = Dimensions.get("window");
 
 
@@ -48,6 +48,130 @@ const [project,setProject]=useState();
   
     const toggleDropdown = () => {
       setDropdownVisible(!isDropdownVisible);
+    };
+
+
+
+
+
+
+
+    /////////////////////////////////////////// Filter /////////////////////////////////////////////////////
+    const [isModalVisible, setIsModalVisible] = useState(false);
+   
+  
+    const toggleModal = () => setIsModalVisible(!isModalVisible);
+  
+
+      const [selectedFilters, setSelectedFilters] = useState({
+        projectName: "",
+        seniorName: "",
+        minPrice: 0,
+        maxPrice: 1000,
+        field: "",
+        status: "",
+      });
+      const [filterType, setFilterType] = useState(null); // نوع الفلترة المختار
+    
+      const [activeFilters, setActiveFilters] = useState([]); // قائمة الفلاتر النشطة
+
+      const toggleFilter = (filterType) => {
+        if (activeFilters.includes(filterType)) {
+          setActiveFilters((prev) => prev.filter((filter) => filter !== filterType));
+        } else {
+          setActiveFilters((prev) => [...prev, filterType]);
+        }
+      };
+      const handleSliderChange = (minPrice, maxPrice) => {
+        setSelectedFilters({ minPrice, maxPrice });
+      };
+      const resetFilters = () => {
+        setSelectedFilters({
+          projectName: "",
+          seniorName: "",
+          minPrice: 0,
+          maxPrice: 1000,
+          field: "",
+          status: "",
+        });
+        setActiveFilters([]);
+      };
+    
+
+
+
+
+
+
+
+
+
+    const handleSave = async (selectedFeilds) => {
+
+      if (currentModal === 'Feild') {
+   console.log(selectedFeilds);
+//   GetProjectsByField(selectedFeilds[0]);
+   setSelectedFilters((prev) => ({
+    ...prev,
+   field:selectedFeilds[0] ,
+  }))
+      }
+  
+    };
+
+
+
+    const handleFilter = async () => {
+      console.log(selectedFilters.maxPrice);
+      try {
+        const token = await AsyncStorage.getItem("userToken"); // استرجاع التوكن
+        if (!token) {
+          setError("Token not found. Please log in.");
+          return;
+        }
+    
+        // بناء استعلام الفلاتر بناءً على الفلاتر المحددة
+        const queryParams = new URLSearchParams({
+          ...(selectedFilters.projectName && { projectName: selectedFilters.projectName }),
+          ...(selectedFilters.minPrice !='undefined' &&
+            selectedFilters.maxPrice != 'undefined' && {
+              priceRange: `${selectedFilters.minPrice}-${selectedFilters.maxPrice}`,
+            }),              ...(selectedFilters.seniorName && { seniorName: selectedFilters.seniorName }),
+          ...(selectedFilters.field && { field: selectedFilters.field }),
+          ...(selectedFilters.status && { status: selectedFilters.status }),
+        }).toString();
+    
+        const response = await fetch(`${baseUrl}/project/filterprojects?${queryParams}`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Wasan__${token}`,
+            },
+          }
+        );
+    
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || "Failed to fetch projects.");
+        }
+    
+        const data = await response.json(); // تحويل الرد إلى JSON
+        setProject(data.projects.filteredProjects);
+        if(data.projects.filteredProjects == null){
+          console.log(data.message);
+          setProject(null);
+        }
+        console.log('Fetched Project:', data.projects); // تحقق من البيانات
+              setModalVisible(false);
+      } catch (error) {
+        console.error('Error fetching Project:', error.message);
+      }
+    };
+    
+    const applyFilters = () => {
+      console.log('Filters applied:', selectedFilters);
+      handleFilter(); // استدعاء دالة الفلترة التي تقوم بإرسال الفلاتر إلى الخادم
+      toggleModal(); // إغلاق المودال بعد تطبيق الفلاتر
     };
   
         const handleGetFeilds = async () => {
@@ -164,16 +288,6 @@ const [project,setProject]=useState();
         };
       
        
-        const handleSave = async (selectedFeilds) => {
-
-          if (currentModal === 'Feild') {
-       console.log(selectedFeilds);
-       GetProjectsByField(selectedFeilds[0]);
-          }
-      
-        };
-      
-
 
   const [profile,setprofileimg] = useState('');
   const [profileUser,setOtherProfile] = useState('');
@@ -468,54 +582,48 @@ const [project,setProject]=useState();
           </>
         )}
                
-               
         <View style={{
-  top:5,
+  top: 5,
   left: 0,  // يحدد أن يكون العنصر عند أقصى اليسار
   marginBottom: 15,  // المسافة بين العناصر الأخرى
   flexDirection: 'row',  // عرض النص والأيقونة بشكل أفقي
   alignItems: 'center',  // محاذاة النص والأيقونة عموديًا
 }}>
-          <TouchableOpacity onPress={()=>viewownprojectcreated()}>
+  <TouchableOpacity onPress={() => viewownprojectcreated()}>
+    <Text style={{
+      fontSize: 16,
+      fontWeight: 'bold',
+      color: isNightMode ? primary : '#000',
+      backgroundColor: isNightMode ? '#000' : '#f9f9f9',
+      paddingHorizontal: 10,
+      paddingVertical: 3,
+      borderRadius: 20,
+      opacity: 0.7,
+    }}>
+     Your Projects
+    </Text>
+  </TouchableOpacity>
 
-  <Text style={{
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: isNightMode ? primary : '#000',
-    backgroundColor: isNightMode ? '#000' : '#f9f9f9',
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    borderRadius: 20,
-    opacity: 0.7,
-  }}>
-Your projects </Text></TouchableOpacity>
-<TouchableOpacity onPress={toggleDropdown}>
+  <TouchableOpacity onPress={toggleDropdown}>
+    <AntDesign 
+      name="caretdown" 
+      size={16} 
+      color={isNightMode ? primary : '#000'} 
+      style={{ marginLeft: 1 }}  // المسافة بين النص والأيقونة
+    />
+  </TouchableOpacity>
 
-  <AntDesign 
-    name="caretdown" 
-    size={16} 
-    color={isNightMode ? primary  : '#000'} 
-    style={{ marginLeft:1 }}  // المسافة بين النص والأيقونة
-  /></TouchableOpacity>
-
-{isDropdownVisible && (
-        <View >
-          <TouchableOpacity onPress={() =>openModal('Feild')}>
-          <Text style={{
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: isNightMode ? primary : '#000',
-    backgroundColor: isNightMode ? '#000' : Colors.fifthColor,
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    borderRadius: 14,
-    opacity: 0.7,
-  }}>
-              Select Project By Field
-            </Text>
-          </TouchableOpacity>
-        </View>
-      )}
+  {/* أيقونة الفلتر */}
+  <View style={{ position: 'absolute', right: 10 }}>
+    <TouchableOpacity onPress={toggleModal}>
+      <Feather
+        name="sliders"
+        size={25}
+        color={fifthColor}
+        style={{ rotate: '90deg' }} // تحويل الأيقونة لتكون عمودية
+      />
+    </TouchableOpacity>
+  </View>
 </View>
       <View style={styles.divider1} />
                   
@@ -679,63 +787,245 @@ Your projects </Text></TouchableOpacity>
       )}
 
       {/*///////////////////////////////////////////////Show Feild////////////////////////////*/}
-         {/* Modal لكل بطاقة */}
-                <Modal animationType="slide" transparent={true} visible={modalVisible} onRequestClose={closeModal}>
-                  <View style={styles.modalContainer}>
-                    <View style={[styles.modalContent, { backgroundColor: isNightMode ? Colors.black : Colors.primary }]}>
-                   <>
-                                      <Text style={[styles.modalTitle, { marginTop: 0 }]}>Select Feild(s)</Text>
-                                      <Text style={{ color: Colors.brand }}>{error}</Text>
-                                      <MultiSelect
-                                        style={styles.scrollableItemsContainer}
-                                        items={Feilds} // قائمة اللغات
-                                        uniqueKey="id" // المفتاح الفريد لكل عنصر
-                                        onSelectedItemsChange={onSelectedItemsChange} // التعامل مع التحديد
-                                        selectedItems={selectedFeilds} // العناصر المحددة حالياً
-                                        selectText="Choose Feilds"
-                                        submitButtonColor={isNightMode ? Colors.fourhColor : Colors.fourhColor} // لون خلفية زر "Submit"
-                                        tagRemoveIconColor={isNightMode ? Colors.brand : Colors.brand} // لون أيقونة الحذف
-                                        tagBorderColor={isNightMode ? '#4A90E2' : '#333'} // لون الحدود
-                                        tagTextColor={isNightMode ? Colors.fifthColor : '#333'} // لون النص في التاج
-                                        selectedItemTextColor={isNightMode ? Colors.fifthColor : '#333'} // لون النص في العنصر المحدد
-                                        selectedItemIconColor={isNightMode ? Colors.brand : '#333'} // لون أيقونة العنصر المحدد
-                                        itemTextColor={isNightMode ? '#000' : '#333'} // لون النص في العنصر غير المحدد
-                                        displayKey="sub_specialization"
-                  
-                                        // تخصيص النص عند عدم اختيار أي عنصر
-                  
-                                        // تخصيص رأس القائمة (الخلفية التي تحتوي النص الافتراضي)
-                                        styleDropdownMenu={{
-                                          backgroundColor: isNightMode ? '#444' : '#EEE', // خلفية رأس القائمة
-                                        }}
-                                        // تخصيص النص داخل الحقل
-                                        styleTextDropdown={{
-                                          color: isNightMode ? '#000' : '#333', // لون النص
-                                          fontSize: 16, // حجم الخط
-                                          fontWeight: 'bold', // سمك الخط
-                                        }}
-                                        // خصائص إضافية لتحسين العرض والتخصيص
-                                        fixedHeight={true} // تحديد ارتفاع ثابت
-                                        styleItemsContainer={{
-                                          maxHeight: 190, // تحديد الحد الأقصى للارتفاع
-                                          overflow: 'hidden', // منع تجاوز العناصر للحاوية
-                  
-                                        }}
-                  
-                                      />
-                                    </>
-              
-                  <View style={styles.buttonsContainer}>
-                                  <TouchableOpacity onPress={()=>handleSave(selectedFeilds)} style={styles.saveButton}>
-                                    <Text style={styles.saveButtonText}>Save</Text>
-                                  </TouchableOpacity>
-                                  <TouchableOpacity onPress={closeModal} style={styles.closeButton}>
-                                    <Text style={styles.closeButtonText}>Close</Text>
-                                  </TouchableOpacity>
-                                </View>
-                </View>
-                              </View>
-                          </Modal>
+       
+                                   {/* المودال */}
+                                   <Modal
+             animationType="slide"
+             transparent={true}
+             visible={isModalVisible}
+             onRequestClose={toggleModal}
+           >
+             <View style={styles.modalContainer}>
+               <View style={styles.modalContent}>
+                 <Text style={styles.modalTitle}>Filter Options</Text>
+       
+                 {/* قائمة اختيار الفلاتر */}
+                 <View >
+                   <Text style={styles.label}>Select Filters:</Text>
+                   {["Project Name", "Senior Name", "Price Range", "Field", "Status"].map(
+                     (type) => (
+                       <TouchableOpacity
+                         key={type}
+                         style={[
+                           styles.filterOption,
+                           activeFilters.includes(type) && styles.activeFilterOption,
+                         ]}
+                         onPress={() => toggleFilter(type)}
+                       >
+                         <Ionicons
+                           name={
+                             activeFilters.includes(type) ? "checkbox" : "square-outline"
+                           }
+                           size={24}
+                           color={activeFilters.includes(type) ? Colors.tertiary : Colors.brand}
+                         />
+                         <Text style={styles.filterText}>{type}</Text>
+                       </TouchableOpacity>
+                     )
+                   )}
+                 </View>
+                 <View style={styles.divider} />
+       
+                 {/* حقول الفلاتر النشطة */}
+                 {activeFilters.includes("Project Name") ? (
+  <View style={styles.filterOptionContainer}>
+    <TextInput
+      style={styles.input}
+      placeholder="Enter project name"
+      value={selectedFilters.projectName}
+      onChangeText={(text) =>
+        setSelectedFilters((prev) => ({ ...prev, projectName: text }))
+      }
+    />
+  </View>
+) : (
+  selectedFilters.projectName !== "" &&   setSelectedFilters((prev) => ({ ...prev, projectName : "" }))
+
+)}
+
+{activeFilters.includes("Senior Name") ? (
+  <View style={styles.filterOptionContainer}>
+    <TextInput
+      style={styles.input}
+      placeholder="Enter senior name"
+      value={selectedFilters.seniorName}
+      onChangeText={(text) =>
+        setSelectedFilters((prev) => ({ ...prev, seniorName: text }))
+      }
+    />
+  </View>
+) : (
+  selectedFilters.seniorName !== "" &&
+  setSelectedFilters((prev) => ({ ...prev, seniorName: "" }))
+)}
+
+       
+{activeFilters.includes("Price Range") ? (
+  <View style={styles.filterOptionContainer}>
+    <Text style={styles.label}>Price Range (in $):</Text>
+    <View style={styles.priceRange}>
+      <Text style={styles.priceLabel}>${selectedFilters.minPrice}</Text>
+      <Slider
+        style={{ flex: 1 }}
+        minimumValue={0}
+        maximumValue={1000}
+        value={selectedFilters.minPrice}
+        onValueChange={(value) =>
+          setSelectedFilters((prev) => ({
+            ...prev,
+            minPrice: Math.round(value),
+          }))
+        }
+      />
+      <Text style={styles.priceLabel}>${selectedFilters.maxPrice}</Text>
+      <Slider
+        style={{ flex: 1 }}
+        minimumValue={0}
+        maximumValue={1000}
+        value={selectedFilters.maxPrice}
+        onValueChange={(value) =>
+          setSelectedFilters((prev) => ({
+            ...prev,
+            maxPrice: Math.round(value),
+          }))
+        }
+      />
+    </View>
+  </View>
+) : (
+  (selectedFilters.minPrice !== 0 || selectedFilters.maxPrice !== 1000) &&
+  setSelectedFilters((prev) => ({
+    ...prev,
+    minPrice: 0,
+    maxPrice: 1000,
+  }))
+)}
+
+       
+       
+                 {activeFilters.includes("Field") && (
+                   
+                   <View style={styles.filterOptionContainer}>
+                     <View >
+                 <TouchableOpacity onPress={() =>openModal('Feild')}>
+                 <Text style={{
+           fontWeight: 'bold',
+           paddingHorizontal: 10,
+           paddingVertical: 3,
+           borderRadius: 8,
+           opacity: 0.7,
+         }}>
+       Select Field           </Text>
+                 </TouchableOpacity>
+               </View>
+                     
+                   </View>
+                 )}
+       
+                 {activeFilters.includes("Status") && (
+                   <View style={styles.filterOptionContainer}>
+                     <Text style={styles.label}>Select Status:</Text>
+                     {["Open", "In Progress", "Completed"].map((status) => (
+                       <TouchableOpacity
+                         key={status}
+                         style={[
+                           styles.statusOption,
+                           selectedFilters.status === status && styles.selectedStatus,
+                         ]}
+                         onPress={() =>
+                           setSelectedFilters((prev) => ({ ...prev, status }))
+                         }
+                       >
+                       
+                         <Text style={styles.statusText}>{status}</Text>
+                       </TouchableOpacity>
+                     ))}
+                   </View>
+                   
+                 )}
+       
+                 {/* أزرار التحكم بالمودال */}
+                 <View style={styles.modalButtons}>
+                   <TouchableOpacity
+                     onPress={() => {
+                       toggleModal();
+                       resetFilters();
+                     }}
+                     style={styles.cancelButton}
+                   >
+                     <Ionicons name="close-circle" size={24} color="red" />
+                     <Text style={styles.buttonText}>Cancel</Text>
+                   </TouchableOpacity>
+                   <TouchableOpacity
+                     onPress={applyFilters}
+                     style={styles.applyButton}
+                   >
+                     <Ionicons name="checkmark-circle" size={24} color= {fifthColor} />
+                     <Text style={styles.buttonText}>Apply</Text>
+                   </TouchableOpacity>
+                 </View>
+               </View>
+             </View>
+           </Modal>
+             {/*///////////////////////////////////////////////Show Feild////////////////////////////*/}
+          {/* Modal لكل بطاقة */}
+          <Modal animationType="slide" transparent={true} visible={modalVisible} onRequestClose={closeModal}>
+                         <View style={styles.modalContainer}>
+                           <View style={[styles.modalContent, { backgroundColor: isNightMode ? Colors.black : Colors.primary }]}>
+                          <>
+                                             <Text style={[styles.modalTitle, { marginTop: 0 }]}>Select Feild(s)</Text>
+                                             <Text style={{ color: Colors.brand }}>{error}</Text>
+                                             <MultiSelect
+                                               style={styles.scrollableItemsContainer}
+                                               items={Feilds} // قائمة اللغات
+                                               uniqueKey="id" // المفتاح الفريد لكل عنصر
+                                               onSelectedItemsChange={onSelectedItemsChange} // التعامل مع التحديد
+                                               selectedItems={selectedFeilds} // العناصر المحددة حالياً
+                                               selectText="Choose Feilds"
+                                               submitButtonColor={isNightMode ? Colors.fourhColor : Colors.fourhColor} // لون خلفية زر "Submit"
+                                               tagRemoveIconColor={isNightMode ? Colors.brand : Colors.brand} // لون أيقونة الحذف
+                                               tagBorderColor={isNightMode ? '#4A90E2' : '#333'} // لون الحدود
+                                               tagTextColor={isNightMode ? Colors.fifthColor : '#333'} // لون النص في التاج
+                                               selectedItemTextColor={isNightMode ? Colors.fifthColor : '#333'} // لون النص في العنصر المحدد
+                                               selectedItemIconColor={isNightMode ? Colors.brand : '#333'} // لون أيقونة العنصر المحدد
+                                               itemTextColor={isNightMode ? '#000' : '#333'} // لون النص في العنصر غير المحدد
+                                               displayKey="sub_specialization"
+                         
+                                               // تخصيص النص عند عدم اختيار أي عنصر
+                         
+                                               // تخصيص رأس القائمة (الخلفية التي تحتوي النص الافتراضي)
+                                               styleDropdownMenu={{
+                                                 backgroundColor: isNightMode ? '#444' : '#EEE', // خلفية رأس القائمة
+                                               }}
+                                               // تخصيص النص داخل الحقل
+                                               styleTextDropdown={{
+                                                 color: isNightMode ? '#000' : '#333', // لون النص
+                                                 fontSize: 16, // حجم الخط
+                                                 fontWeight: 'bold', // سمك الخط
+                                               }}
+                                               // خصائص إضافية لتحسين العرض والتخصيص
+                                               fixedHeight={true} // تحديد ارتفاع ثابت
+                                               styleItemsContainer={{
+                                                 maxHeight: 190, // تحديد الحد الأقصى للارتفاع
+                                                 overflow: 'hidden', // منع تجاوز العناصر للحاوية
+                         
+                                               }}
+                         
+                                             />
+                                           </>
+                     
+                         <View style={styles.buttonsContainer}>
+                                         <TouchableOpacity onPress={()=>handleSave(selectedFeilds)} style={styles.saveButton}>
+                                           <Text style={styles.saveButtonText}>Save</Text>
+                                         </TouchableOpacity>
+                                         <TouchableOpacity onPress={closeModal} style={styles.closeButton}>
+                                           <Text style={styles.closeButtonText}>Close</Text>
+                                         </TouchableOpacity>
+                                       </View>
+                       </View>
+                                     </View>
+                                 </Modal>
+       
 
       {/*///////////////////////////////////////////////Show Feild////////////////////////////*/}
 
@@ -1059,4 +1349,223 @@ const styles = StyleSheet.create({
     right: 25, /* موقع الأيقونة من اليمين */
     cursor: 'pointer',
   },
+  grid: {
+  flexDirection: "row",
+  flexWrap: "wrap",
+  justifyContent: "space-between", // يجعل البطاقات تبدأ بجانب بعضها
+  marginBottom: 40,
+flex:"1",  gap: 20, // توفير مسافة ثابتة بين البطاقات
+},
+
+  cardMobile: {
+    marginBottom: 20,
+    width: width - 20, // تأكيد أن عرض البطاقة يتناسب مع عرض الشاشة
+  },
+cardWeb: {
+  marginBottom: 20,
+  flexBasis: "30%", // تحديد نسبة العرض للبطاقة
+  width: '50%',
+  height: "auto", // السماح للارتفاع بالتكيف مع المحتوى
+  flex: 1, 
+},
+
+
+  cardMobileContent: {
+    backgroundColor: "#fff",
+    borderRadius: 10,
+    shadowColor: "#000",
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 5 },
+    elevation: 5,
+    overflow: "hidden",
+    justifyContent: "space-between",
+  },
+cardWebContent: {
+  height: "auto", // السماح للارتفاع بالتكيف
+  padding: 10,
+  backgroundColor: "#fff",
+  borderRadius: 10,
+  shadowColor: "#000",
+  shadowOpacity: 0.2,
+  shadowRadius: 10,
+  shadowOffset: { width: 0, height: 5 },
+  elevation: 5,
+},
+
+
+  projectImage: {
+    width: "100%",
+    height: 150,
+  },
+  cardDetails: {
+    padding: 10,
+    flex: 1,
+  },
+projectName: {
+  fontSize: 18,
+  fontWeight: "bold",
+  marginBottom: 5,
+  whiteSpace: "nowrap",
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+},
+
+  projectDescription: {
+    fontSize: 14,
+    color: "#666",
+    marginBottom: 10,
+  },
+  seniorInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 10,
+  },
+  seniorAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 10,
+  },
+  seniorName: {
+    fontSize: 14,fontWeight:'bold',
+    color:Colors.fifthColor,
+  },
+  noProjects: {
+    textAlign: "center",
+    color: "#aaa",
+    marginTop: 20,
+  },
+  projectDescription: {
+    fontSize: 14,
+    color: '#555',
+    marginBottom: 5,
+  },
+ 
+  projectPrice: {
+    fontSize: 14,
+    color: '#007bff',fontWeight:'bold',
+    marginBottom: 5,
+  },
+  projectCreatedAt: {
+    fontSize: 12,
+    color: '#888',
+    marginBottom: 0,
+  },
+  seniorInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 5,
+  },
+  seniorAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 10,
+  },  seeMoreContainer: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end', // هذا سيضع النص على الجهة اليمنى
+    marginTop: 15,
+  },
+  seeMoreText: {
+    fontSize: 14,
+    color: Colors.fifthColor, // لون النص ليكون مشابه للروابط
+    fontWeight: 'bold',
+  },divider: {
+    height: 3,
+    backgroundColor: '#ddd',
+    marginVertical: 8,
+  },
+  divider1: {
+    height: 5,
+    backgroundColor: Colors.fourhColor,
+    marginVertical: 8,
+  },
+  divider3: {
+    height: 1,
+    backgroundColor: Colors.fourhColor,
+    marginVertical: 8,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    marginBottom: 15,
+    color: Colors.white,
+  },
+  filterOption: {
+    marginBottom: 15,
+  },
+  label: {
+    fontSize: 16,
+    marginBottom: 5,
+    color: Colors.white,
+  },
+  input: {
+    backgroundColor: Colors.white,
+    borderRadius: 5,
+    padding: 10,
+  },
+  priceRange: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  priceLabel: {
+    marginHorizontal: 10,
+    fontSize: 14,
+    color: Colors.white,
+  },
+  statusOptions: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+  },
+  statusOption: {
+    padding: 5,
+    borderRadius: 5,
+    backgroundColor: Colors.secondary,margin:2
+  },
+  selectedStatus: {
+    backgroundColor: Colors.darkLight,
+  },
+  statusText: {
+    color: Colors.tertiary,
+    fontSize: 14,
+  },
+  modalButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 20,
+  },
+  cancelButton: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  applyButton: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  buttonText: {
+    marginLeft: 5,
+    color: Colors.white,
+    fontSize: 16,
+  },  filterOption: { flexDirection: "row", alignItems: "center", padding: 10 },
+  activeFilterOption: { backgroundColor: Colors.fourhColor},
+  filterText: { marginLeft: 10 },filterOptionContainer: {
+  marginVertical: 4,
+  paddingHorizontal: 10,
+  paddingVertical: 5,
+  backgroundColor: '#f9f9f9',
+  borderRadius: 8,
+  shadowColor: '#000',
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.1,
+  shadowRadius: 6,
+  elevation: 3, // For Android shadow
+}, 
+filterOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 2,padding:5,  borderRadius: 8,
+
+  },
+  
   });
