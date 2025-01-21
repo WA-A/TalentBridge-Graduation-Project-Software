@@ -74,7 +74,7 @@ const ProjectsSchema = new Schema(
       },
     ],
     Price: {
-      type: String,
+      type: Number,
     },
     created_at: {
       type: Date,

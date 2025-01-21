@@ -9,13 +9,12 @@ import { Colors } from './../compnent/Style';
 import { Card,UserInfoText, UserName, ContainerCard, PostText, UserInfo, ButtonText, StyledButton} from './../compnent/Style.js';
 import { TextInput } from 'react-native-gesture-handler';
 const { tertiary, firstColor, secColor,fifthColor,secondary, primary, darkLight, fourhColor, careysPink} = Colors;
-import { EvilIcons,AntDesign} from '@expo/vector-icons';
+import { EvilIcons,AntDesign,Feather} from '@expo/vector-icons';
 import MultiSelect from 'react-native-multiple-select';
 import { useSharedValue, useAnimatedStyle, withSpring } from "react-native-reanimated";
 import { Dimensions } from "react-native";
 import * as Animatable from "react-native-animatable";
 import Slider from '@react-native-community/slider';
-import RangeSlider from 'react-native-range-slider-expo';
 
 const { width } = Dimensions.get("window");
 
@@ -151,8 +150,21 @@ const [project,setProject]=useState();
           }
         };
 
+           
+        const handleSave = async (selectedFeilds) => {
+
+          if (currentModal === 'Feild') {
+       console.log(selectedFeilds);
+    //   GetProjectsByField(selectedFeilds[0]);
+       setSelectedFilters((prev) => ({
+        ...prev,
+       field:selectedFeilds[0] ,
+      }))
+          }
+      
+        };
         const handleFilter = async () => {
-          console.log("sama");
+          console.log(selectedFilters.maxPrice);
           try {
             const token = await AsyncStorage.getItem("userToken"); // استرجاع التوكن
             if (!token) {
@@ -163,8 +175,10 @@ const [project,setProject]=useState();
             // بناء استعلام الفلاتر بناءً على الفلاتر المحددة
             const queryParams = new URLSearchParams({
               ...(selectedFilters.projectName && { projectName: selectedFilters.projectName }),
-              ...(selectedFilters.minPrice && selectedFilters.maxPrice && { priceRange: `${selectedFilters.minPrice}-${selectedFilters.maxPrice}` }),
-              ...(selectedFilters.seniorName && { seniorName: selectedFilters.seniorName }),
+              ...(selectedFilters.minPrice !='undefined' &&
+                selectedFilters.maxPrice != 'undefined' && {
+                  priceRange: `${selectedFilters.minPrice}-${selectedFilters.maxPrice}`,
+                }),              ...(selectedFilters.seniorName && { seniorName: selectedFilters.seniorName }),
               ...(selectedFilters.field && { field: selectedFilters.field }),
               ...(selectedFilters.status && { status: selectedFilters.status }),
             }).toString();
@@ -253,15 +267,7 @@ const [project,setProject]=useState();
           }
         };
         
-      
-        const handleSave = async (selectedFeilds) => {
-
-          if (currentModal === 'Feild') {
-       console.log(selectedFeilds);
-       GetProjectsByField(selectedFeilds[0]);
-          }
-      
-        };
+   
       
 
   const [profile,setprofileimg] = useState('');
@@ -562,59 +568,51 @@ const [project,setProject]=useState();
                
               
 
- <View style={{
-  top:5,
+        <View style={{
+  top: 5,
   left: 0,  // يحدد أن يكون العنصر عند أقصى اليسار
   marginBottom: 15,  // المسافة بين العناصر الأخرى
   flexDirection: 'row',  // عرض النص والأيقونة بشكل أفقي
   alignItems: 'center',  // محاذاة النص والأيقونة عموديًا
 }}>
-          <TouchableOpacity onPress={()=>handleGetProjectByFeildOrSkills()}>
+  <TouchableOpacity onPress={() => handleGetProjectByFeildOrSkills()}>
+    <Text style={{
+      fontSize: 16,
+      fontWeight: 'bold',
+      color: isNightMode ? primary : '#000',
+      backgroundColor: isNightMode ? '#000' : '#f9f9f9',
+      paddingHorizontal: 10,
+      paddingVertical: 3,
+      borderRadius: 20,
+      opacity: 0.7,
+    }}>
+      Suggested for you
+    </Text>
+  </TouchableOpacity>
 
-  <Text style={{
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: isNightMode ? primary : '#000',
-    backgroundColor: isNightMode ? '#000' : '#f9f9f9',
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    borderRadius: 20,
-    opacity: 0.7,
-  }}>
-Suggested for you  </Text></TouchableOpacity>
-<TouchableOpacity onPress={toggleDropdown}>
+  <TouchableOpacity onPress={toggleDropdown}>
+    <AntDesign 
+      name="caretdown" 
+      size={16} 
+      color={isNightMode ? primary : '#000'} 
+      style={{ marginLeft: 1 }}  // المسافة بين النص والأيقونة
+    />
+  </TouchableOpacity>
 
-  <AntDesign 
-    name="caretdown" 
-    size={16} 
-    color={isNightMode ? primary  : '#000'} 
-    style={{ marginLeft:1 }}  // المسافة بين النص والأيقونة
-  /></TouchableOpacity>
-
-{isDropdownVisible && (
-        <View >
-          <TouchableOpacity onPress={() =>openModal('Feild')}>
-          <Text style={{
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: isNightMode ? primary : '#000',
-    backgroundColor: isNightMode ? '#000' : Colors.fifthColor,
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    borderRadius: 14,
-    opacity: 0.7,
-  }}>
-              Select Project By Field
-            </Text>
-          </TouchableOpacity>
-        </View>
-      )}
+  {/* أيقونة الفلتر */}
+  <View style={{ position: 'absolute', right: 10 }}>
+    <TouchableOpacity onPress={toggleModal}>
+      <Feather
+        name="sliders"
+        size={25}
+        color={fifthColor}
+        style={{ rotate: '90deg' }} // تحويل الأيقونة لتكون عمودية
+      />
+    </TouchableOpacity>
+  </View>
 </View>
-      <View style={styles.divider1} />
-                  
-      <TouchableOpacity onPress={toggleModal} style={styles.openModalButton}>
-        <Text style={styles.buttonText}>Open Filters</Text>
-      </TouchableOpacity>
+<View style={styles.divider1} />
+
 <ScrollView 
   contentContainerStyle={[styles.container, { backgroundColor: isNightMode ? "#000" : "#fff" }]}
 >
@@ -765,64 +763,7 @@ Suggested for you  </Text></TouchableOpacity>
       )}
 
       {/*///////////////////////////////////////////////Show Feild////////////////////////////*/}
-         {/* Modal لكل بطاقة */}
-                <Modal animationType="slide" transparent={true} visible={modalVisible} onRequestClose={closeModal}>
-                  <View style={styles.modalContainer}>
-                    <View style={[styles.modalContent, { backgroundColor: isNightMode ? Colors.black : Colors.primary }]}>
-                   <>
-                                      <Text style={[styles.modalTitle, { marginTop: 0 }]}>Select Feild(s)</Text>
-                                      <Text style={{ color: Colors.brand }}>{error}</Text>
-                                      <MultiSelect
-                                        style={styles.scrollableItemsContainer}
-                                        items={Feilds} // قائمة اللغات
-                                        uniqueKey="id" // المفتاح الفريد لكل عنصر
-                                        onSelectedItemsChange={onSelectedItemsChange} // التعامل مع التحديد
-                                        selectedItems={selectedFeilds} // العناصر المحددة حالياً
-                                        selectText="Choose Feilds"
-                                        submitButtonColor={isNightMode ? Colors.fourhColor : Colors.fourhColor} // لون خلفية زر "Submit"
-                                        tagRemoveIconColor={isNightMode ? Colors.brand : Colors.brand} // لون أيقونة الحذف
-                                        tagBorderColor={isNightMode ? '#4A90E2' : '#333'} // لون الحدود
-                                        tagTextColor={isNightMode ? Colors.fifthColor : '#333'} // لون النص في التاج
-                                        selectedItemTextColor={isNightMode ? Colors.fifthColor : '#333'} // لون النص في العنصر المحدد
-                                        selectedItemIconColor={isNightMode ? Colors.brand : '#333'} // لون أيقونة العنصر المحدد
-                                        itemTextColor={isNightMode ? '#000' : '#333'} // لون النص في العنصر غير المحدد
-                                        displayKey="sub_specialization"
-                  
-                                        // تخصيص النص عند عدم اختيار أي عنصر
-                  
-                                        // تخصيص رأس القائمة (الخلفية التي تحتوي النص الافتراضي)
-                                        styleDropdownMenu={{
-                                          backgroundColor: isNightMode ? '#444' : '#EEE', // خلفية رأس القائمة
-                                        }}
-                                        // تخصيص النص داخل الحقل
-                                        styleTextDropdown={{
-                                          color: isNightMode ? '#000' : '#333', // لون النص
-                                          fontSize: 16, // حجم الخط
-                                          fontWeight: 'bold', // سمك الخط
-                                        }}
-                                        // خصائص إضافية لتحسين العرض والتخصيص
-                                        fixedHeight={true} // تحديد ارتفاع ثابت
-                                        styleItemsContainer={{
-                                          maxHeight: 190, // تحديد الحد الأقصى للارتفاع
-                                          overflow: 'hidden', // منع تجاوز العناصر للحاوية
-                  
-                                        }}
-                  
-                                      />
-                                    </>
-              
-                  <View style={styles.buttonsContainer}>
-                                  <TouchableOpacity onPress={()=>handleSave(selectedFeilds)} style={styles.saveButton}>
-                                    <Text style={styles.saveButtonText}>Save</Text>
-                                  </TouchableOpacity>
-                                  <TouchableOpacity onPress={closeModal} style={styles.closeButton}>
-                                    <Text style={styles.closeButtonText}>Close</Text>
-                                  </TouchableOpacity>
-                                </View>
-                </View>
-                              </View>
-                          </Modal>
-
+      
 
 
                             {/* المودال */}
@@ -864,68 +805,80 @@ Suggested for you  </Text></TouchableOpacity>
           <View style={styles.divider} />
 
           {/* حقول الفلاتر النشطة */}
-          {activeFilters.includes("Project Name") && (
-            <View style={styles.filterOptionContainer}>
-              <TextInput
-                style={styles.input}
-                placeholder="Enter project name"
-                value={selectedFilters.projectName}
-                onChangeText={(text) =>
-                  setSelectedFilters((prev) => ({ ...prev, projectName: text }))
+                         {/* حقول الفلاتر النشطة */}
+                         {activeFilters.includes("Project Name") ? (
+          <View style={styles.filterOptionContainer}>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter project name"
+              value={selectedFilters.projectName}
+              onChangeText={(text) =>
+                setSelectedFilters((prev) => ({ ...prev, projectName: text }))
+              }
+            />
+          </View>
+        ) : (
+          selectedFilters.projectName !== "" &&   setSelectedFilters((prev) => ({ ...prev, projectName : "" }))
+        
+        )}
+        
+        {activeFilters.includes("Senior Name") ? (
+          <View style={styles.filterOptionContainer}>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter senior name"
+              value={selectedFilters.seniorName}
+              onChangeText={(text) =>
+                setSelectedFilters((prev) => ({ ...prev, seniorName: text }))
+              }
+            />
+          </View>
+        ) : (
+          selectedFilters.seniorName !== "" &&
+          setSelectedFilters((prev) => ({ ...prev, seniorName: "" }))
+        )}
+        
+               
+        {activeFilters.includes("Price Range") ? (
+          <View style={styles.filterOptionContainer}>
+            <Text style={styles.label}>Price Range (in $):</Text>
+            <View style={styles.priceRange}>
+              <Text style={styles.priceLabel}>${selectedFilters.minPrice}</Text>
+              <Slider
+                style={{ flex: 1 }}
+                minimumValue={0}
+                maximumValue={1000}
+                value={selectedFilters.minPrice}
+                onValueChange={(value) =>
+                  setSelectedFilters((prev) => ({
+                    ...prev,
+                    minPrice: Math.round(value),
+                  }))
+                }
+              />
+              <Text style={styles.priceLabel}>${selectedFilters.maxPrice}</Text>
+              <Slider
+                style={{ flex: 1 }}
+                minimumValue={0}
+                maximumValue={1000}
+                value={selectedFilters.maxPrice}
+                onValueChange={(value) =>
+                  setSelectedFilters((prev) => ({
+                    ...prev,
+                    maxPrice: Math.round(value),
+                  }))
                 }
               />
             </View>
-  
-          )}
-
-          {activeFilters.includes("Senior Name") && (
-          <View style={styles.filterOptionContainer}>
-              <TextInput
-                style={styles.input}
-                placeholder="Enter senior name"
-                value={selectedFilters.seniorName}
-                onChangeText={(text) =>
-                  setSelectedFilters((prev) => ({ ...prev, seniorName: text }))
-                }
-              />
-            </View>          
-          )}
-
-        {activeFilters.includes("Price Range") && (
-  <View style={styles.filterOptionContainer}>
-    <Text style={styles.label}>Price Range (in $):</Text>
-    <View style={styles.priceRange}>
-      <Text style={styles.priceLabel}>${selectedFilters.minPrice}</Text>
-      <Slider
-        style={{ flex: 1 }}
-        minimumValue={0}
-        maximumValue={1000}
-        value={selectedFilters.minPrice}
-        onValueChange={(value) =>
+          </View>
+        ) : (
+          (selectedFilters.minPrice !== 0 || selectedFilters.maxPrice !== 1000) &&
           setSelectedFilters((prev) => ({
             ...prev,
-            minPrice: Math.round(value),
+            minPrice: 0,
+            maxPrice: 1000,
           }))
-        }
-      />
-      <Text style={styles.priceLabel}>${selectedFilters.maxPrice}</Text>
-      <Slider
-        style={{ flex: 1 }}
-        minimumValue={0}
-        maximumValue={1000}
-        value={selectedFilters.maxPrice}
-        onValueChange={(value) =>
-          setSelectedFilters((prev) => ({
-            ...prev,
-            maxPrice: Math.round(value),
-          }))
-        }
-      />
-    </View>
-  </View>
-)}
-
-
+        )}
           {activeFilters.includes("Field") && (
             
             <View style={styles.filterOptionContainer}>
@@ -991,6 +944,63 @@ Select Field           </Text>
       </View>
     </Modal>
       {/*///////////////////////////////////////////////Show Feild////////////////////////////*/}
+   {/* Modal لكل بطاقة */}
+   <Modal animationType="slide" transparent={true} visible={modalVisible} onRequestClose={closeModal}>
+                  <View style={styles.modalContainer}>
+                    <View style={[styles.modalContent, { backgroundColor: isNightMode ? Colors.black : Colors.primary }]}>
+                   <>
+                                      <Text style={[styles.modalTitle, { marginTop: 0 }]}>Select Feild(s)</Text>
+                                      <Text style={{ color: Colors.brand }}>{error}</Text>
+                                      <MultiSelect
+                                        style={styles.scrollableItemsContainer}
+                                        items={Feilds} // قائمة اللغات
+                                        uniqueKey="id" // المفتاح الفريد لكل عنصر
+                                        onSelectedItemsChange={onSelectedItemsChange} // التعامل مع التحديد
+                                        selectedItems={selectedFeilds} // العناصر المحددة حالياً
+                                        selectText="Choose Feilds"
+                                        submitButtonColor={isNightMode ? Colors.fourhColor : Colors.fourhColor} // لون خلفية زر "Submit"
+                                        tagRemoveIconColor={isNightMode ? Colors.brand : Colors.brand} // لون أيقونة الحذف
+                                        tagBorderColor={isNightMode ? '#4A90E2' : '#333'} // لون الحدود
+                                        tagTextColor={isNightMode ? Colors.fifthColor : '#333'} // لون النص في التاج
+                                        selectedItemTextColor={isNightMode ? Colors.fifthColor : '#333'} // لون النص في العنصر المحدد
+                                        selectedItemIconColor={isNightMode ? Colors.brand : '#333'} // لون أيقونة العنصر المحدد
+                                        itemTextColor={isNightMode ? '#000' : '#333'} // لون النص في العنصر غير المحدد
+                                        displayKey="sub_specialization"
+                  
+                                        // تخصيص النص عند عدم اختيار أي عنصر
+                  
+                                        // تخصيص رأس القائمة (الخلفية التي تحتوي النص الافتراضي)
+                                        styleDropdownMenu={{
+                                          backgroundColor: isNightMode ? '#444' : '#EEE', // خلفية رأس القائمة
+                                        }}
+                                        // تخصيص النص داخل الحقل
+                                        styleTextDropdown={{
+                                          color: isNightMode ? '#000' : '#333', // لون النص
+                                          fontSize: 16, // حجم الخط
+                                          fontWeight: 'bold', // سمك الخط
+                                        }}
+                                        // خصائص إضافية لتحسين العرض والتخصيص
+                                        fixedHeight={true} // تحديد ارتفاع ثابت
+                                        styleItemsContainer={{
+                                          maxHeight: 190, // تحديد الحد الأقصى للارتفاع
+                                          overflow: 'hidden', // منع تجاوز العناصر للحاوية
+                  
+                                        }}
+                  
+                                      />
+                                    </>
+              
+                  <View style={styles.buttonsContainer}>
+                                  <TouchableOpacity onPress={()=>handleSave(selectedFeilds)} style={styles.saveButton}>
+                                    <Text style={styles.saveButtonText}>Save</Text>
+                                  </TouchableOpacity>
+                                  <TouchableOpacity onPress={closeModal} style={styles.closeButton}>
+                                    <Text style={styles.closeButtonText}>Close</Text>
+                                  </TouchableOpacity>
+                                </View>
+                </View>
+                              </View>
+                          </Modal>
 
 </View>
     );
