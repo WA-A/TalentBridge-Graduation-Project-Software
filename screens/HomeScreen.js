@@ -43,10 +43,7 @@ import * as WebBrowser from 'expo-web-browser'
 import * as FileSystem from 'expo-file-system';
 import Video from 'react-native-video';
 //import * as Linking from 'expo-linking';
-import CommentsModal from './CommentsModal';
-import { setIsEnabledAsync } from 'expo-av/build/Audio';
-import { string } from 'prop-types';
-import { use } from 'react';
+
 
 export default function HomeScreen({ navigation, route}) {
   const [profile,setprofileimg] = useState('');
