@@ -100,10 +100,12 @@ const ProjectsSchema = new Schema(
         EndDate: { 
           type: Date, required: true 
         },
-    TaskFile: {
-      url: { type: String },  
-      filename: { type: String },  
-  },
+      TaskFile: [
+        {
+          type: Object,
+          required: false,
+        },
+      ],
   DeliveryTaskMethod: {
       type: String,
       enum: ["Online", "On-site"],
