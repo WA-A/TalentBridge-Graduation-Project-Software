@@ -910,7 +910,7 @@ export default function Signup({ navigation }) {
 
                                         console.log('Button Pressed');
                                         handleSignup(finalValues);
-                                        navigation.navigate('RequestSeniorToAdminPage');
+                                        
                                     }}
                                 >
                                     <ButtonText>Sign Up as a  {userType}</ButtonText>
