@@ -115,7 +115,10 @@ const [project,setProject]=useState();
     ...prev,
    field:selectedFeilds[0] ,
   }))
+  console.log(selectedFilters.field);
+  closeModal();
       }
+
   
     };
 
@@ -137,7 +140,7 @@ const [project,setProject]=useState();
             selectedFilters.maxPrice != 'undefined' && {
               priceRange: `${selectedFilters.minPrice}-${selectedFilters.maxPrice}`,
             }),              ...(selectedFilters.seniorName && { seniorName: selectedFilters.seniorName }),
-          ...(selectedFilters.field && { field: selectedFilters.field }),
+          ...(selectedFilters.field && { FieldId: selectedFilters.field }),
           ...(selectedFilters.status && { status: selectedFilters.status }),
         }).toString();
     
