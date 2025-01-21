@@ -95,7 +95,7 @@ export const CreateProject = async (req, res) => {
             
             const tasksArray = [];
         Object.keys(req.body).forEach((key) => {
-            const match = key.match(/^Tasks\[(\d+)\]\.(PhaseName|TaskName|Description|TaskRoleName|Priority|StartDate|EndDate)$/); 
+            const match = key.match(/^Tasks\[(\d+)\]\.(PhaseName|TaskName|Description|TaskRoleName|Priority|StartDate|EndDate|BenefitFromPhase)$/); 
             if (match) {
                 const index = parseInt(match[1], 10); 
                 const field = match[2]; 
@@ -111,12 +111,15 @@ export const CreateProject = async (req, res) => {
                 task.PhaseName && 
                 task.TaskName && 
                 task.Description && 
-                task.AssignedTo && 
+                //task.AssignedTo && 
                 task.TaskRoleName && 
-                task.TaskStatus && 
+               // task.TaskStatus && 
                 task.Priority && 
                 task.StartDate && 
-                task.EndDate
+                task.EndDate &&
+               // task.TaskFile &&
+                //task.DeliveryTaskMethod &&
+                task.BenefitFromPhase 
             );
             
         // إنشاء المشروع في قاعدة البيانات
