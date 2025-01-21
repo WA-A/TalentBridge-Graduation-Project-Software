@@ -10,6 +10,7 @@ import fileUpload, { FileValue } from "../../../utls/Multer.js";
 router.post('/createtasks',auth(EndPoints.CreateTask),fileUpload(FileValue.file).fields([{ name:'TaskFile'}]),TasksController.CreateTask);
 router.get('/getalltasksbysenior/:ProjectId',auth(EndPoints.GetAllTaskBySenior),TasksController.GetAllTasksBySenior);
 router.get('/getalltasksforjunior/:UserId',auth(EndPoints.GetAllTasksForJunior),TasksController.GetAllTasksForJunior);
+router.delete('/deletetask/:ProjectId',auth(EndPoints.DeleteTask),TasksController.DeleteTask);
 
 
 

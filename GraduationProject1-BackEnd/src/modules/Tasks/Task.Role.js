@@ -5,5 +5,6 @@ export const EndPoints = {
     CreateTask:[Roles.Senior],
     GetAllTaskBySenior:[Roles.Senior],
     GetAllTasksForJunior:[Roles.Junior],
+    DeleteTask:[Roles.Senior],
 
 }

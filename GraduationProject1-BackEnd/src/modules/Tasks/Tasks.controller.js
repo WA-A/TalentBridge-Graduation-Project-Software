@@ -173,3 +173,43 @@ export const GetAllTasksForJunior = async (req, res) => {
         });
     }
 };
+
+
+// Delete Task From Project By Senior 
+
+export const DeleteTask = async (req, res) => {
+    try {
+        const { ProjectId } = req.params; 
+        const { TaskId } = req.body; 
+
+        if (!ProjectId || !TaskId) {
+            return res.status(400).json({ message: "ProjectId and TaskId are required" });
+        }
+
+        const project = await ProjectsModel.findById(ProjectId);
+        if (!project) {
+            return res.status(404).json({ message: "Project not found" });
+        }
+
+        const taskIndex = project.Tasks.findIndex((task) => task._id.toString() === TaskId);
+
+        if (taskIndex === -1) {
+            return res.status(404).json({ message: "Task not found in the specified project" });
+        }
+
+        project.Tasks.splice(taskIndex, 1);
+
+        await project.save();
+
+        return res.status(200).json({
+            message: "Task deleted successfully",
+        });
+    } catch (error) {
+        console.error("Error deleting task from project:", error.message);
+        return res.status(500).json({
+            message: "Error deleting task",
+            error: error.message,
+        });
+    }
+};
+
