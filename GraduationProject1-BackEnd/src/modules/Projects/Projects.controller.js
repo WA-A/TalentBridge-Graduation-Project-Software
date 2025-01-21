@@ -90,7 +90,35 @@ export const CreateProject = async (req, res) => {
                   })
               )
             : [];
+         
+            // Tasks in project 
+            
+            const tasksArray = [];
+        Object.keys(req.body).forEach((key) => {
+            const match = key.match(/^Tasks\[(\d+)\]\.(PhaseName|TaskName|Description|AssignedTo|TaskRoleName|TaskStatus|Priority|StartDate|EndDate)$/); // مطابقة المفتاح Tasks[i].PhaseName أو Tasks[i].TaskName
+            if (match) {
+                const index = parseInt(match[1], 10); // استخراج رقم المهمة
+                const field = match[2]; // استخراج الحقل
 
+                if (!tasksArray[index]) {
+                    tasksArray[index] = {}; // إنشاء عنصر جديد إذا لم يكن موجودًا
+                }
+                tasksArray[index][field] = req.body[key]; // تعيين القيمة للحقل المناسب
+            }
+        });
+
+            const ParsedTasks = tasksArray.filter((task) => 
+                task.PhaseName && 
+                task.TaskName && 
+                task.Description && 
+                task.AssignedTo && 
+                task.TaskRoleName && 
+                task.TaskStatus && 
+                task.Priority && 
+                task.StartDate && 
+                task.EndDate
+            );
+            
         // إنشاء المشروع في قاعدة البيانات
         const project = await ProjectsModel.create({
             ProjectName,
@@ -104,6 +132,7 @@ export const CreateProject = async (req, res) => {
             Benefits,
             Price: price, // استخدام السعر المحول
             FileProject,
+            Tasks: ParsedTasks,
         });
 
         return res.status(201).json({
