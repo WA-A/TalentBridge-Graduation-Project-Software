@@ -80,3 +80,47 @@ export const CreateTask = async (req, res) => {
         });
     }
 };
+
+
+// Get All Tasks By Senior in Project 
+
+export const GetAllTasksBySenior = async (req, res) => {
+    try {
+        const { ProjectId } = req.params;
+
+        if (!ProjectId) {
+            return res.status(400).json({ message: "ProjectId is required" });
+        }
+
+        const project = await ProjectsModel.findById(ProjectId);
+
+        if (!project) {
+            return res.status(404).json({ message: "Project not found" });
+        }
+
+        const tasks = project.Tasks || [];
+
+        return res.status(200).json({
+            message: "Tasks fetched successfully",
+            tasks: tasks.map(task => ({
+                TaskName: task.TaskName,
+                PhaseName: task.PhaseName,
+                Description: task.Description,
+                TaskStatus: task.TaskStatus,
+                AssignedTo: task.AssignedTo,
+                Priority: task.Priority,
+                StartDate: task.StartDate,
+                EndDate: task.EndDate,
+                TaskFile: task.TaskFile,
+                DeliveryTaskMethod: task.DeliveryTaskMethod,
+                BenefitFromPhase: task.BenefitFromPhase,
+            })),
+        });
+    } catch (error) {
+        console.error("Error fetching tasks:", error.message);
+        return res.status(500).json({
+            message: "Error fetching tasks",
+            error: error.message,
+        });
+    }
+};
