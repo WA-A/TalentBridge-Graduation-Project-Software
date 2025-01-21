@@ -10,7 +10,8 @@ import ExternalApiSkillsRouter from "./../ExternalApiSkills/ExternalApiSkills.ro
 import ExternalApiFieldsRouter from './../ExternalApiFields/ExternalApiFields.router.js'
 import NotificationRouter from './modules/Notification/Notification.Router.js'
 import RequestSeniorToAdminRouter from './modules/RequestSeniorToAdmin/RequestSeniorToAdmin.router.js'
-import ApplicationTrainRouter from "./modules/Application/Application.router.js"
+import ApplicationTrainRouter from "./modules/Application/Application.router.js";
+import TasksRouter from './modules/Tasks/Tasks.router.js';
 import cors from 'cors';
 import dotenv from 'dotenv';
 dotenv.config(); 
@@ -32,6 +33,8 @@ const Appinit = (app,express)=>{
     app.use('/applicationtrain',ApplicationTrainRouter);
     app.use('/notification',NotificationRouter);
     app.use('/requestseniortoadmin',RequestSeniorToAdminRouter);
+    app.use('/tasks',TasksRouter);
+
 
 
     
