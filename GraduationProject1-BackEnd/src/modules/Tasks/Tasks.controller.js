@@ -124,3 +124,52 @@ export const GetAllTasksBySenior = async (req, res) => {
         });
     }
 };
+
+
+
+// Get All Tasks For Junior
+
+export const GetAllTasksForJunior = async (req, res) => {
+    try {
+        const { UserId } = req.params;
+
+        if (!UserId) {
+            return res.status(400).json({ message: "UserId is required" });
+        }
+
+        const projects = await ProjectsModel.find({
+            "Tasks.AssignedTo": UserId,
+        });
+
+        if (!projects || projects.length === 0) {
+            return res.status(404).json({ message: "No tasks found for this user" });
+        }
+
+        const tasks = projects.flatMap((project) =>
+            project.Tasks.filter((task) => task.AssignedTo?.toString() === UserId)
+        );
+
+        return res.status(200).json({
+            message: "Tasks fetched successfully",
+            tasks: tasks.map(task => ({
+                TaskName: task.TaskName,
+                PhaseName: task.PhaseName,
+                Description: task.Description,
+                TaskStatus: task.TaskStatus,
+                Priority: task.Priority,
+                StartDate: task.StartDate,
+                EndDate: task.EndDate,
+                TaskFile: task.TaskFile,
+                DeliveryTaskMethod: task.DeliveryTaskMethod,
+                BenefitFromPhase: task.BenefitFromPhase,
+                created_at: task.created_at,
+            })),
+        });
+    } catch (error) {
+        console.error("Error fetching tasks for user:", error.message);
+        return res.status(500).json({
+            message: "Error fetching tasks for user",
+            error: error.message,
+        });
+    }
+};

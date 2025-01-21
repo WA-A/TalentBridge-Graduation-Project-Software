@@ -8,7 +8,8 @@ import { Validation } from "../../MiddleWare/Validation.js";
 import fileUpload, { FileValue } from "../../../utls/Multer.js";
 
 router.post('/createtasks',auth(EndPoints.CreateTask),fileUpload(FileValue.file).fields([{ name:'TaskFile'}]),TasksController.CreateTask);
-router.get('/getalltasksbysenior/:ProjectId',auth(EndPoints.getAllTaskBySenior),TasksController.GetAllTasksBySenior);
+router.get('/getalltasksbysenior/:ProjectId',auth(EndPoints.GetAllTaskBySenior),TasksController.GetAllTasksBySenior);
+router.get('/getalltasksforjunior/:UserId',auth(EndPoints.GetAllTasksForJunior),TasksController.GetAllTasksForJunior);
 
 
 
