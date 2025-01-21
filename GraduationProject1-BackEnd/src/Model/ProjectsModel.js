@@ -80,7 +80,9 @@ const ProjectsSchema = new Schema(
         PhaseName: { type: String, required: true },
         TaskName: { type: String, required: true, trim: true },
         Description: { type: String, required: false, trim: true },
-        AssignedTo: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+        AssignedTo: { type: mongoose.Schema.Types.ObjectId, ref: "User", 
+          //required: true 
+          },
         TaskRoleName: { type: String, required: true },
         TaskStatus: {
           type: String,
@@ -92,8 +94,26 @@ const ProjectsSchema = new Schema(
           enum: ["Low", "Medium", "High"],
           default: "Medium",
         },
-        StartDate: { type: Date, required: true },
-        EndDate: { type: Date, required: true },
+        StartDate: { 
+          type: Date, required: true 
+        },
+        EndDate: { 
+          type: Date, required: true 
+        },
+    TaskFile: {
+      url: { type: String },  
+      filename: { type: String },  
+  },
+  DeliveryTaskMethod: {
+      type: String,
+      enum: ["Online", "On-site"],
+      //required: true,
+  },
+  BenefitFromPhase: { 
+      type: String, 
+      required: false,
+      trim: true
+  },
         created_at: { type: Date, default: Date.now },
         updated_at: { type: Date, default: Date.now },
       },

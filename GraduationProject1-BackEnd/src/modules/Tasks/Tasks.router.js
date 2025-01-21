@@ -7,6 +7,7 @@ import * as schema from './Tasks.Validation.js';
 import { Validation } from "../../MiddleWare/Validation.js";
 import fileUpload, { FileValue } from "../../../utls/Multer.js";
 
+router.post('/createtasks',auth(EndPoints.CreateTask),fileUpload(FileValue.file).fields([{ name:'TaskFile'}]),TasksController.CreateTask);
 
 
 
