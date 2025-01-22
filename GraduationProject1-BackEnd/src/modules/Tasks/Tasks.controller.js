@@ -271,6 +271,67 @@ export const SubmitTask = async (req, res) => {
 };
 
 
+// Update Submit Task By Junior Before End Date
+export const UpdateSubmitTask = async (req, res) => {
+    try {
+        const { ProjectId  } = req.params; 
+        const UserId = req.user._id;
+        const { TaskId } = req.body; 
+
+        if (!ProjectId || !TaskId || !UserId) {
+            return res.status(400).json({ message: "Project ID, Task ID, and User ID are required" });
+        }
+
+        const SubmitFile = req.files?.['SubmitFile']
+            ? await Promise.all(
+                  req.files['SubmitFile'].map(async (file) => {
+                      const { secure_url, public_id } = await cloudinary.uploader.upload(file.path, {
+                          folder: `GraduationProject1-Software/Project/Task/Submit/SubmitFile/${TaskId}`,
+                          resource_type: "raw" // zip files
+                      });
+                      return {
+                          secure_url,
+                          public_id,
+                          originalname: file.originalname,
+                      };
+                  })
+              )
+            : [];
+
+        const project = await ProjectsModel.findById(ProjectId);
+        if (!project) {
+            return res.status(404).json({ message: "Project not found" });
+        }
+
+        const task = project.Tasks.find((t) => t._id.toString() === TaskId);
+        if (!task) {
+            return res.status(404).json({ message: "Task not found" });
+        }
+
+        const currentDate = new Date();
+        if (currentDate > new Date(task.EndDate)) {
+            return res.status(400).json({ message: "Submission is not allowed after the task's end date" });
+        }
+
+        const submission = {
+            UserId,
+            SubmitFile,
+            submittedAt: currentDate,
+        };
+
+        task.Submissions = task.Submissions || [];
+        task.Submissions.push(submission);
+
+        await project.save();
+
+        res.status(200).json({ message: "Task submitted successfully", submission });
+    } catch (error) {
+        console.error("Error submitting task:", error.message);
+        res.status(500).json({ message: "Error submitting task", error: error.message });
+    }
+};
+
+
 
 // Get All Submissions Own By Junior
 
@@ -424,64 +485,50 @@ export const AddReviewToSubmission = async (req, res) => {
 };
 
 
+// Review Skills By Senior
 
-export const UpdateSubmitTask = async (req, res) => {
+// ملاحظة ليس جاهز هذا الفنكشن يجب ان يفحص السكلز اذا موجودة عند الجينيور وقيمة الريت تزيد لا تقل واذا السكلز جديدة يضع قيمة مناسبة لتقييم هذه السكلز لدا الجينيور 
+
+export const ReviewSkills = async (req, res) => {    
     try {
-        const { ProjectId  } = req.params; 
+        const { ProjectId } = req.params;
         const UserId = req.user._id;
-        const { TaskId } = req.body; 
+        const { SkillId,  NewRatingSkill } = req.body;
 
-        if (!ProjectId || !TaskId || !UserId) {
-            return res.status(400).json({ message: "Project ID, Task ID, and User ID are required" });
+        if (!ProjectId || !SkillId || !UserId || !NewRatingSkill) {
+            return res.status(400).json({ message: "All fields are required" });
         }
 
-        const SubmitFile = req.files?.['SubmitFile']
-            ? await Promise.all(
-                  req.files['SubmitFile'].map(async (file) => {
-                      const { secure_url, public_id } = await cloudinary.uploader.upload(file.path, {
-                          folder: `GraduationProject1-Software/Project/Task/Submit/SubmitFile/${TaskId}`,
-                          resource_type: "raw" // zip files
-                      });
-                      return {
-                          secure_url,
-                          public_id,
-                          originalname: file.originalname,
-                      };
-                  })
-              )
-            : [];
+        if (NewRatingSkill < 1 || NewRatingSkill > 5) {
+            return res.status(400).json({ message: "Rating must be between 1 and 5" });
+        }
 
         const project = await ProjectsModel.findById(ProjectId);
         if (!project) {
             return res.status(404).json({ message: "Project not found" });
         }
 
-        const task = project.Tasks.find((t) => t._id.toString() === TaskId);
-        if (!task) {
-            return res.status(404).json({ message: "Task not found" });
+        const skillExists = project.RequiredSkills.some((skill) => skill.id.toString() === SkillId.toString());
+        if (!skillExists) {
+            return res.status(400).json({ message: "The skill does not exist in the project's required skills" });
         }
 
-        const currentDate = new Date();
-        if (currentDate > new Date(task.EndDate)) {
-            return res.status(400).json({ message: "Submission is not allowed after the task's end date" });
-        }
-
-        const submission = {
+        const review = {
+            SkillId,
             UserId,
-            SubmitFile,
-            submittedAt: currentDate,
+            NewRatingSkill,
         };
 
-        task.Submissions = task.Submissions || [];
-        task.Submissions.push(submission);
-
+        if (!project.SkillReviews) project.SkillReviews = []; 
+        project.SkillReviews.push(review);
         await project.save();
 
-        res.status(200).json({ message: "Task submitted successfully", submission });
+        res.status(200).json({ message: "Skill reviewed successfully", review });
     } catch (error) {
-        console.error("Error submitting task:", error.message);
-        res.status(500).json({ message: "Error submitting task", error: error.message });
+        console.error("Error reviewing skill:", error.message);
+        res.status(500).json({ message: "Error reviewing skill", error: error.message });
     }
 };
+
 
 

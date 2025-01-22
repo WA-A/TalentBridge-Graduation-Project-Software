@@ -136,6 +136,13 @@ const ProjectsSchema = new Schema(
         updated_at: { type: Date, default: Date.now },
       },
     ],
+   SkillReviews: [
+      {
+        SkillId: { type: Number, required: true },
+        UserId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+        NewRatingSkill: { type: Number, required: true, min: 1, max: 5 },
+      },
+    ],
     created_at: {
       type: Date,
       default: Date.now,
