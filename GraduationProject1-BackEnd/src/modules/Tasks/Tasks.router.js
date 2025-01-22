@@ -15,6 +15,7 @@ router.post('/submittask/:ProjectId',auth(EndPoints.SubmitTask),fileUpload(FileV
 router.get('/getallubmissionsforjunior/:ProjectId',auth(EndPoints.GetAllJuniorSubmissions),TasksController.GetAllJuniorSubmissions);
 router.get('/getallubmissionsbysenior/:ProjectId',auth(EndPoints.GetTaskSubmissionsBySenior),TasksController.GetTaskSubmissionsBySenior);
 router.post('/addreviewtosubmit/:ProjectId',auth(EndPoints.AddReviewToSubmission),TasksController.AddReviewToSubmission);
+router.post('/updatesubmittask/:ProjectId',auth(EndPoints.UpdateSubmitTask),fileUpload(FileValue.file).fields([{ name:'SubmitFile'}]),TasksController.UpdateSubmitTask);
 
 
 
