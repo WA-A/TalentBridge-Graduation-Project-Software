@@ -106,7 +106,7 @@ const ProjectsSchema = new Schema(
           required: false,
         },
       ],
-  DeliveryTaskMethod: {
+  SubmitTaskMethod: {
       type: String,
       enum: ["Online", "On-site"],
       //required: true,
@@ -116,6 +116,22 @@ const ProjectsSchema = new Schema(
       required: false,
       trim: true
   },
+  Submissions: [
+    {
+      UserId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+      SubmitFile: [
+        {
+          type: Object,
+          required: false,
+        },
+      ],
+      SubmittedAt: { type: Date, default: Date.now },
+      Review: {
+        TaskRating: { type: Number, min: 1, max: 5 },
+        Feedback: { type: String, trim: true },
+      },
+    },
+  ],
         created_at: { type: Date, default: Date.now },
         updated_at: { type: Date, default: Date.now },
       },
