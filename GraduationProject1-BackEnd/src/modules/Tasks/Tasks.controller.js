@@ -269,6 +269,7 @@ export const SubmitTask = async (req, res) => {
 };
 
 
+
 // Get All Submissions Own By Junior
 
 export const GetAllJuniorSubmissions = async (req, res) => {
@@ -320,7 +321,6 @@ export const GetAllJuniorSubmissions = async (req, res) => {
 
 
 
-
 // Get All Submissions For Task By Senior
 
 export const GetTaskSubmissionsBySenior = async (req, res) => {
@@ -364,4 +364,62 @@ export const GetTaskSubmissionsBySenior = async (req, res) => {
         });
     }
 };
+
+
+// Create Revivew For Task By Senior
+
+export const AddReviewToSubmission = async (req, res) => {
+    try {
+        const { ProjectId } = req.params;
+        const {TaskId, SubmissionId,TaskRating, Feedback } = req.body;
+        
+
+        if (!ProjectId || !TaskId || !SubmissionId) {
+            return res.status(400).json({ message: "Project ID, Task ID, and Submission ID are required" });
+        }
+
+        if (!TaskRating || TaskRating < 0 || TaskRating > 100) {
+            return res.status(400).json({ message: "Rating must be between 1 and 5" });
+        }
+
+        const project = await ProjectsModel.findById(ProjectId);
+        if (!project) {
+            return res.status(404).json({ message: "Project not found" });
+        }
+
+        if (project.CreatedBySenior.toString() !== req.user._id.toString()) {
+            return res.status(403).json({ message: "Only the senior responsible for this project can add reviews" });
+        }
+
+        const task = project.Tasks.find((task) => task._id.toString() === TaskId);
+        if (!task) {
+            return res.status(404).json({ message: "Task not found" });
+        }
+
+        const submission = task.Submissions.find((submission) => submission._id.toString() === SubmissionId);
+        if (!submission) {
+            return res.status(404).json({ message: "Submission not found" });
+        }
+
+        submission.Review = {
+            TaskRating,
+            Feedback,
+        };
+
+        await project.save();
+
+        return res.status(200).json({
+            message: "Review added successfully",
+            submission,
+        });
+    } catch (error) {
+        console.error("Error adding review to submission:", error.message);
+        return res.status(500).json({
+            message: "Error adding review to submission",
+            error: error.message,
+        });
+    }
+};
+
+
 

@@ -9,5 +9,6 @@ export const EndPoints = {
     DeleteTask:[Roles.Senior],
     SubmitTask:[Roles.Junior],
     GetAllJuniorSubmissions:[Roles.Junior],
-    GetTaskSubmissionsBySenior:[Roles.Senior]
+    GetTaskSubmissionsBySenior:[Roles.Senior],
+    AddReviewToSubmission:[Roles.Senior]
 }
