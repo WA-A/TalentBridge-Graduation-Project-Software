@@ -124,10 +124,11 @@ const ProjectsSchema = new Schema(
               Feedback: { type: String, trim: true },
             },
             Report: {
-              BenefitSummary: { type: String, required: false, trim: true }, // ماذا استفاد من التاسك
-              ChallengesFaced: { type: String, required: false, trim: true },// التحديات التي واجهتها
-              AddedAt: { type: Date, default: Date.now }, 
+              BenefitSummary: { type: String, trim: true }, 
+              ChallengesFaced: { type: String, trim: true },
+              AddedAt: { type: Date, default: Date.now },
             },
+            
           },
         ],
         created_at: { type: Date, default: Date.now },
