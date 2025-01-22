@@ -487,20 +487,14 @@ export const AddReviewToSubmission = async (req, res) => {
 
 // Review Skills By Senior
 
-// ملاحظة ليس جاهز هذا الفنكشن يجب ان يفحص السكلز اذا موجودة عند الجينيور وقيمة الريت تزيد لا تقل واذا السكلز جديدة يضع قيمة مناسبة لتقييم هذه السكلز لدا الجينيور 
-
 export const ReviewSkills = async (req, res) => {    
     try {
         const { ProjectId } = req.params;
         const UserId = req.user._id;
-        const { SkillId,  NewRatingSkill } = req.body;
+        const { SkillsRatings } = req.body;
 
-        if (!ProjectId || !SkillId || !UserId || !NewRatingSkill) {
-            return res.status(400).json({ message: "All fields are required" });
-        }
-
-        if (NewRatingSkill < 1 || NewRatingSkill > 5) {
-            return res.status(400).json({ message: "Rating must be between 1 and 5" });
+        if (!ProjectId || !SkillsRatings || !Array.isArray(SkillsRatings)) {
+            return res.status(400).json({ message: "Project ID and an array of skill ratings are required" });
         }
 
         const project = await ProjectsModel.findById(ProjectId);
@@ -508,27 +502,54 @@ export const ReviewSkills = async (req, res) => {
             return res.status(404).json({ message: "Project not found" });
         }
 
-        const skillExists = project.RequiredSkills.some((skill) => skill.id.toString() === SkillId.toString());
-        if (!skillExists) {
-            return res.status(400).json({ message: "The skill does not exist in the project's required skills" });
+        const requiredSkillIds = project.RequiredSkills.map(skill => skill.id.toString());
+
+        const reviewsToAdd = [];
+
+        for (const rating of SkillsRatings) {
+            const { SkillId, NewRatingSkill } = rating;
+
+            if (!requiredSkillIds.includes(SkillId.toString())) {
+                return res.status(400).json({ message: `Skill with ID ${SkillId} does not exist in the project's required skills` });
+            }
+
+            if (NewRatingSkill < 1 || NewRatingSkill > 5) {
+                return res.status(400).json({ message: `Rating for Skill ${SkillId} must be between 1 and 5` });
+            }
+
+            const existingReview = project.SkillReviews.find(review => review.UserId.toString() === UserId.toString() && review.SkillId.toString() === SkillId.toString());
+
+            if (existingReview) {
+                if (NewRatingSkill < existingReview.NewRatingSkill) {
+                    return res.status(400).json({
+                        message: `New rating for Skill ${SkillId} cannot be less than the previous rating`
+                    });
+                }
+            } else {
+                if (NewRatingSkill === undefined) {
+                    return res.status(400).json({ message: `New rating for Skill ${SkillId} is required` });
+                }
+            }
+
+            reviewsToAdd.push({
+                SkillId,
+                UserId,
+                NewRatingSkill,
+            });
         }
 
-        const review = {
-            SkillId,
-            UserId,
-            NewRatingSkill,
-        };
-
-        if (!project.SkillReviews) project.SkillReviews = []; 
-        project.SkillReviews.push(review);
+        if (!project.SkillReviews) project.SkillReviews = [];
+        project.SkillReviews.push(...reviewsToAdd);
         await project.save();
 
-        res.status(200).json({ message: "Skill reviewed successfully", review });
+        res.status(200).json({ message: "Skills reviewed successfully", reviews: reviewsToAdd });
+
     } catch (error) {
-        console.error("Error reviewing skill:", error.message);
-        res.status(500).json({ message: "Error reviewing skill", error: error.message });
+        console.error("Error reviewing skills:", error.message);
+        res.status(500).json({ message: "Error reviewing skills", error: error.message });
     }
 };
+
 
 
 
