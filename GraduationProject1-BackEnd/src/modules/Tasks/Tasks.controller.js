@@ -274,10 +274,10 @@ export const SubmitTask = async (req, res) => {
 export const GetAllJuniorSubmissions = async (req, res) => {
     try {
         const { ProjectId } = req.params; 
-        const UserId = req.user._id;
+        const UserId = req.user._id; 
 
-        if (!ProjectId || !UserId) {
-            return res.status(400).json({ message: "Project ID and user ID are required" });
+        if (!ProjectId) {
+            return res.status(400).json({ message: "Project ID is required" });
         }
 
         const project = await ProjectsModel.findById(ProjectId);
@@ -285,28 +285,83 @@ export const GetAllJuniorSubmissions = async (req, res) => {
             return res.status(404).json({ message: "Project not found" });
         }
 
-        const juniorSubmissions = project.Tasks.flatMap((task) =>
-            task.Submissions.filter((submission) => submission.UserId.toString() === UserId)
+        const tasksWithUserSubmissions = project.Tasks.map((task) => {
+            const userSubmissions = (task.Submissions || []).filter(
+                (submission) => submission.UserId.toString() === UserId.toString()
+            );
+
+            return {
+                TaskId: task._id,
+                TaskName: task.TaskName,
+                Submissions: userSubmissions,
+            };
+        });
+
+        const hasSubmissions = tasksWithUserSubmissions.some(
+            (task) => task.Submissions.length > 0
         );
 
-        if (juniorSubmissions.length === 0) {
-            return res.status(404).json({ message: "No submissions found for this user in this project" });
+        if (!hasSubmissions) {
+            return res.status(404).json({ message: "No submissions found for this user in the project" });
         }
 
         return res.status(200).json({
             message: "Submissions retrieved successfully",
-            submissions: juniorSubmissions,
+            tasks: tasksWithUserSubmissions,
         });
     } catch (error) {
-        console.error("Error retrieving submissions:", error.message);
+        console.error("Error retrieving submissions for user:", error.message);
         return res.status(500).json({
-            message: "Error retrieving submissions",
+            message: "Error retrieving submissions for user",
             error: error.message,
         });
     }
 };
 
 
+
+
 // Get All Submissions For Task By Senior
 
+export const GetTaskSubmissionsBySenior = async (req, res) => {
+    try {
+        const { ProjectId } = req.params; 
+        const { TaskId } = req.body;    
+
+        if (!ProjectId || !TaskId) {
+            return res.status(400).json({ message: "ProjectId and TaskId are required" });
+        }
+
+        const project = await ProjectsModel.findById(ProjectId);
+        if (!project) {
+            return res.status(404).json({ message: "Project not found" });
+        }
+
+        const task = project.Tasks.find((task) => task._id.toString() === TaskId);
+
+        if (!task) {
+            return res.status(404).json({ message: "Task not found in this project" });
+        }
+
+        const submissions = task.Submissions || [];
+        if (submissions.length === 0) {
+            return res.status(404).json({ message: "No submissions found for this task" });
+        }
+
+        return res.status(200).json({
+            message: "Submissions retrieved successfully",
+            task: {
+                TaskId: task._id,
+                TaskName: task.TaskName,
+                Submissions: submissions,
+            },
+        });
+    } catch (error) {
+        console.error("Error retrieving task submissions:", error.message);
+        return res.status(500).json({
+            message: "Error retrieving task submissions",
+            error: error.message,
+        });
+    }
+};
 

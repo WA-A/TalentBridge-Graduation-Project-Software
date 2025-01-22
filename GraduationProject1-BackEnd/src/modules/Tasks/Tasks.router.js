@@ -13,6 +13,7 @@ router.get('/getalltasksforjunior/:UserId',auth(EndPoints.GetAllTasksForJunior),
 router.delete('/deletetask/:ProjectId',auth(EndPoints.DeleteTask),TasksController.DeleteTask);
 router.post('/submittask/:ProjectId',auth(EndPoints.SubmitTask),fileUpload(FileValue.file).fields([{ name:'SubmitFile'}]),TasksController.SubmitTask);
 router.get('/getallubmissionsforjunior/:ProjectId',auth(EndPoints.GetAllJuniorSubmissions),TasksController.GetAllJuniorSubmissions);
+router.get('/getallubmissionsbysenior/:ProjectId',auth(EndPoints.GetTaskSubmissionsBySenior),TasksController.GetTaskSubmissionsBySenior);
 
 
 
