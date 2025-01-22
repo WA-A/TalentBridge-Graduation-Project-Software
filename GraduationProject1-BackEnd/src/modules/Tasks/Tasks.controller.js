@@ -269,3 +269,44 @@ export const SubmitTask = async (req, res) => {
 };
 
 
+// Get All Submissions Own By Junior
+
+export const GetAllJuniorSubmissions = async (req, res) => {
+    try {
+        const { ProjectId } = req.params; 
+        const UserId = req.user._id;
+
+        if (!ProjectId || !UserId) {
+            return res.status(400).json({ message: "Project ID and user ID are required" });
+        }
+
+        const project = await ProjectsModel.findById(ProjectId);
+        if (!project) {
+            return res.status(404).json({ message: "Project not found" });
+        }
+
+        const juniorSubmissions = project.Tasks.flatMap((task) =>
+            task.Submissions.filter((submission) => submission.UserId.toString() === UserId)
+        );
+
+        if (juniorSubmissions.length === 0) {
+            return res.status(404).json({ message: "No submissions found for this user in this project" });
+        }
+
+        return res.status(200).json({
+            message: "Submissions retrieved successfully",
+            submissions: juniorSubmissions,
+        });
+    } catch (error) {
+        console.error("Error retrieving submissions:", error.message);
+        return res.status(500).json({
+            message: "Error retrieving submissions",
+            error: error.message,
+        });
+    }
+};
+
+
+// Get All Submissions For Task By Senior
+
+
