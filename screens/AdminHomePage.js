@@ -79,20 +79,20 @@ export default function AdminHomePage({ navigation, route}) {
        {/* زر الإعدادات وزر المشاريع */}
        <View style={{ flexDirection: 'row', alignItems: 'center',left: '10%',
     }}>
-     <TouchableOpacity onPress={() => nav.navigate('HomeScreen')} style={{ marginRight: 100, marginLeft: 80}}>
-           <Ionicons name="home" size={20} color= {isNightMode ? primary : "#000"} />
+     <TouchableOpacity onPress={() => nav.navigate('AdminHomePage')} style={{ marginRight: 100, marginLeft: 80}}>
+           <Ionicons name="stats-chart" size={20} color= {isNightMode ? primary : "#000"} />
          </TouchableOpacity>
        
    
 
          <TouchableOpacity
-  style={{ marginRight: 100 }}
->
-  <Ionicons name="folder" size={20} color={isNightMode ? primary : "#000"} />
+           style={{ marginRight: 100 }}
+            >
+  <Ionicons name="document-text" size={20} color={isNightMode ? primary : "#000"} />
 </TouchableOpacity>
 
          <TouchableOpacity onPress={() => nav.navigate('AddPostScreen')} style={{ marginRight:100 }}>
-           <Ionicons name="add-circle" size={25} color= {isNightMode ? primary : "#000"} />
+           <Ionicons name="trending-up-outline" size={25} color= {isNightMode ? primary : "#000"} />
          </TouchableOpacity>
    
    
