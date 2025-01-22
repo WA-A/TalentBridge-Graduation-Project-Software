@@ -1,4 +1,5 @@
 import {Roles} from '../../MiddleWare/auth.js'
+import { SubmitTask } from './Tasks.controller.js'
 
 
 export const EndPoints = {
@@ -6,5 +7,6 @@ export const EndPoints = {
     GetAllTaskBySenior:[Roles.Senior],
     GetAllTasksForJunior:[Roles.Junior],
     DeleteTask:[Roles.Senior],
+    SubmitTask:[Roles.Junior],
 
 }

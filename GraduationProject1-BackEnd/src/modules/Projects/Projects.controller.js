@@ -118,7 +118,7 @@ export const CreateProject = async (req, res) => {
                 task.StartDate && 
                 task.EndDate &&
                // task.TaskFile &&
-                //task.DeliveryTaskMethod &&
+                //task.SubmitTaskMethod &&
                 task.BenefitFromPhase 
             );
             

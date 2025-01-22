@@ -16,10 +16,10 @@ export const CreateTask = async (req, res) => {
             StartDate,
             EndDate,
             BenefitFromPhase,
-            DeliveryTaskMethod,
+            SubmitTaskMethod,
         } = req.body;
 
-        if (!ProjectId || !PhaseName || !TaskName || !Description || !AssignedTo || !TaskRoleName || !TaskStatus || !Priority || !StartDate || !EndDate  || !DeliveryTaskMethod || !BenefitFromPhase) {
+        if (!ProjectId || !PhaseName || !TaskName || !Description || !AssignedTo || !TaskRoleName || !TaskStatus || !Priority || !StartDate || !EndDate  || !SubmitTaskMethod || !BenefitFromPhase) {
             return res.status(400).json({ message: "All fields are required" });
         }
 
@@ -61,7 +61,7 @@ export const CreateTask = async (req, res) => {
             StartDate,
             EndDate,
             TaskFile,  
-            DeliveryTaskMethod,
+            SubmitTaskMethod,
             BenefitFromPhase,
         };
 
@@ -112,7 +112,7 @@ export const GetAllTasksBySenior = async (req, res) => {
                 StartDate: task.StartDate,
                 EndDate: task.EndDate,
                 TaskFile: task.TaskFile,
-                DeliveryTaskMethod: task.DeliveryTaskMethod,
+                SubmitTaskMethod: task.SubmitTaskMethod,
                 BenefitFromPhase: task.BenefitFromPhase,
             })),
         });
@@ -160,9 +160,8 @@ export const GetAllTasksForJunior = async (req, res) => {
                 StartDate: task.StartDate,
                 EndDate: task.EndDate,
                 TaskFile: task.TaskFile,
-                DeliveryTaskMethod: task.DeliveryTaskMethod,
+                SubmitTaskMethod: task.SubmitTaskMethod,
                 BenefitFromPhase: task.BenefitFromPhase,
-                created_at: task.created_at,
             })),
         });
     } catch (error) {
@@ -212,4 +211,61 @@ export const DeleteTask = async (req, res) => {
         });
     }
 };
+
+
+
+//  Submit Task By Junior
+
+export const SubmitTask = async (req, res) => {
+    try {
+        const { ProjectId } = req.params;
+        const UserId = req.user._id;
+        const { TaskId } = req.body;
+
+        if (!ProjectId || !TaskId || !UserId ) {
+            return res.status(400).json({ message: "All fields are required" });
+        }
+
+
+        const SubmitFile = req.files?.['SubmitFile']
+                    ? await Promise.all(
+                          req.files['SubmitFile'].map(async (file) => {
+                              const { secure_url, public_id } = await cloudinary.uploader.upload(file.path, {
+                                  folder: `GraduationProject1-Software/Project/Task/Submit/SubmitFile/${TaskId}`,
+                              });
+        
+                              return {
+                                  secure_url,
+                                  public_id,
+                                  originalname: file.originalname,
+                              };
+                          })
+                      )
+                    : [];
+
+        const project = await ProjectsModel.findById(ProjectId);
+        if (!project) {
+            return res.status(404).json({ message: "Project not found" });
+        }
+
+        const task = project.Tasks.find((t) => t._id.toString() === TaskId);
+        if (!task) {
+            return res.status(404).json({ message: "Task not found" });
+        }
+
+        const submission = {
+            UserId,
+            SubmitFile
+        };
+
+        task.Submissions.push(submission);
+        await project.save();
+
+        res.status(200).json({ message: "Task submitted successfully", submission });
+    } catch (error) {
+        console.error("Error submitting task:", error.message);
+        res.status(500).json({ message: "Error submitting task", error: error.message });
+    }
+};
+
 
