@@ -232,6 +232,8 @@ export const SubmitTask = async (req, res) => {
                           req.files['SubmitFile'].map(async (file) => {
                               const { secure_url, public_id } = await cloudinary.uploader.upload(file.path, {
                                   folder: `GraduationProject1-Software/Project/Task/Submit/SubmitFile/${TaskId}`,
+                                  resource_type: "raw" // zip files
+
                               });
         
                               return {
@@ -421,5 +423,65 @@ export const AddReviewToSubmission = async (req, res) => {
     }
 };
 
+
+
+export const UpdateSubmitTask = async (req, res) => {
+    try {
+        const { ProjectId  } = req.params; 
+        const UserId = req.user._id;
+        const { TaskId } = req.body; 
+
+        if (!ProjectId || !TaskId || !UserId) {
+            return res.status(400).json({ message: "Project ID, Task ID, and User ID are required" });
+        }
+
+        const SubmitFile = req.files?.['SubmitFile']
+            ? await Promise.all(
+                  req.files['SubmitFile'].map(async (file) => {
+                      const { secure_url, public_id } = await cloudinary.uploader.upload(file.path, {
+                          folder: `GraduationProject1-Software/Project/Task/Submit/SubmitFile/${TaskId}`,
+                          resource_type: "raw" // zip files
+                      });
+                      return {
+                          secure_url,
+                          public_id,
+                          originalname: file.originalname,
+                      };
+                  })
+              )
+            : [];
+
+        const project = await ProjectsModel.findById(ProjectId);
+        if (!project) {
+            return res.status(404).json({ message: "Project not found" });
+        }
+
+        const task = project.Tasks.find((t) => t._id.toString() === TaskId);
+        if (!task) {
+            return res.status(404).json({ message: "Task not found" });
+        }
+
+        const currentDate = new Date();
+        if (currentDate > new Date(task.EndDate)) {
+            return res.status(400).json({ message: "Submission is not allowed after the task's end date" });
+        }
+
+        const submission = {
+            UserId,
+            SubmitFile,
+            submittedAt: currentDate,
+        };
+
+        task.Submissions = task.Submissions || [];
+        task.Submissions.push(submission);
+
+        await project.save();
+
+        res.status(200).json({ message: "Task submitted successfully", submission });
+    } catch (error) {
+        console.error("Error submitting task:", error.message);
+        res.status(500).json({ message: "Error submitting task", error: error.message });
+    }
+};
 
 
