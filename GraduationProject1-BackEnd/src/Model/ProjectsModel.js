@@ -127,7 +127,7 @@ const ProjectsSchema = new Schema(
       ],
       SubmittedAt: { type: Date, default: Date.now },
       Review: {
-        TaskRating: { type: Number, min: 1, max: 5 },
+        TaskRating: { type: Number, min: 0, max: 100 },
         Feedback: { type: String, trim: true },
       },
     },
