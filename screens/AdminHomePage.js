@@ -1,6 +1,6 @@
 import React, { useState, useContext,useRef,useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { View, Text, Image,TextInput,TouchableOpacity, StyleSheet, ToastAndroid,useColorScheme, PermissionsAndroid, ScrollView,Animated, Button, Alert, Platform,TouchableWithoutFeedback,Keyboard, FlatList,KeyboardAvoidingView,flatListRef} from 'react-native';
+import { View, Text, Image,TextInput,TouchableOpacity, StyleSheet, ToastAndroid,useColorScheme, PermissionsAndroid, SafeAreaView, ScrollView,Animated, Button, Alert, Platform,TouchableWithoutFeedback,Keyboard, FlatList,KeyboardAvoidingView,flatListRef} from 'react-native';
 import { Ionicons, Feather, FontAwesome5, EvilIcons, FontAwesome,Entypo,MaterialIcons,AntDesign
 
 } from '@expo/vector-icons';
@@ -47,6 +47,7 @@ import CommentsModal from './CommentsModal';
 import { setIsEnabledAsync } from 'expo-av/build/Audio';
 import { string } from 'prop-types';
 import { use } from 'react';
+import { PieChart, BarChart } from 'react-native-chart-kit';
 
 export default function AdminHomePage({ navigation, route}) {
        const { isNightMode, toggleNightMode } = useContext(NightModeContext);
@@ -56,6 +57,24 @@ export default function AdminHomePage({ navigation, route}) {
         setIsSidebarVisible(!isSidebarVisible); // تبديل حالة الشريط الجانبي
       
       };
+
+      const screenWidth = Dimensions.get('window').width;
+
+      const pieData = [
+        { name: 'Famale', population: 60, color: '#F7A8B8', legendFontColor: '#000', legendFontSize: 12 },
+        { name: 'Male', population: 40, color: '#334664', legendFontColor: '#000', legendFontSize: 12 },
+      ];
+    
+      const barData = {
+        labels: ['Software Engineering', 'Data Science', 'Accounting and Finance', 'Psychology','Social Work','Graphic Design'],
+        datasets: [
+          {
+            data: [50, 80, 60, 90, 25, 40],
+          },
+        ],
+      };
+
+
  return(
   
 <TouchableWithoutFeedback >
@@ -184,91 +203,101 @@ export default function AdminHomePage({ navigation, route}) {
 </View></>
       )}
 
-  {/* الشريط الجانبي */}
-  <View style={{ flexDirection: 'row', flex: 1 }}>
-  {/* الشريط الجانبي */}
-  {Platform.OS === 'web' && isSidebarVisible && (
-  <View style={{
-    position: 'fixed',
-    width: '30%',
-    height: '100%',
-    backgroundColor: isNightMode ? '#333' : '#fff',
-    padding: 10,
-    zIndex: 5,
-    borderRightWidth: 1,
-    borderColor: '#ccc',
-    overflow: 'auto',
-    paddingVertical: 10,
-    marginTop: Platform.OS === 'web' ? 50 : 0,
-    height: `calc(110vh - 0px - 100px)`,
-    overflowY: 'auto',
-  }}>
-    <Text style={{
-      color: isNightMode ? '#fff' : '#000',
-      fontSize: 18,
-      marginBottom: 20,
-      fontWeight: 'bold',
-    }}>
-      Friend List
-    </Text>
-    {loading ? (
-      <Text style={{
-        color: isNightMode ? '#fff' : '#000',
-        fontSize: 16,
-        textAlign: 'center',
-      }}>
-        Loading...
-      </Text>
-    ) : (
-      <FlatList
-        data={friends}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            key={item._id}
-            onPress={() => handleSelectedPerson(item)}
-            style={{
-              padding: 15,
-              borderBottomWidth: 1,
-              borderBottomColor: '#ccc',
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'flex-start',
-              borderRadius: 8,
-              marginBottom: 10,
-              backgroundColor: isNightMode ? '#444' : '#f9f9f9',
-              boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
-              transition: 'all 0.3s ease',
-            }}
-          >
-           
-            {/* عرض اسم المستخدم */}
-            <Text style={{
-              color: isNightMode ? '#fff' : '#000',
-              fontSize: 16,
-              fontWeight: '500',
-            }}>
-              {item.FullName}
-            </Text>
-          </TouchableOpacity>
-        )}
-        keyExtractor={(item) => item._id.toString()}
-      />
-    )}
-  </View>
-)}
+                {/* <View style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  backgroundColor: isNightMode ? Colors.tertiary : Colors.secondary,
+                  width: '100%',
+                  marginTop: 20,
+                  padding: 10,
+                }}>
+                </View> */}
 
 
- 
- 
+                {/* الشريط الجانبي */}
+                  <View style={{ flexDirection: 'row', flex: 1 }}>
+                  {/* الشريط الجانبي */}
+                  {Platform.OS === 'web' && isSidebarVisible && (
+                  <View style={{
+                    position: 'fixed',
+                    width: '30%',
+                    height: '100%',
+                    backgroundColor: isNightMode ? '#333' : '#fff',
+                    padding: 10,
+                    zIndex: 5,
+                    borderRightWidth: 1,
+                    borderColor: '#ccc',
+                    overflow: 'auto',
+                    paddingVertical: 10,
+                    marginTop: Platform.OS === 'web' ? 50 : 0,
+                    height: `calc(110vh - 0px - 100px)`,
+                    overflowY: 'auto',
+                  }}>
+                    {loading ? (
+                      <Text style={{
+                        color: isNightMode ? '#fff' : '#000',
+                        fontSize: 16,
+                        textAlign: 'center',
+                      }}>
+                        Loading...
+                      </Text>
+                    ) : (
+                      <FlatList
+                        data={friends}
+                        renderItem={({ item }) => (
+                          <TouchableOpacity
+                            key={item._id}
+                            onPress={() => handleSelectedPerson(item)}
+                            style={{
+                              padding: 15,
+                              borderBottomWidth: 1,
+                              borderBottomColor: '#ccc',
+                              flexDirection: 'row',
+                              alignItems: 'center',
+                              justifyContent: 'flex-start',
+                              borderRadius: 8,
+                              marginBottom: 10,
+                              backgroundColor: isNightMode ? '#444' : '#f9f9f9',
+                              boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+                              transition: 'all 0.3s ease',
+                            }}
+                          >
+                          
+                          </TouchableOpacity>
+                        )}
+                        keyExtractor={(item) => item._id.toString()}
+                      />
+                    )}
+                  </View>
+                )}
+                </View>
 
-  
-  
+    {/* chart */}
+    <ScrollView 
+      style={styles.container} 
+      contentContainerStyle={styles.contentContainer}
+    >
+      <View style={styles.chartContainer}>
+        {/* Pie Chart */}
+        <Text style={styles.title}>Gender</Text>
+        <PieChart
+          data={pieData}
+          width={screenWidth - 40}
+          height={220}
+          chartConfig={{
+            color: () => '#000',
+            strokeWidth: 2,
+          }}
+          accessor="population"
+          backgroundColor="transparent"
+          paddingLeft="15"
+        />
 
-
-
-
-
-</View>
+        
+      </View>
+    </ScrollView>
+    
   
 
 
@@ -617,6 +646,24 @@ container: {
 },
 backButton: {
   marginRight: 10,
+},
+container: {
+},
+contentContainer: {
+  padding: 0,
+},
+chartContainer: {
+  alignItems: 'center',
+},
+title: {
+  fontSize: 18,
+  fontWeight: 'bold',
+  textAlign: 'center',
+  marginBottom: 10,
+},
+barChart: {
+  marginVertical: 10,
+  borderRadius: 8,
 },
 });
  
