@@ -80,9 +80,7 @@ const ProjectsSchema = new Schema(
         PhaseName: { type: String, required: true },
         TaskName: { type: String, required: true, trim: true },
         Description: { type: String, required: false, trim: true },
-        AssignedTo: { type: mongoose.Schema.Types.ObjectId, ref: "User", 
-          //required: true 
-          },
+        AssignedTo: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
         TaskRoleName: { type: String, required: true },
         TaskStatus: {
           type: String,
@@ -94,11 +92,17 @@ const ProjectsSchema = new Schema(
           enum: ["Low", "Medium", "High"],
           default: "Medium",
         },
-        StartDate: { 
-          type: Date, required: true 
-        },
-        EndDate: { 
-          type: Date, required: true 
+        StartDate: { type: Date, required: true },
+        EndDate: { type: Date, required: true },
+        TaskFile: [
+          {
+            type: Object,
+            required: false,
+          },
+        ],
+        SubmitTaskMethod: {
+          type: String,
+          enum: ["Online", "On-site"],
         },
          TaskFile: [
         {
@@ -116,8 +120,42 @@ const ProjectsSchema = new Schema(
            required: false,
            trim: true
           },
+        BenefitFromPhase: {
+          type: String,
+          required: false,
+          trim: true,
+        },
+        Submissions: [
+          {
+            UserId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+            SubmitFile: [
+              {
+                type: Object,
+                required: false,
+              },
+            ],
+            SubmittedAt: { type: Date, default: Date.now },
+            Review: {
+              TaskRating: { type: Number, min: 0, max: 100 },
+              Feedback: { type: String, trim: true },
+            },
+            Report: {
+              BenefitSummary: { type: String, trim: true }, 
+              ChallengesFaced: { type: String, trim: true },
+              AddedAt: { type: Date, default: Date.now },
+            },
+            
+          },
+        ],
         created_at: { type: Date, default: Date.now },
         updated_at: { type: Date, default: Date.now },
+      },
+    ],    
+   SkillReviews: [
+      {
+        SkillId: { type: Number, required: true },
+        UserId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+        NewRatingSkill: { type: Number, required: true, min: 1, max: 5 },
       },
     ],
     created_at: {
