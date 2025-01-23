@@ -104,13 +104,7 @@ const ProjectsSchema = new Schema(
           type: String,
           enum: ["Online", "On-site"],
         },
-         TaskFile: [
-        {
-          type: Object,
-          required: false,
-           },
-              ],
-            DeliveryTaskMethod: {
+        DeliveryTaskMethod: {
        type: String,
         enum: ["Online", "On-site"],
         //required: true,
@@ -120,11 +114,7 @@ const ProjectsSchema = new Schema(
            required: false,
            trim: true
           },
-        BenefitFromPhase: {
-          type: String,
-          required: false,
-          trim: true,
-        },
+        
         Submissions: [
           {
             UserId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
