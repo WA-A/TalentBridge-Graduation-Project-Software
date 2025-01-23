@@ -7,7 +7,6 @@ import { Validation } from "../../MiddleWare/Validation.js";
 import fileUpload, { FileValue } from "./../../../utls/Multer.js";
 
 
-
 router.post('/createreport/:ProjectId',auth(EndPoints.CreateReport),ReportController.CreateReport);
 
 export default router
