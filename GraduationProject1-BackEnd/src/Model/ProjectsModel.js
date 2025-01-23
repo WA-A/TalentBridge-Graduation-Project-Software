@@ -104,6 +104,22 @@ const ProjectsSchema = new Schema(
           type: String,
           enum: ["Online", "On-site"],
         },
+         TaskFile: [
+        {
+          type: Object,
+          required: false,
+           },
+              ],
+            DeliveryTaskMethod: {
+       type: String,
+        enum: ["Online", "On-site"],
+        //required: true,
+         },
+          BenefitFromPhase: { 
+         type: String, 
+           required: false,
+           trim: true
+          },
         BenefitFromPhase: {
           type: String,
           required: false,

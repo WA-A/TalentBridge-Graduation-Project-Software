@@ -1182,7 +1182,7 @@ const handleGetAllPostsComment = async (postId) => {
      setpendingRequests(data.data);
 
     } catch (error) {
-      console.error('Error fetching ProfileData:', error);
+    //  console.error('Error fetching ProfileData:', error);
     }
     finally {
       setIsLoading(false);
@@ -1232,7 +1232,7 @@ const handleGetAllPostsComment = async (postId) => {
 
 
     } catch (error) {
-      console.error('Error fetching ProfileData:', error);
+     // console.error('Error fetching ProfileData:', error);
     }
     finally {
       setIsLoading(false);
@@ -2285,12 +2285,12 @@ const handleGetAllPostsComment = async (postId) => {
   
         setPosts(updatedPosts);
       } else {
-        console.error('No posts found or data is not an array', data);
+    //    console.error('No posts found or data is not an array', data);
       }
   
       setIsLoading(false);
     } catch (error) {
-      console.error('Error fetching posts:', error);
+     // console.error('Error fetching posts:', error);
       setIsLoading(false);
     }
   };

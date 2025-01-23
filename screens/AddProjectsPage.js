@@ -6,7 +6,6 @@ import { jwtDecode } from "jwt-decode";
 import axios from 'axios';
 import * as Animatable from 'react-native-animatable';
 import MultiSelect from 'react-native-multiple-select';
-import { Video as ExpoVideo } from 'expo-av';
 import * as MediaLibrary from 'expo-media-library';
 import Modal from 'react-native-modal';
 import { useNavigation } from '@react-navigation/native';
@@ -21,32 +20,11 @@ import * as DocumentPicker from "expo-document-picker";
 import './../compnent/webCardStyle.css';
 import {
     Colors,
-    Card,
-    ContainerCard,
-    UserIMg,
-    UserInfo,
-    UserName,
-    UserInfoText,
-    PostTime,
-    PostText,
-    PostIMg,
-    ReactionOfPost,
-    Interaction,
-    InteractionText,
 } from './../compnent/Style'
 import ImageViewer from 'react-native-image-zoom-viewer';
 // Color constants
 const { secondary, primary, careysPink, darkLight, fourhColor, tertiary, fifthColor,brand } = Colors;
-const { width } = Dimensions.get('window');
-import * as WebBrowser from 'expo-web-browser'
 
-import * as FileSystem from 'expo-file-system';
-import Video from 'react-native-video';
-//import * as Linking from 'expo-linking';
-import CommentsModal from './CommentsModal';
-import { setIsEnabledAsync } from 'expo-av/build/Audio';
-import { string } from 'prop-types';
-import { use } from 'react';
 
 const AddProjectsPage = () => {
     const [PositionRoles, setPositionRoles] = useState(['']); // لإضافة أدوار الوظائف ديناميكيًا
@@ -111,19 +89,12 @@ const AddProjectsPage = () => {
 
     const [ProjectName, setProjectName] = useState('');
     const [Description, setDescription] = useState('');
-    const [RequiredSkills, setRequiredSkills] = useState('');
-    const [Field, setField] = useState('');
     const [DurationInMounths, setDurationInMounths] = useState('');
-    const [PositionRole, setPositionRole] = useState('');
     const [WorkLocation, setWorkLocation] = useState('');
     const [Benefits, setBenefits] = useState('');
     const [Price, setPrice] = useState('');
     const [FieldUser, setFieldUser] = useState('');
-  const [userSkills, setUserSkills] = useState([]);
-  const [userRateSkills, setUserRateSkills] = useState([]);
-  const [skillsList, setSkillsList] = useState([]); // قائمة المهارات
   const [selectedSkills, setSelectedSkills] = useState([]);
-  const [RateselectedSkills, setRateSelectedSkills] = useState([]);
   const [Skills, setSkills] = useState([]);
     const nav = useNavigation();
     let [fontsLoaded] = useFonts({
@@ -157,11 +128,7 @@ const AddProjectsPage = () => {
     const closeModalProject = () => {
         setModalVisibleProject(false);
       };
-    const onSelectedItemsChange = (selectedItems) => {
-      setSelectedFeilds(selectedItems); // تحديث حالة اللغات المحددة
-  
-    };
-  
+
   
     const handleGetSkills = async () => {
         try {
@@ -291,27 +258,13 @@ const AddProjectsPage = () => {
   };
     const { isNightMode, toggleNightMode } = useContext(NightModeContext);
     const [selectFieldModalVisible, setSelectFieldModalVisible] = useState(false); 
-    const [applyNowModalVisible, setApplyNowModalVisible] = useState(false);  
-    const [selectedField, setSelectedField] = useState('');
-    const [NumberOfTrain ,setNumberOfTrain] = useState('');
-    const [ProfileLink ,setProfileLink] = useState('');
+   
   const [scrollY] = useState(new Animated.Value(0));
 
 
     if (!fontsLoaded) {
         return <View><Text>Loading...</Text></View>;
     }
-
-    const handleFieldSelect = (field) => {
-        selectFieldModalVisible(field);
-        setSelectFieldModalVisible(false);
-    };
-
-    const handleApplyNow = () => {
-      setNumberOfTrain();
-      setProfileLink();
-      setApplyNowModalVisible(true);
-  };
 
     // Load custom fonts
     const bottomBarTranslate = scrollY.interpolate({
@@ -334,19 +287,12 @@ const AddProjectsPage = () => {
   
     changeBorderColor();
     handleViewProfile();
-    handleGetFeilds();
-    handleGetUserFeild();
+   // handleGetFeilds();
+   handleGetUserFeild();
     handleGetSkills ();
   }, []);
   
-  const animatedStyle = {
-    borderColor: borderColor.interpolate({
-      inputRange: [0, 1, 2, 3, 4,5],
-      outputRange: [colors[0],colors[1], colors[2], colors[3],colors[4],colors[5]],
-    }),
-    borderWidth: 2, // سمك الإطار
-    padding: 10,
-  };
+
 
     const [file, setFile] = useState(null);
 
@@ -424,13 +370,22 @@ const AddProjectsPage = () => {
         
         
     const handleAddProject = async () => {
-        setShowSuccessMessage(true); // عرض رسالة النجاح
-        setModalVisibleProject(true);
-        animateCheckMark(); // تفعيل الأنميشن
-        setTimeout(() => {
-          setModalVisibleProject(false);
-        }, 7000); // 5 ثواني
-        console.log("position",PositionRoles);
+
+
+      if (
+        !ProjectName.trim() || 
+        !Description.trim() || 
+        !DurationInMounths.trim() || 
+        PositionRoles.length === 0 || 
+        !WorkLocation.trim() || 
+        !Benefits.trim() || 
+        !Price.trim()
+      ) {
+        alert('Please fill in all required fields before creating the project.');
+        return; // منع إنشاء المشروع إذا كانت الحقول غير مكتملة
+      }
+
+    
         try {
             const token = await AsyncStorage.getItem('userToken');
             if (!token) throw new Error('No token found');
@@ -459,49 +414,23 @@ const AddProjectsPage = () => {
             // إضافة الأدوار
             const defaultRoles = PositionRoles.map(role => ({ roleName: role }));
 
-    
+            console.log(defaultRoles);
             defaultRoles.forEach((role, index) => {
                 formData.append(`Roles[${index}].roleName`, role.roleName);
             });
 
-            if (file) {
-                let fileUri = file.uri;
-
-                // إذا كان التطبيق على الويب
-                if (Platform.OS === 'web') {
-                    // تحويل البيانات إلى Blob (بيانات الـ PDF المشفرة بتنسيق Base64)
-                    const pdfBlob = base64ToBlob(file.uri, 'application/pdf');
-                    formData.append('FileProject', pdfBlob, 'ProjectFile.pdf');  // اسم الملف الذي سيتم حفظه
-                
-                }else{
-            
-                formData.append('FileProject', {
-                    uri: fileUri,
-                    name: file.name,
-                    type: file.mimeType || 'application/pdf',
-                });}
-            }
+   
             
             console.log('FormData before sending:', formData);
     
-            const response = await fetch(`${baseUrl}/project/createproject`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Wasan__${token}`, 
-                },
-                body: formData,
-            });
-    
+        
+// داخل React Native
+nav.navigate('AddTaskForProject', {
+  project: formData,  // تمرير الـ ID الخاص بالمشروع
+  duration:DurationInMounths,  // تمرير مدة المشروع
+  file:file,role:defaultRoles,ProjectName:ProjectName,
+});
 
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'Something went wrong');
-            }
-    
-            const result = await response.json();
-
-            console.log('Add Project successfully:', result);
-      
         } catch (error) {
             console.error('Error adding project:', error);
         }
@@ -722,7 +651,7 @@ const AddProjectsPage = () => {
                         multiline
                     />
                 </View>
-                <View style={styles.divider} />
+                <View style={styles.divider}/>
 
                 <View
   style={[
@@ -782,7 +711,7 @@ const AddProjectsPage = () => {
               </View>
 
               {/* فاصل بين المهارات */}
-              {index < selectedSkills.length - 1 && <View style={styles.divider1} />}
+              {index < selectedSkills.length - 1 && <View style={styles.divider1}/>}
             </View>
           ))}
         </View>
@@ -793,7 +722,7 @@ const AddProjectsPage = () => {
 
             
 
-                <View style={styles.divider} />
+                <View style={styles.divider}/>
 
                 <View style={styles.inputContainer}>
                     <Text style={styles.label}>Duration (Months)</Text>
@@ -804,7 +733,7 @@ const AddProjectsPage = () => {
                          placeholder="Enter duration in months"
                     />
                 </View>
-                <View style={styles.divider} />
+                <View style={styles.divider}/>
 
               {/* دور الوظيفة (Position Role) */}
               <View style={styles.inputContainer}>
@@ -813,30 +742,30 @@ const AddProjectsPage = () => {
     <Text style={styles.addButtonText}>Add new role</Text>
   </TouchableOpacity>
   <View>
-  {PositionRoles.map((role, index) => (
-    <>
-    <View key={index} style={styles.dynamicItem}>
-      <TextInput
-        style={styles.inputFullWidth}
-        value={role}
-        onChangeText={(text) => handlePositionRoleChange(index, text)}
-        placeholder={`Role ${index + 1}`}
-        placeholderTextColor="#aaa"
-      />
-      <TouchableOpacity onPress={() => removePositionRole(index)} style={styles.removeButton}>
-        <Text style={styles.removeButtonText}>Remove</Text>
-      </TouchableOpacity>
-    </View>
-    <View style={styles.divider3} /></>
-
-  ))}
+    {PositionRoles.map((role, index) => (
+      <React.Fragment key={index}>
+        <View style={styles.dynamicItem}>
+          <TextInput
+            style={styles.inputFullWidth}
+            value={role}
+            onChangeText={(text) => handlePositionRoleChange(index, text)}
+            placeholder={`Role ${index + 1}`}
+            placeholderTextColor="#aaa"
+          />
+          <TouchableOpacity onPress={() => removePositionRole(index)} style={styles.removeButton}>
+            <Text style={styles.removeButtonText}>Remove</Text>
+          </TouchableOpacity>
+        </View>
+        <View style={styles.divider3}/>
+      </React.Fragment>
+    ))}
+  </View>
 </View>
 
-</View>
 
 
           
-        <View style={styles.divider} />
+        <View style={styles.divider}/>
 
                 <View style={styles.inputContainer}>
                     <Text style={styles.label}>Work Location</Text>
@@ -847,7 +776,7 @@ const AddProjectsPage = () => {
                         placeholder="Enter Work Location"
                     />
                 </View>
-                <View style={styles.divider} />
+                <View style={styles.divider}/>
 
                 <View style={styles.inputContainer}>
                     <Text style={styles.label}>Benefits</Text>
@@ -858,7 +787,7 @@ const AddProjectsPage = () => {
                         placeholder="Enter Benefits"
                     />
                 </View>
-                <View style={styles.divider} />
+                <View style={styles.divider}/>
 
                 <View style={styles.inputContainer}>
                     <Text style={styles.label}>Price</Text>
@@ -869,7 +798,7 @@ const AddProjectsPage = () => {
                         placeholder="Enter Price"
                     />
                 </View>
-                <View style={styles.divider} />
+                <View style={styles.divider}/>
                 <View style={styles.container1}>
   {/* النص وزر اختيار الملف بجانب بعض */}
   <View style={styles.row}>
@@ -888,7 +817,7 @@ const AddProjectsPage = () => {
 </View>
 
 
-    <View style={styles.divider} />
+    <View style={styles.divider}/>
 
 
 <View style={[styles.addButtonText,{marginBottom:40}]}>
@@ -1055,7 +984,7 @@ const AddProjectsPage = () => {
           }}
         >
           <TouchableOpacity onPress={() => setMenuVisible(true)}>
-            <Ionicons name="settings" size={25} color="#000" />
+            <Ionicons name="settings" size={25} color="#000"/>
           </TouchableOpacity>
           <TouchableOpacity
   onPress={async () => {

@@ -28,7 +28,7 @@ import { useNavigation } from '@react-navigation/native';
 import ProjectPage from './screens/ProjectPage.js';
 import RequestSeniorToAdminPage from './screens/RequestSeniorToAdminPage.js';
 import AdminHomePage from './screens/AdminHomePage.js';
-
+import AddTaskForProject from './screens/AddTaskForProject.js';
 
 Notifications.setNotificationHandler({
     handleNotification: async () => ({
@@ -208,6 +208,13 @@ export default function App() {
             component={AdminHomePage}
             options={{ headerShown: false }}
           />
+
+<Stack.Screen
+            name="AddTaskForProject"
+            component={AddTaskForProject}
+            options={{ headerShown: false }}
+          />
+          
 
         </Stack.Navigator>
       </NavigationContainer>

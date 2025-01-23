@@ -1051,8 +1051,10 @@ const fetchFriends = async () => {
       throw new Error(`HTTP error! status: ${response.status}`);
   }
   const data = await response.json();
-  console.log('Friends:',data );
-    setFriends(data.users); 
+if(data.users == nul){
+console.log("No Friend");
+}    else{
+  setFriends(data.users); }
   } catch (error) {
  //   console.error('Error fetching friends:', error);
 }
@@ -1323,7 +1325,7 @@ const handleGetAllPosts = async () => {
   <Ionicons name="folder" size={20} color={isNightMode ? "#000": "#000"} />
 </TouchableOpacity>
 
-         <TouchableOpacity onPress={() => nav.navigate('AddPostScreen')} style={{ marginRight:100 }}>
+         <TouchableOpacity onPress={() => nav.navigate('AddTaskForProject')} style={{ marginRight:100 }}>
            <Ionicons name="add-circle" size={25} color= {isNightMode ? primary : "#000"} />
          </TouchableOpacity>
    
@@ -2132,7 +2134,7 @@ const handleGetAllPosts = async () => {
         }}
       />
     </TouchableOpacity>
-    <TouchableOpacity onPress={() => nav.navigate('AddPostScreen')}>
+    <TouchableOpacity onPress={() => nav.navigate('AddTaskForProject')}>
       <Ionicons name="add-circle" size={28} color='#000' />
     </TouchableOpacity>
     <TouchableOpacity onPress={() => handleGetAllPosts()}>
