@@ -100,22 +100,22 @@ const ProjectsSchema = new Schema(
         EndDate: { 
           type: Date, required: true 
         },
-      TaskFile: [
+         TaskFile: [
         {
           type: Object,
           required: false,
-        },
-      ],
-  DeliveryTaskMethod: {
-      type: String,
-      enum: ["Online", "On-site"],
-      //required: true,
-  },
-  BenefitFromPhase: { 
-      type: String, 
-      required: false,
-      trim: true
-  },
+           },
+              ],
+            DeliveryTaskMethod: {
+       type: String,
+        enum: ["Online", "On-site"],
+        //required: true,
+         },
+          BenefitFromPhase: { 
+         type: String, 
+           required: false,
+           trim: true
+          },
         created_at: { type: Date, default: Date.now },
         updated_at: { type: Date, default: Date.now },
       },
