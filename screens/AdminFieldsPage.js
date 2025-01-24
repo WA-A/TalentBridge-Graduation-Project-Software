@@ -49,7 +49,7 @@ import { string } from 'prop-types';
 import { use } from 'react';
 import { PieChart, BarChart } from 'react-native-chart-kit';
 
-export default function AdminHomePage({ navigation, route}) {
+export default function AdminFieldsPage({ navigation, route}) {
        const { isNightMode, toggleNightMode } = useContext(NightModeContext);
          const [isSidebarVisible, setIsSidebarVisible] = useState(false);
        
@@ -57,23 +57,10 @@ export default function AdminHomePage({ navigation, route}) {
         setIsSidebarVisible(!isSidebarVisible); // تبديل حالة الشريط الجانبي
       
       };
-            const nav = useNavigation();
-        
-      const screenWidth = Dimensions.get('window').width;
 
-      const pieData = [
-        { name: 'Famale', population: 60, color: '#F7A8B8', legendFontColor: '#000', legendFontSize: 12 },
-        { name: 'Male', population: 40, color: '#334664', legendFontColor: '#000', legendFontSize: 12 },
-      ];
-    
-      const barData = {
-        labels: ['Software Engineering', 'Data Science', 'Accounting and Finance', 'Psychology','Social Work','Graphic Design'],
-        datasets: [
-          {
-            data: [50, 80, 60, 90, 25, 40],
-          },
-        ],
-      };
+
+          const nav = useNavigation();
+      
 
 
  return(
@@ -272,45 +259,7 @@ export default function AdminHomePage({ navigation, route}) {
                 )}
                 </View>
 
-    {/* chart */}
-    <ScrollView 
-      style={styles.container} 
-      contentContainerStyle={styles.contentContainer}
-    >
-      <View style={styles.chartContainer}>
-        {/* Pie Chart */}
-        <Text style={styles.title}>Gender</Text>
-        <PieChart
-          data={pieData}
-          width={screenWidth - 40}
-          height={220}
-          chartConfig={{
-            color: () => '#000',
-            strokeWidth: 2,
-          }}
-          accessor="population"
-          backgroundColor="transparent"
-          paddingLeft="15"
-        />
-
-        {/* Bar Chart */}
-        <Text style={[styles.title, { marginTop: 20 }]}>Fields</Text>
-        <BarChart
-          data={barData}
-          width={screenWidth - 40}
-          height={220}
-          chartConfig={{
-            backgroundColor: '#7C7692',
-            backgroundGradientFrom: '#7C7692',
-            backgroundGradientTo: '#7C7692',
-            color: () => '#1AFF92',
-            strokeWidth: 2,
-            barPercentage: 0.7,
-          }}
-          style={styles.barChart}
-        />
-      </View>
-    </ScrollView>
+   
     
   
 
