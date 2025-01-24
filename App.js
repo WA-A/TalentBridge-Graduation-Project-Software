@@ -30,6 +30,7 @@ import RequestSeniorToAdminPage from './screens/RequestSeniorToAdminPage.js';
 import AdminHomePage from './screens/AdminHomePage.js';
 import AdminRequestPage from './screens/AdminRequestPage.js';
 import AdminFieldsPage from './screens/AdminFieldsPage.js';
+import AddTaskForProject from './screens/AddTaskForProject.js';
 
 Notifications.setNotificationHandler({
     handleNotification: async () => ({
@@ -221,6 +222,11 @@ export default function App() {
             component={AdminFieldsPage}
             options={{ headerShown: false }}
           />
+            name="AddTaskForProject"
+            component={AddTaskForProject}
+            options={{ headerShown: false }}
+          />
+          
 
         </Stack.Navigator>
       </NavigationContainer>

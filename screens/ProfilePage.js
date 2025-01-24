@@ -16,6 +16,11 @@ import io from 'socket.io-client';
 import Modal from 'react-native-modal';
 import ImageViewer from 'react-native-image-zoom-viewer';
 import * as Animatable from "react-native-animatable";
+import { jwtDecode } from "jwt-decode";
+import { Video as ExpoVideo } from 'expo-av';
+import * as MediaLibrary from 'expo-media-library';
+import moment from 'moment';
+import { decode as atob } from 'base-64'; // إذا كنت تستخدم React Native
 
 import {
   Colors,
@@ -38,6 +43,13 @@ import { colors } from 'react-native-elements';
 import MultiSelect from 'react-native-multiple-select';
 import { GetUserSkills } from '../GraduationProject1-BackEnd/ExternalApiSkills/ExternealApiSkills.controller';
 
+import * as WebBrowser from 'expo-web-browser'
+
+import * as FileSystem from 'expo-file-system';
+import Video from 'react-native-video';
+//import * as Linking from 'expo-linking';
+
+
 // Color constants
 const { secondary, primary, careysPink, darkLight, fourhColor, tertiary, fifthColor, firstColor } = Colors;
 const { width, height } = Dimensions.get('window');
@@ -46,7 +58,548 @@ const { width, height } = Dimensions.get('window');
 export default function ProfilePage({ navigation }) {
 
 
+/////////
+ const [likedPosts, setLikedPosts] = useState({});
 
+  const handleLike = (postId) => {
+    setLikedPosts((prev) => ({
+      ...prev,
+      [postId]: !prev[postId],
+    }));
+
+    toggleLike(postId); // استدعاء الدالة الأصلية لتحديث البيانات في الخادم.
+  };
+
+
+  const [posts, setPosts] = useState([]);
+///////////////Comment /////////////////
+const [isEditing, setIsEditing] = useState(false);
+const [editingCommentId, setEditingCommentId] = useState(null); // ID التعليق الجاري تعديله
+const [editingImage, setEditingImage] = useState(null); // صورة التعليق الجاري تعديله
+const [isedit,setisedt]=useState(false);
+const editCommentHandler = (commentId, text, images) => {
+  setIsEditing(true);
+  setEditingCommentId(commentId);
+
+  // إعداد النص الحالي
+  setNewCommentText(text || '');
+
+  // إعداد الصور الحالية
+  if (images && images.length > 0 && images[0].secure_url) {
+    setImageUriComment(images);
+    setEditingImage(images[0].secure_url);
+  } else {
+    setImageUriComment(null);
+    setEditingImage(null);
+  }
+};
+const removeimgcomment =()=>{
+setImageUriComment(null);
+setEditingImage(null);
+}
+const cancelEditHandler = () => {
+  setIsEditing(false);
+  setEditingCommentId(null);
+  setNewCommentText(''); // إعادة تعيين النص
+  setImageUriComment(null);  // إعادة تعيين الصورة
+  setEditingImage(null);
+};
+const [imageUriComment, setImageUriComment] = useState('');
+const [newCommentText, setNewCommentText] = useState('');
+const [imageUriForComment, setImageUriForComment] = useState('');
+const [selectedCommentImage, setSelectedCommentImage] = useState(null);
+
+const handleAddComment = () => {
+  addCommentHandler();
+  setNewCommentText('');
+  setImageUriComment(null);  // إعادة تعيين الصورة
+  setEditingImage(null);
+};
+
+
+const pickImageComment = async () => {
+  try {
+    // طلب إذن الوصول إلى مكتبة الصور
+    let permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (permissionResult.granted === false) {
+      Alert.alert('Permission required', 'You need to grant permission to access the gallery.');
+      return;
+    }
+    let result ;
+    // اختيار صورة
+     result = await ImagePicker.launchImageLibraryAsync({
+          mediaTypes: ['images'],
+          allowsEditing: true,
+          aspect: [8, 5],
+          quality: 1,
+        });
+    if (!result.canceled) {
+      const selectedImage = result.assets[0];
+      setEditingImage(selectedImage.uri);
+      setImageUriComment(selectedImage.uri); // فقط URI هنا
+      setisedt(true);
+      console.log('Selected image URI:', selectedImage.uri);
+    }
+  } catch (error) {
+    console.log('Error picking image: ', error);
+  }
+};
+
+const [isCommentModal,setCommenModal] = useState (false);
+const [commentPost, setCommentPosts]=useState([]);
+const [postIdForComment,setPostIdForComment]=useState([]);
+
+const handleCommentPress = () => {
+  setCommenModal(true); // إظهار المودال عند الضغط على تعليق
+};
+
+const handleCloseModal = () => {
+  setCommenModal(false); // إغلاق المودال
+};
+const toggleModalComment = () =>setCommenModal(!isCommentModal);
+    const [comments, setComments] = useState([]);
+    const [newComment, setNewComment] = useState('');
+    const [imageUri, setImageUri] = useState('');
+
+    // دالة لإضافة تعليق جديد
+    const addComment = () => {
+      if (newComment.trim()) {
+        const newComments = [
+          ...comments,
+          { text: newComment, user: 'User', image: imageUri },
+        ];
+        setComments(newComments);  // إضافة التعليق الجديد
+        setNewComment('');
+        setImageUriComment('');
+      }
+    };
+
+    const updateMyComment = async (CommentId) => {
+   //   console.log("f", newCommentText, imageUriComment);
+      try {
+        const token = await AsyncStorage.getItem('userToken');
+        if (!token) {
+          console.error('Token not found');
+          return;
+        }
+    
+        const formData = new FormData();
+    
+        // إضافة النص إذا كان موجودًا
+        if (newCommentText && newCommentText.trim() !== '') {
+          formData.append('Text', newCommentText);
+        }
+    
+        // إضافة الصورة إذا كانت موجودة
+        if (imageUriComment) {
+          if (isedit) {
+            if (Platform.OS === 'web') {
+              const profileBlob = base64ToBlob(imageUriComment, 'image/jpeg');
+              formData.append('images', profileBlob, 'images.jpg');
+            } else {
+              formData.append('images', {
+                uri: imageUriComment,
+                type: 'image/jpeg',
+                name: 'image.jpg',
+              });
+            }
+          } else {
+            // إذا لم يكن هناك تعديل في الصورة (لكن الصورة موجودة بالفعل)، أرسل الرابط
+            console.log("no image edit, sending existing image URI",imageUriComment);
+            const existingImage = imageUriComment; // الحصول على صورة موجودة
+            if (existingImage) {
+              formData.append('images',imageUriComment);
+        //      console.log("dd",formData.images);
+
+                      }          }
+        }
+    
+        // طباعة `FormData` للتأكد
+        formData.forEach((value, key) => {
+          console.log(`${key}:`, value);
+        });
+    
+        const response = await fetch(`${baseUrl}/comment/updatecomment/${CommentId}`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Wasan__${token}`,
+          },
+          body: formData,
+        });
+    
+        if (!response.ok) {
+          throw new Error('Failed to update comment');
+        }
+    
+        const userData = await response.json();
+    
+        if (!userData.comment) {
+          console.error('Missing comment field in response:', userData);
+          throw new Error('Comment data not returned from server');
+        }
+    
+        console.log('Comment updated successfully:', userData);
+    
+        // تحديث البيانات المحلية
+        setImageUri(userData.comment.Images?.[0]?.secure_url || null);
+        setNewCommentText(userData.comment.Text || '');
+        setEditingImage(null);
+        handleGetAllPostsComment(postIdForComment);
+        cancelEditHandler();
+        setisedt(false);
+      } catch (error) {
+        console.error('Error updating comment:', error);
+      }
+    };
+
+
+    const addTokendevice = async () => {
+    try {
+      const deviceToken = await AsyncStorage.getItem('expoPushToken');
+      if (!deviceToken) {
+        console.log('no Token found:',deviceToken );
+        return ;
+      } 
+        // التأكد من تحويل deviceToken إلى سترينغ
+        const tokenString = String(deviceToken);
+
+        const token = await AsyncStorage.getItem('userToken');
+        if (!token) {
+            console.error('Token not found');
+            return;
+        }
+
+        // إرسال بيانات التوكن إلى السيرفر
+        const response = await fetch(`${baseUrl}/user/addDeviceToken`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Wasan__${token}`, // المصادقة باستخدام التوكن
+                'Content-Type': 'application/json', // تحديد نوع البيانات المرسلة
+            },
+            body: JSON.stringify({deviceToken:tokenString}), // إرسال deviceToken كسترينغ
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to add deviceToken');
+        }
+
+        // الحصول على بيانات الاستجابة
+        const userData = await response.json();
+        console.log('deviceToken added successfully:', userData);
+    } catch (error) {
+        console.error('Error adding DeviceToken:', error.message);
+    }
+};
+
+
+const sendPushNotification = async (expoPushToken) => {
+      const message = {
+        to: expoPushToken,
+        sound: 'default',
+        title: 'Original Title',
+        body: 'And here is the body!',
+        data: { someData: 'goes here' },
+      };
+    
+      await fetch('https://exp.host/--/api/v2/push/send', {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'Accept-encoding': 'gzip, deflate',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(message),
+      });
+    }; 
+    
+//////delete Comment ///////////////////////
+const handleDeleteComments = async (CommentId) => {
+  console.log(CommentId);
+  try {
+    const token = await AsyncStorage.getItem('userToken'); // استرجاع التوكن
+    if (!token) {
+      console.error('Token not found');
+      return;
+    }
+    const response = await fetch(`${baseUrl}/comment/deletecomment/${CommentId}`, { // تأكد من المسار الصحيح
+      method: 'DELETE',  // طريقة الحذف يجب أن تكون DELETE
+      headers: {
+        'Authorization': `Wasan__${token}`, // تضمين التوكن في الهيدر
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json(); // إذا كان هناك خطأ في الرد
+      throw new Error(errorData.message || 'Failed to delete language');
+    }
+    handleGetAllPostsComment(postIdForComment);
+    console.log('delete comment'); // تحقق من البيانات
+  } catch (error) {
+    console.error('Error deleting commen:', error.message);
+  }
+};
+
+    /////////ddLike/////////
+    const toggleLike = async (postIdForComment) => {
+      console.log(postIdForComment);
+      try {
+        // استرجاع التوكن
+        const token = await AsyncStorage.getItem('userToken');
+        if (!token) {
+          console.error('Token not found');
+          return;
+        }
+    
+        // فك تشفير التوكن
+        const decodedToken = jwtDecode(token);
+        console.log('Decoded Token:', decodedToken);
+        const loggedInUserId = decodedToken.id;
+    
+        if (!loggedInUserId) {
+          console.error('Failed to extract userId from token');
+          return;
+        }
+    
+        // إرسال طلب toggleLike
+        const response = await fetch(`${baseUrl}/notification/toggleLike`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Wasan__${token}`,
+            'Content-Type': 'application/json', // تأكد من إضافة Content-Type
+          },
+          body: JSON.stringify({
+            userId: loggedInUserId,
+            postId: postIdForComment,
+          }),
+        });
+    
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Something went wrong');
+        }
+    
+        console.log('Toggle like successful',loggedInUserId,postIdForComment);
+        handleGetAllPosts(); 
+      } catch (error) {
+        console.error('Error in toggleLike:', error);
+      }
+    };
+    
+//////////////////Add new Comment///////////
+
+
+const addCommentHandler = async () => {
+  try {
+    // استرجاع التوكن
+    const token = await AsyncStorage.getItem('userToken');
+    if (!token) {
+      console.error('Token not found');
+      return;
+    }
+
+    // فك تشفير التوكن باستخدام jwt-decode
+    const decodedToken = jwtDecode(token);
+    console.log('Decoded Token:', decodedToken);
+    const loggedInUserId = decodedToken.id; // تأكد أن `userId` موجود في التوكن
+
+    if (!loggedInUserId) {
+      console.error('Failed to extract userId from token');
+      return;
+    }
+
+    console.log('Logged-in User ID:', loggedInUserId);
+
+    // إعداد البيانات باستخدام FormData
+    const formData = new FormData();
+    formData.append('Text', newCommentText);
+
+    if (editingImage) {
+      if (Platform.OS === 'web') {
+        const profileBlob = base64ToBlob(imageUriComment, 'image/jpeg');
+        formData.append('images', profileBlob, 'images.jpg');
+      }
+    }
+
+    if (imageUriComment) {
+      formData.append('images', {
+        uri: imageUriComment,
+        type: 'image/jpeg',
+        name: 'image.jpg',
+      });
+    }
+
+    console.log('Sending comment data:', postIdForComment);
+
+    // إرسال التعليق
+    const response = await fetch(`${baseUrl}/comment/createcomment/${postIdForComment}`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Wasan__${token}`,
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Something went wrong');
+    }
+
+    const responseData = await response.json();
+  
+    console.log('Comment added successfully:', responseData);
+    const commentId = responseData.comment._id;
+    console.log("comment",commentId);
+    // استدعاء دالة إنشاء الإشعار
+    await fetch(`${baseUrl}/notification/createCommentNotification`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Wasan__${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        postId: postIdForComment,
+        commentContent: newCommentText,
+        userId: loggedInUserId, // تمرير معرف المستخدم
+        commentId: commentId,
+      }),
+    });
+
+    console.log('Notification created successfully');
+
+    // تحديث التعليقات
+    handleGetAllPostsComment(postIdForComment);
+  } catch (error) {
+    console.error('Error in addCommentHandler:', error);
+  }
+};
+
+
+//////////////////////////////////////////
+  const [currentUserId,setuserId] = useState(''); // أو حسب هيكلة التوكن
+
+
+    const ActionComment = async(postId) =>{
+      setCommentPosts([]);
+      handleGetAllPostsComment(postId);
+      setCommenModal(true);           // فتح المودال
+    };
+
+const handleGetAllPostsComment = async (postId) => {
+  setPostIdForComment(postId);    // تخزين ID المنشور
+  console.log("Fetching Comments...");
+  try {
+    const token = await AsyncStorage.getItem('userToken');
+
+    if (!token) {
+      throw new Error('No token found');
+    }
+    
+    const decodedToken = jwtDecode(token); // فك التوكن
+    setuserId(decodedToken.id); // تخزين معرف المستخدم (id)
+    console.log('Decoded Token:', decodedToken); 
+    const baseUrl = Platform.OS === 'web'
+      ? 'http://localhost:3000'
+      : 'http://192.168.1.239:3000' || 'http://192.168.0.107:3000';
+
+    const response = await fetch(`${baseUrl}/comment/getallcomments/${postId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Wasan__${token}`,
+      },
+    });
+    
+    console.log('Response:', response); 
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch comments');
+    }
+
+    const data = await response.json();
+    console.log('Fetched Comments:', data);
+
+    if (data && Array.isArray(data.comments) && data.comments.length > 0) {
+      setCommentPosts(data.comments); // تخزين التعليقات في الحالة
+    } else {
+      console.log('No comments available.');
+    }
+  } catch (error) {
+    console.error('Error fetching comments:', error);
+    alert("Error loading comments. Please try again.");
+  } finally {
+    setIsLoading(false); // إيقاف التحميل
+  }
+};
+ const saveImageToDevice = async (imageUrl) => {
+  try {
+      if (Platform.OS === 'web') {
+        // منطق خاص بالويب مع اختيار مكان الحفظ
+        const response = await fetch(imageUrl);
+        const blob = await response.blob();
+
+        const fileHandle = await window.showSaveFilePicker({
+          suggestedName: 'image.png',
+          types: [
+            {
+              description: 'Image Files',
+              accept: { 'image/png': ['.png'] },
+            },
+          ],
+        });
+
+        const writableStream = await fileHandle.createWritable();
+        await writableStream.write(blob);
+        await writableStream.close();
+
+        Alert.alert('Success', 'Image has been saved');
+      }  else {
+          // منطق خاص بالموبايل
+          const fileUri = FileSystem.documentDirectory + 'image.png';
+          const { uri } = await FileSystem.downloadAsync(imageUrl, fileUri);
+  
+          const { status } = await MediaLibrary.requestPermissionsAsync();
+          if (status === 'granted') {
+            const asset = await MediaLibrary.createAssetAsync(uri);
+            const album = await MediaLibrary.getAlbumAsync('Expo');
+            if (album) {
+              await MediaLibrary.addAssetsToAlbumAsync([asset], album.id, false);
+            } else {
+              await MediaLibrary.createAlbumAsync('Expo', asset, false);
+            }
+            Alert.alert('Success', 'Image has been saved to gallery');
+          } else {
+            Alert.alert('Permission Denied', 'We need permission to save the image');
+          }
+        }
+      }  catch (error) {
+      Alert.alert('Error', 'There was an error downloading or saving the image');
+    } 
+  };
+ 
+    const [fileUri, setFileUri] = useState(null);
+  
+
+    const openFileInBrowser = async (uri) => {
+      if (!uri) {
+        Alert.alert('Error', 'Invalid file URL');
+        return;
+      }
+    
+      try {
+        // إضافة المعامل download إلى الرابط لتنزيل الملف مباشرة
+        const downloadUrl = `${uri}?download=true`; 
+        await WebBrowser.openBrowserAsync(downloadUrl); // فتح الرابط في المتصفح
+      } catch (error) {
+        console.log('Error opening file:', error);
+        Alert.alert('Error', 'Failed to open file');
+      }
+    };
+    
+
+
+
+////////
 
 
 
@@ -201,7 +754,6 @@ export default function ProfilePage({ navigation }) {
 
 
   const [githubLink, setGithubLink] = useState(''); // لحفظ الرابط الذي يُدخله المستخدم  
-  const [isEditing, setIsEditing] = useState(false); // حالة للتحكم في إظهار/إخفاء الإدخال
 
 
   const [showAllCertification, setShowAllCertification] = useState(false); // المتغير الذي يحدد ما إذا كان يجب عرض جميع الشهادات
@@ -383,6 +935,7 @@ export default function ProfilePage({ navigation }) {
       await handleAddSkills();
 
     }
+    closeModal();
   };
 
 
@@ -402,9 +955,10 @@ export default function ProfilePage({ navigation }) {
       // إذا كان القسم "التعليم"
       await updateCertification(updatedItem);
     }
-    if (currentModalEditting === 'project') {
+    if (currentModalEditting === 'post') {
+
       // إذا كان القسم "المشاريع"
-      await addProject();
+      await updatePost(updatedItem);
     }
     // if (currentModalEditting === 'skills') {
     //   // إذا كان القسم "المهارات"
@@ -628,7 +1182,7 @@ export default function ProfilePage({ navigation }) {
      setpendingRequests(data.data);
 
     } catch (error) {
-      console.error('Error fetching ProfileData:', error);
+    //  console.error('Error fetching ProfileData:', error);
     }
     finally {
       setIsLoading(false);
@@ -678,7 +1232,7 @@ export default function ProfilePage({ navigation }) {
 
 
     } catch (error) {
-      console.error('Error fetching ProfileData:', error);
+     // console.error('Error fetching ProfileData:', error);
     }
     finally {
       setIsLoading(false);
@@ -1057,6 +1611,52 @@ export default function ProfilePage({ navigation }) {
       getAllExperiance();
     } catch (error) {
       console.error('Error updating experience:', error);
+    }
+  };
+
+
+  const updatePost = async (updatedItem) => {
+    console.log("samaaaaaaaaaa",updatedItem._id);
+    try {
+      const token = await AsyncStorage.getItem('userToken');
+      if (!token) {
+        console.error('Token not found');
+        return;
+      }
+
+      // إعداد البيانات باستخدام FormData
+      const formData = new FormData();
+
+      // إضافة الحقول النصية
+      formData.append('Body', updatedItem.Body);
+     
+
+      console.log("theform", formData);
+
+      // إرسال الطلب باستخدام fetch
+      const response = await fetch(`${baseUrl}/post/updatepost/${updatedItem._id}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Wasan__${token}`,
+        },
+        body: formData, // إرسال formData مباشرة
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch user post');
+      }
+
+      if (response.ok) {
+        console.log('post updated successfully',response);
+        setModalEdittingVisible(false); // إغلاق المودال بعد التحديث
+      } else {
+        console.error('Failed to update post');
+      }
+   
+      handleGetAllPosts();
+
+    } catch (error) {
+      console.error('Error updating certifications:', error);
     }
   };
 
@@ -1641,7 +2241,62 @@ export default function ProfilePage({ navigation }) {
     }
   };
 
-
+  const handleGetAllPosts = async () => {
+    try {
+      const token = await AsyncStorage.getItem('userToken');
+      console.log('Token:', token); 
+      if (!token) {
+        throw new Error('No token found');
+      }
+  
+      const baseUrl = Platform.OS === 'web'
+        ? 'http://localhost:3000'
+        : 'http://192.168.1.239:3000';
+  
+      const response = await fetch(`${baseUrl}/post/getpost`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Wasan__${token}`,
+        },
+      });
+  
+      if (!response.ok) {
+        throw new Error('Failed to fetch posts');
+      }
+  
+      const data = await response.json();
+  
+      if (Array.isArray(data.posts) && data.posts.length > 0) {
+        // إضافة حالة التفاعل لكل منشور
+        const updatedPosts = data.posts.map(post => {
+          const decodedToken = jwtDecode(token);
+          const loggedInUserId = decodedToken.id;
+  
+          // التحقق من إذا كان المستخدم قد وضع لايك على هذا المنشور
+          const isLiked = post.like.includes(loggedInUserId);
+  
+          // إضافة حالة التفاعل (لايك) إلى المنشور
+          return {
+            ...post,
+            isLiked
+          };
+        });
+  
+        setPosts(updatedPosts);
+      } else {
+    //    console.error('No posts found or data is not an array', data);
+      }
+  
+      setIsLoading(false);
+    } catch (error) {
+     // console.error('Error fetching posts:', error);
+      setIsLoading(false);
+    }
+  };
+  
+      
+  
 
 
 
@@ -1660,6 +2315,7 @@ export default function ProfilePage({ navigation }) {
     handleGetLanguagesUser();
     handleGetSkillsUser();
     handlegetPendingRequests();
+    handleGetAllPosts();
     socket.on('profileUpdated', (updatedUserData) => {
       console.log('Profile updated:', updatedUserData);
 
@@ -1690,6 +2346,15 @@ export default function ProfilePage({ navigation }) {
     return <Text>No profile data available</Text>;
   }
 
+  const handleTabPress = (tab) => {
+    setActiveTab(tab);
+  
+    // استدعاء الدالة عند الضغط على علامة التبويب "Request"
+    if (tab === 'Request') {
+      handlegetPendingRequests();
+    }
+  };
+  
 
   const handelGetUserPosts = async () => {
     try {
@@ -3283,6 +3948,31 @@ export default function ProfilePage({ navigation }) {
                 )}
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+                {currentModalEditting === 'post' && selectedItem && (
+                  <>
+                    <Text style={[styles.modalTitle, { color: isNightMode ? '#fff' : '#000' }]}>Edit Post</Text>
+                    <TextInput
+                      placeholder="Body"
+                      value={selectedItem.Body}
+                      onChangeText={(text) => setSelectedItem({ ...selectedItem, Body: text })}
+                      style={styles.input}
+                    />
+               
+                  </>
+                )}
+
                 {/* محتويات Modal Language */}
                 {currentModal === 'Language' && (
                   <>
@@ -3317,10 +4007,14 @@ export default function ProfilePage({ navigation }) {
             <View style={styles.tabContainer}>
               {['Messages', 'Connect', 'Posts', 'Request'].map((tab) => (
                 <TouchableOpacity
-                  key={tab}
-                  onPress={() => setActiveTab(tab)}
-                  style={styles.tabButton}
-                >
+      key={tab}
+      onPress={() => handleTabPress(tab)}
+      style={[
+        styles.tabButton,
+        activeTab === tab && styles.activeTab,
+      ]}
+    >
+
                   <Text style={[styles.tabText, { color: isNightMode ? Colors.primary : Colors.black }]}>{tab}</Text>
                   {activeTab === tab && <View style={styles.activeIndicator} />}
                 </TouchableOpacity>
@@ -3332,7 +4026,158 @@ export default function ProfilePage({ navigation }) {
       <View style={[styles.content, { backgroundColor: isNightMode ? Colors.black : Colors.primary }]}>
         {activeTab === 'Messages' && <Text style={[styles.tabContent, { color: isNightMode ? Colors.primary : Colors.black }]}>Messages Content</Text>}
         {activeTab === 'Connect' && <Text style={[styles.tabContent, { color: isNightMode ? Colors.primary : Colors.black }]}>Connect Content</Text>}
-        {activeTab === 'Posts' && <Text style={[styles.tabContent, { color: isNightMode ? Colors.primary : Colors.black }]}>Posts Content</Text>}
+        {activeTab === 'Posts' && 
+  posts.map((post, index) => (
+    <React.Fragment key={index}>
+      <View
+        style={{
+          width: Platform.OS === 'web' ? '50%' : '100%',
+          alignItems: 'center',
+          marginBottom: 15,
+          marginTop: 30,
+        }}
+      >
+        <View
+          style={{
+            backgroundColor: isNightMode ? '#3a3a3a' : '#fff',
+            width: '95%',
+            borderRadius: 15,
+            padding: 15,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.3,
+            shadowRadius: 5,
+            elevation: 5,
+          }}
+        >
+              
+          <TouchableOpacity onPress={() => openModalEditting(post, 'post')} style={[styles.editButton,{margin:10}]}>
+                    <MaterialIcons name="edit" size={15} color={isNightMode ? Colors.primary : Colors.black} />
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => openConfirmDeleteModal('post',post)} style={[styles.deleteButton,{margin:10}]}>
+                    <MaterialCommunityIcons name="minus-circle" size={15} color={isNightMode ? Colors.primary : Colors.black} />
+                  </TouchableOpacity>             
+
+          {/* Header */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
+            <Image
+              source={{ uri: post.UserId.PictureProfile.secure_url }}
+              style={{
+                width: 50,
+                height: 50,
+                borderRadius: 25,
+                marginRight: 10,
+                borderWidth: 2,
+                borderColor: isNightMode ? primary : '#ddd',
+              }}
+            />
+            <View>
+              <Text style={{ color: isNightMode ? primary : '#000', fontWeight: 'bold', fontSize: 16 }}>
+                {post.UserId.FullName}
+              </Text>
+              <Text style={{ color: darkLight, fontSize: 12 }}>
+                {new Date(post.createdAt).toLocaleString()}
+              </Text>
+            </View>
+          </View>
+
+          {/* Body */}
+          <Text style={{ color: isNightMode ? primary : '#000', fontSize: 16, lineHeight: 22, marginBottom: 15 }}>
+            {post.Body}
+          </Text>
+          <View style={styles.divider} />
+
+          {/* Images */}
+          {post.Images && post.Images.length > 0 && post.Images.map((image, idx) => (
+            <TouchableOpacity
+              key={idx}
+              onPress={() => openImageViewer(image?.secure_url)}
+            >
+              <Image
+                source={{ uri: image.secure_url }}
+                style={{
+                  width: '100%',
+                  height: 300,
+                  borderRadius: 10,
+                  marginBottom: 10,
+                  resizeMode: 'cover',
+                }}
+              />
+            </TouchableOpacity>
+          ))}
+
+          {/* Videos */}
+          {post.Videos && post.Videos.length > 0 && post.Videos.map((video, idx) => (
+            <View key={idx}>
+              {Platform.OS === 'web' ? (
+                <video
+                  controls
+                  style={styles.video}
+                  src={video.secure_url}
+                  resizeMode="contain" // التأكد من أن الفيديو يبقى ضمن الحدود
+                />
+              ) : (
+                <ExpoVideo
+                  source={{ uri: video.secure_url }}
+                  style={styles.video}
+                  useNativeControls
+                  resizeMode="contain" // التأكد من أن الفيديو يبقى ضمن الحدود
+                />
+              )}
+            </View>
+          ))}
+
+          {/* Files */}
+          {post.Files && post.Files.length > 0 && post.Files.map((file, index) => (
+            <TouchableOpacity
+              key={index}
+              style={styles.fileCard}
+              onPress={() => openFileInBrowser(file.secure_url, file.originalname)}
+            >
+              <FontAwesome name="file-o" size={24} color="#555" style={styles.icon} />
+              <Text style={styles.fileName}>
+                {file.originalname || 'Click to view/download file'}
+              </Text>
+            </TouchableOpacity>
+          ))}
+
+          <View style={{ flexDirection: 'row', justifyContent: 'space-around', marginTop: 10 }}>
+            {/* Like Button */}
+            <TouchableOpacity onPress={() => handleLike(post._id, post.like)} style={{ flexDirection: 'column', alignItems: 'center', marginRight: 0 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Text style={{ color: isNightMode ? primary : '#000', fontSize: 14, marginLeft: 0, fontWeight: 'bold', marginTop: 0 }}>
+                  {post.like.length}
+                </Text>
+                <Ionicons name="heart-circle" size={27} color={post.isLiked ? '#ff0000' : '#ccc34'} />
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              onPress={() => ActionComment(post._id)} 
+              style={{ alignItems: 'center' }}
+            >
+              <Ionicons 
+                name="chatbubbles" 
+                size={26} 
+                color={isNightMode ? secondary : '#ccc34'} 
+              />
+              <Text style={{ color: isNightMode ? primary : '#000', fontSize: 14 }}>
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+
+      {/* Divider */}
+      {index < posts.length - 1 && (
+        <View style={{ width: '100%', height: 3, backgroundColor: isNightMode ? '#555' : '#ddd', marginVertical: 20 }} />
+      )}
+    </React.Fragment>
+  ))
+}
+
+
+
 
         {activeTab === 'Request' && (
   <View style={styles.requestsContainer}>
@@ -3711,6 +4556,172 @@ export default function ProfilePage({ navigation }) {
           </View>
         </View>
       )}
+
+
+           {/* Menu */}
+
+
+            <Modal
+        visible={isModalVisibleviewImage}
+        transparent={true}
+        onRequestClose={closeImageViewer}
+      >
+        <ImageViewer
+          imageUrls={currentImage}
+          onCancel={closeImageViewer}
+          enableSwipeDown={true}
+          menus={({  }) => (
+            <View style={styles.menuContainer}>
+              <Button
+                title="Download Image"
+                color={Colors.darkLight}
+                onPress={() => saveImageToDevice(currentImage[0]?.url)}
+              />
+            </View>
+          )}
+        />
+      </Modal>
+
+
+      <Modal 
+  isVisible={isCommentModal} 
+  onBackdropPress={handleCloseModal} 
+  style={{ justifyContent: 'flex-end', margin: 0 }} 
+  transparent={true}
+>
+  <View style={{
+    backgroundColor: isNightMode ? '#333' : '#fff',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
+    height: Platform.OS === 'web' ? '80%' : '80%',  // إذا كانت ويب، عرض المودال بنصف الصفحة
+    margin: Platform.OS === 'web' ? '5%' : '',  // إذا كانت ويب، عرض المودال بنصف الصفحة
+    borderRadius: Platform.OS === 'web' ? 20 : '',  // إذا كانت ويب، عرض المودال بنصف الصفحة
+    flexDirection: 'column',
+  }}>
+    {/* Header */}
+    <View style={styles.commentHeader}>
+      <Text style={[styles.commentTitle, isNightMode && styles.commentTitleDark]}>Comments</Text>
+      <TouchableOpacity onPress={handleCloseModal} style={styles.commentCloseButton}>
+        <Ionicons name="close" size={28} color={isNightMode ? 'white' : 'gray'} />
+      </TouchableOpacity>
+    </View>
+
+    {/* Comments List - FlatList */}
+    {commentPost && commentPost.length > 0 ? (
+      <FlatList 
+        style={{ flex: 1 }}
+        data={commentPost}
+        renderItem={({ item }) => {
+          const isOwner = item.UserId === currentUserId; // تحقق إن كان صاحب الحساب
+          return (
+            <View style={[styles.commentItem, isNightMode && styles.commentItemDark]}>
+              <TouchableOpacity onPress={() => handleProfilePress(item.UserId)}>
+                {item.PictureProfile && item.PictureProfile.secure_url && (
+                  <Image
+                    source={{ uri: item.PictureProfile.secure_url }}
+                    style={styles.commentUserImage}
+                  />
+                )}
+              </TouchableOpacity>
+              <View style={styles.commentTextContainer}>
+                <Text style={[styles.commentUser, isNightMode && styles.commentUserDark]}>{item.FullName}</Text>
+                <Text style={[styles.commentDate, isNightMode && styles.commentDateDark]}>
+                  {moment(item.createdAt).format('MMM Do YYYY,[at] h:mm a')}
+                </Text>
+                {item.Text && (
+                  <Text style={[styles.commentText,isNightMode && styles.noCommentsTextDark]}>{item.Text}</Text>
+                )}
+                {item.Images && item.Images.length > 0 && (
+                  <TouchableOpacity onPress={() => openImageViewer(item.Images[0]?.secure_url)}>
+                    <Image
+                      source={{ uri: item.Images[0].secure_url }}
+                      style={Platform.OS === 'web' ? styles.commentImagewep : styles.commentImage}
+                    />
+                  </TouchableOpacity>
+                )}
+
+                {isOwner && (
+                  <View style={styles.commentOptions}>
+                    <TouchableOpacity onPress={() => editCommentHandler(item._id, item.Text, item.Images)}>
+                      <Ionicons name="create" size={15} color={isNightMode ? 'white' : 'gray'} />
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => handleDeleteComments(item._id)}>
+                      <Ionicons name="trash" size={15} color={isNightMode ? 'white' : 'gray'} />
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </View>
+            </View>
+          );
+        }}
+        keyExtractor={(item) => item._id ? item._id.toString() : ''}
+        contentContainerStyle={styles.commentList}
+      />
+    ) : (
+      <Text style={[styles.noCommentsText, isNightMode && styles.noCommentsTextDark]}>No comment yet</Text>
+    )}
+
+    {editingImage && editingImage.length > 0 && (
+      <View style={styles.imageWrapper}>
+        <TouchableOpacity onPress={pickImageComment}>
+          <Image source={{ uri: editingImage }} style={Platform.OS === 'web' ? styles.commentImagewep : styles.commentImage} />
+        </TouchableOpacity>
+        {/* Remove Image Button */}
+        <TouchableOpacity onPress={() => removeimgcomment()} style={styles.removeImageButton}>
+          <Ionicons name="close" size={15} color="white" />
+        </TouchableOpacity>
+      </View>
+    )}
+
+    {/* Comment Input Section */}
+    <View style={[styles.commentInputContainer]}>
+      {/* Text Input with auto-resize */}
+      <TextInput
+        placeholder="Write a comment..."
+        value={newCommentText}
+        onChangeText={setNewCommentText}
+        style={[
+          styles.commentInput,
+          isNightMode && styles.commentInputDark,
+          { minHeight: 40, textAlignVertical: 'top' }, // توسع الحقل مع النص
+        ]}
+        multiline={true} // لجعل الإدخال متعدد الأسطر
+      />
+
+      {/* Action Buttons */}
+      <View style={styles.actionButtonsContainer}>
+        <TouchableOpacity onPress={pickImageComment} style={styles.imagePickerButton}>
+          <Ionicons name="image" size={30} color={isNightMode ? 'white' : 'gray'} />
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => {
+            if (newCommentText.trim() || editingImage) {
+              isEditing ? updateMyComment(editingCommentId) : handleAddComment();
+            } 
+          }}
+          style={styles.commentSendButton}
+        >
+          <Ionicons name="send" size={15} color="white" />
+        </TouchableOpacity>
+      </View>
+    </View>
+
+  </View>
+</Modal>
+
+
+
+
+
+
+
+
+
+
+
+
+      
 
     </View>
   );
@@ -4317,7 +5328,329 @@ const styles = StyleSheet.create({
     padding: 5,
   },
 
+container: {
+    alignItems: 'center',
+    marginVertical: 10,
+  },
+  divider2: {
+    height: 1,
+    backgroundColor: '#ddd',
+    marginVertical: 8,
+  },
+  title: {
+    fontWeight: 'bold',
+    marginBottom: 10,
+    fontSize: 16,
+    textAlign: 'center',
+  },
+  fileCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f9f9f9',
+    borderRadius: 10,
+    padding: 10,
+    marginBottom: 10,
+    width: '100%',
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
+  },
+  
+  icon: {
+    marginRight: 10,
+  },
+  fileName: {
+    color: '#007BFF',
+    textDecorationLine: 'underline',
+    flexShrink: 1,
+    fontSize: 14,
+  },
+  video: {
+    width: '100%',
+    height: 300,
+    borderRadius: 10,
+    marginBottom: 10,
+    backgroundColor: '#000', // لون خلفية الفيديو (لأغراض التحميل)
+},    webVideo: {
+  width: '100%',
+  height: 300,
+  borderRadius: 10,
+  marginBottom: 10,
+  backgroundColor: '#000', // لون خلفية الفيديو (لأغراض التحميل)
+},
+commentModal: { 
+  justifyContent: 'center',
+  alignItems: 'center',
+  justifyContent: 'flex-end', // لظهور المودال من الأسفل في الجوال
+  margin: 0,
+},
+commentModalDark: {
+  backgroundColor: '#000000AA', // لون الظل عند التفعيل في وضع الليل
+},
+commentModalContent: {
+  width: '100%',
+  backgroundColor: '#fff',
+  borderTopLeftRadius: 20,  // جولة الزوايا من الأعلى
+  borderTopRightRadius: 20,  // جولة الزوايا من الأعلى
+  padding: 20,
+  justifyContent: 'flex-end',  // يتم وضع حقل التعليق في أسفل المودال
+  maxHeight: '70%',// تحديد أقصى ارتفاع للمودال ليكون 90% من الشاشة
+},
+// الهيدر
+commentHeader: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  marginBottom: 20,
+},
+commentTitle: {
+  fontSize: 18,
+  fontWeight: 'bold',
+},
+commentTitleDark: {
+  color: 'white',
+},
+commentCloseButton: {
+  padding: 10,
+},
+// القائمة التعليقات
+commentList: {
+  paddingBottom: 20,
+},
+// تعليق فردي
+commentItem: {
+  flexDirection: 'row',
+  marginBottom: 15,
+  borderBottomWidth: 1,
+  borderBottomColor: '#ddd',
+  paddingBottom: 10,
+  paddingRight: 10,
+},
+commentItemDark: {
+  backgroundColor: '#333',
+},
+commentUserImageContainer: {
+  marginRight: 10,
+},
+commentUserImage: {
+  width: 45,
+  height: 45,
+  borderRadius: 25, // جعل الصورة دائرية
+  borderWidth: 1,   // إطار
+  borderColor:Colors.fifthColor,
+  marginRight: 10,  // مسافة بين الصورة والنص
+},
+commentTextContainer: {
+  flex: 1,
+},
+commentUser: {
+  fontWeight: 'bold',
+  fontSize: 14,
+},
+commentUserDark: {
+  color: 'white',
+},
+commentImage: {
+  width: '100%',
+  height: 200,
+  borderRadius: 10,
+  marginTop: 10,
+},
+commentImagewep: {
+  width: 400,
+  height: 200,
+  borderRadius: 10,
+  marginTop: 10,
+},
+commentOptions: {
+  flexDirection: 'row',
+  marginTop: 10,
+},
+commentInputDark: {
+  backgroundColor: '#333',
+  color: 'white',
+},
+previewImage: {
+  width: '100%',
+  height: 200,
+  borderRadius: 10,
+  marginTop: 10,
+},
+imagePickerButton: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  marginTop: 10,
+},
+imagePickerText: {
+  fontSize: 16,
+  marginLeft: 10,
+  color: '#007BFF',
+},
+commentInputContainer: {
+  flexDirection: 'row',  // وضع العناصر في نفس السطر
+  alignItems: 'center',  // محاذاة العناصر في الوسط عموديا
+  marginBottom: 15,  // مسافة بين المودال وعناصر الإدخال
+},
 
+
+commentInputDark: {
+  backgroundColor: '#333',  // تعديل الخلفية في الوضع الداكن
+  color: 'white',  // تغيير لون النص في الوضع الداكن
+},
+previewImage: {
+  width: 40,  // عرض الصورة المعاينة
+  height: 40,  // ارتفاع الصورة المعاينة
+  borderRadius: 5,
+  marginLeft: 10,  // مسافة بين الزر والصورة
+},
+imagePickerButton: {
+  padding: 10,
+},
+commentModalContent: {
+  borderTopLeftRadius: 20,
+  borderTopRightRadius: 20,
+  padding: 20,
+  flex: 1,
+  justifyContent: 'flex-start', // جعل التبرير يبدأ من الأعلى
+  maxHeight: '80%', // تحديد أقصى ارتفاع ليكون 80% من الشاشة
+},
+
+commentList: {
+  paddingBottom: 20, // تحديد المسافة أسفل القائمة
+},
+
+commentInputContainer: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  marginTop: 10, // تقليل المسافة بين منطقة الإدخال والتعليقات
+  marginBottom: 0, // لا نريد مسافة إضافية أسفل منطقة الإدخال
+},
+
+
+// إضافة هذا لتجنب المسافة البيضاء الكبيرة أسفل منطقة الإدخال:
+modalContentContainer: {
+  flex: 1,
+  justifyContent: 'space-between', // توزيع المحتوى ليشغل المساحة المتاحة بشكل متساوٍ
+},
+commentCancelButton: {
+  backgroundColor: 'red',
+  paddingHorizontal: 15,
+  paddingVertical: 10,
+  borderRadius: 5,
+  marginRight: 10,
+},
+commentCancelText: {
+  color: 'red',
+  fontSize: 14,
+  fontWeight: 'bold',
+},
+commentInputContainer: {
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    marginBottom: 10,
+  },
+  commentInput: {
+    flex: 1, // لتمديد الحقل لملء المساحة المتاحة
+    padding: 10,
+    borderWidth: 1,
+    borderColor: Colors.darkLight,
+    borderRadius: 5,backgroundColor:Colors.secondary
+  },
+  commentInputContainer: {
+    flexDirection: 'row', // وضع العناصر بجانب بعضها
+    alignItems: 'center', // محاذاة العناصر عمودياً
+    marginTop: 10,
+  },
+  commentInputDark: {
+    backgroundColor: '#222',
+    color: 'white',
+  },
+  imageWrapper: {
+    position: 'relative',
+    marginTop: 10,
+    alignSelf: 'stretch',
+  },
+  commentImagePreview: {
+    width: '100%',
+    height: 150,
+    borderRadius: 10,
+    resizeMode: 'cover',
+  },
+  removeImageButton: {
+    position: 'absolute',
+    top: 20,
+    right:-5,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    borderRadius: 15,padding:3
+  },
+  actionButtonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 10,
+    width: '100%',
+  },
+  imagePickerButton: {
+    marginRight: 10,
+  },
+  commentSendButton: {
+    backgroundColor:Colors.fourhColor,
+    padding: 8,
+    width:30,height:30, borderRadius: 30,
+  },
+  actionButtonsContainer: {
+    flexDirection: 'row', // ترتيب الأزرار بجانب بعضها
+    alignItems: 'center',
+    marginLeft: 10,
+  },
+  noCommentsText: {
+    fontSize: 18,
+    color: 'gray',
+    textAlign: 'center',
+    flex: 1,
+    justifyContent: 'center',  // توسيط النص في الاتجاه العمودي
+
+  },
+  noCommentsTextDark: {
+    color: 'white',  // تغيير اللون إلى الأبيض في وضع الليل
+  },
+  commentDate: {
+  fontSize: 9,
+  color: 'gray',
+  marginTop: 5,
+},
+commentDateDark: {
+  color: 'lightgray',
+},
+commentText: {
+  color: '#000',
+},
+searchBox: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  flex: 1,
+  paddingHorizontal: 10,
+  borderRadius: 10,
+  borderWidth: 1,
+  borderColor: '#ccc',
+},
+searchIcon: {
+  marginRight: 10,
+},
+inputSearch: {
+  flex: 1,
+  height: 40,
+  fontSize: 16,
+},
+container: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  padding: 5,
+},
+backButton: {
+  marginRight: 10,
+},
 });
 
 

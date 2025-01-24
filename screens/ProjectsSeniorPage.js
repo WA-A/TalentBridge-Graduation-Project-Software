@@ -238,6 +238,42 @@ const [project,setProject]=useState();
           //  console.error('Error fetching Project:', error.message);
           }
         };
+
+
+        const handleDeleteProhect= async (CommentId) => {
+          console.log(CommentId);
+          try {
+            const token = await AsyncStorage.getItem('userToken'); // استرجاع التوكن
+            if (!token) {
+              console.error('Token not found');
+              return;
+            }
+            const response = await fetch(`${baseUrl}/project/deleteownprojectcreated/${CommentId}`, { // تأكد من المسار الصحيح
+              method: 'DELETE',  // طريقة الحذف يجب أن تكون DELETE
+              headers: {
+                'Authorization': `Wasan__${token}`, // تضمين التوكن في الهيدر
+                'Content-Type': 'application/json',
+              },
+            });
+        if(response){
+          console.log(response.message);
+        }
+            if (!response.ok) {
+              const errorData = await response.json(); // إذا كان هناك خطأ في الرد
+              throw new Error(errorData.message || 'Failed to delete project');
+            }
+            viewownprojectcreated();
+          } catch (error) {
+            console.error('Error deleting project:', error.message);
+          }
+        };
+
+
+
+
+
+
+
    
         const navigateToSeniorProfile = async (senior) => {
           await handleViewOtherProfile(senior._id);  // الانتظار حتى يتم تحميل البيانات
@@ -291,6 +327,7 @@ const [project,setProject]=useState();
         };
       
        
+        
 
   const [profile,setprofileimg] = useState('');
   const [profileUser,setOtherProfile] = useState('');
@@ -661,7 +698,7 @@ const [project,setProject]=useState();
               <TouchableOpacity  style={styles.editButton}>
                 <MaterialIcons name="edit" size={20} color={isNightMode ? Colors.primary : Colors.black} />
               </TouchableOpacity>
-              <TouchableOpacity  style={styles.deleteButton}>
+              <TouchableOpacity onPress={() =>handleDeleteProhect(project._id)} style={styles.deleteButton}>
                 <MaterialCommunityIcons name="minus-circle" size={20} color={isNightMode ? Colors.primary : Colors.black} />
               </TouchableOpacity>
             </View>

@@ -153,21 +153,20 @@ export const CreateProject = async (req, res) => {
 
 
   
-//  View Own Project Created
 export const GetProjectsBySenior = async (req, res) => {
-    
-        const CreatedBySenior = req.user._id; 
-        const projects = await ProjectsModel.find({ CreatedBySenior });
+    const CreatedBySenior = req.user._id;
 
-        
-        if (!projects.length) {
-            return res.status(404).json({ message: "No projects found for this senior." });
-    } 
+    // البحث عن المشاريع الخاصة بهذا senior مع ترتيبها حسب التاريخ من الأحدث إلى الأقدم
+    const projects = await ProjectsModel.find({ CreatedBySenior }).sort({ created_at: -1 }); // -1 يعني الترتيب من الأحدث إلى الأقدم
+
+    if (!projects.length) {
+        return res.status(404).json({ message: "No projects found for this senior." });
+    }
+
     return res.status(200).json({ projects });
-      
-    
 };
- 
+
+
  // Edit Own Project Created
  export const UpdateProjectBySenior = async (req, res) => {
         try {
@@ -304,7 +303,7 @@ export const DeleteProjectBySenior = async (req, res) => {
   
     const deletedProject = await ProjectsModel.findOneAndDelete({
         _id: ProjectId,
-        CreatedBySenior
+  CreatedBySenior,
     });
 
     
