@@ -9,5 +9,5 @@ import { EndPoints } from "./Admin.role.js";
 
 
 router.get('/getallrequestseniortoadmin',auth(EndPoints.GetAllRequestSeniorToAdmin),AdminController.GetAllRequestSeniorToAdmin);
-
+router.patch('/adminacceptofseniorrequest/:UserId',auth(EndPoints.GetAllRequestSeniorToAdmin),AdminController.AdminAcceptofSeniorRequest);
 export default router
