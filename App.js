@@ -222,6 +222,8 @@ export default function App() {
             component={AdminFieldsPage}
             options={{ headerShown: false }}
           />
+          
+          <Stack.Screen
             name="AddTaskForProject"
             component={AddTaskForProject}
             options={{ headerShown: false }}
