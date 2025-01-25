@@ -691,7 +691,7 @@ export const updateLanguage = async (req, res) => {
 export const updateRecommendation = async (req, res) => {
     try {
         const { recommendationId } = req.params;
-        const { content } = req.body; // تمرير المحتوى الجديد
+        const { text } = req.body; 
         const authUser = req.user;
 
         const user = await UserModel.findById(authUser._id);
@@ -704,12 +704,12 @@ export const updateRecommendation = async (req, res) => {
             return res.status(404).json({ message: "Recommendation not found" });
         }
 
-        recommendation.content = content || recommendation.content;
+        recommendation.text = text || recommendation.text;
         await user.save();
 
         return res.status(200).json({ 
             message: "Recommendation updated successfully", 
-            recommendations: user.Recommendations // إعادة قائمة التوصيات فقط
+            recommendations: user.Recommendations 
         });
     } catch (error) {
         console.error("Error updating recommendation:", error);
