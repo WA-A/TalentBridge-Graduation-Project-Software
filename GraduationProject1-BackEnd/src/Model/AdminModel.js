@@ -1,7 +1,7 @@
 import mongoose, { Schema, model } from 'mongoose';
 
 const AdminSchema = new Schema({
-
+     
     IsDeleted: {
       type: Boolean,
       default: false,
