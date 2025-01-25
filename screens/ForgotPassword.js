@@ -124,28 +124,6 @@ export default function ForgotPassword({ navigation }) {
     }}
   />
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
                 <Text style={{ fontSize: 18, marginBottom: 20 }}>Enter you'r email address: </Text>
                 <View style={{ position: 'relative', width: 300 }}>
   <StyledTextInput 
