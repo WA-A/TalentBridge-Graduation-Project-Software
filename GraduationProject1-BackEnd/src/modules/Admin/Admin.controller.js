@@ -1,6 +1,7 @@
 import RequestSeniorToAdminModel from '../../Model/RequestSeniorToAdminModel.js';
 import UserModel from '../../Model/User.Model.js'; 
 import { SendEmail } from "../../../utls/SendEmail.js";
+import { Fields } from '../../../ExternalApiFields/ExternealApiFields.controller.js';
 
 // Get All Request Senior To Admin
 
@@ -54,4 +55,34 @@ export const AdminAcceptofSeniorRequest = async (req, res) => {
 };
 
  
- 
+// Add New Fields 
+
+  export const AddNewFields = async (req, res) => {
+    try {
+      const { sub_specialization, code } = req.body;
+  
+      if (!sub_specialization || !code) {
+        return res.status(400).json({ error: "All fields are required except ID!" });
+      }
+  
+      const newId = Fields.length > 0 
+        ? Fields[Fields.length - 1].id + 1 
+        : 1;
+  
+      const newField = {
+        id: newId,
+        sub_specialization,
+        code,
+      };
+  
+      Fields.push(newField);
+  
+      res.status(201).json({ message: "New field added successfully!", newField });
+    } catch (error) {
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  };
+  
+
+  
+  

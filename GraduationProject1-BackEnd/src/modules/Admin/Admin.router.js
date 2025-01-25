@@ -10,4 +10,5 @@ import { EndPoints } from "./Admin.role.js";
 
 router.get('/getallrequestseniortoadmin',auth(EndPoints.GetAllRequestSeniorToAdmin),AdminController.GetAllRequestSeniorToAdmin);
 router.patch('/adminacceptofseniorrequest/:UserId',auth(EndPoints.GetAllRequestSeniorToAdmin),AdminController.AdminAcceptofSeniorRequest);
+router.post('/addnewfields',auth(EndPoints.GetAllRequestSeniorToAdmin),AdminController.AddNewFields);
 export default router
