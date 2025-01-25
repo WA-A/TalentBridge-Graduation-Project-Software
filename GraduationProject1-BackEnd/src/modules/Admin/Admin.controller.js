@@ -2,6 +2,7 @@ import RequestSeniorToAdminModel from '../../Model/RequestSeniorToAdminModel.js'
 import UserModel from '../../Model/User.Model.js'; 
 import { SendEmail } from "../../../utls/SendEmail.js";
 import { Fields } from '../../../ExternalApiFields/ExternealApiFields.controller.js';
+import Skills from '../../../ExternalApiSkills/ExternealApiSkills.controller.js';
 
 // Get All Request Senior To Admin
 
@@ -82,7 +83,36 @@ export const AdminAcceptofSeniorRequest = async (req, res) => {
       res.status(500).json({ error: "Internal Server Error" });
     }
   };
+
+
+  // Add New Skills 
+
+  export const AddNewSkills = async (req, res) => {
+    try {
+      const { name, code } = req.body;
+  
+      if (!name || !code) {
+        return res.status(400).json({ error: "All Skills are required except ID!" });
+      }
+  
+      const newId = Skills.length > 0 
+        ? Skills[Skills.length - 1].id + 1 
+        : 1;
+  
+      const newSkill = {
+        id: newId,
+        name,
+        code,
+      };
+  
+      Skills.push(newSkill);
+  
+      res.status(201).json({ message: "New skills added successfully!", newSkill });
+    } catch (error) {
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  };
   
 
-  
+
   
