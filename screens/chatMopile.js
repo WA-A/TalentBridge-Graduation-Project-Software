@@ -20,8 +20,8 @@ import * as MediaLibrary from 'expo-media-library';
 import * as ImagePicker from 'expo-image-picker';
 import ImageViewer from 'react-native-image-zoom-viewer';
 import * as WebBrowser from 'expo-web-browser'
-const { width } = Dimensions.get("window");
 
+const { width } = Dimensions.get("window");
 
 export default function ChatMopile ({ navigation, route }) {
   const {projectID} = route.params || {}; 
@@ -969,6 +969,7 @@ Select Field           </Text>
               
             </View>
           )}
+          
 
           {activeFilters.includes("Status") && (
             <View style={styles.filterOptionContainer}>
