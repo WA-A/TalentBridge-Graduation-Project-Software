@@ -17,7 +17,14 @@ import * as ImagePicker from 'expo-image-picker';
 import io from 'socket.io-client';
 import moment from 'moment';
 import { decode as atob } from 'base-64'; // إذا كنت تستخدم React Native
-
+import {
+  LineChart,
+  BarChart,
+  PieChart,
+  ProgressChart,
+  ContributionGraph,
+  StackedBarChart
+} from "react-native-chart-kit";
 import './../compnent/webCardStyle.css';
 import {
     Colors,
@@ -47,7 +54,6 @@ import CommentsModal from './CommentsModal';
 import { setIsEnabledAsync } from 'expo-av/build/Audio';
 import { string } from 'prop-types';
 import { use } from 'react';
-import { PieChart, BarChart } from 'react-native-chart-kit';
 
 export default function AdminHomePage({ navigation, route}) {
        const { isNightMode, toggleNightMode } = useContext(NightModeContext);
@@ -67,7 +73,7 @@ export default function AdminHomePage({ navigation, route}) {
       ];
     
       const barData = {
-        labels: ['Software Engineering', 'Data Science', 'Accounting and Finance', 'Psychology','Social Work','Graphic Design'],
+        labels: ['22', '27', '35', '23','19','40'],
         datasets: [
           {
             data: [50, 80, 60, 90, 25, 40],
@@ -151,18 +157,9 @@ export default function AdminHomePage({ navigation, route}) {
       position: Platform.OS === 'web' ? 'fixed' : 'relative',
       top: 0, left: 0, right: 0, zIndex: 10,
     }}>
-      <Text style={{
-        fontFamily: 'Updock-Regular', fontSize: 30, position: 'absolute', left: 0, right: 0,
-        textAlign: 'center', color: isNightMode ? primary : "#000"
-      }}>
-        Talent Bridge
-      </Text>
+     
 
-      {/* Sidebar Toggle Button */}
-      <TouchableOpacity onPress={toggleSidebar}>
-        <EvilIcons name="sc-telegram" size={39} color={careysPink} style={{ position: 'absolute', top: -20, left: 10 }} />
-        <EvilIcons name="sc-telegram" size={37} color={darkLight} style={{ position: 'absolute', top: -20, left: 10 }} />
-      </TouchableOpacity>
+      
 
       {/* Night Mode Toggle Button */}
       <TouchableOpacity onPress={toggleNightMode}>
@@ -180,104 +177,75 @@ export default function AdminHomePage({ navigation, route}) {
      backgroundColor: isNightMode ? '#2C2C2C' : '#f0f0f0' , elevation: 3, position: Platform.OS === 'web' ? 'fixed' : 'relative',
       zIndex: 10, width: '100%', top: Platform.OS === 'web' ? 55 : 0, marginBottom: Platform.OS === 'web' ? 20 : 0,
     }}>
-        <View style={[styles.container, { backgroundColor: isNightMode ? '#2C2C2C' : '#f0f0f0' }]}>
-      {/* Notification Icon */}
-      <TouchableOpacity style={styles.backButton} onPress={() => nav.navigate('Notification')}>
-        <Ionicons name="notifications" size={20} color={isNightMode ? primary : "#000"} />
-      </TouchableOpacity>
-          <View style={[styles.searchBox, { backgroundColor: isNightMode ? '#5E5A5A' : '#fff' }]}>
-            <Ionicons name="search" size={20} color={isNightMode ? '#fff' : '#888'} style={styles.searchIcon} />
-
-            <TextInput
-              style={[styles.inputSearch, { color: isNightMode ? '#fff' : '#000' }]}
-              placeholder="Search..."
-              placeholderTextColor={isNightMode ? '#ccc' : '#888'}
-              value={searchQuery}  // تعيين قيمة البحث
-              onChangeText={setSearchQuery}  // تحديث قيمة البحث عند الكتابة
-              returnKeyType="search"  // تحويل زر الإدخال في لوحة المفاتيح إلى زر بحث
-              onFocus={() => nav.navigate('SearchScreen', { searchQuery: searchQuery })}  // تنفيذ البحث عند التركيز
-            />
-          </View>
-        </View>
-</View></>
+       
+</View>
+</>
       )}
 
-                {/* <View style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  backgroundColor: isNightMode ? Colors.tertiary : Colors.secondary,
-                  width: '100%',
-                  marginTop: 20,
-                  padding: 10,
-                }}>
-                </View> */}
+        
 
+<ScrollView style={[styles.container, { marginTop: Platform.OS === 'web' ? 70 : 20 }]}>
+  <View style={{ flex: 1, padding: 20, backgroundColor: isNightMode ? '#333' : 'transparent' }}>
+    {/* الكروت */}
+    <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20, marginTop: 20 }}>
+      {/* كارت عدد السينير */}
+      <View style={{
+        flex: 1,
+        backgroundColor: isNightMode ? '#444' : '#fff',
+        borderRadius: 16,
+        padding: 20,
+        marginHorizontal: 5,
+        elevation: 3, // للظل
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 5,
+        alignItems: 'center'
+      }}>
+        <Text style={{ fontSize: 18, color: isNightMode ? '#fff' : '#334664', marginBottom: 10,fontWeight: 'bold' }}>Number of Senior </Text>
+        <Text style={{ fontSize: 32, fontWeight: 'bold', color: '#7C7692' }}>150</Text>
+      </View>
 
-                {/* الشريط الجانبي */}
-                  <View style={{ flexDirection: 'row', flex: 1 }}>
-                  {/* الشريط الجانبي */}
-                  {Platform.OS === 'web' && isSidebarVisible && (
-                  <View style={{
-                    position: 'fixed',
-                    width: '30%',
-                    height: '100%',
-                    backgroundColor: isNightMode ? '#333' : '#fff',
-                    padding: 10,
-                    zIndex: 5,
-                    borderRightWidth: 1,
-                    borderColor: '#ccc',
-                    overflow: 'auto',
-                    paddingVertical: 10,
-                    marginTop: Platform.OS === 'web' ? 50 : 0,
-                    height: `calc(110vh - 0px - 100px)`,
-                    overflowY: 'auto',
-                  }}>
-                    {loading ? (
-                      <Text style={{
-                        color: isNightMode ? '#fff' : '#000',
-                        fontSize: 16,
-                        textAlign: 'center',
-                      }}>
-                        Loading...
-                      </Text>
-                    ) : (
-                      <FlatList
-                        data={friends}
-                        renderItem={({ item }) => (
-                          <TouchableOpacity
-                            key={item._id}
-                            onPress={() => handleSelectedPerson(item)}
-                            style={{
-                              padding: 15,
-                              borderBottomWidth: 1,
-                              borderBottomColor: '#ccc',
-                              flexDirection: 'row',
-                              alignItems: 'center',
-                              justifyContent: 'flex-start',
-                              borderRadius: 8,
-                              marginBottom: 10,
-                              backgroundColor: isNightMode ? '#444' : '#f9f9f9',
-                              boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
-                              transition: 'all 0.3s ease',
-                            }}
-                          >
-                          
-                          </TouchableOpacity>
-                        )}
-                        keyExtractor={(item) => item._id.toString()}
-                      />
-                    )}
-                  </View>
-                )}
-                </View>
+      {/* كارت عدد الجينيور */}
+      <View style={{
+        flex: 1,
+        backgroundColor: isNightMode ? '#444' : '#fff',
+        borderRadius: 16,
+        padding: 20,
+        marginHorizontal: 5,
+        elevation: 3,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 5,
+        alignItems: 'center'
+      }}>
+        <Text style={{ fontSize: 18, color: isNightMode ? '#fff' : '#334664', marginBottom: 10,fontWeight: 'bold' }}>Number of Junior </Text>
+        <Text style={{ fontSize: 32, fontWeight: 'bold', color: '#F7A8B8' }}>250</Text>
+      </View>
 
-    {/* chart */}
-    <ScrollView 
-      style={styles.container} 
-      contentContainerStyle={styles.contentContainer}
-    >
-      <View style={styles.chartContainer}>
+      {/* كارت الأرباح */}
+      <View style={{
+        flex: 1,
+        backgroundColor: isNightMode ? '#444' : '#fff',
+        borderRadius: 16,
+        padding: 20,
+        marginHorizontal: 5,
+        elevation: 3,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 5,
+        alignItems: 'center'
+      }}>
+        <Text style={{ fontSize: 18, color: isNightMode ? '#fff' : '#334664', marginBottom: 10 ,fontWeight: 'bold'}}>Profits</Text>
+        <Text style={{ fontSize: 32, fontWeight: 'bold', color: '#9EABCB' }}>$10K</Text>
+      </View>
+    </View>
+  </View>
+
+  {/* chart */}
+  <View style={styles.chartContainer}>
         {/* Pie Chart */}
         <Text style={styles.title}>Gender</Text>
         <PieChart
@@ -292,9 +260,56 @@ export default function AdminHomePage({ navigation, route}) {
           backgroundColor="transparent"
           paddingLeft="15"
         />
+        
 
-        {/* Bar Chart */}
-        <Text style={[styles.title, { marginTop: 20 }]}>Fields</Text>
+        <Text>Fields</Text>
+  <LineChart
+    data={{
+      labels:['Software Engineering', 'Data Science', 'Accounting and Finance', 'Psychology','Social Work','Graphic Design'],
+      datasets: [
+        {
+          data: [
+            Math.random() * 100,
+            Math.random() * 100,
+            Math.random() * 100,
+            Math.random() * 100,
+            Math.random() * 100,
+            Math.random() * 100
+          ]
+        }
+      ]
+    }}
+    width={Dimensions.get("window").width} // from react-native
+    height={220}
+    yAxisLabel="$"
+    yAxisSuffix="k"
+    yAxisInterval={1} // optional, defaults to 1
+    chartConfig={{
+      backgroundColor: "#e26a00",
+      backgroundGradientFrom: "#fb8c00",
+      backgroundGradientTo: "#ffa726",
+      decimalPlaces: 2, // optional, defaults to 2dp
+      color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+      labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+      style: {
+        borderRadius: 16
+      },
+      propsForDots: {
+        r: "6",
+        strokeWidth: "2",
+        stroke: "#ffa726"
+      }
+    }}
+    bezier
+    style={{
+      marginVertical: 8,
+      borderRadius: 16
+    }}
+  />
+
+
+  {/* Bar Chart */}
+  <Text style={[styles.title, { marginTop: 20 }]}>Age</Text>
         <BarChart
           data={barData}
           width={screenWidth - 40}
@@ -309,14 +324,10 @@ export default function AdminHomePage({ navigation, route}) {
           }}
           style={styles.barChart}
         />
+
       </View>
-    </ScrollView>
-    
-  
-
-
-
-        </View>
+</ScrollView>
+ </View>
     </TouchableWithoutFeedback>
     
     );
