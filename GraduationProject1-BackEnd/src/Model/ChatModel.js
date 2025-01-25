@@ -9,6 +9,10 @@ const ChatSchema = new Schema(
                 required: true, 
             },
         ],
+        project: {
+            type: Types.ObjectId,
+            ref: 'Project', // ربط المشروع بالدردشة
+        },
         messages: [
             {
                 _id: { type: Types.ObjectId, auto: true },

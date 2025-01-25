@@ -290,11 +290,7 @@ const [pushNotToken,setpushNotToken]=useState('');
                                 </TouchableOpacity>
                             </View>
 
-                            <View>
-                                <TouchableOpacity onPress={() => navigation.navigate('HomeScreen')}>
-                                    <Text style={{ color: darkLight, margin: 20 }}>Home after login</Text>
-                                </TouchableOpacity>
-                            </View>
+                           
                         </StyledFormArea>
                     )}
                 </Formik>

@@ -6,10 +6,10 @@ import { useFonts } from 'expo-font';
 import { NightModeContext } from './NightModeContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Colors } from './../compnent/Style';
-import { Card,UserInfoText, UserName, ContainerCard, PostText, UserInfo, ButtonText, StyledButton} from './../compnent/Style.js';
 import { TextInput } from 'react-native-gesture-handler';
 const { tertiary, firstColor, secColor,fifthColor,secondary, primary, darkLight, fourhColor, careysPink} = Colors;
-import { EvilIcons,AntDesign,Feather} from '@expo/vector-icons';
+import { EvilIcons,AntDesign,Feather,FontAwesome5,FontAwesome
+} from '@expo/vector-icons';
 import MultiSelect from 'react-native-multiple-select';
 import { useSharedValue, useAnimatedStyle, withSpring } from "react-native-reanimated";
 import { Dimensions } from "react-native";
@@ -251,10 +251,10 @@ const [project,setProject]=useState();
             console.error('Error fetching Project:', error.message);
           }
         };
-        const navigateToProjectDetails = (project) => {
+        const navigateToProjectDetails = (project,userRole) => {
           // Implement navigation logic here, e.g., navigation.navigate('ProjectDetails', { project });
           console.log('Navigate to Project Details:', project);
-          navigation.navigate('ProjectPage', { userData: project });
+          navigation.navigate('ProjectPage', { userData: project,RoleUser:userRole });
         };
       
         const navigateToSeniorProfile = async (senior) => {
@@ -589,6 +589,7 @@ const [project,setProject]=useState();
     }}>
       Suggested for you
     </Text>
+    
   </TouchableOpacity>
 
   <TouchableOpacity onPress={toggleDropdown}>
@@ -601,7 +602,18 @@ const [project,setProject]=useState();
   </TouchableOpacity>
 
   {/* أيقونة الفلتر */}
-  <View style={{ position: 'absolute', right: 10 }}>
+  <View style={{ position: 'absolute', right: 10,  flexDirection: 'row',  // عرض النص والأيقونة بشكل أفقي
+  alignItems: 'center', }}>
+ <TouchableOpacity   onPress={() => nav.navigate('ProjectYouAreIN')}>
+  <FontAwesome
+    name="folder-open"
+    size={25}
+    color={fourhColor}
+    style={{ marginRight: 6 }}  // المسافة بين النص والأيقونة
+
+  />
+</TouchableOpacity>
+
     <TouchableOpacity onPress={toggleModal}>
       <Feather
         name="sliders"
@@ -609,6 +621,7 @@ const [project,setProject]=useState();
         color={fifthColor}
         style={{ rotate: '90deg' }} // تحويل الأيقونة لتكون عمودية
       />
+
     </TouchableOpacity>
   </View>
 </View>
@@ -634,7 +647,7 @@ const [project,setProject]=useState();
         >
           <TouchableOpacity
             style={isMobile ? styles.cardMobileContent : styles.cardWebContent}
-            onPress={() => navigateToProjectDetails(project)}
+            onPress={() => navigateToProjectDetails(project,project.senior.role)}
           >
           
         

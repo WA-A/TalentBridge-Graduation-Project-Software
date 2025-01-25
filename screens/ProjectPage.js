@@ -21,7 +21,7 @@ const { width } = Dimensions.get("window");
 
 
 export default function ProjectPage({ navigation, route }) {
-    const { userData } = route.params || {}; 
+    const { userData,RoleUser} = route.params || {}; 
     const baseUrl = Platform.OS === 'web'
       ? 'http://localhost:3000'
       : 'http://192.168.1.239:3000' || 'http://192.168.0.107:3000';
@@ -81,25 +81,36 @@ const [project,setProject]=useState();
           body: JSON.stringify(applicationData), // بيانات الطلب
         });
     
-        // التحقق من الرد
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || 'Failed to create application');
-        }
-    
         const result = await response.json();
     
-        console.log('Application created successfully:', result);
+        // التحقق من الرد
+        if (response.ok) {
+          if (result.alreadyApplied) {
+            console.log(result.alreadyApplied);
+
+            // المستخدم قد قدم الطلب بالفعل
+            alert('You have already applied for this role.');
+          } else {
+            console.log('Application created successfully:', result);
+            if(result.application.Status === "Accepted"){
+              await approveRequest(result.application._id,result.application.roleId, token);
+              alert('Application created and notification sent successfully');
+
+            }
+            else{await sendApprovalNotification(result.application._id,token);
     
-        // إرسال الإشعار بعد نجاح إنشاء الطلب
-        await sendApprovalNotification(result.application._id, result.application.roleId, token);
-    
-        alert('Application created and notification sent successfully');
+              alert('Application created and notification sent successfully');}
+          }
+        } else {
+          // التعامل مع الخطأ إذا لم يكن الرد ناجحًا
+          throw new Error(result.message || 'Failed to create application');
+        }
       } catch (error) {
         console.error('Error creating application:', error.message);
         alert('Failed to create application. Please try again.');
       }
     };
+    
     
     // دالة لإرسال الإشعار
     const sendApprovalNotification = async (applicationId, roleId, token) => {
@@ -129,6 +140,33 @@ const [project,setProject]=useState();
     
 
 
+        
+    // دالة لإرسال الإشعار
+    const approveRequest = async (applicationId, roleId, token) => {
+      try {
+        const notificationResponse = await fetch(`${baseUrl}/notification/approveRequest`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Wasan__${token}`,
+          },
+          body: JSON.stringify({
+            requestId: applicationId,
+            requestContent: 'Your application to join the project has been approved. Please check your projects box.',
+          }),
+        });
+    
+        if (!notificationResponse.ok) {
+          const errorData = await notificationResponse.json();
+          throw new Error(errorData.message || 'Failed to send notification');
+        }
+    
+        console.log('Notification sent successfully');
+      } catch (error) {
+        console.error('Error sending notification:', error.message);
+      }
+    };
+    
 
 
 
@@ -279,7 +317,7 @@ const [project,setProject]=useState();
     }
 
    
-    const handleApplyNow = (selectedRole, notes,id,numberOfTrain) => {
+    const handleApplyNow = (selectedRole, notes,id) => {
       console.log(selectedRole);
       if (!selectedRole) {
         console.error('Role is required');
@@ -290,7 +328,7 @@ const [project,setProject]=useState();
       const applicationData = {
         projectId:id,  // معرّف المشروع (يجب تغييره حسب السياق)
         roleId: selectedRole,  // الدور الذي اختاره المستخدم
-        NumberOfTrain: numberOfTrain,  // عدد التدريبات (يمكن تغييره وفقًا للمدخلات الأخرى إن لزم الأمر)
+        NumberOfTrain: 0,  // عدد التدريبات (يمكن تغييره وفقًا للمدخلات الأخرى إن لزم الأمر)
         notes: notes,  // الملاحظات التي أضافها المستخدم
       };
     
@@ -524,14 +562,30 @@ const [project,setProject]=useState();
         style={isMobile ? styles.cardMobileContent : styles.cardWebContent}
       >
         <View style={styles.cardDetails}>
+        {RoleUser === "Senior" ? (
+      <TouchableOpacity
+        style={styles.applyButton} // يمكنك تخصيص هذا الزر حسب احتياجك
+        onPress={() => { 
+          // هنا يمكنك إضافة الوظيفة الخاصة بحذف المشروع
+          console.log("Delete project");
+        }}
+      >
+        <Text style={styles.applyButtonText}>Delete</Text>
+      </TouchableOpacity>
+    ) : (
+      <TouchableOpacity
+        style={styles.applyButton}
+        onPress={() => {
+          toggleModal();
+        }}
+      >
+        <Text style={styles.applyButtonText}>Apply</Text>
+      </TouchableOpacity>
+    )}
           <View style={styles.projectHeader}>
+          
             <Text style={styles.projectName}>{userData.ProjectName}</Text>
-            <TouchableOpacity
-              style={styles.applyButton}
-              onPress={() => {toggleModal()}}
-            >
-              <Text style={styles.applyButtonText}>Apply</Text>
-            </TouchableOpacity>
+           
           </View>
           <Text style={styles.projectDescription}>
             {userData.Description}
@@ -586,10 +640,42 @@ const [project,setProject]=useState();
 
           <Text style={styles.sectionTitle}>Roles:</Text>
           {userData.Roles.map((role) => (
-            <Text key={role._id} style={styles.roleName}>
+      <Text key={role._id} style={styles.roleName}>
               {role.roleName}
-            </Text>
+            </Text>      
           ))}
+          <View style={styles.divider1} />
+          <Text style={styles.sectionTitle}>The project plan:</Text>
+
+{/* عرض المراحل والمهام بشكل تسلسلي */}
+{/* عرض المراحل والمهام بشكل تسلسلي */}
+{userData.Tasks && userData.Tasks.map((task, index) => (
+  <View key={index} style={styles.phaseContainer}>
+    <Text style={styles.phaseName}>{task.PhaseName}</Text>
+    
+    {/* Displaying tasks within each phase */}
+    <View key={task._id} style={styles.taskContainer}>
+      <Text style={styles.taskName}>{task.TaskName}</Text>
+      <Text style={styles.taskDescription}>{task.Description}</Text>
+      <Text style={styles.taskRole}>Role: {task.TaskRoleName}</Text>
+      <Text style={styles.taskStatus}>Status: {task.TaskStatus}</Text>
+      <Text style={styles.taskPriority}>Priority: {task.Priority}</Text>
+   {/*   <Text style={styles.taskDates}>
+        Start Date: {new Date(task.StartDate).toLocaleDateString("en-US")} - End Date: {new Date(task.EndDate).toLocaleDateString("en-US")}
+      </Text>*/}
+      <Text style={styles.taskBenefit}>Benefit: {task.BenefitFromPhase}</Text>
+    </View>
+  </View>
+))}
+
+
+
+
+
+
+
+
+
 
           <View style={styles.divider} />
 
@@ -610,12 +696,7 @@ const [project,setProject]=useState();
               <Text style={styles.seniorName}>
                 {userData.CreatedBySenior?.FullName || "Unknown Senior"}
               </Text>
-              <Text style={styles.seniorEmail}>
-                Email: {userData.CreatedBySenior?.Email || "N/A"}
-              </Text>
-              <Text style={styles.seniorPhone}>
-                Phone: {userData.CreatedBySenior?.PhoneNumber || "N/A"}
-              </Text>
+             
             </View>
           </TouchableOpacity>
           <Modal
@@ -653,18 +734,11 @@ const [project,setProject]=useState();
                     />
 
                     {/* حقل عدد التدريب */}
-                    <Text style={styles.label}>Number of Train:</Text>
-                    <TextInput
-                      style={styles.textInput}
-                      value={numberOfTrain}
-                      onChangeText={setNumberOfTrain}
-                      keyboardType="numeric"
-                      placeholder="Enter number of train"
-                    />
+                
 <TouchableOpacity
   style={styles.modalButton}
   onPress={() => {
-    handleApplyNow(selectedRole, notes,userData._id,numberOfTrain);
+    handleApplyNow(selectedRole, notes,userData._id,);
     toggleModal();
   }}
 >
@@ -1012,9 +1086,9 @@ closeButtonText: {
     width: width - 22, // تأكيد أن عرض البطاقة يتناسب مع عرض الشاشة
   },
   cardWeb: {
-    width: "60%", // عرض البطاقة على الأجهزة المكتبية
+    width: "80%", // عرض البطاقة على الأجهزة المكتبية
     minWidth: 600, // الحد الأدنى للعرض
-    maxWidth: 800, marginTop:20,
+    maxWidth: 1200, marginTop:20,
   },
   cardMobileContent: {
     backgroundColor: "#fff",
@@ -1287,7 +1361,154 @@ modalButtonText: {
   color: "#fff",               // لون النص أبيض
   fontSize: 16,                // حجم النص
   fontWeight: "bold",          // سماكة النص
+},taskContainer: {
+  width: '100%', // العرض بالكامل
+  padding: 15, // إضافة padding حول المحتوى
+  marginVertical: 10, // إضافة مسافة رأسية بين كل تاسك
+  backgroundColor: '#f9f9f9', // لون الخلفية الفاتح
+  borderRadius: 8, // حواف دائرية
+  shadowColor: '#000', // لون الظل
+  shadowOffset: { width: 0, height: 2 }, // توجيه الظل
+  shadowOpacity: 0.1, // شفافية الظل
+  shadowRadius: 5, // نصف قطر الظل
+  elevation: 3, // إضافة تأثير الظل في الأنظمة التي تدعم الظلال
+  flexDirection: 'row', // محاذاة العناصر أفقياً داخل الحاوية
+  alignItems: 'center', // محاذاة العناصر عمودياً في المركز
+},phaseContainer: {
+  width: '100%', // العرض بالكامل
+  padding: 20, // إضافة padding داخل الحاوية
+  marginVertical: 15, // إضافة مسافة بين كل مرحلة وأخرى
+  backgroundColor: '#e6f7ff', // لون الخلفية بلون أزرق فاتح
+  borderRadius: 10, // حواف دائرية لزيادة الانسيابية
+  shadowColor: '#000', // لون الظل
+  shadowOffset: { width: 0, height: 4 }, // توجيه الظل
+  shadowOpacity: 0.1, // شفافية الظل
+  shadowRadius: 6, // نصف قطر الظل
+  elevation: 5, // إضافة تأثير الظل في الأنظمة المدعومة
+  flexDirection: 'column', // محاذاة العناصر عموديًا
+  alignItems: 'flex-start', // محاذاة العناصر من البداية على المحور الأفقي
+  borderWidth: 1, // إضافة حدود حول الحاوية
+  borderColor: '#b3d9ff', // لون الحدود
+},  taskName: {
+  fontSize: 18,
+  fontWeight: 'bold',
+  color: '#333',
+  marginBottom: 5,
 },
 
+taskRole: {
+  fontSize: 14,
+  color: '#888',
+  marginBottom: 5,fontWeight:'bold'
+},
+taskStatus: {
+  fontSize: 14,
+  fontWeight: '600',
+  color: '#4CAF50', // You can adjust the color based on task status (e.g., green for 'In Progress')
+  marginBottom: 5,
+},
+taskPriority: {
+  fontSize: 14,
+  fontWeight: '600',
+  color: '#FF9800', // Orange for 'High Priority'
+  marginBottom: 5,
+},
+taskDates: {
+  fontSize: 13,
+  color: '#888',
+}, taskName: {
+  fontSize: 18,
+  fontWeight: 'bold',
+  color: '#333',
+  marginBottom: 5,
+},
+taskDescription: {
+  fontSize: 14,
+  color: '#555',
+  marginBottom: 8,
+},
+taskRole: {
+  fontSize: 14,
+  color:Colors.darkLight,
+  marginBottom: 5,
+},
+
+benefitsContainer: {
+  marginTop: 10,
+  padding: 10,
+  backgroundColor: '#e8f5e9',
+  borderRadius: 8,
+},
+benefitsText: {
+  fontSize: 14,
+  color: '#388E3C',
+  fontWeight: '500',
+},
+sectionTitle: {
+  fontSize: 20,
+  fontWeight: 'bold',
+  marginVertical: 15,
+  color: '#333',
+},
+phaseContainer: {
+  marginBottom: 15,
+  padding: 10,
+  backgroundColor: Colors.secondary,
+  borderRadius: 8,
+  shadowColor: '#000',
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.1,
+  shadowRadius: 4,
+  elevation: 3,
+},
+phaseName: {
+  fontSize: 18,
+  fontWeight: 'bold',
+  color: '#444',
+  marginBottom: 8,
+},
+taskContainer: {
+  padding: 10,
+  backgroundColor: '#ffffff',
+  borderRadius: 8,
+  marginTop: 5,
+  borderWidth: 1,
+  borderColor: Colors.careysPink,
+},
+taskName: {
+  fontSize: 16,
+  fontWeight: 'bold',
+  color: '#333',
+  marginBottom: 5,
+},
+taskDescription: {
+  fontSize: 14,
+  color: '#555',
+  marginBottom: 8,
+},
+
+taskStatus: {
+  fontSize: 14,
+  fontWeight: '600',
+  color: '#4CAF50', // Example: green for 'In Progress'
+  marginBottom: 5,
+},
+taskPriority: {
+  fontSize: 14,
+  fontWeight: '600',
+  color: Colors.fifthColor, // Example: orange for 'High Priority'
+  marginBottom: 5,
+},
+taskDates: {
+  fontSize: 12,
+  color: '#888',
+  marginBottom: 5,
+},
+taskBenefit: {
+  fontSize: 14,
+  fontWeight: '500',
+  color:Colors.tertiary, // Green to highlight the benefits
+  marginTop: 5,
+},
 
 });

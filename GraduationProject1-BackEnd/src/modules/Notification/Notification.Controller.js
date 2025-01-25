@@ -1,6 +1,8 @@
 import Notification from '../../Model/Notfication.js';
 import CommentModel from '../../Model/CommentModel.js'; 
 import PostModel from '../../Model/PostModel.js';
+import ApplicationTrainModel from '../../Model/ApplicationTrainModel.js';
+
 import UserModel from '../../Model/User.Model.js';
 import mongoose from 'mongoose';
 
@@ -389,22 +391,14 @@ export const createLikeNotification = async (postId, userId) => {
     try {
       // استخراج userId من التوكن (موجود في req.user بعد التحقق من التوكن)
       const userId = req.user._id; // الـ userId تم التحقق منه في الـ middleware
-      const { requestId, seniorId } = req.body;
+      const { requestId } = req.body;
   
       // العثور على الطلب في قاعدة البيانات
-      const request = await RequestModel.findById(requestId);
+      const request = await ApplicationTrainModel.findById(requestId);
       if (!request) {
         return res.status(404).json({ message: "Request not found" });
       }
-  
-      // التحقق من أن السينيور هو من يوافق على الطلب
-      if (request.seniorId.toString() !== seniorId) {
-        return res.status(403).json({ message: "Only the assigned senior can approve this request" });
-      }
-  
-      // تحديث حالة الطلب إلى "approved"
-      request.status = 'approved';
-      await request.save();
+
   
       // إرسال إشعار للمستخدم الذي قدم الطلب
       const requestingUser = await UserModel.findById(userId).select('FullName deviceToken');
@@ -419,7 +413,7 @@ export const createLikeNotification = async (postId, userId) => {
         title: 'Your request has been approved',
         message: `Your approval request has been successfully approved by ${requestingUser.FullName}`,
         action: `/requests/${requestId}`,
-        data: { requestId, seniorId, userId },
+        data: { requestId,userId },
         priority: 'high',
       });
   
@@ -430,7 +424,7 @@ export const createLikeNotification = async (postId, userId) => {
         requestingUser.deviceToken,
         'Request Approved',
         `Your approval request has been successfully approved by ${requestingUser.FullName}`,
-        { requestId, seniorId, userId, notificationType: 'request_approved' }
+        { requestId,userId, notificationType: 'request_approved' }
       );
   
       return res.status(200).json({

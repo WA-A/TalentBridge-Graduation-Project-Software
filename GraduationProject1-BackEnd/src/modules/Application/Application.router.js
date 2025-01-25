@@ -3,8 +3,6 @@ const router = Router();
 import * as ApplicationController from './Application.controller.js'
 import { auth } from "../../MiddleWare/auth.js";
 import { EndPoints } from "./Application.Role.js";
-import { Validation } from "../../MiddleWare/Validation.js";
-import * as schema from './Application.Validation.js';
 
 
 
@@ -16,4 +14,7 @@ router.delete('/deleteApplication/:applicationId',auth(EndPoints.CreateApplicati
 router.put('/approveApplication/:applicationId',auth(EndPoints.getApplication),ApplicationController.approveApplication); //senior
 router.get('/getProjectByApplicationId/:applicationId',auth(EndPoints.CreateApplication),ApplicationController.getProjectByApplicationId); //jenior //senior
 router.get('/getPendingRequests',auth(EndPoints.CreateApplication),ApplicationController.getPendingRequests);
+
+router.delete('/RejectApplication/:applicationId',auth(EndPoints.CreateApplication),ApplicationController.RejectApplication);//jenior senior
+
 export default router

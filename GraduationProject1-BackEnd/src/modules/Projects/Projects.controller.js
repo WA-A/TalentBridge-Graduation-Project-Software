@@ -15,6 +15,8 @@ export const CreateProject = async (req, res) => {
             WorkLoaction,
             Benefits,
             Price,
+            isAutoApproval,   // إضافة حقل الموافقة التلقائية
+            maxAutoApproved,  // إضافة حقل الحد الأقصى للطلبات التلقائية
         } = req.body;
 
         const CreatedBySenior = req.user._id;
@@ -136,6 +138,10 @@ export const CreateProject = async (req, res) => {
             Price: price, // استخدام السعر المحول
             FileProject,
             Tasks: ParsedTasks,
+            AutoApprovalSettings: {
+                isAutoApproval: isAutoApproval || false,  // تحديد إذا كان التفعيل أو لا
+                maxAutoApproved: maxAutoApproved || 0,   // تحديد الرقم
+            },
         });
 
         return res.status(201).json({
@@ -156,14 +162,35 @@ export const CreateProject = async (req, res) => {
 export const GetProjectsBySenior = async (req, res) => {
     const CreatedBySenior = req.user._id;
 
-    // البحث عن المشاريع الخاصة بهذا senior مع ترتيبها حسب التاريخ من الأحدث إلى الأقدم
-    const projects = await ProjectsModel.find({ CreatedBySenior }).sort({ created_at: -1 }); // -1 يعني الترتيب من الأحدث إلى الأقدم
+    try {
+        // البحث عن المشاريع الخاصة بهذا senior مع ترتيبها حسب التاريخ من الأحدث إلى الأقدم
+        const projects = await ProjectsModel.find({ CreatedBySenior })
+            .sort({ created_at: -1 }) // -1 يعني الترتيب من الأحدث إلى الأقدم
+            .populate("CreatedBySenior", "FullName PictureProfile role"); // إضافة populate لجلب بيانات السينيور مثل الاسم والصورة والدور
 
-    if (!projects.length) {
-        return res.status(404).json({ message: "No projects found for this senior." });
+        if (!projects.length) {
+            return res.status(404).json({ message: "No projects found for this senior." });
+        }
+
+        // إعادة المشاريع مع تفاصيل السينيور
+        return res.status(200).json({
+            message: "Projects retrieved successfully",
+            projects: projects.map(project => ({
+                ...project.toObject(), // تحويل المشروع إلى كائن عادي لتعديل القيم
+                senior: project.CreatedBySenior ? {
+                    name: project.CreatedBySenior.FullName,
+                    picture: project.CreatedBySenior.PictureProfile || "https://via.placeholder.com/150", // صورة السينيور
+                    role: req.user.Role || "No role provided", // الدور
+                } : null,
+            }))
+        });
+    } catch (error) {
+        console.error("Error retrieving projects by senior:", error.message);
+        return res.status(500).json({
+            message: "Error retrieving projects",
+            error: error.message,
+        });
     }
-
-    return res.status(200).json({ projects });
 };
 
 
@@ -362,6 +389,7 @@ export const GetProjectsByFieldAndSkills = async (req, res) => {
     try {
         console.log(req.user);
         const userId = req.user._id;
+        const userRole = req.user.Role; // يجب التأكد أن المستخدم يحتوي على الحقل role
 
         // الحصول على بيانات المستخدم
         const user = await UserModel.findById(userId);
@@ -426,8 +454,10 @@ export const GetProjectsByFieldAndSkills = async (req, res) => {
                         picture: project.CreatedBySenior.PictureProfile || "https://via.placeholder.com/150", // صورة السينيور
                         email: project.CreatedBySenior.Email || "No email provided",  // الإيميل
                         phone: project.CreatedBySenior.PhoneNumber || "No phone number provided", // رقم الهاتف
+                        role: userRole,
                     } : null,
-                }))
+                }
+            ))
             },
             userSkillsAndFields: {
                 skills: userSkillsWithRate,
@@ -519,6 +549,138 @@ export const GetProjectsByFilters = async (req, res) => {
         console.error("Error retrieving projects with filters:", error.message);
         return res.status(500).json({
             message: "Error retrieving projects",
+            error: error.message,
+        });
+    }
+};
+
+
+export const GetProjectsProgressCompleteBySenior = async (req, res) => {
+    const CreatedBySenior = req.user._id; // ID الخاص بالسينيور
+
+    try {
+        // البحث عن المشاريع الخاصة بالسينيور والتي حالتها In Progress أو Completed
+        const projects = await ProjectsModel.find({
+            CreatedBySenior,
+            Status: { $in: ["In Progress", "Completed"] },
+        })
+            .sort({ created_at: -1 }) // ترتيب المشاريع من الأحدث إلى الأقدم
+            .populate("CreatedBySenior", "FullName PictureProfile role"); // إحضار تفاصيل السينيور
+
+        if (!projects.length) {
+            return res.status(404).json({ message: "No projects found for this senior." });
+        }
+
+        return res.status(200).json({
+            message: "Projects retrieved successfully",
+            projects,
+        });
+    } catch (error) {
+        console.error("Error retrieving projects by senior:", error.message);
+        return res.status(500).json({
+            message: "Error retrieving projects",
+            error: error.message,
+        });
+    }
+};
+
+
+export const GetProjectsByUserRole = async (req, res) => {
+    const loggedInUserId = req.user._id; // معرف المستخدم المسجل دخول
+
+    try {
+        // البحث عن المشاريع التي تحتوي على المستخدم المسجل دخوله في أدوارها
+        const projects = await ProjectsModel.find({
+            "Roles.users.userId": loggedInUserId, // المستخدم مشارك في الأدوار
+            Status: { $in: ["Open", "In Progress", "Completed"] }, // حالة المشروع الآن تشمل "Pending"
+        })
+            .sort({ created_at: -1 }) // ترتيب المشاريع حسب الأحدث
+            .populate("Roles.users.userId", "FullName PictureProfile role"); // جلب بيانات المستخدم
+
+        if (!projects.length) {
+            return res.status(404).json({ message: "No projects found for the logged-in user." });
+        }
+
+        // إعادة المشاريع مع تفاصيل المستخدم
+        return res.status(200).json({
+            message: "Projects retrieved successfully",
+            projects: projects.map(project => ({
+                ...project.toObject(), // تحويل المشروع إلى كائن عادي
+                roles: project.Roles.map(role => ({
+                    roleName: role.roleName,
+                    users: role.users
+                        .filter(user => String(user.userId._id) === String(loggedInUserId)) // فقط المستخدم المسجل دخول
+                        .map(user => ({
+                            name: user.userId.FullName,
+                            picture: user.userId.PictureProfile || "https://via.placeholder.com/150", // صورة المستخدم
+                            role: user.userId.role,
+                            status: user.status, // حالة المستخدم في هذا الدور
+                        })),
+                })),
+            })),
+        });
+    } catch (error) {
+        console.error("Error retrieving projects by user role:", error.message);
+        return res.status(500).json({
+            message: "Error retrieving projects",
+            error: error.message,
+        });
+    }
+};
+
+
+export const UpdateProjectStatusToInProgress = async (req, res) => {
+    const { projectId } = req.params; // معرف المشروع من بارامتر الطلب
+
+    try {
+        // تحديث حالة المشروع إلى "In Progress"
+        const updatedProject = await ProjectsModel.findByIdAndUpdate(
+            projectId,
+            { Status: "In Progress" },
+            { new: true } // إعادة المشروع المحدث
+        );
+
+        if (!updatedProject) {
+            return res.status(404).json({ message: "Project not found." });
+        }
+
+        return res.status(200).json({
+            message: "Project status updated to 'In Progress'.",
+            project: updatedProject,
+        });
+    } catch (error) {
+        console.error("Error updating project status to 'In Progress':", error.message);
+        return res.status(500).json({
+            message: "Error updating project status.",
+            error: error.message,
+        });
+    }
+};
+
+
+export const UpdateProjectStatusToCompleted = async (req, res) => {
+    const { projectId } = req.params; // معرف المشروع من بارامتر الطلب
+
+    try {
+        // تحديث حالة المشروع إلى "Completed"
+        const updatedProject = await ProjectsModel.findByIdAndUpdate(
+            projectId,
+            { Status: "Completed" },
+            { new: true } // إعادة المشروع المحدث
+        );
+
+        if (!updatedProject) {
+            return res.status(404).json({ message: "Project not found." });
+        }
+
+        return res.status(200).json({
+            message: "Project status updated to 'Completed'.",
+            project: updatedProject,
+        });
+    } catch (error) {
+        console.error("Error updating project status to 'Completed':", error.message);
+        return res.status(500).json({
+            message: "Error updating project status.",
             error: error.message,
         });
     }
