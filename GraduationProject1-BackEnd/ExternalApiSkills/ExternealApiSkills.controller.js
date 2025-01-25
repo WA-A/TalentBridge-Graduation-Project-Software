@@ -1,6 +1,6 @@
 import UserModel from '../src/Model/User.Model.js';
 
-const Skills = [
+export const Skills = [
     { id: 1, name: "Python", code: "py" },
     { id: 2, name: "Java", code: "ja" },
     { id: 3, name: "C++", code: "c+" },

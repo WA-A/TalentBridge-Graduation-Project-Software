@@ -1,6 +1,6 @@
 import UserModel from '../src/Model/User.Model.js';
 
-const Fields = [
+export const Fields = [
     // Information Technology & Computer Science (1-100)
     { id: 1, sub_specialization: "Software Engineering", code: "IT_SE_SWE" },
     { id: 2, sub_specialization: "Web Development", code: "IT_SE_WD" },

@@ -13,6 +13,7 @@ import RequestSeniorToAdminRouter from './modules/RequestSeniorToAdmin/RequestSe
 import ApplicationTrainRouter from "./modules/Application/Application.router.js";
 import TasksRouter from './modules/Tasks/Tasks.router.js';
 import ReportRouter from './modules/Report/Report.router.js';
+import AdminRouter from './modules/Admin/Admin.router.js';
 
 import cors from 'cors';
 import dotenv from 'dotenv';
@@ -37,6 +38,8 @@ const Appinit = (app,express)=>{
     app.use('/requestseniortoadmin',RequestSeniorToAdminRouter);
     app.use('/tasks',TasksRouter);
     app.use('/report',ReportRouter);
+    app.use('/admin',AdminRouter);
+
 
 
 
