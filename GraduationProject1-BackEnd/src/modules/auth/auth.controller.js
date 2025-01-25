@@ -87,7 +87,7 @@ export const SignIn = async (req, res) => {
         const user = await UserModel.findOne({ Email });
 
         if (!user) {
-            return res.status(400).json({ message: "The entered email is invalid, try again!" });
+      return res.status(400).json({ message: "The entered email is invalid, try again!" });
         }
 
         const Match = await bcrypt.compare(Password, user.Password);
@@ -108,7 +108,6 @@ export const SignIn = async (req, res) => {
             user: userData
         });
     } catch (error) {
-        console.error("Error during SignIn:", error);
         return res.status(500).json({ message: "Server error", error });
     }
 };

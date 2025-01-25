@@ -15,16 +15,11 @@ import { useSharedValue, useAnimatedStyle, withSpring } from "react-native-reani
 import { Dimensions } from "react-native";
 import * as Animatable from "react-native-animatable";
 import Slider from '@react-native-community/slider';
-import * as FileSystem from 'expo-file-system';
-import * as MediaLibrary from 'expo-media-library';
-import * as ImagePicker from 'expo-image-picker';
-import ImageViewer from 'react-native-image-zoom-viewer';
-import * as WebBrowser from 'expo-web-browser'
+
 const { width } = Dimensions.get("window");
 
 
-export default function ChatMopile ({ navigation, route }) {
-  const {projectID} = route.params || {}; 
+export default function  ThePlaneProjectJunior ({ navigation, route }) {
 
     const baseUrl = Platform.OS === 'web'
       ? 'http://localhost:3000'
@@ -273,41 +268,9 @@ const [project,setProject]=useState();
           }
         };
         
-   const [isModalVisibleviewImage, setIsModalVisibleViewImage] = useState(false);
-    const [currentImage, setCurrentImage] = useState(null);
-    
-    // دالة لفتح نافذة عرض الصورة
-    const openImageViewer = (imageUri) => {
-      console.log('Open Image Viewer:', imageUri);
-      // تعيين الصورة المعروضة
-   
-      setCurrentImage([{ url: imageUri }]);
-      setIsModalVisibleViewImage(true);  // فتح النافذة
-    };
-    
-    // إغلاق نافذة عرض الصورة
-    const closeImageViewer = () => {
-      setIsModalVisibleViewImage(false);
-    };
    
       
-const openFileInBrowser = async (uri) => {
-      if (!uri) {
-        Alert.alert('Error', 'Invalid file URL');
-        return;
-      }
-    
-      try {
-        // إضافة المعامل download إلى الرابط لتنزيل الملف مباشرة
-        const downloadUrl = `${uri}?download=true`; 
-        await WebBrowser.openBrowserAsync(downloadUrl); // فتح الرابط في المتصفح
-      } catch (error) {
-        console.log('Error opening file:', error);
-        Alert.alert('Error', 'Failed to open file');
-      }
-    };
-    
-    
+
   const [profile,setprofileimg] = useState('');
   const [profileUser,setOtherProfile] = useState('');
 
@@ -387,6 +350,20 @@ const openFileInBrowser = async (uri) => {
         'Lato-Regular': require('./../compnent/fonts/Lato-Regular.ttf'),
     });
 
+    if (!fontsLoaded) {
+        return <View><Text>Loading...</Text></View>;
+    }
+
+    const handleFieldSelect = (field) => {
+        selectFieldModalVisible(field);
+        setSelectFieldModalVisible(false);
+    };
+
+    const handleApplyNow = () => {
+      setNumberOfTrain();
+      setProfileLink();
+      setApplyNowModalVisible(true);
+  };
 
     // Load custom fonts
     const bottomBarTranslate = scrollY.interpolate({
@@ -396,93 +373,10 @@ const openFileInBrowser = async (uri) => {
     });
   const [searchQuery, setSearchQuery] = useState('');
 
-  const { ProjectId } = route.params; // الحصول على الـ ProjectId من الـ Route
-  const [messages, setMessages] = useState([]); // لتخزين الرسائل المستلمة
-  const [newMessage, setNewMessage] = useState(''); // لتخزين الرسالة الجديدة
-  const [loading, setLoading] = useState(true); // لتحديد حالة تحميل الرسائل
-  const [userData, setUserData] = useState(null); // لتخزين بيانات المستخدم السينيور
-  const [chatsData , setchatsData] = useState(); // لتخزين بيانات المستخدم السينيور
-  
-
-  const handleSendMessage = async () => {
-    if (!newMessage.trim()) return; // التحقق من أن الرسالة غير فارغة
-
-    try {
-      const token = await AsyncStorage.getItem('userToken'); // الحصول على التوكن من التخزين
-      console.log(token);
-      if (!token) {
-        console.error('Token not found');
-        return;
-      }
-  
-      const response = await fetch(`${baseUrl}/chat/AddmassageToChatProject/${projectID}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Wasan__${token}`, // تأكد من كتابة التوكن بالشكل الصحيح
-        },
-        body: JSON.stringify({
-          MessageContent: newMessage, // إضافة المحتوى الجديد للرسالة
-        }),
-
-      });
-   
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-  
-  
-      fetchMessages();
-      const data = await response.json();
-      console.log(data); // قم بإجراء شيء ما مع البيانات المستلمة من الخادم
-      setNewMessage(''); // إعادة تعيين الرسالة بعد الإرسال
-
-  
-      
-    } catch (error) {
-      console.error('Error fetching ProfileData:', error);
-    }
-     
-  };
-
-
-
-
-
-  const fetchMessages = async () => {
-
-    console.log("projectId",projectID);
-    try {
-      const token = await AsyncStorage.getItem('userToken'); // الحصول على التوكن من التخزين
-      console.log(token);
-      if (!token) {
-        console.error('Token not found');
-        return;
-      }
-  
-      const response = await fetch(`${baseUrl}/chat/GetAllChatsProject/${projectID}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Wasan__${token}`, // تأكد من كتابة التوكن بالشكل الصحيح
-        },
-      });
-  
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-  
-      const data = await response.json();
-      setchatsData(data.chats);  // تحديث حالة البروفايل
-  
-    } catch (error) {
-      console.error('Error fetching chat:', error);
-    }
-  };
-
   useEffect(() => {
-    fetchMessages();
     handleViewProfile();
+    handleGetFeilds();
+    handleGetProjectByFeildOrSkills();
   }, []);
   
 
@@ -672,94 +566,142 @@ const openFileInBrowser = async (uri) => {
             </View>
           </>
         )}
-              
-        <View  style={{flex:1,
-marginBottom: Platform.OS === 'web' ? 0 : 50, // marginBottom صفر في الويب و 50 في المنصات الأخرى
-marginRight: Platform.OS === 'web' ? '20%' : '', // marginBottom صفر في الويب و 50 في المنصات الأخرى
-marginLeft: Platform.OS === 'web' ? '20%' : '', // marginBottom صفر في الويب و 50 في المنصات الأخرى
-
-        }}>
-        <View style={[styles.container,{marginBottom: Platform.OS === 'web' ? 100 : 50, // marginBottom صفر في الويب و 50 في المنصات الأخرى
-}]}>       
-
-        {chatsData?.length > 0 ? (
-        <FlatList
-          data={chatsData[0].messages} // نعرض الرسائل من الداتا المرسلة
-          keyExtractor={(item) => item._id}
-          renderItem={({ item }) => (
-            <View style={styles.messageContainer}>
-             <View style={{flexDirection:'row',alignContent:'center',alignItems:'center'}}>
-               <Image
-              source={{
-                uri: item.sender.PictureProfile?.secure_url|| 'https://via.placeholder.com/80', // استخدام الصورة المختارة أو صورة بروفايل أو صورة افتراضية
-              }} style={styles.profileImage}
-            />
-               <Text style={styles.senderName}>
-                  {item.sender.FullName} (@{item.sender.UserName})
-                </Text>
-            </View>
-            <View style={styles.divider}></View>
-              <View style={styles.messageContent}>
                
-                <Text style={styles.messageText}>{item.content}</Text>
-                      {/* Files */}
-                      {item.messageType === 'file' && item.media && item.media.length > 0 && item.media.map((file, index) => (
-                  <TouchableOpacity
-                    key={index}
-                    style={styles.fileCard}
-                    onPress={() => openFileInBrowser (file.secure_url, file.originalname)} // تمرير secure_url و originalname
-                  >
-                    <FontAwesome name="file-o" size={24} color="#555" style={styles.icon} />
-                    <Text style={styles.fileName}>
-                      {file.originalname || 'Click to view/download file'}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-                {item.messageType === 'image' && item.media && item.media.length > 0 && item.media.map((image, index) => (
+              
 
-  <TouchableOpacity
-    key={index}
-    onPress={() => openImageViewer(image?.secure_url)}
-  >
-    <Image
-      source={{ uri: image.secure_url }}
-      style={{
-        width: '100%',
-        height: 300,
-        borderRadius: 10,
-        marginBottom: 10,marginTop: 10,
-        width: Platform.OS === 'web' ? '30%' : '100%', // marginBottom صفر في الويب و 50 في المنصات الأخرى
+        <View style={{
+  top: 5,
+  left: 0,  // يحدد أن يكون العنصر عند أقصى اليسار
+  marginBottom: 15,  // المسافة بين العناصر الأخرى
+  flexDirection: 'row',  // عرض النص والأيقونة بشكل أفقي
+  alignItems: 'center',  // محاذاة النص والأيقونة عموديًا
+}}>
+  <TouchableOpacity onPress={() => handleGetProjectByFeildOrSkills()}>
+    <Text style={{
+      fontSize: 16,
+      fontWeight: 'bold',
+      color: isNightMode ? primary : '#000',
+      backgroundColor: isNightMode ? '#000' : '#f9f9f9',
+      paddingHorizontal: 10,
+      paddingVertical: 3,
+      borderRadius: 20,
+      opacity: 0.7,
+    }}>
+      Suggested for you
+    </Text>
+    
+  </TouchableOpacity>
 
-        resizeMode: 'cover',
-      }}
+  <TouchableOpacity onPress={toggleDropdown}>
+    <AntDesign 
+      name="caretdown" 
+      size={16} 
+      color={isNightMode ? primary : '#000'} 
+      style={{ marginLeft: 1 }}  // المسافة بين النص والأيقونة
     />
   </TouchableOpacity>
-))}
 
- 
-              </View>
-            </View>
-          )}
-        />
-      ) : (
-        <Text>No messages available.</Text>
-      )}</View>
+  {/* أيقونة الفلتر */}
+  <View style={{ position: 'absolute', right: 10,  flexDirection: 'row',  // عرض النص والأيقونة بشكل أفقي
+  alignItems: 'center', }}>
+ <TouchableOpacity  onPress={toggleModal}>
+  <FontAwesome
+    name="folder-open"
+    size={25}
+    color={fourhColor}
+    style={{ marginRight: 6 }}  // المسافة بين النص والأيقونة
 
-      <View style={styles.inputContainer}>
-      <TextInput
-        style={styles.input}
-        placeholder="Type a message..."
-        value={newMessage} 
-        onChangeText={setNewMessage} // تحديث الحالة عند تغيير النص
+  />
+</TouchableOpacity>
+
+    <TouchableOpacity onPress={toggleModal}>
+      <Feather
+        name="sliders"
+        size={25}
+        color={fifthColor}
+        style={{ rotate: '90deg' }} // تحويل الأيقونة لتكون عمودية
       />
-        <TouchableOpacity onPress={handleSendMessage}>
-        <Ionicons name="send" size={25} color="#000" />
-        </TouchableOpacity>
-      </View>
 
+    </TouchableOpacity>
+  </View>
+</View>
+<View style={styles.divider1} />
+
+<ScrollView 
+  contentContainerStyle={[styles.container, { backgroundColor: isNightMode ? "#000" : "#fff" }]}
+>
+  {project && project.filteredProjects.length > 0 ? (
+    <View
+      style={[
+        styles.grid,
+        { flexDirection: isMobile ? "column" : "row", justifyContent: isMobile ? "flex-start" : "space-between" },{backgroundColor: isNightMode ? "#000" : Colors.primary }
+      ]}
+    >
+      {project.filteredProjects.map((project, index) => (
+        <Animatable.View
+          key={project._id}
+          animation="zoomIn"
+          delay={index * 100} // تأخير كل بطاقة 100ms لتظهر بالتتابع
+          duration={500} // مدة تأثير الزوم
+          style={[isMobile ? styles.cardMobile : styles.cardWeb]} // تنسيق مخصص لكل منصة
+        >
+          <TouchableOpacity
+            style={isMobile ? styles.cardMobileContent : styles.cardWebContent}
+            onPress={() => navigateToProjectDetails(project,project.senior.role)}
+          >
+          
+        
+            <View style={styles.cardDetails}>
+            
+             
+              <Text style={styles.projectName}>{project.ProjectName}</Text>
+              <Text style={styles.projectDescription}>
+                {project.Description.slice(0, 50)}...
+              </Text>
+              <Text style={styles.projectCreatedAt}>
+                Created on: {new Date(project.created_at).toLocaleDateString('en-US')}
+              </Text>
+              <Text style={styles.projectStatus}>
+                Status: {project.Status}
+              </Text>
+              <Text style={styles.projectPrice}>
+                Price: ${project.Price}
+              </Text>
+                       <View style={styles.divider} />
+           
+
+              <View style={styles.seniorInfo}>
+              <TouchableOpacity style={styles.seniorInfo}
+  onPress={() => navigateToSeniorProfile(project.CreatedBySenior)}
+>
+<Image
+  source={{
+    uri: project.CreatedBySenior?.PictureProfile?.secure_url || "https://via.placeholder.com/50",
+  }}
+  style={styles.seniorAvatar}
+/>
+
+  <Text style={styles.seniorName}>
+    {project.CreatedBySenior ? project.CreatedBySenior.FullName : "Unknown Senior"}
+  </Text>
+</TouchableOpacity>
+
+</View>
+              {/* "See More" Button */}
+            
+            </View>
+          </TouchableOpacity>
+        </Animatable.View>
+      ))}
     </View>
-  
-       
+  ) : (
+    <Text style={styles.noProjects}>
+      No projects available.
+    </Text>
+  )}
+</ScrollView>
+
+
   
             
             {/* Bottom Navigation Bar */}
@@ -1545,106 +1487,6 @@ filterOption: {
     marginBottom: 2,padding:5,  borderRadius: 8,
 
   },
-  messagesList: {
-    flex: 1,
-    marginBottom: 10,
-  },
-  messageContainer: {
-    marginBottom: 10,
-    padding: 10,
-    borderRadius: 5,
-    backgroundColor: '#f1f1f1',
-  },
-  messageHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 5,
-  },
-  userImage: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    marginRight: 10,
-  },
-  sender: {
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  seniorLabel: {
-    color: 'red',
-    fontWeight: 'bold',
-    marginBottom: 5,
-  },
-  message: {
-    fontSize: 16,
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderTopWidth: 1,
-    borderTopColor: '#ccc',
-    paddingTop: 10,
-  },
- 
-  senderName: {
-    fontWeight: 'bold',
-  }, profileImage: {
-    width: 40,
-    height: 40,
-    marginRight: 10,
-                borderRadius: 30,
-                borderColor: tertiary,
-                borderWidth: 1
-  },
-inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    position: 'absolute', // تثبيت المدخل في الأسفل
-    bottom: 0,
-    left: 0,
-    right: 0,
-    padding: 10,
-    backgroundColor: '#fff',
-    borderTopWidth: 2,
-    borderTopColor: '#ccc',
-  },
-  input: {
-    flex: 1,
-    height: 40,
-    borderColor: '#ccc',
-    borderWidth: 1,
-    borderRadius: 20,
-    paddingHorizontal: 10,
-    marginRight: 10,
-  },
-  sendIcon: {
-    padding: 5,
-    backgroundColor: '#E8E8E8',
-    borderRadius: 20,
-  },
-  fileCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#f9f9f9',
-    borderRadius: 10,
-    padding: 10,
-    marginBottom: 10,marginTop: 10,
-    width: '100%',
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
-  },
   
-  icon: {
-    marginRight: 10,
-  },
-  fileName: {
-    color: Colors.darkLight,
-    textDecorationLine: 'underline',
-    flexShrink: 1,
-    fontSize: 14,
-  },
 
 });

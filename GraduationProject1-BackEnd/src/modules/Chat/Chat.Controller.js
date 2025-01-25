@@ -1,6 +1,9 @@
 import ChatModel from "../../Model/ChatModel.js";
 import cloudinary from './../../../utls/Cloudinary.js';
 import UserModel from "../../Model/User.Model.js";
+import ProjectsModel from "../../Model/ProjectsModel.js";
+import mongoose from 'mongoose';
+
 import fs from 'fs';
 
 
@@ -459,5 +462,243 @@ export const GetChatUsers = async (req, res) => {
     } catch (error) {
         console.error("Error fetching chat users:", error);
         return res.status(500).json({ message: error.message });
+    }
+};
+
+export const CreateChatProject = async (req, res, next) => {
+    try {
+        const { FirstMessage, ProjectId } = req.body;
+
+        if (!FirstMessage || !ProjectId) {
+            return next(new Error("FirstMessage and ProjectId are required."));
+        }
+
+        // جلب المشروع
+        const project = await ProjectsModel.findById(ProjectId);
+        if (!project) {
+            return next(new Error("Project not found."));
+        }
+
+        // التحقق من الأشخاص في الأدوار وحالتهم Approved
+        const approvedUsers = [];
+        project.Roles.forEach((role) => {
+            role.users.forEach((user) => {
+                if (user.status === "Approved") {
+                    approvedUsers.push(user.userId);
+                }
+            });
+        });
+
+        if (approvedUsers.length === 0) {
+            return next(new Error("No approved users found in the project."));
+        }
+
+        // التحقق من عدم إرسال الرسالة لصاحب التوكن
+        const recipients = approvedUsers.filter(
+            (userId) => userId.toString() !== req.user._id.toString()
+        );
+
+        if (recipients.length === 0) {
+            return next(
+                new Error("No valid recipients found (excluding the sender).")
+            );
+        }
+
+        let media = [];
+
+        // رفع الوسائط إذا كانت موجودة
+        if (req.files) {
+            // نفس الكود الحالي لمعالجة الصور والفيديوهات والملفات
+        }
+
+        const messageType =
+            media.length > 0
+                ? media[0].secure_url
+                    ? "image"
+                    : media[0].video_url
+                    ? "video"
+                    : "file"
+                : "text";
+
+        // إنشاء محادثات لكل مستلم
+        const chats = await Promise.all(
+            recipients.map(async (recipient) => {
+                return await ChatModel.create({
+                    users: [req.user._id, recipient],
+                    project: ProjectId,
+                    messages: [
+                        {
+                            sender: req.user._id,
+                            content: FirstMessage,
+                            messageType: messageType,
+                            media: media,
+                        },
+                    ],
+                });
+            })
+        );
+
+        return res.status(201).json({
+            message: "Chats created successfully.",
+            chats,
+        });
+    } catch (error) {
+        console.error("Error creating chat:", error);
+        return next(error);
+    }
+};
+
+
+
+
+
+export const AddUserToChatProject = async (req, res, next) => {
+    try {
+        const { ProjectId, UserId } = req.body;
+
+        // تحقق من وجود بيانات المشروع والمستخدم
+        if (!ProjectId || !UserId) {
+            return next(new Error("ProjectId and UserId are required."));
+        }
+
+        // جلب المشروع من قاعدة البيانات
+        const project = await ProjectsModel.findById(ProjectId);
+        if (!project) {
+            return next(new Error("Project not found."));
+        }
+
+        // تحقق من أن المستخدم ليس بالفعل جزءاً من المشروع
+        const userIsInProject = project.Roles.some(role =>
+            role.users.some(user => user.userId.toString() === UserId)
+        );
+
+        if (!userIsInProject) {
+            return next(new Error("User is not part of the project."));
+        }
+
+        // جلب الدردشة الحالية
+        const chat = await ChatModel.findOne({ project: ProjectId });
+        if (!chat) {
+            return next(new Error("Chat not found for the project."));
+        }
+
+        // التحقق من أن المستخدم ليس بالفعل في الدردشة
+        if (chat.users.includes(UserId)) {
+            return next(new Error("User is already in the chat."));
+        }
+
+        // إضافة المستخدم إلى الدردشة
+        chat.users.push(UserId);
+
+        // حفظ التعديلات
+        await chat.save();
+
+        return res.status(200).json({
+            message: "User added to the chat successfully.",
+            chat,
+        });
+    } catch (error) {
+        console.error("Error adding user to chat:", error);
+        return next(error);
+    }
+};
+
+export const GetAllChatsProject = async (req, res) => {
+    try {
+        const loggedInUserId = req.user._id; // الحصول على id المستخدم الحالي
+        const { projectId } = req.params;    // الحصول على projectId من الـ URL
+
+        // العثور على الشات الخاص بالمشروع بناءً على المشروع والمستخدم
+        const chats = await ChatModel.find({
+            project: projectId,  // استخدم projectId في البحث
+            users: loggedInUserId // البحث باستخدام loggedInUserId في الـ users
+        })
+        .populate({
+            path: 'messages.sender',  // جلب بيانات المرسل المرتبط بكل رسالة
+            select: 'FullName UserName PictureProfile Role'  // تحديد الحقول التي نحتاجها
+        })
+        .populate({
+            path: 'users',  // جلب تفاصيل جميع المستخدمين المرتبطين بالشات
+            select: 'FullName PictureProfile UserName' // الحقول المطلوبة للمستخدمين
+        });
+
+        if (chats.length === 0) {
+            return res.status(404).json({ message: 'No chats found for this user in the given project' });
+        }
+
+        // إعادة الشات مع تفاصيل المستخدمين
+        return res.status(200).json({ message: 'Chats retrieved successfully', chats });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: 'Failed to retrieve chats' });
+    }
+};
+
+
+
+
+export const AddmessageToChatProject = async (req, res, next) => {
+    try {
+        const { MessageContent } = req.body;
+        const { projectId } = req.params;
+
+        // التحقق من وجود MessageContent و projectId
+        if (!MessageContent || !projectId) {
+            return next(new Error("MessageContent and ProjectId are required."));
+        }
+
+        // العثور على المحادثة بناءً على projectId
+        const chat = await ChatModel.findOne({ project: projectId });
+        if (!chat) {
+            return next(new Error("Chat not found for the provided ProjectId."));
+        }
+
+        const UserId = req.user._id; // استخراج UserId
+
+        // رفع الصور إلى Cloudinary
+        const images = req.files['images'] ? await Promise.all(req.files['images'].map(async (file) => {
+            const { secure_url, public_id } = await cloudinary.uploader.upload(file.path, { folder: `Chats/${UserId}` });
+            return { secure_url, public_id, originalname: file.originalname };
+        })) : [];
+
+        // رفع الفيديوهات إلى Cloudinary
+        const videos = req.files['videos'] ? await Promise.all(req.files['videos'].map(async (file) => {
+            const { secure_url, public_id } = await cloudinary.uploader.upload(file.path, { folder: `Chats/${UserId}`, resource_type: "video" });
+            return { secure_url, public_id, originalname: file.originalname };
+        })) : [];
+
+        // رفع الملفات (مثل PDFs) إلى Cloudinary
+        const files = req.files['files'] ? await Promise.all(req.files['files'].map(async (file) => {
+            const { secure_url, public_id } = await cloudinary.uploader.upload(file.path, { folder: `Chats/${UserId}` });
+            return { secure_url, public_id, originalname: file.originalname };
+        })) : [];
+
+        // تحديد نوع الرسالة بناءً على الملفات الموجودة
+        const messageType = (images.length > 0) ? 'image' :
+            (videos.length > 0) ? 'video' :
+            (files.length > 0) ? 'file' : 'text';
+
+        // إنشاء الرسالة الجديدة
+        const newMessage = {
+            sender: req.user._id, // الشخص الذي أرسل الرسالة
+            content: MessageContent,
+            messageType, // تحديد نوع الرسالة
+            media: [...images, ...videos, ...files], // جميع الوسائط
+            timestamp: Date.now(),
+        };
+
+        // إضافة الرسالة إلى المحادثة
+        chat.messages.push(newMessage);
+
+        // حفظ التغييرات
+        await chat.save();
+
+        return res.status(200).json({
+            message: "Message added successfully.",
+            chat,
+        });
+    } catch (error) {
+        console.error("Error adding message:", error);
+        return next(error);
     }
 };

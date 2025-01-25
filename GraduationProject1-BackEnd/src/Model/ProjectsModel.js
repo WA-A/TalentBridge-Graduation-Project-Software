@@ -72,6 +72,16 @@ const ProjectsSchema = new Schema(
         required: false,
       },
     ],
+     AutoApprovalSettings: {
+      isAutoApproval: {
+        type: Boolean, // تحديد إذا كانت الطلبات تقبل تلقائيًا أو يدويًا
+        default: false,
+      },
+      maxAutoApproved: {
+        type: Number, // الحد الأقصى لعدد الطلبات التي يتم قبولها تلقائيًا
+        default: 0, // القيمة الافتراضية صفر تعني عدم قبول أي طلب تلقائيًا
+      },
+    },
     Price: {
       type: Number,
     },

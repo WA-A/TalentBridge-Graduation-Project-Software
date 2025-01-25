@@ -10,14 +10,6 @@ import * as schema from './Post.Validation.js';
 const router = Router();
 
 
-// تعريف `fileUpload` لرفع الصور
-const imageUpload = fileUpload(FileValue.image);
-
-// تعريف `fileUpload` لرفع الفيديوهات
-const videoUpload = fileUpload(FileValue.video);
-
-// تعريف `fileUpload` لرفع الملفات (مثل PDF)
-const fileUploadOnly = fileUpload(FileValue.file);
 
 router.put('/updatepost/:postId',auth(EndPoints.CreatePost),  fileUpload(FileValue.image.concat(FileValue.video, FileValue.file)).fields([
     { name: 'images', maxCount: 5 }, // السماح بتحميل 5 صور

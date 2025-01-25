@@ -29,7 +29,11 @@ import ProjectPage from './screens/ProjectPage.js';
 import RequestSeniorToAdminPage from './screens/RequestSeniorToAdminPage.js';
 import AdminHomePage from './screens/AdminHomePage.js';
 import AddTaskForProject from './screens/AddTaskForProject.js';
-
+import RequestToSeniorProject from './screens/RequestToSeniorProject.js';
+import ThePlaneProjectSenior from './screens/ThePlaneProjectSenior.js';
+import ThePlaneProjectJunior from './screens/ThePlaneProjectJunior.js';
+import ProjectYouAreIN from './screens/ProjectYouAreIN.js';
+import ChatMopile from './screens/chatMopile.js';
 Notifications.setNotificationHandler({
     handleNotification: async () => ({
       shouldShowAlert: true,
@@ -214,8 +218,34 @@ export default function App() {
             component={AddTaskForProject}
             options={{ headerShown: false }}
           />
-          
 
+<Stack.Screen
+            name="RequestToSeniorProject"
+            component={RequestToSeniorProject}
+            options={{ headerShown: false }}
+          />
+      
+      
+<Stack.Screen
+            name="ThePlaneProjectJunior"
+            component={ThePlaneProjectJunior}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="ThePlaneProjectSenior"
+            component={ThePlaneProjectSenior}
+            options={{ headerShown: false }}
+          />
+             <Stack.Screen
+            name="ProjectYouAreIN"
+            component={ProjectYouAreIN}
+            options={{ headerShown: false }}
+          />
+             <Stack.Screen
+            name="ChatMopile"
+            component={ChatMopile}
+            options={{ headerShown: false }}
+          />
         </Stack.Navigator>
       </NavigationContainer>
     </NightModeProvider></NotificationProvider>

@@ -9,7 +9,7 @@ import { Colors } from './../compnent/Style';
 import { Card,UserInfoText, UserName, ContainerCard, PostText, UserInfo, ButtonText, StyledButton} from './../compnent/Style.js';
 import { TextInput } from 'react-native-gesture-handler';
 const { tertiary, firstColor, secColor,fifthColor,secondary, primary, darkLight, fourhColor, careysPink} = Colors;
-import { EvilIcons,AntDesign,MaterialIcons,MaterialCommunityIcons,Feather} from '@expo/vector-icons';
+import { EvilIcons,AntDesign,MaterialIcons,MaterialCommunityIcons,Feather,FontAwesome} from '@expo/vector-icons';
 import MultiSelect from 'react-native-multiple-select';
 import { useSharedValue, useAnimatedStyle, withSpring } from "react-native-reanimated";
 import { Dimensions } from "react-native";
@@ -58,7 +58,8 @@ const [project,setProject]=useState();
 
     /////////////////////////////////////////// Filter /////////////////////////////////////////////////////
     const [isModalVisible, setIsModalVisible] = useState(false);
-   
+    const [isModalSEnoir, setIsSenior] = useState(false);
+
   
     const toggleModal = () => setIsModalVisible(!isModalVisible);
   
@@ -99,7 +100,7 @@ const [project,setProject]=useState();
     
 
 
-
+const [userRoless,setRoleUser]=useState('');
 
 
 
@@ -172,6 +173,7 @@ const [project,setProject]=useState();
     };
     
     const applyFilters = () => {
+      setIsSenior(false);
       console.log('Filters applied:', selectedFilters);
       handleFilter(); // استدعاء دالة الفلترة التي تقوم بإرسال الفلاتر إلى الخادم
       toggleModal(); // إغلاق المودال بعد تطبيق الفلاتر
@@ -206,6 +208,8 @@ const [project,setProject]=useState();
         };
       
         const viewownprojectcreated = async () => {
+          setIsSenior(true);
+
           try {
             const token = await AsyncStorage.getItem('userToken'); // استرجاع التوكن
             console.log('Retrieved Token:', token); // تحقق من التوكن
@@ -227,6 +231,7 @@ const [project,setProject]=useState();
             }
         
             const data = await response.json(); // تحويل الرد إلى JSON
+
             if (data.projects && data.projects.length > 0) {
               setProject(data.projects);
               console.log('Fetched Project:', data.projects); // تحقق من البيانات
@@ -269,7 +274,11 @@ const [project,setProject]=useState();
         };
 
 
+        const handleShowApplication= async (ApptId) => {
 
+          navigation.navigate('RequestToSeniorProject', { projectId:ApptId});
+
+        };
 
 
 
@@ -319,11 +328,14 @@ const [project,setProject]=useState();
           } catch (error) {
             console.error('Error fetching Project:', error.message);
           }
+        
         };
-        const navigateToProjectDetails = (project) => {
+
+        const navigateToProjectDetails = (project,userRoless) => {
           // Implement navigation logic here, e.g., navigation.navigate('ProjectDetails', { project });
-          console.log('Navigate to Project Details:', project);
-          navigation.navigate('ProjectPage', { userData: project });
+          console.log('Navigate to Project Details:', project,userRoless);
+
+          navigation.navigate('ProjectPage', { userData: project,RoleUser:userRoless});
         };
       
        
@@ -654,7 +666,18 @@ const [project,setProject]=useState();
   </TouchableOpacity>
 
   {/* أيقونة الفلتر */}
-  <View style={{ position: 'absolute', right: 10 }}>
+  <View style={{ position: 'absolute', right: 10,  flexDirection: 'row',  // عرض النص والأيقونة بشكل أفقي
+  alignItems: 'center', }}>
+ <TouchableOpacity onPress={() => nav.navigate('ProjectYouAreIN')} >
+  <FontAwesome
+    name="folder-open"
+    size={25}
+    color={fourhColor}
+    style={{ marginRight: 6 }}  // المسافة بين النص والأيقونة
+
+  />
+</TouchableOpacity>
+
     <TouchableOpacity onPress={toggleModal}>
       <Feather
         name="sliders"
@@ -662,6 +685,7 @@ const [project,setProject]=useState();
         color={fifthColor}
         style={{ rotate: '90deg' }} // تحويل الأيقونة لتكون عمودية
       />
+
     </TouchableOpacity>
   </View>
 </View>
@@ -688,20 +712,34 @@ const [project,setProject]=useState();
         >
           <TouchableOpacity
             style={isMobile ? styles.cardMobileContent : styles.cardWebContent}
-            onPress={() => navigateToProjectDetails(project)}
+            onPress={() => navigateToProjectDetails(project,project.senior.role)}
           >
           
         
             <View style={styles.cardDetails}>
-            
             <View style={styles.experienceHeader}>
-              <TouchableOpacity  style={styles.editButton}>
-                <MaterialIcons name="edit" size={20} color={isNightMode ? Colors.primary : Colors.black} />
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() =>handleDeleteProhect(project._id)} style={styles.deleteButton}>
-                <MaterialCommunityIcons name="minus-circle" size={20} color={isNightMode ? Colors.primary : Colors.black} />
-              </TouchableOpacity>
-            </View>
+            <TouchableOpacity
+    onPress={() => handleDeleteProhect(project._id)}
+    style={styles.deleteButton}
+  >
+    <MaterialCommunityIcons
+      name="minus-circle"
+      size={20}
+      color={isNightMode ? Colors.primary : Colors.black}
+    />
+  </TouchableOpacity>
+  {isModalSEnoir && (
+    <TouchableOpacity     onPress={() => handleShowApplication(project._id)} style={styles.editButton}>
+      <Ionicons
+        name="people-sharp"
+        size={20}
+        color={isNightMode ? Colors.primary : Colors.black}
+      />
+    </TouchableOpacity>
+  )}
+ 
+</View>
+
             <Text style={styles.projectName}>{project.ProjectName}</Text>
 
               <Text style={styles.projectDescription}>
@@ -1378,7 +1416,7 @@ const styles = StyleSheet.create({
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
-      marginBottom: 10,marginTop:9,
+      marginBottom: 13,marginTop:9,
     },editButton: {
     position: 'absolute',
     right: 0, /* موقع الأيقونة من اليمين */

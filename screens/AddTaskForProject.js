@@ -27,6 +27,7 @@ const { secondary, primary, careysPink, darkLight, fourhColor, tertiary, fifthCo
 import { Picker } from '@react-native-picker/picker';
 import DateTimePickerModal from '@react-native-community/datetimepicker';  // للموبايل
 import { color } from 'react-native-elements/dist/helpers';
+import { use } from 'react';
 let DatePicker;
 if (Platform.OS === 'web') {
     DatePicker = require('react-datepicker').default;
@@ -38,6 +39,10 @@ export default function AddTaskForProject({route}) {
 
    const { project, duration,file,role,ProjectName } = route.params;  // الحصول على الـ projectId و DurationInMounths
   
+   const [inputMode, setInputMode] = useState("manual"); // وضع الإدخال (يدوي أو تلقائي)
+   const [automaticNumber, setAutomaticNumber] = useState(""); // الرقم المدخل عند الوضع التلقائي
+   const [isAutoApproval, setIsAutoApproval] = useState(false);
+   const [maxAutoApproved, setMaxAutoApproved] = useState(0);
 
 
 ////////////////////////////For Phase And Task .//////////////////////////////
@@ -150,7 +155,7 @@ const [erorWep,setErrorWep]=useState('');
         const startDateValid = isValidDate(task.startDate) ? new Date(task.startDate).toISOString() : null;
         const endDateValid = isValidDate(task.endDate) ? new Date(task.endDate).toISOString() : null;
   
-  
+      
         // إضافة المهمة إذا كانت البيانات مكتملة
         allTasks.push({
           PhaseName: phase.phaseName, // أو phase.phaseName مباشرة إذا أردت الاسم الأصلي
@@ -363,6 +368,13 @@ const [erorWep,setErrorWep]=useState('');
           }
       
         };
+
+          // دالة المعالجة للعمليات التلقائية
+  const handleAutomaticAddition = (number) => {
+    // إضافة الكود المطلوب لمعالجة الرقم التلقائي
+    console.log("Automatic number:", number);
+  };
+
       
 
   const [profile,setprofileimg] = useState('');
@@ -506,95 +518,93 @@ const [erorWep,setErrorWep]=useState('');
         }
         
         const handleAddProject = async () => {
+          console.log(inputMode, isAutoApproval, maxAutoApproved);
+        
           if (!validateFields()) {
             return; // Stop execution if validation fails
           }
         
-            transformPhasesToTasks(phases);
-      
-            try {
-                const token = await AsyncStorage.getItem('userToken');
-                if (!token) throw new Error('No token found');
+          transformPhasesToTasks(phases);
         
-                const baseUrl = Platform.OS === 'web'
-                    ? 'http://localhost:3000'
-                    : 'http://192.168.1.239:3000';
-                    console.log("Thefile",project);
-
-                         if (file) {
-                          console.log("Thefile",file);
-
-                                const fileUri = file.uri.startsWith('file://') ? file.uri : `file://${file.uri}`;
-
-                                // إذا كان التطبيق على الويب
-                                if (Platform.OS === 'web') {
-                                    // تحويل البيانات إلى Blob (بيانات الـ PDF المشفرة بتنسيق Base64)
-                                    const pdfBlob = base64ToBlob(file.uri, 'application/pdf');
-                                    project.append('FileProject', pdfBlob, 'ProjectFile.pdf');  // اسم الملف الذي سيتم حفظه
-                                
-                                }else{
-                            
-                                project.append('FileProject', {
-                                    uri: fileUri,
-                                    name: file.name,
-                                    type: file.mimeType || 'application/pdf',
-                                });}
-                            }
-
-                            console.log("Thefile",project);
-                        
-                          
-                           
-                            allTasks.forEach((task, index) => {
-                              
-                              project.append(`Tasks[${index}].PhaseName`, task.PhaseName);
-                              project.append(`Tasks[${index}].TaskName`, task.TaskName);
-                              project.append(`Tasks[${index}].Description`, task.Description);
-                              project.append(`Tasks[${index}].TaskRoleName`, task.TaskRoleName);
-                              project.append(`Tasks[${index}].TaskStatus`, task.TaskStatus);
-                              project.append(`Tasks[${index}].Priority`, task.Priority);
-                              project.append(`Tasks[${index}].StartDate`, task.StartDate);
-                              project.append(`Tasks[${index}].EndDate`, task.EndDate);
-                              project.append(`Tasks[${index}].BenefitFromPhase`, task.BenefitFromPhase);
-                          });
-                            // التحقق من الحقول المطلوبة لكل مهمة
-
-                          
-            
-                    const response = await fetch(`${baseUrl}/project/createproject`, {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `Wasan__${token}`, 
-                        },
-                        body: project,
-                    });
-            
+          try {
+            const token = await AsyncStorage.getItem('userToken');
+            if (!token) throw new Error('No token found');
         
-                    if (!response.ok) {
-                        const errorData = await response.json();
-                        throw new Error(errorData.message || 'Something went wrong');
-                    }
-            
-                    setShowSuccessMessage(true); // عرض رسالة النجاح
-                    setModalVisibleProject(true);
-                    animateCheckMark(); // تفعيل الأنميشن
-                    setTimeout(() => {
-                      setModalVisibleProject(false);
-                    }, 7000); // 5 ثواني
-                    const result = await response.json();
-                    console.log('Add Project successfully');
-                    nav.navigate('AddTaskForProject', {
-                      userData:result.project,  // تمرير الـ ID الخاص بالمشروع
-                      
-                    });
-          
-            } catch (error) {
-                console.error('Error adding project:', error);
+            const baseUrl = Platform.OS === 'web'
+              ? 'http://localhost:3000'
+              : 'http://192.168.1.239:3000';
+            console.log("Thefile", project);
+        
+            if (file) {
+              console.log("Thefile", file);
+        
+              const fileUri = file.uri.startsWith('file://') ? file.uri : `file://${file.uri}`;
+        
+              // إذا كان التطبيق على الويب
+              if (Platform.OS === 'web') {
+                // تحويل البيانات إلى Blob (بيانات الـ PDF المشفرة بتنسيق Base64)
+                const pdfBlob = base64ToBlob(file.uri, 'application/pdf');
+                project.append('FileProject', pdfBlob, 'ProjectFile.pdf');  // اسم الملف الذي سيتم حفظه
+        
+              } else {
+                project.append('FileProject', {
+                  uri: fileUri,
+                  name: file.name,
+                  type: file.mimeType || 'application/pdf',
+                });
+              }
             }
-            //console.log(JSON.stringify(phases, null, 2)); // null للـ replacer، و 2 لإضافة مسافة بادئة لتنسيق النص
-          };
-          
-    
+        
+            console.log("Thefile", project);
+        
+            allTasks.forEach((task, index) => {
+              project.append(`Tasks[${index}].PhaseName`, task.PhaseName);
+              project.append(`Tasks[${index}].TaskName`, task.TaskName);
+              project.append(`Tasks[${index}].Description`, task.Description);
+              project.append(`Tasks[${index}].TaskRoleName`, task.TaskRoleName);
+              project.append(`Tasks[${index}].TaskStatus`, task.TaskStatus);
+              project.append(`Tasks[${index}].Priority`, task.Priority);
+              project.append(`Tasks[${index}].StartDate`, task.StartDate);
+              project.append(`Tasks[${index}].EndDate`, task.EndDate);
+              project.append(`Tasks[${index}].BenefitFromPhase`, task.BenefitFromPhase);
+            });
+        
+            // إضافة القيم الجديدة عند إرسال البيانات
+            project.append('isAutoApproval', isAutoApproval);
+            project.append('maxAutoApproved', maxAutoApproved);
+        
+            const response = await fetch(`${baseUrl}/project/createproject`, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Wasan__${token}`,
+              },
+              body: project,
+            });
+        
+            if (!response.ok) {
+              const errorData = await response.json();
+              throw new Error(errorData.message || 'Something went wrong');
+            }
+        
+            // عرض رسالة النجاح
+            setShowSuccessMessage(true);
+            setModalVisibleProject(true);
+            animateCheckMark(); // تفعيل الأنميشن
+        
+            // إخفاء البطاقة بعد 7 ثوانٍ
+            setTimeout(() => {
+              setModalVisibleProject(false);
+            },9000); // 7 ثواني
+        
+            const result = await response.json();
+            console.log('Add Project successfully');
+            nav.navigate('ProjectsSeniorPage');
+        
+          } catch (error) {
+            console.error('Error adding project:', error);
+          }
+        };
+        
     
     
     return (
@@ -912,7 +922,7 @@ const [erorWep,setErrorWep]=useState('');
               <Text style={styles.label}>Priority</Text>
 <View style={styles.pickerContainer}>
   <Picker
-    selectedValue={task.priority}
+    selectedValue={task.Priority}
     onValueChange={(value) => handleTaskChange(phaseIndex, taskIndex, 'Priority', value)}
   >
     <Picker.Item label="Select Priority" value="" />
@@ -956,6 +966,53 @@ const [erorWep,setErrorWep]=useState('');
         </TouchableOpacity>
 
 
+ {/* اختيار وضع الإدخال */}
+ <View style={{ flexDirection: 'row', alignItems: 'center', margin: 10 }}>
+    <Text style={{ color: isNightMode ? "#fff" : "#000", marginRight: 10 }}>
+      Select Input Mode:
+    </Text>
+    <TouchableOpacity
+      onPress={() => setInputMode("manual")}
+      style={[
+        styles.radioButton,
+        inputMode === "manual" && styles.radioButtonSelected,
+      ]}
+    >
+      <Text style={{ color: inputMode === "manual" ? primary : "#000" }}>
+        Manual
+      </Text>
+    </TouchableOpacity>
+    <TouchableOpacity
+      onPress={() => setInputMode("automatic")}
+      style={[
+        styles.radioButton,
+        inputMode === "automatic" && styles.radioButtonSelected,
+      ]}
+    >
+      <Text style={{ color: inputMode === "automatic" ? primary : "#000" }}>
+        Automatic
+      </Text>
+    </TouchableOpacity>
+  </View>
+
+  {/* إدخال الرقم إذا كان الوضع تلقائي */}
+  {inputMode === "automatic" && (
+    <View style={{ marginHorizontal: 20, marginBottom: 20 }}>
+      <Text style={styles.label}>Enter the number of items:</Text>
+      <TextInput
+        style={styles.input}
+        keyboardType="numeric" // استبدال inputMode بـ keyboardType
+        placeholder="Enter a number"
+        value={maxAutoApproved}
+        onChangeText={(text) => {
+          setMaxAutoApproved(text);  // تحديث قيمة automaticNumber
+          setIsAutoApproval(true);  // تعيين isAutoApproval إلى false
+        }}      />
+    </View>
+  )}
+
+
+
         <View style={[styles.addButtonText, { marginBottom: 40 }]}>
   {Platform.OS === 'web' ? (
     <>
@@ -970,6 +1027,8 @@ const [erorWep,setErrorWep]=useState('');
     </TouchableOpacity>
   )}
 </View>
+
+
 
 
 </ScrollView>
@@ -1669,7 +1728,15 @@ divider: {
   cancelButtonText: {
     color: 'white', // لون النص في الزر
     fontSize: 16,
+  },radioButton: {
+    padding: 10,
+    borderWidth: 1,
+    borderRadius: 20,
+    marginRight: 10,
   },
-
+  radioButtonSelected: {
+    backgroundColor: "#ddd",
+  },
+  
 });
 

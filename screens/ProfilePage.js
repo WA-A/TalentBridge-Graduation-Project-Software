@@ -340,6 +340,34 @@ const handleDeleteComments = async (CommentId) => {
   }
 };
 
+
+const handleDeleteApp = async (CommentId) => {
+  console.log(CommentId);
+  try {
+    const token = await AsyncStorage.getItem('userToken'); // استرجاع التوكن
+    if (!token) {
+      console.error('Token not found');
+      return;
+    }
+    const response = await fetch(`${baseUrl}/applicationtrain/deleteApplication/${CommentId}`, { // تأكد من المسار الصحيح
+      method: 'DELETE',  // طريقة الحذف يجب أن تكون DELETE
+      headers: {
+        'Authorization': `Wasan__${token}`, // تضمين التوكن في الهيدر
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json(); // إذا كان هناك خطأ في الرد
+      throw new Error(errorData.message || 'Failed to delete App');
+    }
+    handlegetPendingRequests();
+    console.log('Application deleted successfully');
+  } catch (error) {
+    console.error('Error deleting App:', error.message);
+  }
+};
+
     /////////ddLike/////////
     const toggleLike = async (postIdForComment) => {
       console.log(postIdForComment);
@@ -1179,7 +1207,12 @@ const handleGetAllPostsComment = async (postId) => {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data = await response.json();
-     setpendingRequests(data.data);
+      if (data && data.data && data.data.length > 0) {
+        console.log("ddddddddddd");
+        setpendingRequests(data.data); // تعيين البيانات إذا كانت موجودة
+      } else {
+        setpendingRequests([]); // تعيين مصفوفة فارغة إذا لم تكن هناك بيانات
+      }
 
     } catch (error) {
     //  console.error('Error fetching ProfileData:', error);
@@ -1288,9 +1321,10 @@ const handleGetAllPostsComment = async (postId) => {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Something went wrong');
       }
+      getAllCertifications();
     }
     catch (error) {
-      console.error('Error fetching addCertification:', error);
+   //   console.error('Error fetching addCertification:', error);
     }
   };
 
@@ -1535,11 +1569,15 @@ const handleGetAllPostsComment = async (postId) => {
       }
 
       const userData = await response.json();
+      if(userData.experiences===null){
+return;
+      }
+      console.log("theeeeeeeeeeee",experiences);
       setExperiences(userData.experiences);
 
 
     } catch (error) {
-      console.error('Error handling experiamce:', error.message);
+     console.error('Error handling experiamce:', error.message);
     }
 
   };
@@ -1561,15 +1599,18 @@ const handleGetAllPostsComment = async (postId) => {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to fetch user Experiences');
+      //  throw new Error('Failed to fetch user Experiences');
       }
 
       const userData = await response.json();
+      if(userData.certifications===null){
+        return;
+              }
       setCertification(userData.certifications);
       console.log(certification);
-
+     
     } catch (error) {
-      console.error('Error handling experiamce:', error.message);
+    //  console.error('Error handling experiamce:', error.message);
     }
 
   };
@@ -1795,10 +1836,13 @@ const handleGetAllPostsComment = async (postId) => {
       }
 
       const userData = await response.json();
+      if(userData.education===null){
+        return;
+      }
       setEducation(userData.education);
 
     } catch (error) {
-      console.error('Error handling education:', error.message);
+   //   console.error('Error handling education:', error.message);
     }
 
   };
@@ -1989,11 +2033,14 @@ const handleGetAllPostsComment = async (postId) => {
       }
 
       const data = await response.json(); // تحويل الرد إلى JSON
+      if(data.language=== null){
+        return;
+      }
       setLanguages(data.languages); // تخزين اللغات في الحالة لعرضها
 
       console.log('Fetched languages:', data.languages); // تحقق من البيانات
     } catch (error) {
-      console.error('Error fetching languages:', error.message);
+   //   console.error('Error fetching languages:', error.message);
     }
   };
 
@@ -2023,7 +2070,7 @@ const handleGetAllPostsComment = async (postId) => {
       setUserLanguages(data.languages);
       console.log('Fetched languages:', data.languages);
     } catch (error) {
-      console.error('Error fetching languages:', error.message);
+ //     console.error('Error fetching languages:', error.message);
     }
   };
 
@@ -2163,7 +2210,7 @@ const handleGetAllPostsComment = async (postId) => {
       setUserRateSkills(data.skills.map((skill) => skill.rating || 1)); // تحديث التقييمات
       console.log('Fetched skills:', data.skills);
     } catch (error) {
-      console.error('Error fetching skills:', error.message);
+ //     console.error('Error fetching skills:', error.message);
     }
   };
 
@@ -2288,10 +2335,8 @@ const handleGetAllPostsComment = async (postId) => {
     //    console.error('No posts found or data is not an array', data);
       }
   
-      setIsLoading(false);
     } catch (error) {
      // console.error('Error fetching posts:', error);
-      setIsLoading(false);
     }
   };
   
@@ -2303,6 +2348,7 @@ const handleGetAllPostsComment = async (postId) => {
 
 
   useEffect(() => {
+    
     loadSelectedLanguages();
     handleGetLanguages(); // استرجاع اللغات عند تحميل المكون
     loadSelectedSkills();
@@ -2338,13 +2384,6 @@ const handleGetAllPostsComment = async (postId) => {
     };
   }, [FullName, bio, about, userName, location, CoverImage, profileImage]);
 
-  if (isLoading) {
-    return <Text>Loading...</Text>;
-  }
-
-  if (!profileData) {
-    return <Text>No profile data available</Text>;
-  }
 
   const handleTabPress = (tab) => {
     setActiveTab(tab);
@@ -2385,10 +2424,8 @@ const handleGetAllPostsComment = async (postId) => {
         setOwnpost([]);
       }
 
-      setIsLoading(false);
     } catch (error) {
-      console.error('Error fetching user posts:', error);
-      setIsLoading(false);
+   //   console.error('Error fetching user posts:', error);
     }
   };
 
@@ -4179,39 +4216,39 @@ const handleGetAllPostsComment = async (postId) => {
 
 
 
-        {activeTab === 'Request' && (
+{activeTab === 'Request' && (
   <View style={styles.requestsContainer}>
-    {pendingRequests.length > 0 ? (
-      pendingRequests.map((request, index) => (  // إضافة `index` هنا
-        <>
-          <TouchableOpacity>
-            <Animatable.View
-              key={request._id}
-              animation="zoomIn"
-              delay={index * 100}  // تأخير كل بطاقة 100ms لتظهر بالتتابع
-              duration={500}  // مدة تأثير الزوم
-              style={styles.requestCard}>
-              <Text style={[styles.requestName, { color: isNightMode ? Colors.primary : Colors.black }]}>
-                {request.roleName}
-              </Text>
-              <TouchableOpacity
-                onPress={() => handleCardPress(request._id)}
-                style={styles.deleteIcon}
-              >
-                <Ionicons name="remove-circle-sharp" size={24} color="red" />
-              </TouchableOpacity>
-            </Animatable.View>
-          </TouchableOpacity>
+    {pendingRequests?.length > 0 ? (
+      pendingRequests.map((request, index) => ( // التأكد من وجود الطلبات
+        <React.Fragment key={request._id}>
+          <Animatable.View
+            animation="zoomIn"
+            delay={index * 100}  // تأخير ظهور كل بطاقة
+            duration={500}  // مدة تأثير الزوم
+            style={styles.requestCard}
+          >
+            <Text style={[styles.requestName, { color: isNightMode ? Colors.primary : Colors.black }]}>
+              {request.roleName}
+            </Text>
+            <TouchableOpacity
+              onPress={() => handleDeleteApp(request._id)}
+              style={styles.deleteIcon}
+            >
+              <Ionicons name="remove-circle-sharp" size={24} color="red" />
+            </TouchableOpacity>
+          </Animatable.View>
           <View style={styles.divider} />
-        </>
+        </React.Fragment>
       ))
     ) : (
+      // عرض النص في حالة عدم وجود طلبات
       <Text style={[styles.noRequestsText, { color: isNightMode ? Colors.primary : Colors.black }]}>
         No pending requests
       </Text>
     )}
   </View>
 )}
+
 
       </View>
           </View>
@@ -5304,7 +5341,6 @@ const styles = StyleSheet.create({
   },
   requestsContainer: {
     marginTop: 20,marginBottom: 20,
-    width: width - 20, // تأكيد أن عرض البطاقة يتناسب مع عرض الشاشة
   },
   requestCard: {
     shadowColor: fifthColor,
