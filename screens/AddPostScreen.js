@@ -174,172 +174,217 @@ const AddPostScreen = () => {
         alert(error.message);
       }
     };
+    
     return (
-      <View style={{ flex: 1, backgroundColor: secondary, paddingTop: 20 }}>
+        <View style={{ flex: 1, backgroundColor: secondary, paddingTop: 20 }}>
         {/* الشريط العلوي */}
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 10, paddingVertical: 25, backgroundColor: secondary }}>
-          <Text style={{ fontFamily: 'Updock-Regular', fontSize: 30, position: 'absolute', left: 0, right: 0, textAlign: 'center' }}>
-            Talent Bridge
-          </Text>
-        </View>
-    
-        {/* الشريط العلوي - Back and Post buttons */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 10, paddingVertical: 20, backgroundColor: fourhColor, elevation: 3 }}>
-          <TouchableOpacity onPress={() => nav.navigate('HomeScreen')}>
-            <FontAwesome6 name="circle-left" size={25} color={careysPink} style={{ position: 'absolute', top: -15 }} />
-            <Text style={{ fontSize: 17, fontWeight: 'bold', color: primary, position: 'absolute', top: -15, left: 30 }}>
-              Back
-            </Text>
-          </TouchableOpacity>
-    
-          <TouchableOpacity onPress={() => nav.navigate('HomeScreen')}>
-            <FontAwesome6 name="circle-right" size={25} color={careysPink} style={{ position: 'absolute', top: -15, left: -25 }} />
-            <Text style={{ fontSize: 17, fontWeight: 'bold', color: primary, position: 'absolute', top: -15, left: -65 }}>
-              Post
-            </Text>
-          </TouchableOpacity>
-        </View>
-    
-        {/* Main Content */}
-        <StyledContainer style={{ backgroundColor: isNightMode ? Colors.black : Colors.primary }}>
-          <InnerContainer>
-            <PageTitle>Add New Post</PageTitle>
-    
-            {/* Post Body Input */}
-        <TextInput
-          style={{
-            borderWidth: 1,
-            borderColor: "#ddd",
-            borderRadius: 8,
-            padding: 12,
-            marginBottom: 20,
-            fontSize: 16,
-            textAlignVertical: "top",
-            backgroundColor: '#f9f9f9',
-            color: primary
-          }}
-          placeholder="Write your post here..."
-          onChangeText={setBody}
-          placeholderTextColor="#bbb"
-          multiline
-        />
 
-        {/* Upload Type Buttons */}
-        <View style={{ flexDirection: 'row', marginVertical: 20, justifyContent: 'center' }}>
-          {['image', 'video', 'file'].map((type) => (
-            <TouchableOpacity
-              key={type}
-              onPress={() => setUploadType(type)}
-              style={{
-                paddingVertical: 10,
-                paddingHorizontal: 15,
-                margin: 8,
-                borderRadius: 30,
-                backgroundColor: uploadType === type ? Colors.primary : '#f1f1f1',
-                shadowColor: '#000',
-                shadowOpacity: 0.1,
-                shadowOffset: { width: 0, height: 2 },
-                elevation: 5,
-              }}>
-              <Text style={{ fontSize: 14, color: uploadType === type ? Colors.white : Colors.primary }}>
-                Upload {type.charAt(0).toUpperCase() + type.slice(1)}
-              </Text>
+            <Text style={{ fontFamily: 'Updock-Regular', fontSize: 30, position: 'absolute', left: 0, right: 0, textAlign: 'center' }}>
+                Talent Bridge
+            </Text>
+
+        </View>
+
+           
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 10, paddingVertical: 20, backgroundColor: fourhColor, elevation: 3 }}>
+
+            <TouchableOpacity onPress={() => nav.navigate('HomeScreen')}>
+                <FontAwesome6 name="circle-left" size={25} color={careysPink} style={{ position: 'absolute', top: -15 }} />
+                <Text style={{ fontSize: 17,fontWeight:'bold',color:primary ,position: 'absolute',top: -15,left:30 }}>
+               Back
+            </Text>
             </TouchableOpacity>
-          ))}
+
+            <TouchableOpacity onPress={() => nav.navigate('HomeScreen')}>
+                <FontAwesome6 name="circle-right" size={25} color={careysPink} style={{ position: 'absolute', top: -15,left:-25 }} />
+                <Text style={{fontSize: 17,fontWeight:'bold',color:primary ,position: 'absolute',top: -15,left:-65 }}>
+               Post
+            </Text>
+            </TouchableOpacity>
+            </View>
+                   
+                    {/* Main Contant */}
+        
+            <StyledContainer style={{ backgroundColor: isNightMode ? Colors.black : Colors.primary }}>
+      <InnerContainer>
+        {/* Title for the post */}
+        <PageTitle>Add New Post</PageTitle>
+
+       {/* Post Body Input */}
+       <TextInput
+  style={{
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 10,
+    padding: 10,
+    marginBottom: 15,
+    fontSize: 16,
+    height: 100,
+    textAlignVertical: "top",
+  }}
+  placeholder="Post Body"
+  onChangeText={setBody}
+  placeholderTextColor="#999"
+  multiline
+/>
+
+        {/* Switch between Upload Types */}
+        <View style={{ flexDirection: 'row', marginVertical: 20 }}>
+          <TouchableOpacity
+            onPress={() => setUploadType('image')}
+            style={[
+              { padding: 10, marginRight: 10, borderRadius: 10, backgroundColor: uploadType === 'image' ? Colors.brand : Colors.secondary },
+            ]}
+          >
+            <Text style={{ color: uploadType === 'image' ? Colors.primary : Colors.tertiary }}>Upload Image</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => setUploadType('video')}
+            style={[
+              { padding: 10, marginRight: 10, borderRadius: 10, backgroundColor: uploadType === 'video' ? Colors.brand : Colors.secondary },
+            ]}
+          >
+            <Text style={{ color: uploadType === 'video' ? Colors.primary : Colors.tertiary }}>Upload Video</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => setUploadType('file')}
+            style={[
+              { padding: 10, marginRight: 10, borderRadius: 10, backgroundColor: uploadType === 'file' ? Colors.brand : Colors.secondary },
+            ]}
+          >
+            <Text style={{ color: uploadType === 'file' ? Colors.primary : Colors.tertiary }}>Upload File</Text>
+          </TouchableOpacity>
         </View>
 
-        {/* Choose File Section */}
+        {/* Choose file section */}
         {uploadType === 'image' && (
-          <StyledButton onPress={pickImage} style={{ backgroundColor: Colors.primary, padding: 12, borderRadius: 8 }}>
-            <ButtonText>Choose Image</ButtonText>
-          </StyledButton>
-        )}
+  <StyledButton onPress={pickImage}>
+    <ButtonText>Choose Image</ButtonText>
+  </StyledButton>
+)}
+
+
         {uploadType === 'video' && (
-          <StyledButton onPress={pickVideo} style={{ backgroundColor: Colors.primary, padding: 12, borderRadius: 8 }}>
+          <StyledButton onPress={pickVideo}>
             <ButtonText>Choose Video</ButtonText>
           </StyledButton>
         )}
-        {uploadType === 'file' && (
-          <StyledButton onPress={pickFile} style={{ backgroundColor: Colors.primary, padding: 12, borderRadius: 8 }}>
+         {uploadType === 'file' && (
+          <StyledButton onPress={pickFile}>
             <ButtonText>Choose File</ButtonText>
           </StyledButton>
-        )}
+        )} 
 
-        {/* Preview the uploaded content */}
-        {Images && (
-          <Text style={{ marginVertical: 20, fontSize: 16, color: '#555' }}>
-            {Images.name}
-          </Text>
-        )}
-        {Videos && (
-          <Video
-            source={{ uri: Videos }}
-            style={{ width: '100%', height: 200, marginVertical: 20 }}
-            useNativeControls
-            resizeMode="cover"
-            isLooping
-          />
-        )}
+       {/* Preview the uploaded content */}
+       {Images && (
+        <Text style={{ marginVertical: 20, fontSize: 16, color: '#555' }}>
+           {Images.name} {/* اسم الصورة مع الامتداد */}
+         </Text>
+     )}
+  {Videos && (
+  <Video
+    source={{ uri: Videos }}
+    style={{ width: 200, height: 200, marginVertical: 20 }}
+    useNativeControls // إضافة عناصر التحكم
+    resizeMode="cover" // لضبط الفيديو داخل الإطار
+    isLooping // تشغيل الفيديو بشكل متكرر
+  />
+)}
+        {/* File preview*/}
         {Files && (
           <Text style={{ marginVertical: 20 }}>
             {Files.split('/').pop()}
           </Text>
         )}
 
-        {/* Post Button */}
-        <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 30 }}>
-          <StyledButton onPress={handleAddPost} style={{ backgroundColor: Colors.primary, paddingVertical: 12, paddingHorizontal: 20, borderRadius: 8 }}>
-            <ButtonText>Add Post</ButtonText>
-          </StyledButton>
-        </View>
+<View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 20 }}>
+  <TouchableOpacity style={{ alignItems: 'center' }} onPress={handleAddPost}>
+    <StyledButton style={{ backgroundColor: brand, marginRight: 10 }}>
+      <ButtonText>Add Post</ButtonText>
+    </StyledButton>
+  </TouchableOpacity>
+</View>
+
       </InnerContainer>
     </StyledContainer>
-    
-        {/* شريط التنقل السفلي */}
-        <View style={{ flexDirection: 'row', justifyContent: 'space-around', padding: 20, backgroundColor: secondary, elevation: 3 }}>
-          <TouchableOpacity onPress={() => nav.navigate('Settings')}>
-            <Ionicons name="settings" size={25} color="#000" />
-          </TouchableOpacity>
-          <TouchableOpacity
-  onPress={async () => {
-    try {
-      const token = await AsyncStorage.getItem('userToken'); // استرجاع التوكن
-      if (!token) {
-        console.error('Token not found');
-        return;
-      }
 
-      // إزالة المقدمة "Wasan__" وفك التوكن
-      const jwt = token.replace('Wasan__', ''); // حذف المقدمة
-      const payload = JSON.parse(atob(jwt.split('.')[1])); // فك تشفير الـ payload
 
-      const userRole = payload.role; // الحصول على الدور
-     console.log(userRole);
-      // التحقق من الدور والتنقل
-      if (userRole === 'Senior') {
-        nav.navigate('ProjectsSeniorPage'); // الانتقال لصفحة Senior
-      } else if (userRole === 'Junior') {
-        nav.navigate('ProjectsJuniorPage'); // الانتقال لصفحة Junior
-      } else {
-        console.error('Invalid role');
-      }
-    } catch (error) {
-      console.error('Error processing token:', error.message);
-    }
-  }}
->
-  <Ionicons name="folder" size={25} color={isNightMode ? primary : "#000"} />
-</TouchableOpacity>
-          <TouchableOpacity onPress={() => nav.navigate('ProjectsSeniorPage')}>
-            <Ionicons name="add-circle" size={28} color="#000" />
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => nav.navigate('HomeScreen')}>
-            <Ionicons name="home" size={25} color="#000" />
-          </TouchableOpacity>
+
+            {/* شريط التنقل السفلي */}
+            <View style={{ flexDirection: 'row', justifyContent: 'space-around', padding: 20, backgroundColor: secondary, elevation: 3 }}>
+                <TouchableOpacity onPress={() => nav.navigate('Settings')}>
+                    <Ionicons name="settings" size={25} color="#000" />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => nav.navigate('Projects')}>
+                    <Ionicons name="folder" size={25} color="#000" />
+                </TouchableOpacity>
+
+
+                <TouchableOpacity onPress={() => nav.navigate('ProjectsSeniorPage')}>
+                    <Ionicons name="add-circle" size={28} color="#000" />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => nav.navigate('HomeScreen')}>
+                    <Ionicons name="home" size={25} color="#000" />
+                </TouchableOpacity>
+            </View>
         </View>
-      </View>
     );
-    
-  }    
-
+};
+const styles = StyleSheet.create({
+    lightBackground: {
+        position: 'absolute',
+        top: 4,
+        left: 22,
+        width: 30,
+        height: 30,
+        borderRadius: 15,
+        backgroundColor: '#b0c4de',
+        opacity: 0.6,
+    },
+        switchContainer: {
+          flexDirection: 'row',
+          marginBottom: 20,
+        },
+        switchButton: {
+          padding: 10,
+          margin: 5,
+          backgroundColor: '#ddd',
+          borderRadius: 5,
+        },
+        activeSwitchButton: {
+          backgroundColor: '#4CAF50',
+        },
+        switchText: {
+          color: '#000',
+        },
+        activeSwitchText: {
+          color: '#fff',
+        },
+        uploadButton: {
+          marginTop: 20,
+          padding: 15,
+          backgroundColor: '#007BFF',
+          borderRadius: 5,
+        },
+        uploadButtonText: {
+          color: '#fff',
+          fontSize: 16,
+        },
+        previewImage: {
+          width: 100,
+          height: 100,
+          marginTop: 20,
+        },
+        previewVideo: {
+          width: 200,
+          height: 200,
+          marginTop: 20,
+        },
+        previewFileText: {
+          marginTop: 20,
+          color: '#333',
+        },
+      
+});
 export default AddPostScreen;

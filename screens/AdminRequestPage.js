@@ -139,12 +139,7 @@ export default function AdminRequestPage({ navigation, route}) {
       position: Platform.OS === 'web' ? 'fixed' : 'relative',
       top: 0, left: 0, right: 0, zIndex: 10,
     }}>
-      <Text style={{
-        fontFamily: 'Updock-Regular', fontSize: 30, position: 'absolute', left: 0, right: 0,
-        textAlign: 'center', color: isNightMode ? primary : "#000"
-      }}>
-        Talent Bridge
-      </Text>
+      
 
       {/* Sidebar Toggle Button */}
       <TouchableOpacity onPress={toggleSidebar}>
@@ -168,103 +163,9 @@ export default function AdminRequestPage({ navigation, route}) {
      backgroundColor: isNightMode ? '#2C2C2C' : '#f0f0f0' , elevation: 3, position: Platform.OS === 'web' ? 'fixed' : 'relative',
       zIndex: 10, width: '100%', top: Platform.OS === 'web' ? 55 : 0, marginBottom: Platform.OS === 'web' ? 20 : 0,
     }}>
-        <View style={[styles.container, { backgroundColor: isNightMode ? '#2C2C2C' : '#f0f0f0' }]}>
-      {/* Notification Icon */}
-      <TouchableOpacity style={styles.backButton} onPress={() => nav.navigate('Notification')}>
-        <Ionicons name="notifications" size={20} color={isNightMode ? primary : "#000"} />
-      </TouchableOpacity>
-          <View style={[styles.searchBox, { backgroundColor: isNightMode ? '#5E5A5A' : '#fff' }]}>
-            <Ionicons name="search" size={20} color={isNightMode ? '#fff' : '#888'} style={styles.searchIcon} />
-
-            <TextInput
-              style={[styles.inputSearch, { color: isNightMode ? '#fff' : '#000' }]}
-              placeholder="Search..."
-              placeholderTextColor={isNightMode ? '#ccc' : '#888'}
-              value={searchQuery}  // تعيين قيمة البحث
-              onChangeText={setSearchQuery}  // تحديث قيمة البحث عند الكتابة
-              returnKeyType="search"  // تحويل زر الإدخال في لوحة المفاتيح إلى زر بحث
-              onFocus={() => nav.navigate('SearchScreen', { searchQuery: searchQuery })}  // تنفيذ البحث عند التركيز
-            />
-          </View>
-        </View>
+       
 </View></>
       )}
-
-                {/* <View style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  backgroundColor: isNightMode ? Colors.tertiary : Colors.secondary,
-                  width: '100%',
-                  marginTop: 20,
-                  padding: 10,
-                }}>
-                </View> */}
-
-
-                {/* الشريط الجانبي */}
-                  <View style={{ flexDirection: 'row', flex: 1 }}>
-                  {/* الشريط الجانبي */}
-                  {Platform.OS === 'web' && isSidebarVisible && (
-                  <View style={{
-                    position: 'fixed',
-                    width: '30%',
-                    height: '100%',
-                    backgroundColor: isNightMode ? '#333' : '#fff',
-                    padding: 10,
-                    zIndex: 5,
-                    borderRightWidth: 1,
-                    borderColor: '#ccc',
-                    overflow: 'auto',
-                    paddingVertical: 10,
-                    marginTop: Platform.OS === 'web' ? 50 : 0,
-                    height: `calc(110vh - 0px - 100px)`,
-                    overflowY: 'auto',
-                  }}>
-                    {loading ? (
-                      <Text style={{
-                        color: isNightMode ? '#fff' : '#000',
-                        fontSize: 16,
-                        textAlign: 'center',
-                      }}>
-                        Loading...
-                      </Text>
-                    ) : (
-                      <FlatList
-                        data={friends}
-                        renderItem={({ item }) => (
-                          <TouchableOpacity
-                            key={item._id}
-                            onPress={() => handleSelectedPerson(item)}
-                            style={{
-                              padding: 15,
-                              borderBottomWidth: 1,
-                              borderBottomColor: '#ccc',
-                              flexDirection: 'row',
-                              alignItems: 'center',
-                              justifyContent: 'flex-start',
-                              borderRadius: 8,
-                              marginBottom: 10,
-                              backgroundColor: isNightMode ? '#444' : '#f9f9f9',
-                              boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
-                              transition: 'all 0.3s ease',
-                            }}
-                          >
-                          
-                          </TouchableOpacity>
-                        )}
-                        keyExtractor={(item) => item._id.toString()}
-                      />
-                    )}
-                  </View>
-                )}
-                </View>
-
-   
-    
-  
-
-
 
         </View>
     </TouchableWithoutFeedback>
