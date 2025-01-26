@@ -71,5 +71,8 @@ router.get('/getAllExperiences', auth(EndPoints.CreateProfile), UserController.g
 router.get('/getAllCertifications', auth(EndPoints.CreateProfile), UserController.getAllCertifications);
 router.get('/getAllEducation', auth(EndPoints.CreateProfile), UserController.getAllEducation);
 router.get('/getUserFeild', auth(EndPoints.CreateProfile), UserController.getUserFeild);
+router.post('/addrecommendations',auth(EndPoints.CreateProfile),UserController.addRecommendation);
+router.patch('/updaterecommendations/:recommendationId',auth(EndPoints.CreateProfile),UserController.updateRecommendation);
+router.delete('/deleterecommendations/:recommendationId',auth(EndPoints.CreateProfile),UserController.deleteRecommendation);
 
 export default router
