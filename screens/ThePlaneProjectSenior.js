@@ -15,12 +15,37 @@ import { useSharedValue, useAnimatedStyle, withSpring } from "react-native-reani
 import { Dimensions } from "react-native";
 import * as Animatable from "react-native-animatable";
 import Slider from '@react-native-community/slider';
-
 const { width } = Dimensions.get("window");
+import moment from 'moment/moment';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { color } from 'react-native-elements/dist/helpers';
+
 
 
 export default function  ThePlaneProjectSenior ({ navigation, route }) {
-  const { projectId } = route.params;  // الحصول على projectId من التنقل
+  const { projectId,juniors} = route.params;  // الحصول على projectId من التنقل
+  
+// تعريف الحالات بشكل منفصل
+const [startDate, setStartDate] = useState(new Date());
+const [endDate, setEndDate] = useState(new Date());
+
+const [showStartPicker, setShowStartPicker] = useState(false);
+const [showEndPicker, setShowEndPicker] = useState(false);
+
+const handleDateChange = (selectedDate, isStartDate) => {
+  if (selectedDate) {
+    if (isStartDate) {
+      setStartDate(selectedDate); // تحديث StartDate
+    } else {
+      setEndDate(selectedDate); // تحديث EndDate
+    }
+  }
+
+  // إخفاء DatePicker بناءً على نوع التاريخ
+  isStartDate ? setShowStartPicker(false) : setShowEndPicker(false);
+};
+
+
 
     const baseUrl = Platform.OS === 'web'
       ? 'http://localhost:3000'
@@ -49,8 +74,27 @@ const [project,setProject]=useState();
   
     /////////////////////////////////////////// Filter /////////////////////////////////////////////////////
     const [isModalVisible, setIsModalVisible] = useState(false);
-   
+    const [daysLeft,setdaysLeft]=useState('');
+    const [newTask, setNewTask] = useState({
+      PhaseName: "",
+      TaskName: "",
+      Description: "",
+      TaskRoleName: "",
+      StartDate: "",
+      EndDate: "",
+      Priority: "",
+    });
+    const addTask = () => {
+      // Logic to add the new task (e.g., updating state or sending data to an API)
+      console.log("New Task:", newTask);
+    };
   
+    const calculateDaysLeft = (currentDate, endDate) => {
+      const current = moment(currentDate, "YYYY-MM-DD");
+      const end = moment(endDate, "YYYY-MM-DD");
+      const difference = end.diff(current, "days");
+      return difference > 0 ? difference : "Deadline passed";
+    };
     const toggleModal = () => setIsModalVisible(!isModalVisible);
   
 
@@ -306,6 +350,37 @@ const [project,setProject]=useState();
   };
 
 
+  const handleShowAllTaskToJunior = async () => {
+    try {
+      const token = await AsyncStorage.getItem('userToken'); // استرجاع التوكن
+      console.log('Retrieved Token:', token); // تحقق من التوكن
+      if (!token) { 
+        console.error('Token not found');
+        return;
+      }
+
+      const response = await fetch(`${baseUrl}/tasks/getalltasksbysenior/${projectId}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Wasan__${token}`, // تأكد من التنسيق الصحيح هنا
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json(); // إذا كان هناك خطأ في الرد
+   //     throw new Error(errorData.message || 'Failed to fetch skills');
+      }
+
+      const data = await response.json(); // تحويل الرد إلى JSON
+      setProject(data.tasks);
+
+      console.log('Fetched Project:', data.tasks); // تحقق من البيانات
+
+    } catch (error) {
+    //  console.error('Error fetching tasks:', error.message);
+    }
+  };
+
 
   const handleViewOtherProfile = async (userId) => {
     console.log(userId);
@@ -378,7 +453,7 @@ const [project,setProject]=useState();
   useEffect(() => {
     handleViewProfile();
     handleGetFeilds();
-    handleGetProjectByFeildOrSkills();
+    handleShowAllTaskToJunior();
   }, []);
   
 
@@ -632,79 +707,158 @@ const [project,setProject]=useState();
 <ScrollView 
   contentContainerStyle={[styles.container, { backgroundColor: isNightMode ? "#000" : "#fff" }]}
 >
-  {project && project.filteredProjects.length > 0 ? (
+  {project && project.length > 0 ? (
     <View
       style={[
         styles.grid,
         { flexDirection: isMobile ? "column" : "row", justifyContent: isMobile ? "flex-start" : "space-between" },{backgroundColor: isNightMode ? "#000" : Colors.primary }
       ]}
     >
-      {project.filteredProjects.map((project, index) => (
-        <Animatable.View
-          key={project._id}
-          animation="zoomIn"
-          delay={index * 100} // تأخير كل بطاقة 100ms لتظهر بالتتابع
-          duration={500} // مدة تأثير الزوم
-          style={[isMobile ? styles.cardMobile : styles.cardWeb]} // تنسيق مخصص لكل منصة
-        >
-          <TouchableOpacity
-            style={isMobile ? styles.cardMobileContent : styles.cardWebContent}
-            onPress={() => navigateToProjectDetails(project,project.senior.role)}
-          >
+        {project.map((task, index) => (
+
+            <Animatable.View
+              key={task._id}
+              animation="zoomIn"
+              delay={index * 100}
+              duration={500}
+              style={isMobile ? styles.cardMobile : styles.cardWeb}
+            >
+              <View
+                style={
+                  isMobile ? styles.cardMobileContent : styles.cardWebContent
+                }
+           
+              >
+                <View style={styles.cardDetails}>
+                <View style={{ flexDirection:'row'}}>
+               {/* Start DatePicker */}
+
+
+     
+                    </View>
+
+
+      
+                  <View style={styles.taskActionsDate}>
+                  <Text style={styles.projectName}>{task.PhaseName}</Text>
+              
+  <TouchableOpacity  style={[styles.actionButton,]}  onPress={() => setShowStartPicker(true)}>
+                     <Text  style={styles.actionButtonText}>Select Junior</Text>  
+                      </TouchableOpacity>
+
+               
+                  </View>
+                  <View style={styles.divider1} />
+                  <Text style={styles.projectDescription}>
+                    Task Name: {task.TaskName}
+                  </Text>
+                  <Text style={styles.projectDescription}>
+                    Description: {task.Description}
+                  </Text>
+
+
+  {/* Start Date */}
+<Text style={styles.label}>Start Date:</Text>
+{Platform.OS === "web" ? (
+  <input
+    type="date"
+    value={moment(startDate).format("YYYY-MM-DD")} // عرض StartDate
+    onChange={(e) => handleDateChange(new Date(e.target.value), true)}
+    style={styles.input}
+  />
+) : (
+  <>
+    {showStartPicker && (
+      <DateTimePicker
+        value={startDate} // تمرير StartDate
+        mode="date"
+        display="default"
+        onChange={(event, selectedDate) => handleDateChange(selectedDate, true)}
+      />
+    )}
+    <TouchableOpacity onPress={() => setShowStartPicker(true)}>
+      <Text style={styles.dateText}>
+        {moment(startDate).format("MMM DD, YYYY")} {/* عرض StartDate */}
+      </Text>
+    </TouchableOpacity>
+  </>
+)}
+
+{/* End Date */}
+<Text style={styles.label}>End Date:</Text>
+{Platform.OS === "web" ? (
+  <input
+    type="date"
+    value={moment(endDate).format("YYYY-MM-DD")} // عرض EndDate
+    onChange={(e) => handleDateChange(new Date(e.target.value), false)}
+    style={styles.input}
+  />
+) : (
+  <>
+    <TouchableOpacity onPress={() => setShowEndPicker(true)}>
+      <Text style={styles.dateText}>
+        {moment(endDate).format("MMM DD, YYYY")} {/* عرض EndDate */}
+      </Text>
+    </TouchableOpacity>
+    {showEndPicker && (
+      <DateTimePicker
+        value={endDate} // تمرير EndDate
+        mode="date"
+        display="default"
+        onChange={(event, selectedDate) => handleDateChange(selectedDate, false)}
+      />
+    )}
+  </>
+)}
+
+                      
+                 
+                  <Text style={styles.taskPriority}>
+                    Priority: {task.Priority}
+                  </Text>
           
-        
-            <View style={styles.cardDetails}>
-            
-             
-              <Text style={styles.projectName}>{project.ProjectName}</Text>
-              <Text style={styles.projectDescription}>
-                {project.Description.slice(0, 50)}...
-              </Text>
-              <Text style={styles.projectCreatedAt}>
-                Created on: {new Date(project.created_at).toLocaleDateString('en-US')}
-              </Text>
-              <Text style={styles.projectStatus}>
-                Status: {project.Status}
-              </Text>
-              <Text style={styles.projectPrice}>
-                Price: ${project.Price}
-              </Text>
-                       <View style={styles.divider} />
+               
+                  <Text style={styles.taskDates}>
+                      <Text style={styles.label}>Days Left:</Text> {calculateDaysLeft(moment(), task.EndDate)}
+                    </Text>
+                  <View style={styles.divider1} />
+
+                  <View style={styles.taskActions}>
+
+                  <TouchableOpacity  style={styles.actionButton}  onPress={() =>
+                        console.log(`Start task: ${task._id}`)
+                      }>
+                     <Text  style={styles.actionButtonText}>Start Task</Text>
+                      
+                      </TouchableOpacity>
+                    <TouchableOpacity style={styles.actionButton}  onPress={() =>
+                        console.log(`Completing task: ${task._id}`)
+                      }>
+                     <Text style={styles.actionButtonText}>End Task</Text>
+                      
+                      </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
            
 
-              <View style={styles.seniorInfo}>
-              <TouchableOpacity style={styles.seniorInfo}
-  onPress={() => navigateToSeniorProfile(project.CreatedBySenior)}
->
-<Image
-  source={{
-    uri: project.CreatedBySenior?.PictureProfile?.secure_url || "https://via.placeholder.com/50",
-  }}
-  style={styles.seniorAvatar}
-/>
 
-  <Text style={styles.seniorName}>
-    {project.CreatedBySenior ? project.CreatedBySenior.FullName : "Unknown Senior"}
-  </Text>
-</TouchableOpacity>
 
-</View>
-              {/* "See More" Button */}
+            </Animatable.View>
             
-            </View>
-          </TouchableOpacity>
-        </Animatable.View>
       ))}
+    
     </View>
   ) : (
+    
     <Text style={styles.noProjects}>
-      No projects available.
+      No Tasks available.
     </Text>
   )}
 </ScrollView>
 
 
-  
+    
             
             {/* Bottom Navigation Bar */}
  {/* Bottom Navigation Bar */}
@@ -1176,7 +1330,7 @@ closeButtonText: {
         projectDescription: {
             fontSize: 14,
             color: '#666',
-            marginBottom: 10,
+            marginBottom: 10,fontWeight:'bold',
         },
         projectField: {
             fontSize: 14,
@@ -1280,11 +1434,11 @@ flex:"1",  gap: 20, // توفير مسافة ثابتة بين البطاقات
 },
 
   cardMobile: {
-    marginBottom: 20,
+    marginBottom: 10,
     width: width - 20, // تأكيد أن عرض البطاقة يتناسب مع عرض الشاشة
   },
 cardWeb: {
-  marginBottom: 20,
+  marginBottom: 10,
   flexBasis: "30%", // تحديد نسبة العرض للبطاقة
   width: '50%',
   height: "auto", // السماح للارتفاع بالتكيف مع المحتوى
@@ -1293,8 +1447,8 @@ cardWeb: {
 
 
   cardMobileContent: {
-    backgroundColor: "#fff",
-    borderRadius: 10,
+    backgroundColor: Colors.secondary,
+    borderRadius: 5,
     shadowColor: "#000",
     shadowOpacity: 0.2,
     shadowRadius: 10,
@@ -1306,7 +1460,7 @@ cardWeb: {
 cardWebContent: {
   height: "auto", // السماح للارتفاع بالتكيف
   padding: 10,
-  backgroundColor: "#fff",
+  backgroundColor: Colors.secondary,
   borderRadius: 10,
   shadowColor: "#000",
   shadowOpacity: 0.2,
@@ -1395,12 +1549,12 @@ projectName: {
     fontWeight: 'bold',
   },divider: {
     height: 3,
-    backgroundColor: '#ddd',
+    backgroundColor: Colors.brand,
     marginVertical: 8,
   },
   divider1: {
-    height: 5,
-    backgroundColor: Colors.fourhColor,
+    height: 3,
+    backgroundColor: Colors.darkLight,
     marginVertical: 8,
   },
   divider3: {
@@ -1489,6 +1643,37 @@ filterOption: {
     marginBottom: 2,padding:5,  borderRadius: 8,
 
   },
-  
-
+  taskActions: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
+  },
+  taskActionsDate: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
+  },
+  actionButton: {
+    backgroundColor: Colors.darkLight,
+    paddingVertical: 8,
+    paddingHorizontal: 5,
+    borderRadius: 10,
+  },
+  actionButtonText: {
+    color: "#fff",
+    fontSize: 13,
+    fontWeight: "600",
+    textAlign: "center",
+  },
+taskDates: {
+    fontSize: 13,
+    color: "#2c3e50",
+    marginBottom: 6,
+  },
+  taskPriority: {
+    fontSize: 14,
+    fontWeight: "bold",
+    color: "#e74c3c",
+    marginTop: 6,
+  },
 });

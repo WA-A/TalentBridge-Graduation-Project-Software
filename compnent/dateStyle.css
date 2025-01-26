@@ -1,13 +1,13 @@
 /* webStyles.css */
 .date-picker {
     font-family: 'Arial', sans-serif;  /* استخدام خط جميل */
-    font-size: 16px;  /* حجم الخط */
+    font-size: 12px;  /* حجم الخط */
     color: #333;  /* لون النص */
-    border-radius:30px;  /* حواف دائرية */
+    border-radius:10px;  /* حواف دائرية */
     border: 2px solid #ccc;  /* الحدود */
     background-color: "#E5E7Eb";  /* الخلفية البيضاء */
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);  /* إضافة الظلال */
-    width: 97%;  /* جعل الـ DatePicker يأخذ كامل العرض */
+    width:100;  /* جعل الـ DatePicker يأخذ كامل العرض */
     transition: all 0.3s ease;  /* تأثير التغيير السلس */
     margin-top: 3px;
     margin-bottom: 10px; 

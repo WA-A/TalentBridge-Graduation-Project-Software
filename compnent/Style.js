@@ -5,18 +5,19 @@ import { Dimensions } from 'react-native';
 
 export const Colors = {
     primary: "#ffffff",
-    primaryDark: "#334664",
     secondary: "#E5E7Eb",
     tertiary: "#334664",
+    fifthColor:"#7C7692",
     darkLight: "#9EABCB",
-    brand: "#C99FA9",
-    careysPink: "#F7A8B8",
     firstColor:"#F7F1EF",
     secColor:"#DACACB",
     thirdColor:"#D2C6C7",
     fourhColor:"#CAC5D8",
-    fifthColor:"#7C7692",
     black:"#000000",
+    brand: "#C99FA9",
+    careysPink: "#F7A8B8",
+    primaryDark: "#334664",
+
 };
 
 const { primary, secondary, tertiary, darkLight, brand , careysPink,wildBlueYonder,
