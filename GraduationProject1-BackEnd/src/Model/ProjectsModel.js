@@ -90,7 +90,7 @@ const ProjectsSchema = new Schema(
         PhaseName: { type: String, required: true },
         TaskName: { type: String, required: true, trim: true },
         Description: { type: String, required: false, trim: true },
-        AssignedTo: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+        AssignedTo: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
         TaskRoleName: { type: String, required: true },
         TaskStatus: {
           type: String,
@@ -114,11 +114,6 @@ const ProjectsSchema = new Schema(
           type: String,
           enum: ["Online", "On-site"],
         },
-        DeliveryTaskMethod: {
-       type: String,
-        enum: ["Online", "On-site"],
-        //required: true,
-         },
           BenefitFromPhase: { 
          type: String, 
            required: false,
