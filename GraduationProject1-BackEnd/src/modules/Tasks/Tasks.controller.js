@@ -102,19 +102,7 @@ export const GetAllTasksBySenior = async (req, res) => {
 
         return res.status(200).json({
             message: "Tasks fetched successfully",
-            tasks: tasks.map(task => ({
-                TaskName: task.TaskName,
-                PhaseName: task.PhaseName,
-                Description: task.Description,
-                TaskStatus: task.TaskStatus,
-                AssignedTo: task.AssignedTo,
-                Priority: task.Priority,
-                StartDate: task.StartDate,
-                EndDate: task.EndDate,
-                TaskFile: task.TaskFile,
-                SubmitTaskMethod: task.SubmitTaskMethod,
-                BenefitFromPhase: task.BenefitFromPhase,
-            })),
+            tasks: tasks
         });
     } catch (error) {
         console.error("Error fetching tasks:", error.message);
@@ -126,6 +114,57 @@ export const GetAllTasksBySenior = async (req, res) => {
 };
 
 
+export const UpdateTaskDates = async (req, res) => {
+    try {
+        const { ProjectId} = req.params;
+        const {TaskId, StartDate, EndDate } = req.body;
+
+         // التحقق من وجود الحقول المطلوبة
+         if (!ProjectId || !TaskId || !StartDate || !EndDate) {
+            return res.status(400).json({ message: "All fields are required" });
+        }
+
+        // التحقق من أن تاريخ البداية ليس بعد تاريخ النهاية
+        if (new Date(StartDate) > new Date(EndDate)) {
+            return res.status(400).json({ message: "Start date cannot be later than end date" });
+        }
+
+        // جلب المشروع من قاعدة البيانات
+        const project = await ProjectsModel.findById(ProjectId);
+        if (!project) {
+            return res.status(404).json({ message: "Project not found" });
+        }
+
+        // العثور على المهمة باستخدام `_id`
+        const task = project.Tasks.find((t) => t._id.toString() === TaskId);
+        if (!task) {
+            return res.status(404).json({ message: "Task not found" });
+        }
+
+        // تحديث تواريخ المهمة
+        task.StartDate = StartDate;
+        task.EndDate = EndDate;
+
+        // حفظ المشروع
+        await project.save();
+
+        return res.status(200).json({
+            message: "Task dates updated successfully",
+            task: {
+                TaskId: task._id,
+                TaskName: task.TaskName,
+                StartDate: task.StartDate,
+                EndDate: task.EndDate,
+            },
+        });
+    } catch (error) {
+        console.error("Error updating task dates:", error.message);
+        return res.status(500).json({
+            message: "Error updating task dates",
+            error: error.message,
+        });
+    }
+};
 
 // Get All Tasks For Junior
 

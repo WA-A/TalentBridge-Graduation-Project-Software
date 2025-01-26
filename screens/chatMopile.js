@@ -1,4 +1,4 @@
-import React, { useState, useContext,useEffect } from 'react';
+import React, {  useRef,useState, useContext,useEffect } from 'react';
 import { View, Text, TouchableOpacity,StyleSheet, Modal, FlatList, ScrollView, Image,Platform,Animated} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
@@ -20,7 +20,8 @@ import * as MediaLibrary from 'expo-media-library';
 import * as ImagePicker from 'expo-image-picker';
 import ImageViewer from 'react-native-image-zoom-viewer';
 import * as WebBrowser from 'expo-web-browser'
-
+import { decode as atob } from 'base-64'; // إذا كنت تستخدم React Native
+import * as DocumentPicker from "expo-document-picker";
 const { width } = Dimensions.get("window");
 
 export default function ChatMopile ({ navigation, route }) {
@@ -52,6 +53,37 @@ const [project,setProject]=useState();
     };
   
     /////////////////////////////////////////// Filter /////////////////////////////////////////////////////
+    const flatListRef = useRef(null); // مرجع لـ FlatList
+
+
+
+
+
+    const [selectedMessage, setSelectedMessage] = useState(null); // الرسالة المختارة عند الضغط المطول
+    const [isModalVisibleMassage, setModalVisibleMassage] = useState(false); // للتحكم في ظهور المودال
+  
+    // التعامل مع حذف الرسالة
+    const handleDeleteMessage = (messageId) => {
+      console.log(`Delete message with ID: ${messageId}`);
+      deleteMessage(messageId);
+      setModalVisibleMassage(false);
+    };
+  
+    // التعامل مع تعديل الرسالة
+    const handleEditMessage = (messageId) => {
+      console.log(`Edit message with ID: ${messageId}`);
+      setModalVisibleMassage(false);
+    };
+  
+    // فتح المودال عند الضغط المطوّل
+    const handleLongPressMessage = (messageId) => {
+      setSelectedMessage(messageId);
+      setModalVisibleMassage(true);
+    };
+
+
+
+
     const [isModalVisible, setIsModalVisible] = useState(false);
    
   
@@ -289,8 +321,40 @@ const [project,setProject]=useState();
     const closeImageViewer = () => {
       setIsModalVisibleViewImage(false);
     };
-   
-      
+    const formatTime = (timestamp) => {
+      const date = new Date(timestamp);
+    
+      // أسماء أيام الأسبوع
+      const daysOfWeek = [
+        'Sunday',
+        'Monday',
+        'Tuesday',
+        'Wednesday',
+        'Thursday',
+        'Friday',
+        'Saturday',
+      ];
+    
+      // تحديد اليوم (Sunday, Monday, ...)
+      const day = daysOfWeek[date.getDay()];
+    
+      // تحديد الوقت بصيغة AM/PM
+      let hours = date.getHours();
+      const minutes = date.getMinutes();
+      const isAM = hours < 12;
+      const period = isAM ? 'AM' : 'PM';
+    
+      // تحويل الساعة إلى صيغة 12 ساعة
+      if (hours > 12) {
+        hours -= 12;
+      } else if (hours === 0) {
+        hours = 12;
+      }
+    
+      // صيغة الوقت النهائية: Day, HH:MM AM/PM
+      return `${day}, ${hours}:${minutes < 10 ? '0' + minutes : minutes} ${period}`;
+    };
+    
 const openFileInBrowser = async (uri) => {
       if (!uri) {
         Alert.alert('Error', 'Invalid file URL');
@@ -308,6 +372,29 @@ const openFileInBrowser = async (uri) => {
     };
     
     
+
+    const deleteMessage = async (messageId) => {
+      try {
+        const token = await AsyncStorage.getItem('userToken'); // الحصول على التوكن من التخزين
+        console.log(token);
+        if (!token) {
+          console.error('Token not found');
+          return;
+        }          const response = await fetch(`${baseUrl}/chat/deletechatProject/${projectID}/${messageId}`, {
+              method: 'DELETE',
+              headers: {
+                  'Authorization': `Wasan__${token}`,
+              },
+          });
+  
+          const data = await response.json();
+          console.log(data.message);
+          fetchMessages();
+      } catch (error) {
+          console.error('Error deleting message:', error);
+      }
+  };
+  
   const [profile,setprofileimg] = useState('');
   const [profileUser,setOtherProfile] = useState('');
 
@@ -402,10 +489,81 @@ const openFileInBrowser = async (uri) => {
   const [loading, setLoading] = useState(true); // لتحديد حالة تحميل الرسائل
   const [userData, setUserData] = useState(null); // لتخزين بيانات المستخدم السينيور
   const [chatsData , setchatsData] = useState(); // لتخزين بيانات المستخدم السينيور
-  
+  const [file , setFile] = useState(); // لتخزين بيانات المستخدم السينيور
+  const [imageChat , setImageChat] = useState(); // لتخزين بيانات المستخدم السينيور
+    const handleFilePicker = async () => {
+              try {
+                const result = await DocumentPicker.getDocumentAsync({
+                  type: 'application/pdf', // فقط ملفات PDF
+                });
+                console.log(result.uri);
+                console.log(result);
+                // التأكد من أن المستخدم لم يلغي العملية
+                if (result.canceled) {
+                  console.log('User canceled file selection');
+                } else {
+                  // التعامل مع النتيجة
+                  const pickedFile = result.assets ? result.assets[0] : null;
+                  if (pickedFile) {
+                    setFile(pickedFile);
+                    console.log('File URI:', pickedFile.uri);  // عرض مسار الملف
+                  }
+                }
+              } catch (error) {
+                console.error('Error picking file:', error);
+              }
+            };
 
+  const pickImage = async (type) => {
+     try {
+       // طلب إذن الوصول إلى مكتبة الصور
+       let permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+       if (permissionResult.granted === false) {
+         Alert.alert('Permission required', 'You need to grant permission to access the gallery.');
+         return;
+       }
+       let result;
+       // إطلاق نافذة لاختيار الصورة
+ 
+         result = await ImagePicker.launchImageLibraryAsync({
+           mediaTypes: ['images'],
+           allowsEditing: true,
+           aspect: [8, 5],
+           quality: 1,
+         });
+       
+      
+       console.log(result);
+       // إذا تم اختيار صورة
+      
+           setImageChat(result.assets[0].uri); // تعيين صورة البروفايل
+    
+     } catch (error) {
+       console.log('Error picking image: ', error);
+     }
+   };
+    function base64ToBlob(base64Data, mimeType) {
+            const byteCharacters = atob(base64Data.split(',')[1]);  // إزالة الـ prefix 'data:application/pdf;base64,'
+            const byteArrays = [];
+        
+            for (let offset = 0; offset < byteCharacters.length; offset += 1024) {
+                const slice = byteCharacters.slice(offset, offset + 1024);
+                const byteNumbers = new Array(slice.length);
+        
+                for (let i = 0; i < slice.length; i++) {
+                    byteNumbers[i] = slice.charCodeAt(i);
+                }
+        
+                const byteArray = new Uint8Array(byteNumbers);
+                byteArrays.push(byteArray);
+            }
+        
+            return new Blob(byteArrays, { type: mimeType });
+        };
+ 
+   
   const handleSendMessage = async () => {
-    if (!newMessage.trim()) return; // التحقق من أن الرسالة غير فارغة
+    if (!newMessage.trim() && !file && !imageChat) return; // التحقق من أن الرسالة غير فارغة
 
     try {
       const token = await AsyncStorage.getItem('userToken'); // الحصول على التوكن من التخزين
@@ -414,39 +572,99 @@ const openFileInBrowser = async (uri) => {
         console.error('Token not found');
         return;
       }
-  
-      const response = await fetch(`${baseUrl}/chat/AddmassageToChatProject/${projectID}`, {
+      console.log(imageChat);
+      const formData = new FormData();
+    
+      formData.append('MessageContent', newMessage);
+
+           if (imageChat) {
+              if (Platform.OS === 'web') {
+                // استخدام Blob للويب
+                const profileBlob = base64ToBlob(imageChat, 'image/jpeg');
+                formData.append('images', profileBlob, 'images.jpg');
+              } else {
+                // استخدام uri للموبايل
+                formData.append('images', {
+                  uri: imageChat,
+                  type: 'image/jpeg',
+                  name: 'images.jpg',
+                });
+              }
+            }
+
+         
+                     if (file) {
+                       console.log("Thefile", file);
+                 
+                       const fileUri = file.uri.startsWith('file://') ? file.uri : `file://${file.uri}`;
+                 
+                       // إذا كان التطبيق على الويب
+                       if (Platform.OS === 'web') {
+                         // تحويل البيانات إلى Blob (بيانات الـ PDF المشفرة بتنسيق Base64)
+                         const pdfBlob = base64ToBlob(file.uri, 'application/pdf');
+                         formData.append('files', pdfBlob,file.name);  // اسم الملف الذي سيتم حفظه
+                 
+                       } else {
+                        formData.append('files', {
+                           uri: fileUri,
+                           name: file.name,
+                           type: file.mimeType || 'application/pdf',
+                         });
+                       }
+                     }
+  console.log(formData);
+
+   
+ 
+      const response = await fetch(`${baseUrl}/chat/AddmessageToChatProject/${projectID}`,{
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
           'Authorization': `Wasan__${token}`, // تأكد من كتابة التوكن بالشكل الصحيح
         },
-        body: JSON.stringify({
-          MessageContent: newMessage, // إضافة المحتوى الجديد للرسالة
-        }),
-
+          body: formData, // إرسال البيانات كـ FormData
       });
    
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Something went wrong');
       }
-  
   
       fetchMessages();
       const data = await response.json();
       console.log(data); // قم بإجراء شيء ما مع البيانات المستلمة من الخادم
-      setNewMessage(''); // إعادة تعيين الرسالة بعد الإرسال
-
-  
-      
+      setNewMessage(''); // إعادة تعيين الرسالة بعد الإرسال  
+      setImageChat('');
+      setFile('');
     } catch (error) {
-      console.error('Error fetching ProfileData:', error);
+      console.error('Error fetching chat', error);
     }
      
   };
 
 
-
+  const renderSelectedMedia = () => {
+    if (imageChat) {
+      return (
+        <View style={styles.previewContainer}>
+          <Text style={styles.previewLabel}>Selected Media:</Text>
+          <Image
+            source={{ uri: imageChat }}
+            style={styles.previewImage}
+          />
+        </View>
+      );
+    }
+    if (file) {
+      return (
+        <View style={styles.previewContainer}>
+          <Text style={styles.previewLabel}>Selected Media:</Text>
+          <Text>file.name</Text>
+         
+        </View>
+      );
+    }
+    return null;
+  };
 
 
   const fetchMessages = async () => {
@@ -474,16 +692,20 @@ const openFileInBrowser = async (uri) => {
   
       const data = await response.json();
       setchatsData(data.chats);  // تحديث حالة البروفايل
-  
+        flatListRef.current?.scrollToEnd({ animated: true });
+      
     } catch (error) {
-      console.error('Error fetching chat:', error);
+//      console.error('Error fetching chat:', error);
     }
   };
+
 
   useEffect(() => {
     fetchMessages();
     handleViewProfile();
-  }, []);
+    flatListRef.current?.scrollToEnd({ animated: true });
+
+  },[]);
   
 
 
@@ -673,93 +895,139 @@ const openFileInBrowser = async (uri) => {
           </>
         )}
               
-        <View  style={{flex:1,
-marginBottom: Platform.OS === 'web' ? 0 : 50, // marginBottom صفر في الويب و 50 في المنصات الأخرى
-marginRight: Platform.OS === 'web' ? '20%' : '', // marginBottom صفر في الويب و 50 في المنصات الأخرى
-marginLeft: Platform.OS === 'web' ? '20%' : '', // marginBottom صفر في الويب و 50 في المنصات الأخرى
-
-        }}>
-        <View style={[styles.container,{marginBottom: Platform.OS === 'web' ? 100 : 50, // marginBottom صفر في الويب و 50 في المنصات الأخرى
-}]}>       
-
-        {chatsData?.length > 0 ? (
-        <FlatList
-          data={chatsData[0].messages} // نعرض الرسائل من الداتا المرسلة
-          keyExtractor={(item) => item._id}
-          renderItem={({ item }) => (
-            <View style={styles.messageContainer}>
-             <View style={{flexDirection:'row',alignContent:'center',alignItems:'center'}}>
-               <Image
-              source={{
-                uri: item.sender.PictureProfile?.secure_url|| 'https://via.placeholder.com/80', // استخدام الصورة المختارة أو صورة بروفايل أو صورة افتراضية
-              }} style={styles.profileImage}
-            />
-               <Text style={styles.senderName}>
-                  {item.sender.FullName} (@{item.sender.UserName})
-                </Text>
-            </View>
-            <View style={styles.divider}></View>
-              <View style={styles.messageContent}>
-               
-                <Text style={styles.messageText}>{item.content}</Text>
-                      {/* Files */}
-                      {item.messageType === 'file' && item.media && item.media.length > 0 && item.media.map((file, index) => (
-                  <TouchableOpacity
-                    key={index}
-                    style={styles.fileCard}
-                    onPress={() => openFileInBrowser (file.secure_url, file.originalname)} // تمرير secure_url و originalname
-                  >
-                    <FontAwesome name="file-o" size={24} color="#555" style={styles.icon} />
-                    <Text style={styles.fileName}>
-                      {file.originalname || 'Click to view/download file'}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-                {item.messageType === 'image' && item.media && item.media.length > 0 && item.media.map((image, index) => (
-
-  <TouchableOpacity
-    key={index}
-    onPress={() => openImageViewer(image?.secure_url)}
-  >
-    <Image
-      source={{ uri: image.secure_url }}
+        <View
       style={{
-        width: '100%',
-        height: 300,
-        borderRadius: 10,
-        marginBottom: 10,marginTop: 10,
-        width: Platform.OS === 'web' ? '30%' : '100%', // marginBottom صفر في الويب و 50 في المنصات الأخرى
-
-        resizeMode: 'cover',
+        flex: 1,
+        marginBottom: Platform.OS === 'web' ? 0 : 50,
+        marginHorizontal: Platform.OS === 'web' ? '20%' : 0,
       }}
-    />
-  </TouchableOpacity>
-))}
+    >
+      <View style={{ marginBottom: Platform.OS === 'web' ? 100 : 60, margin: 4 }}>
+        {chatsData?.length > 0 ? (
+          <FlatList
+            ref={flatListRef} // تعيين المرجع
+            data={chatsData[0]?.messages || []}
+            keyExtractor={(item) => item._id}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                onLongPress={() => handleLongPressMessage(item._id)}
+                style={styles.messageContainer}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Image
+                    source={{
+                      uri: item.sender.PictureProfile?.secure_url || 'https://via.placeholder.com/80',
+                    }}
+                    style={styles.profileImage}
+                  />
+                  <Text style={styles.senderName}>
+                    {item.sender.FullName} (@{item.sender.UserName})
+                  </Text>
+                </View>
 
- 
-              </View>
-            </View>
-          )}
-        />
-      ) : (
-        <Text>No messages available.</Text>
-      )}</View>
+                {/* وقت الإرسال */}
+                <Text style={styles.timeText}>{formatTime(item.timestamp)}</Text>
 
-      <View style={styles.inputContainer}>
-      <TextInput
-        style={styles.input}
-        placeholder="Type a message..."
-        value={newMessage} 
-        onChangeText={setNewMessage} // تحديث الحالة عند تغيير النص
-      />
-        <TouchableOpacity onPress={handleSendMessage}>
-        <Ionicons name="send" size={25} color="#000" />
-        </TouchableOpacity>
+                <View style={styles.divider}></View>
+                <View style={styles.messageContent}>
+                  <Text style={styles.messageText}>{item.content}</Text>
+
+                  {item.messageType === 'file' &&
+                    item.media &&
+                    item.media.map((file, index) => (
+                      <TouchableOpacity
+                        key={index}
+                        style={styles.fileCard}
+                        onPress={() =>
+                          openFileInBrowser(file.secure_url, file.originalname)
+                        }
+                      >
+                        <FontAwesome
+                          name="file-o"
+                          size={24}
+                          color="#555"
+                          style={styles.icon}
+                        />
+                        <Text style={styles.fileName}>
+                          {file.originalname || 'Click to view/download file'}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+
+                  {item.messageType === 'image' &&
+                    item.media &&
+                    item.media.map((image, index) => (
+                      <TouchableOpacity
+                        key={index}
+                        onPress={() => openImageViewer(image?.secure_url)}
+                      >
+                        <Image
+                          source={{ uri: image.secure_url }}
+                          style={{
+                            width: '100%',
+                            height: 300,
+                            borderRadius: 10,
+                            marginVertical: 10,
+                            width: Platform.OS === 'web' ? '30%' : '100%',
+                            resizeMode: 'cover',
+                          }}
+                        />
+                      </TouchableOpacity>
+                    ))}
+                </View>
+              </TouchableOpacity>
+            )}
+          />
+        ) : (
+          <Text>No messages available.</Text>
+        )}
       </View>
 
+      {/* عرض الصورة أو الملف المختار */}
+      <View style={styles.inputContainerImage}>{renderSelectedMedia()}</View>
+      <View style={styles.inputContainer}>
+        <TouchableOpacity onPress={pickImage} style={{ marginRight: 5 }}>
+          <Ionicons name="image" size={25} color="#000" />
+        </TouchableOpacity>
+        <TouchableOpacity onPress={handleFilePicker} style={{ marginRight: 5 }}>
+          <Feather name="file" size={23} color="#000" />
+        </TouchableOpacity>
+        <TextInput
+          style={styles.input}
+          placeholder="Type a message..."
+          value={newMessage}
+          onChangeText={setNewMessage} // تحديث الحالة عند تغيير النص
+        />
+        <TouchableOpacity onPress={handleSendMessage}>
+          <Ionicons name="send" size={25} color="#000" />
+        </TouchableOpacity>
+      </View>
     </View>
-  
-       
+          {/* المودال عند الضغط المطول */}
+      <Modal
+        visible={isModalVisibleMassage}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setModalVisibleMassage(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+           
+            <TouchableOpacity
+              onPress={() => handleDeleteMessage(selectedMessage)}
+              style={styles.modalButton}
+            >
+              <Text style={styles.modalButtonText}>Delete Message</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => setModalVisibleMassage(false)}
+              style={[styles.modalButton, { backgroundColor: '#ccc' }]}
+            >
+              <Text style={styles.modalButtonText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
   
             
             {/* Bottom Navigation Bar */}
@@ -1609,6 +1877,17 @@ inputContainer: {
     borderTopWidth: 2,
     borderTopColor: '#ccc',
   },
+  inputContainerImage: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    position: 'absolute', // تثبيت المدخل في الأسفل
+    bottom: 50,
+    left: 0,
+    right: 0,
+    padding: 10,
+    backgroundColor: '#fff',
+
+  },
   input: {
     flex: 1,
     height: 40,
@@ -1646,6 +1925,46 @@ inputContainer: {
     textDecorationLine: 'underline',
     flexShrink: 1,
     fontSize: 14,
+  }, previewContainer: {
+    marginBottom: 10,
+    alignItems: 'center',
+  },
+  previewLabel: {
+    fontWeight: 'bold',
+    marginBottom: 5,
+  },
+  previewImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 10,
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 10,
+    width: '80%',
+  },
+  modalButton: {
+    padding: 15,
+    borderRadius: 8,
+    backgroundColor: Colors.darkLight,
+    marginVertical: 5,
+    alignItems: 'center',
+  },
+  modalButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  timeText: {
+    fontSize: 12,
+    color: 'gray',
+    marginTop: 5,
   },
 
 });

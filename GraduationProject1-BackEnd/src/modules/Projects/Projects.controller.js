@@ -3,6 +3,9 @@ import cloudinary from '../../../utls/Cloudinary.js';
 import UserModel from "../../Model/User.Model.js";
 import { AddFieldsWithOutToken } from '../../../ExternalApiFields/ExternealApiFields.controller.js';
 import  Skills  from "../../../ExternalApiSkills/ExternealApiSkills.controller.js";
+import {CreateChatProject} from '../Chat/Chat.Controller.js';
+
+
 
 export const CreateProject = async (req, res) => {
     try {
@@ -143,10 +146,18 @@ export const CreateProject = async (req, res) => {
                 maxAutoApproved: maxAutoApproved || 0,   // تحديد الرقم
             },
         });
-
+        const firstMessage = `Welcome to the project: ${ProjectName}`;
+        const chatCreationResult = await CreateChatProject({
+            body: {
+                FirstMessage: firstMessage,
+                ProjectId: project._id,
+            },
+            user: req.user,
+        });
         return res.status(201).json({
             message: 'Project created successfully',
             project,
+            chat: chatCreationResult,
         });
     } catch (error) {
         console.error("Error creating project:", error.message);
@@ -562,10 +573,10 @@ export const GetProjectsProgressCompleteBySenior = async (req, res) => {
         // البحث عن المشاريع الخاصة بالسينيور والتي حالتها In Progress أو Completed
         const projects = await ProjectsModel.find({
             CreatedBySenior,
-            Status: { $in: ["In Progress", "Completed"] },
+            Status: { $in: ["Open","In Progress", "Completed"] },
         })
             .sort({ created_at: -1 }) // ترتيب المشاريع من الأحدث إلى الأقدم
-            .populate("CreatedBySenior", "FullName PictureProfile role"); // إحضار تفاصيل السينيور
+            .populate("CreatedBySenior", "FullName PictureProfile"); // إحضار تفاصيل السينيور
 
         if (!projects.length) {
             return res.status(404).json({ message: "No projects found for this senior." });
@@ -631,7 +642,7 @@ export const GetProjectsByUserRole = async (req, res) => {
 
 export const UpdateProjectStatusToInProgress = async (req, res) => {
     const { projectId } = req.params; // معرف المشروع من بارامتر الطلب
-
+console.log(projectId);
     try {
         // تحديث حالة المشروع إلى "In Progress"
         const updatedProject = await ProjectsModel.findByIdAndUpdate(

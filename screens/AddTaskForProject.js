@@ -465,6 +465,8 @@ const [erorWep,setErrorWep]=useState('');
                   setFile(pickedFile);
                   console.log('File URI:', pickedFile.uri);  // عرض مسار الملف
                 }
+
+                
               }
             } catch (error) {
               console.error('Error picking file:', error);

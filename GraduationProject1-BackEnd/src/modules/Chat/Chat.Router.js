@@ -29,5 +29,7 @@ router.post('/AddmessageToChatProject/:projectId',auth(EndPoints.CreateChat),fil
     ]),
     ChatController.AddmessageToChatProject
 );
+router.delete('/deletechatProject/:projectId/:messageId', auth(EndPoints.CreateChat),ChatController.DeleteChatProject)
+
 
 export default router;

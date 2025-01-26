@@ -62,7 +62,7 @@ const RequestToSeniorProject = () => {
       const [profileUser,setOtherProfile] = useState('');
   const navigation = useNavigation();
   const route = useRoute();
-  const { projectId } = route.params;  // الحصول على projectId من التنقل
+  const { projectId,status } = route.params;  // الحصول على projectId من التنقل
   const [applications, setApplications] = useState([]);
     const nav = useNavigation();
   
@@ -94,6 +94,43 @@ const RequestToSeniorProject = () => {
     //  console.error('Error fetching ProfileData:', error);
     }
   };
+
+
+  //////////////////
+
+
+
+  const startProject = async () => {
+console.log(projectId);
+    try {
+      const token = await AsyncStorage.getItem('userToken');
+      if (!token) {
+        console.error('Token not found');
+        return;
+      }
+      // جلب بيانات المستخدم الحالية من السيرفر
+      const response = await fetch(`${baseUrl}/project/UpdateProjectStatusToInProgress/${projectId}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Wasan__${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text(); // جلب نص الخطأ
+        console.error('Server Response:', errorText);
+        throw new Error('Failed to Start Project');
+      }
+      
+      const data = await response.json();
+
+      console.log(data.project);
+      navigation.navigate('ThePlaneProjectSenior',{ projectId: projectId });
+    } catch (error) {
+      console.error('Error updating Project :', error);
+    }
+  };
+
 
 
   const handleDeleteApplication = async (CommentId) => {
@@ -370,23 +407,58 @@ const RequestToSeniorProject = () => {
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.requestsCount}>
-          Total Requests: {applications ? applications.length : 0}
+          Total Requests: {applications ? applications.length : 0}/4
         </Text>
       </View>
       <View style={styles.divider3}></View>
 
-      {/* Project Status */}
-      <View style={[styles.cardDetails, { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 15 }]}>
-        <Text style={styles.projectStatus}>Start the project?</Text>
-        <TouchableOpacity
-          style={styles.applyButton}
-          onPress={() => {
-            toggleModal();
-          }}
-        >
-          <Text style={styles.applyButtonText}>Start</Text>
-        </TouchableOpacity>
-      </View>
+   {/* Project Status */}
+<View
+  style={[
+    styles.cardDetails,
+    {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: 15,
+    },
+  ]}
+>
+  <Text style={styles.projectStatus}>
+    {status === 'In Progress'
+      ? 'Project is in progress. Open it?'
+      : status === 'Open'
+      ? 'Start the project?'
+      : status === 'Completed'
+      ? 'View the project?'
+      : 'Unknown status'}
+  </Text>
+
+  <TouchableOpacity
+    style={styles.applyButton}
+    onPress={() => {
+      if (status === 'In Progress') {
+        navigation.navigate('ThePlaneProjectSenior', { projectId: projectId }); // شاشة عرض المشروع
+
+      } else if (status === 'Open') {
+        startProject(); // تنفيذ بدء المشروع
+      } else if (status === 'Completed') {
+      } else {
+        console.warn('Invalid project status');
+      }
+    }}
+  >
+    <Text style={styles.applyButtonText}>
+      {status === 'In Progress'
+        ? 'Open'
+        : status === 'Open'
+        ? 'Start'
+        : status === 'Completed'
+        ? 'View'
+        : 'N/A'}
+    </Text>
+  </TouchableOpacity>
+</View>
 
       <View style={styles.divider}></View>
 
@@ -602,7 +674,7 @@ const styles = StyleSheet.create({
     },
     
       cardMobile: {
-        marginBottom: 20,
+        marginBottom: 20,width:330
       },
     cardWeb: {
       marginBottom: 20,

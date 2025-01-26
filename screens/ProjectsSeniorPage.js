@@ -274,9 +274,9 @@ const [userRoless,setRoleUser]=useState('');
         };
 
 
-        const handleShowApplication= async (ApptId) => {
+        const handleShowApplication= async (ApptId,status) => {
 
-          navigation.navigate('RequestToSeniorProject', { projectId:ApptId});
+          navigation.navigate('RequestToSeniorProject', { projectId:ApptId,status:status});
 
         };
 
@@ -729,7 +729,7 @@ const [userRoless,setRoleUser]=useState('');
     />
   </TouchableOpacity>
   {isModalSEnoir && (
-    <TouchableOpacity     onPress={() => handleShowApplication(project._id)} style={styles.editButton}>
+    <TouchableOpacity     onPress={() => handleShowApplication(project._id,project.Status)} style={styles.editButton}>
       <Ionicons
         name="people-sharp"
         size={20}
