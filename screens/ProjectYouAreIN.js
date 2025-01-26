@@ -231,7 +231,7 @@ const [userRoless,setRoleUser]=useState('');
               // تغيير اسم الـ API بناءً على الدور
               let apiUrl = `${baseUrl}/project/viewownprojectcreated`;
               if (userRole === 'Senior') {
-                apiUrl = `${baseUrl}/project/GetProjectsProgressCompleteBySenior `;
+                apiUrl = `${baseUrl}/project/GetProjectsProgressCompleteBySenior`;
                 setIsSenior(true); // ضبط الحالة إذا كان المستخدم Senior
               } else if (userRole === 'Junior') {
                 apiUrl = `${baseUrl}/project/GetProjectsByUserRole`;
@@ -738,16 +738,7 @@ const [userRoless,setRoleUser]=useState('');
         
             <View style={styles.cardDetails}>
             <View style={styles.experienceHeader}>
-            <TouchableOpacity onPress={() => nav.navigate('ChatMopile',{projectID: project._id })}
-
-    style={styles.deleteButton}
-  >
-    <FontAwesome
-      name="wechat"
-      size={25}
-      color={isNightMode ? Colors.primary : Colors.black}
-    />
-  </TouchableOpacity>
+   <Text style={styles.status}>{project.Status}</Text>
   {isModalSEnoir && (
     <TouchableOpacity     onPress={() => handleShowApplication(project._id)} style={styles.editButton}>
       <Ionicons
@@ -757,15 +748,16 @@ const [userRoless,setRoleUser]=useState('');
       />
     </TouchableOpacity>
   )}
-  {!isModalSEnoir && (
-    <TouchableOpacity     onPress={() => handleShowApplication(project._id)} style={styles.editButton}>
-      <Ionicons
-        name="people-sharp"
-        size={25}
-        color={isNightMode ? Colors.primary : Colors.black}
-      />
-    </TouchableOpacity>
-  )}
+  <TouchableOpacity onPress={() => nav.navigate('ChatMopile',{projectID: project._id })}
+
+style={styles.deleteButton}
+>
+<FontAwesome
+  name="wechat"
+  size={25}
+  color={isNightMode ? Colors.primary : Colors.black}
+/>
+</TouchableOpacity>
 </View>
                        <View style={styles.divider} />
 

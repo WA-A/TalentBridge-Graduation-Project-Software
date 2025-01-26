@@ -20,6 +20,7 @@ const { width } = Dimensions.get("window");
 
 
 export default function  ThePlaneProjectSenior ({ navigation, route }) {
+  const { projectId } = route.params;  // الحصول على projectId من التنقل
 
     const baseUrl = Platform.OS === 'web'
       ? 'http://localhost:3000'
@@ -89,6 +90,7 @@ const [project,setProject]=useState();
     
    
     /////////////////////////////////////////////////////////////////////////////////////////////////////////
+    
   
         const handleGetFeilds = async () => {
           try {

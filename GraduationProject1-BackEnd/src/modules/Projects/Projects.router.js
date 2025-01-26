@@ -18,7 +18,7 @@ router.get('/viewprojectbyfiled/:FieldId',auth(EndPoints.getProject),ProjectCont
 router.get('/filterprojects', auth(EndPoints.getProject), ProjectController.GetProjectsByFilters);
 router.get('/GetProjectsProgressCompleteBySenior', auth(EndPoints.getProject), ProjectController.GetProjectsProgressCompleteBySenior);
 router.get('/GetProjectsByUserRole', auth(EndPoints.getProject), ProjectController.GetProjectsByUserRole);
-router.put('/UpdateProjectStatusToInProgress/:ProjectId',auth(EndPoints.CreateProject),ProjectController.UpdateProjectStatusToInProgress );
-router.put('/UpdateProjectStatusToCompleted/::ProjectId',auth(EndPoints.CreateProject),ProjectController.UpdateProjectStatusToCompleted);
+router.put('/UpdateProjectStatusToInProgress/:projectId',auth(EndPoints.CreateProject),ProjectController.UpdateProjectStatusToInProgress );
+router.put('/UpdateProjectStatusToCompleted/:projectId',auth(EndPoints.CreateProject),ProjectController.UpdateProjectStatusToCompleted);
 
 export default router

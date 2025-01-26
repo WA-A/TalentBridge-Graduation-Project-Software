@@ -465,7 +465,7 @@ export const GetChatUsers = async (req, res) => {
     }
 };
 
-export const CreateChatProject = async (req, res, next) => {
+export const CreateChatProject = async (req, res) => {
     try {
         const { FirstMessage, ProjectId } = req.body;
 
@@ -482,27 +482,20 @@ export const CreateChatProject = async (req, res, next) => {
         // التحقق من الأشخاص في الأدوار وحالتهم Approved
         const approvedUsers = [];
         project.Roles.forEach((role) => {
-            role.users.forEach((user) => {
-                if (user.status === "Approved") {
-                    approvedUsers.push(user.userId);
-                }
-            });
+            if (role.users) {  // Ensure that users is defined
+                role.users.forEach((user) => {
+                    if (user && user.status === "Approved") {  // Ensure user is defined
+                        approvedUsers.push(user.userId);
+                    }
+                });
+            }
         });
-
-        if (approvedUsers.length === 0) {
-            return next(new Error("No approved users found in the project."));
-        }
+        
 
         // التحقق من عدم إرسال الرسالة لصاحب التوكن
         const recipients = approvedUsers.filter(
             (userId) => userId.toString() !== req.user._id.toString()
         );
-
-        if (recipients.length === 0) {
-            return next(
-                new Error("No valid recipients found (excluding the sender).")
-            );
-        }
 
         let media = [];
 
@@ -519,6 +512,27 @@ export const CreateChatProject = async (req, res, next) => {
                     ? "video"
                     : "file"
                 : "text";
+
+        // إذا لم يكن هناك مستلمون، أنشئ دردشة فارغة
+        if (recipients.length === 0) {
+            const chat = await ChatModel.create({
+                users: [req.user._id], // فقط المرسل
+                project: ProjectId,
+                messages: [
+                    {
+                        sender: req.user._id,
+                        content: FirstMessage,
+                        messageType: messageType,
+                        media: media,
+                    },
+                ],
+            });
+
+            return res.status(201).json({
+                message: "Chat created successfully (without recipients).",
+                chat,
+            });
+        }
 
         // إنشاء محادثات لكل مستلم
         const chats = await Promise.all(
@@ -538,16 +552,14 @@ export const CreateChatProject = async (req, res, next) => {
             })
         );
 
-        return res.status(201).json({
-            message: "Chats created successfully.",
+        return ({
             chats,
         });
-    } catch (error) {
+    }  catch (error) {
         console.error("Error creating chat:", error);
-        return next(error);
+       
     }
 };
-
 
 
 
@@ -635,6 +647,36 @@ export const GetAllChatsProject = async (req, res) => {
 };
 
 
+export const DeleteChatProject = async (req, res) => {
+    try {
+        const loggedInUserId = req.user._id; // الحصول على ID المستخدم الحالي
+        const { projectId, messageId } = req.params; // الحصول على projectId و messageId من الـ URL
+
+        // العثور على الشات المرتبط بالمشروع والمستخدم
+        const chat = await ChatModel.findOne({
+            project: projectId,
+            users: loggedInUserId,
+            "messages._id": messageId, // التأكد من وجود الرسالة داخل الشات
+        });
+
+        if (!chat) {
+            return res.status(404).json({ message: 'Chat or message not found' });
+        }
+
+        // حذف الرسالة من المصفوفة
+        chat.messages = chat.messages.filter(
+            (message) => message._id.toString() !== messageId
+        );
+
+        // حفظ الشات بعد التعديل
+        await chat.save();
+
+        return res.status(200).json({ message: 'Message deleted successfully' });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: 'Failed to delete message' });
+    }
+};
 
 
 export const AddmessageToChatProject = async (req, res, next) => {
@@ -643,7 +685,7 @@ export const AddmessageToChatProject = async (req, res, next) => {
         const { projectId } = req.params;
 
         // التحقق من وجود MessageContent و projectId
-        if (!MessageContent || !projectId) {
+        if (!projectId) {
             return next(new Error("MessageContent and ProjectId are required."));
         }
 

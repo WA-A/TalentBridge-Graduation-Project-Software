@@ -94,7 +94,8 @@ const [project,setProject]=useState();
             console.log('Application created successfully:', result);
             if(result.application.Status === "Accepted"){
               await approveRequest(result.application._id,result.application.roleId, token);
-              alert('Application created and notification sent successfully');
+              await AddUserToChatProject(result.application.projectId,result.application.userId,token);
+              alert('You have been approved. You will find the project in the private projects box. You have also been entered into the project chat.');
 
             }
             else{await sendApprovalNotification(result.application._id,token);
@@ -164,6 +165,32 @@ const [project,setProject]=useState();
         console.log('Notification sent successfully');
       } catch (error) {
         console.error('Error sending notification:', error.message);
+      }
+    };
+
+    const AddUserToChatProject  = async (ProjectId,UserId,token) => {
+      console.log(ProjectId,UserId);
+      try {
+        const notificationResponse = await fetch(`${baseUrl}/chat/AddUserToChatProject `, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Wasan__${token}`,
+          },
+          body: JSON.stringify({
+            ProjectId:ProjectId,
+            UserId: UserId,
+          }),
+        });
+    
+        if (!notificationResponse.ok) {
+          const errorData = await notificationResponse.json();
+          throw new Error(errorData.message || 'Failed to send notification');
+        }
+    
+        console.log('User Aded successfully');
+      } catch (error) {
+        console.error('Error Adding user', error.message);
       }
     };
     
@@ -317,7 +344,7 @@ const [project,setProject]=useState();
     }
 
    
-    const handleApplyNow = (selectedRole, notes,id) => {
+    const handleApplyNow = (selectedRole,notes,id) => {
       console.log(selectedRole);
       if (!selectedRole) {
         console.error('Role is required');
