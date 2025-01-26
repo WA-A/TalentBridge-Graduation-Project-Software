@@ -29,6 +29,7 @@ import {
     UserInfoText,
     PostTime,
     PostText,
+    PageTitle,
     PostIMg,
     ReactionOfPost,
     Interaction,
@@ -36,7 +37,7 @@ import {
 } from './../compnent/Style'
 import ImageViewer from 'react-native-image-zoom-viewer';
 // Color constants
-const { secondary, primary, careysPink, darkLight, fourhColor, tertiary, fifthColor } = Colors;
+const { secondary, primary, careysPink, darkLight, brand,fourhColor, tertiary, fifthColor } = Colors;
 const { width } = Dimensions.get('window');
 import * as WebBrowser from 'expo-web-browser'
 
@@ -48,6 +49,7 @@ import { setIsEnabledAsync } from 'expo-av/build/Audio';
 import { string } from 'prop-types';
 import { use } from 'react';
 import { PieChart, BarChart } from 'react-native-chart-kit';
+import Skills from './../GraduationProject1-BackEnd/ExternalApiSkills/ExternealApiSkills.controller';
 
 export default function AdminFieldsPage({ navigation, route}) {
        const { isNightMode, toggleNightMode } = useContext(NightModeContext);
@@ -60,6 +62,11 @@ export default function AdminFieldsPage({ navigation, route}) {
 
 
           const nav = useNavigation();
+
+
+          const [sub_specialization, setsub_specialization] = useState('');
+              const [Code, setCode] = useState('');
+              const [Skill, setSkill] = useState('');
       
 
 
@@ -138,12 +145,7 @@ export default function AdminFieldsPage({ navigation, route}) {
       position: Platform.OS === 'web' ? 'fixed' : 'relative',
       top: 0, left: 0, right: 0, zIndex: 10,
     }}>
-      <Text style={{
-        fontFamily: 'Updock-Regular', fontSize: 30, position: 'absolute', left: 0, right: 0,
-        textAlign: 'center', color: isNightMode ? primary : "#000"
-      }}>
-        Talent Bridge
-      </Text>
+      
 
       {/* Sidebar Toggle Button */}
       <TouchableOpacity onPress={toggleSidebar}>
@@ -151,119 +153,96 @@ export default function AdminFieldsPage({ navigation, route}) {
         <EvilIcons name="sc-telegram" size={37} color={darkLight} style={{ position: 'absolute', top: -20, left: 10 }} />
       </TouchableOpacity>
 
-      {/* Night Mode Toggle Button */}
-      <TouchableOpacity onPress={toggleNightMode}>
-        <View style={{ position: 'relative', width: 50, height: 50 }}>
-          <Ionicons name={isNightMode ? "sunny" : "moon"} size={25} color={darkLight} style={{ position: 'absolute', top: 9, right: 20 }} />
-          <Ionicons name="cloud" size={30.7} color={isNightMode ? "#000" : secondary} style={{ position: 'absolute', top: 8.7, left: -12 }} />
-          <Ionicons name="cloud" size={27} color={careysPink} style={{ position: 'absolute', top: 11, left: -11 }} />
-        </View>
-      </TouchableOpacity>
-    </View>
-
-    {/* Icon Navigation */}
-    <View style={{
-      flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 15, paddingVertical: 10,
-     backgroundColor: isNightMode ? '#2C2C2C' : '#f0f0f0' , elevation: 3, position: Platform.OS === 'web' ? 'fixed' : 'relative',
-      zIndex: 10, width: '100%', top: Platform.OS === 'web' ? 55 : 0, marginBottom: Platform.OS === 'web' ? 20 : 0,
-    }}>
-        <View style={[styles.container, { backgroundColor: isNightMode ? '#2C2C2C' : '#f0f0f0' }]}>
-      {/* Notification Icon */}
-      <TouchableOpacity style={styles.backButton} onPress={() => nav.navigate('Notification')}>
-        <Ionicons name="notifications" size={20} color={isNightMode ? primary : "#000"} />
-      </TouchableOpacity>
-          <View style={[styles.searchBox, { backgroundColor: isNightMode ? '#5E5A5A' : '#fff' }]}>
-            <Ionicons name="search" size={20} color={isNightMode ? '#fff' : '#888'} style={styles.searchIcon} />
-
-            <TextInput
-              style={[styles.inputSearch, { color: isNightMode ? '#fff' : '#000' }]}
-              placeholder="Search..."
-              placeholderTextColor={isNightMode ? '#ccc' : '#888'}
-              value={searchQuery}  // تعيين قيمة البحث
-              onChangeText={setSearchQuery}  // تحديث قيمة البحث عند الكتابة
-              returnKeyType="search"  // تحويل زر الإدخال في لوحة المفاتيح إلى زر بحث
-              onFocus={() => nav.navigate('SearchScreen', { searchQuery: searchQuery })}  // تنفيذ البحث عند التركيز
-            />
-          </View>
-        </View>
+         {/* Night Mode Toggle Button */}
+               <TouchableOpacity onPress={toggleNightMode}>
+                 <View style={{ position: 'relative', width: 50, height: 50 }}>
+                   <Ionicons name={isNightMode ? "sunny" : "moon"} size={25} color={darkLight} style={{ position: 'absolute', top: 9, right: 20 }} />
+                   <Ionicons name="cloud" size={30.7} color={isNightMode ? "#000" : secondary} style={{ position: 'absolute', top: 8.7, left: -12 }} />
+                   <Ionicons name="cloud" size={27} color={careysPink} style={{ position: 'absolute', top: 11, left: -11 }} />
+                 </View>
+               </TouchableOpacity>
+             </View>
+         
+             {/* Icon Navigation */}
+             <View style={{
+               flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 15, paddingVertical: 10,
+              backgroundColor: isNightMode ? '#2C2C2C' : '#f0f0f0' , elevation: 3, position: Platform.OS === 'web' ? 'fixed' : 'relative',
+               zIndex: 10, width: '100%', top: Platform.OS === 'web' ? 55 : 0, marginBottom: Platform.OS === 'web' ? 20 : 0,
+             }}>
+       
 </View></>
       )}
 
-                {/* <View style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  backgroundColor: isNightMode ? Colors.tertiary : Colors.secondary,
-                  width: '100%',
-                  marginTop: 20,
-                  padding: 10,
-                }}>
-                </View> */}
+              
+<View style={{ flex: 1,  backgroundColor: isNightMode ? "#000" : primary }}>
+                    
+    
+            <ScrollView style={{ flex: 1, padding: 70 }}>
+                   
+        <PageTitle>Add New Fields</PageTitle>
 
 
-                {/* الشريط الجانبي */}
-                  <View style={{ flexDirection: 'row', flex: 1 }}>
-                  {/* الشريط الجانبي */}
-                  {Platform.OS === 'web' && isSidebarVisible && (
-                  <View style={{
-                    position: 'fixed',
-                    width: '30%',
-                    height: '100%',
-                    backgroundColor: isNightMode ? '#333' : '#fff',
-                    padding: 10,
-                    zIndex: 5,
-                    borderRightWidth: 1,
-                    borderColor: '#ccc',
-                    overflow: 'auto',
-                    paddingVertical: 10,
-                    marginTop: Platform.OS === 'web' ? 50 : 0,
-                    height: `calc(110vh - 0px - 100px)`,
-                    overflowY: 'auto',
-                  }}>
-                    {loading ? (
-                      <Text style={{
-                        color: isNightMode ? '#fff' : '#000',
-                        fontSize: 16,
-                        textAlign: 'center',
-                      }}>
-                        Loading...
-                      </Text>
-                    ) : (
-                      <FlatList
-                        data={friends}
-                        renderItem={({ item }) => (
-                          <TouchableOpacity
-                            key={item._id}
-                            onPress={() => handleSelectedPerson(item)}
-                            style={{
-                              padding: 15,
-                              borderBottomWidth: 1,
-                              borderBottomColor: '#ccc',
-                              flexDirection: 'row',
-                              alignItems: 'center',
-                              justifyContent: 'flex-start',
-                              borderRadius: 8,
-                              marginBottom: 10,
-                              backgroundColor: isNightMode ? '#444' : '#f9f9f9',
-                              boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
-                              transition: 'all 0.3s ease',
-                            }}
-                          >
-                          
-                          </TouchableOpacity>
-                        )}
-                        keyExtractor={(item) => item._id.toString()}
-                      />
-                    )}
-                  </View>
-                )}
+        <Text style={styles.label}>New Fields Name</Text>   {/* sub_specialization */}
+                <View style={styles.inputContainer}>
+                        {/* Add New Fields */}
+                    <TextInput
+                        style={styles.input}
+                        value={sub_specialization}
+                        onChangeText={setsub_specialization}
+                        placeholder="Enter Fields Name"
+                    />
+                </View>
+                    
+                <Text style={styles.label}>New Fields Code</Text>   {/* code */}
+
+                <View style={styles.inputContainer}>
+            
+                    <TextInput
+                        style={styles.input}
+                        value={Code}
+                        onChangeText={setCode}
+                        placeholder="Enter Fields Code"
+                    />
+                </View>
+                    <View style={[styles.addButtonText,{marginBottom:40}]}>
+                <TouchableOpacity style={styles.submitButton} >
+                    <Text style={styles.submitText}>Add New Fields</Text>
+                </TouchableOpacity></View>
+
+                <View style={styles.divider} />
+
+                <PageTitle>Add New Skills</PageTitle>
+                       
+                <Text style={styles.label}>New Skill Name</Text>   {/* sub_specialization */}
+
+                <View style={styles.inputContainer}>
+                        {/* Add New Skills */}
+                    
+                    <TextInput
+                        style={styles.input}
+                        value={Skill}
+                        onChangeText={setSkill}
+                        placeholder="Enter Skills Name"
+                    />
                 </View>
 
-   
-    
-  
+                <Text style={styles.label}>New Skill Code</Text>   {/* code */}
 
-
+                <View style={styles.inputContainer}>
+            
+                    <TextInput
+                        style={styles.input}
+                        value={Code}
+                        onChangeText={setCode}
+                        placeholder="Enter Skill Code"
+                    />
+                </View>
+<View style={[styles.addButtonText,{marginBottom:40}]}>
+                <TouchableOpacity style={styles.submitButton} >
+                    <Text style={styles.submitText}>Add New Skills</Text>
+                </TouchableOpacity></View>
+            </ScrollView>
+  </View>
 
         </View>
     </TouchableWithoutFeedback>
@@ -271,29 +250,29 @@ export default function AdminFieldsPage({ navigation, route}) {
     );
 };
 
-const styles = StyleSheet.create({
-  menuContainer: {
-    position: 'absolute',
-    bottom: 20,
-    left: 20,
-    right: 20,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-    borderRadius: 10,
-    padding: 10,
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-  },   divider: {
-    height: 1,
-    backgroundColor: '#ddd',
-    marginVertical: 8,
-  },
+const styles = StyleSheet.create({ 
   container: {
     alignItems: 'center',
     marginVertical: 10,
   },
+  divider: {
+    height: 3,
+    backgroundColor: '#ddd',
+    marginVertical: 8,
+  },
   divider2: {
     height: 1,
     backgroundColor: '#ddd',
+    marginVertical: 8,
+  },
+  divider1: {
+    height: 5,
+    backgroundColor: Colors.fourhColor,
+    marginVertical: 8,
+  },
+  divider3: {
+    height: 1,
+    backgroundColor: Colors.fourhColor,
     marginVertical: 8,
   },
   title: {
@@ -302,331 +281,83 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: 'center',
   },
-  fileCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#f9f9f9',
-    borderRadius: 10,
-    padding: 10,
-    marginBottom: 10,
-    width: '100%',
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
-  },
-  
-  icon: {
-    marginRight: 10,
-  },
-  fileName: {
-    color: '#007BFF',
-    textDecorationLine: 'underline',
-    flexShrink: 1,
-    fontSize: 14,
-  },
-  video: {
-    width: '100%',
-    height: 300,
-    borderRadius: 10,
-    marginBottom: 10,
-    backgroundColor: '#000', // لون خلفية الفيديو (لأغراض التحميل)
-},    webVideo: {
-  width: '100%',
-  height: 300,
-  borderRadius: 10,
-  marginBottom: 10,
-  backgroundColor: '#000', // لون خلفية الفيديو (لأغراض التحميل)
+  label: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom:10,
+    color: brand,
 },
-commentModal: { 
-  justifyContent: 'center',
-  alignItems: 'center',
-  justifyContent: 'flex-end', // لظهور المودال من الأسفل في الجوال
-  margin: 0,
-},
-commentModalDark: {
-  backgroundColor: '#000000AA', // لون الظل عند التفعيل في وضع الليل
-},
-commentModalContent: {
-  width: '100%',
-  backgroundColor: '#fff',
-  borderTopLeftRadius: 20,  // جولة الزوايا من الأعلى
-  borderTopRightRadius: 20,  // جولة الزوايا من الأعلى
-  padding: 20,
-  justifyContent: 'flex-end',  // يتم وضع حقل التعليق في أسفل المودال
-  maxHeight: '70%',// تحديد أقصى ارتفاع للمودال ليكون 90% من الشاشة
-},
-// الهيدر
-commentHeader: {
-  flexDirection: 'row',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-  marginBottom: 20,
-},
-commentTitle: {
-  fontSize: 18,
-  fontWeight: 'bold',
-},
-commentTitleDark: {
-  color: 'white',
-},
-commentCloseButton: {
-  padding: 10,
-},
-// القائمة التعليقات
-commentList: {
-  paddingBottom: 20,
-},
-// تعليق فردي
-commentItem: {
-  flexDirection: 'row',
+inputContainer: {
+  marginTop: 12,
   marginBottom: 15,
-  borderBottomWidth: 1,
-  borderBottomColor: '#ddd',
-  paddingBottom: 10,
-  paddingRight: 10,
-},
-commentItemDark: {
-  backgroundColor: '#333',
-},
-commentUserImageContainer: {
-  marginRight: 10,
-},
-commentUserImage: {
-  width: 45,
-  height: 45,
-  borderRadius: 25, // جعل الصورة دائرية
-  borderWidth: 1,   // إطار
-  borderColor:Colors.fifthColor,
-  marginRight: 10,  // مسافة بين الصورة والنص
-},
-commentTextContainer: {
-  flex: 1,
-},
-commentUser: {
-  fontWeight: 'bold',
-  fontSize: 14,
-},
-commentUserDark: {
-  color: 'white',
-},
-commentImage: {
-  width: '100%',
-  height: 200,
-  borderRadius: 10,
-  marginTop: 10,
-},
-commentImagewep: {
-  width: 400,
-  height: 200,
-  borderRadius: 10,
-  marginTop: 10,
-},
-commentOptions: {
-  flexDirection: 'row',
-  marginTop: 10,
-},
-commentInputDark: {
-  backgroundColor: '#333',
-  color: 'white',
-},
-previewImage: {
-  width: '100%',
-  height: 200,
-  borderRadius: 10,
-  marginTop: 10,
-},
-imagePickerButton: {
-  flexDirection: 'row',
-  alignItems: 'center',
-  marginTop: 10,
-},
-imagePickerText: {
-  fontSize: 16,
-  marginLeft: 10,
-  color: '#007BFF',
-},
-commentInputContainer: {
-  flexDirection: 'row',  // وضع العناصر في نفس السطر
-  alignItems: 'center',  // محاذاة العناصر في الوسط عموديا
-  marginBottom: 15,  // مسافة بين المودال وعناصر الإدخال
-},
-
-
-commentInputDark: {
-  backgroundColor: '#333',  // تعديل الخلفية في الوضع الداكن
-  color: 'white',  // تغيير لون النص في الوضع الداكن
-},
-previewImage: {
-  width: 40,  // عرض الصورة المعاينة
-  height: 40,  // ارتفاع الصورة المعاينة
-  borderRadius: 5,
-  marginLeft: 10,  // مسافة بين الزر والصورة
-},
-imagePickerButton: {
-  padding: 10,
-},
-commentModalContent: {
-  borderTopLeftRadius: 20,
-  borderTopRightRadius: 20,
-  padding: 20,
-  flex: 1,
-  justifyContent: 'flex-start', // جعل التبرير يبدأ من الأعلى
-  maxHeight: '80%', // تحديد أقصى ارتفاع ليكون 80% من الشاشة
-},
-
-commentList: {
-  paddingBottom: 20, // تحديد المسافة أسفل القائمة
-},
-
-commentInputContainer: {
-  flexDirection: 'row',
-  alignItems: 'center',
-  marginTop: 10, // تقليل المسافة بين منطقة الإدخال والتعليقات
-  marginBottom: 0, // لا نريد مسافة إضافية أسفل منطقة الإدخال
-},
-
-
-// إضافة هذا لتجنب المسافة البيضاء الكبيرة أسفل منطقة الإدخال:
-modalContentContainer: {
-  flex: 1,
-  justifyContent: 'space-between', // توزيع المحتوى ليشغل المساحة المتاحة بشكل متساوٍ
-},
-commentCancelButton: {
-  backgroundColor: 'red',
-  paddingHorizontal: 15,
-  paddingVertical: 10,
-  borderRadius: 5,
-  marginRight: 10,
-},
-commentCancelText: {
-  color: 'red',
-  fontSize: 14,
-  fontWeight: 'bold',
-},
-commentInputContainer: {
-    flexDirection: 'column',
-    alignItems: 'flex-start',
-    marginBottom: 10,
-  },
-  commentInput: {
-    flex: 1, // لتمديد الحقل لملء المساحة المتاحة
-    padding: 10,
-    borderWidth: 1,
-    borderColor: Colors.darkLight,
-    borderRadius: 5,backgroundColor:Colors.secondary
-  },
-  commentInputContainer: {
-    flexDirection: 'row', // وضع العناصر بجانب بعضها
-    alignItems: 'center', // محاذاة العناصر عمودياً
-    marginTop: 10,
-  },
-  commentInputDark: {
-    backgroundColor: '#222',
-    color: 'white',
-  },
-  imageWrapper: {
-    position: 'relative',
-    marginTop: 10,
-    alignSelf: 'stretch',
-  },
-  commentImagePreview: {
-    width: '100%',
-    height: 150,
-    borderRadius: 10,
-    resizeMode: 'cover',
-  },
-  removeImageButton: {
-    position: 'absolute',
-    top: 20,
-    right:-5,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    borderRadius: 15,padding:3
-  },
-  actionButtonsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 10,
-    width: '100%',
-  },
-  imagePickerButton: {
-    marginRight: 10,
-  },
-  commentSendButton: {
-    backgroundColor:Colors.fourhColor,
-    padding: 8,
-    width:30,height:30, borderRadius: 30,
-  },
-  actionButtonsContainer: {
-    flexDirection: 'row', // ترتيب الأزرار بجانب بعضها
-    alignItems: 'center',
-    marginLeft: 10,
-  },
-  noCommentsText: {
-    fontSize: 18,
-    color: 'gray',
-    textAlign: 'center',
-    flex: 1,
-    justifyContent: 'center',  // توسيط النص في الاتجاه العمودي
-
-  },
-  noCommentsTextDark: {
-    color: 'white',  // تغيير اللون إلى الأبيض في وضع الليل
-  },
-  commentDate: {
-  fontSize: 9,
-  color: 'gray',
-  marginTop: 5,
-},
-commentDateDark: {
-  color: 'lightgray',
-},
-commentText: {
-  color: '#000',
-},
-searchBox: {
-  flexDirection: 'row',
-  alignItems: 'center',
-  flex: 1,
   paddingHorizontal: 10,
-  borderRadius: 10,
-  borderWidth: 1,
-  borderColor: '#ccc',
+  borderWidth: 1, // إضافة الحدود
+  borderColor: "fff", // لون الحدود
+  borderRadius: 5, // تقويس الحواف
+  borderRadius: 8,
+
 },
-searchIcon: {
-  marginRight: 10,
-},
-inputSearch: {
-  flex: 1,
+input: {
   height: 40,
   fontSize: 16,
+  color: "#000",
+  paddingHorizontal: 10,
+  width: '100%',
+
 },
-container: {
-  flexDirection: 'row',
+submitButton: {
+  backgroundColor: fifthColor,
+  paddingVertical: 15,
+  borderRadius: 8,
   alignItems: 'center',
-  padding: 5,
+  marginVertical: 20,
 },
-backButton: {
-  marginRight: 10,
-},
-container: {
-},
-contentContainer: {
-  padding: 0,
-},
-chartContainer: {
-  alignItems: 'center',
-},
-title: {
+
+submitText: {
   fontSize: 18,
   fontWeight: 'bold',
+  color: '#fff',
   textAlign: 'center',
-  marginBottom: 10,
+
 },
-barChart: {
-  marginVertical: 10,
-  borderRadius: 8,
+container1: {
+  padding: 20,
+  marginVertical: 20,
+  backgroundColor: '#f9f9f9',
+  borderRadius: 10,
+  elevation: 5,
+},
+row: {
+  flexDirection: 'row', // ترتيب أفقي للعناصر
+  alignItems: 'center', // محاذاة العناصر عموديًا
+  justifyContent: 'space-between', // توزيع متوازن بين النص والزر
+},
+label: {
+  fontSize: 16,
+  fontWeight: 'bold',
+  color: '#333',
+  flex: 1, // يسمح بتوسيع النص إذا لزم الأمر
+  marginRight: 10, // مسافة بين النص والزر
+},
+fileButton: {
+  backgroundColor: Colors.fourhColor,
+  paddingVertical: 10,
+  paddingHorizontal: 20,
+  borderRadius: 5,
+},
+fileInfo: {
+  marginTop: 20,
+  padding: 10,
+  borderWidth: 1,
+  borderColor: '#ddd',
+  borderRadius: 5,
+  backgroundColor: '#f5f5f5',
+  width: '100%',
+  alignItems: 'center',
+},
+fileName: {
+  fontSize: 16,
+  color: '#555',
 },
 });
  

@@ -20,8 +20,10 @@ router.get('/getallsubmissionsforjunior/:ProjectId', auth(EndPoints.GetAllJunior
 router.get('/getallsubmissionsbysenior/:ProjectId', auth(EndPoints.GetTaskSubmissionsBySenior), TasksController.GetTaskSubmissionsBySenior);
 
 // Review
-router.post('/addreviewtosubmit/:ProjectId', auth(EndPoints.AddReviewToSubmission), TasksController.AddReviewToSubmission);
-router.post('/reviewskills/:ProjectId', auth(EndPoints.ReviewSkills), TasksController.ReviewSkills);
+
+router.post('/addreviewtosubmit/:ProjectId',auth(EndPoints.AddReviewToSubmission),TasksController.AddReviewToSubmission);
+router.post('/reviewskills/:ProjectId',auth(EndPoints.ReviewSkills),TasksController.ReviewSkills);
+router.patch('/UpdateTaskinformations/:ProjectId',auth(EndPoints.CreateTask),TasksController.UpdateTaskInformations);
 
 
 export default router;

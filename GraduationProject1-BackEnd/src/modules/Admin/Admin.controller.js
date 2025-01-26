@@ -58,31 +58,42 @@ export const AdminAcceptofSeniorRequest = async (req, res) => {
  
 // Add New Fields 
 
-  export const AddNewFields = async (req, res) => {
-    try {
-      const { sub_specialization, code } = req.body;
-  
-      if (!sub_specialization || !code) {
-        return res.status(400).json({ error: "All fields are required except ID!" });
-      }
-  
-      const newId = Fields.length > 0 
-        ? Fields[Fields.length - 1].id + 1 
-        : 1;
-  
-      const newField = {
-        id: newId,
-        sub_specialization,
-        code,
-      };
-  
-      Fields.push(newField);
-  
-      res.status(201).json({ message: "New field added successfully!", newField });
-    } catch (error) {
-      res.status(500).json({ error: "Internal Server Error" });
+export const AddNewFields = async (req, res) => {
+  try {
+    const { sub_specialization, code } = req.body;
+
+    // Validate that the required fields are provided
+    if (!sub_specialization || !code) {
+      return res.status(400).json({ error: "All fields are required except ID!" });
     }
-  };
+
+    // Check if the sub_specialization already exists
+    const existingField = Fields.find(field => field.sub_specialization === sub_specialization);
+    if (existingField) {
+      return res.status(400).json({ error: "Sub-specialization already exists!" });
+    }
+
+    // Determine the new ID
+    const newId = Fields.length > 0 ? Fields[Fields.length - 1].id + 1 : 1;
+
+    // Create the new field
+    const newField = {
+      id: newId,
+      sub_specialization,
+      code,
+    };
+
+    // Add the new field to the list
+    Fields.push(newField);
+
+    // Respond with success
+    res.status(201).json({ message: "New field added successfully!", newField });
+  } catch (error) {
+    // Handle unexpected errors
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
 
 
   // Add New Skills 
@@ -91,27 +102,38 @@ export const AdminAcceptofSeniorRequest = async (req, res) => {
     try {
       const { name, code } = req.body;
   
+      // Validate that the required fields are provided
       if (!name || !code) {
         return res.status(400).json({ error: "All Skills are required except ID!" });
       }
   
-      const newId = Skills.length > 0 
-        ? Skills[Skills.length - 1].id + 1 
-        : 1;
+      // Check if the skill with the same name already exists
+      const existingSkill = Skills.find(skill => skill.name === name);
+      if (existingSkill) {
+        return res.status(400).json({ error: "Skill with this name already exists!" });
+      }
   
+      // Determine the new ID
+      const newId = Skills.length > 0 ? Skills[Skills.length - 1].id + 1 : 1;
+  
+      // Create the new skill
       const newSkill = {
         id: newId,
         name,
         code,
       };
   
+      // Add the new skill to the list
       Skills.push(newSkill);
   
-      res.status(201).json({ message: "New skills added successfully!", newSkill });
+      // Respond with success
+      res.status(201).json({ message: "New skill added successfully!", newSkill });
     } catch (error) {
+      // Handle unexpected errors
       res.status(500).json({ error: "Internal Server Error" });
     }
   };
+  
   
 
 
