@@ -1,5 +1,6 @@
 import ProjectsModel from "../../Model/ProjectsModel.js";
 import cloudinary from '../../../utls/Cloudinary.js';
+import mongoose from "mongoose";
 
 
 export const CreateTask = async (req, res) => {
@@ -114,57 +115,84 @@ export const GetAllTasksBySenior = async (req, res) => {
 };
 
 
-export const UpdateTaskDates = async (req, res) => {
+export const UpdateTaskInformations = async (req, res) => {
     try {
-        const { ProjectId} = req.params;
-        const {TaskId, StartDate, EndDate } = req.body;
+        const { ProjectId } = req.params;
+        const { TaskId, StartDate, EndDate, AssignedTo, SubmitTaskMethod } = req.body;
 
-         // التحقق من وجود الحقول المطلوبة
-         if (!ProjectId || !TaskId || !StartDate || !EndDate) {
+        if (!ProjectId || !TaskId || !StartDate || !EndDate) {
             return res.status(400).json({ message: "All fields are required" });
         }
 
-        // التحقق من أن تاريخ البداية ليس بعد تاريخ النهاية
         if (new Date(StartDate) > new Date(EndDate)) {
             return res.status(400).json({ message: "Start date cannot be later than end date" });
         }
 
-        // جلب المشروع من قاعدة البيانات
         const project = await ProjectsModel.findById(ProjectId);
         if (!project) {
             return res.status(404).json({ message: "Project not found" });
         }
 
-        // العثور على المهمة باستخدام `_id`
         const task = project.Tasks.find((t) => t._id.toString() === TaskId);
         if (!task) {
             return res.status(404).json({ message: "Task not found" });
         }
 
-        // تحديث تواريخ المهمة
+        const TaskFile = req.files?.['TaskFile']
+            ? await Promise.all(
+                  req.files['TaskFile'].map(async (file) => {
+                      const { secure_url, public_id } = await cloudinary.uploader.upload(file.path, {
+                          folder: `GraduationProject1-Software/Project/Task/TaskFile/${ProjectId}`,
+                      });
+
+                      return {
+                          secure_url,
+                          public_id,
+                          originalname: file.originalname,
+                      };
+                  })
+              )
+            : [];
+
         task.StartDate = StartDate;
         task.EndDate = EndDate;
 
-        // حفظ المشروع
+        if (AssignedTo) {
+            const assignedIds = Array.isArray(AssignedTo) ? AssignedTo : [AssignedTo];
+            task.AssignedTo = assignedIds.map((id) => new mongoose.Types.ObjectId(id));
+        }
+        
+
+        task.TaskStatus = "In Progress";
+
+        if (SubmitTaskMethod) {
+            task.SubmitTaskMethod = SubmitTaskMethod;
+        }
+
         await project.save();
 
         return res.status(200).json({
-            message: "Task dates updated successfully",
+            message: "Task details updated successfully",
             task: {
                 TaskId: task._id,
                 TaskName: task.TaskName,
                 StartDate: task.StartDate,
                 EndDate: task.EndDate,
+                TaskStatus: task.TaskStatus,
+                AssignedTo: task.AssignedTo,
+                TaskFile,
+                SubmitTaskMethod: task.SubmitTaskMethod,
             },
         });
     } catch (error) {
-        console.error("Error updating task dates:", error.message);
+        console.error("Error updating task details:", error.message);
         return res.status(500).json({
-            message: "Error updating task dates",
+            message: "Error updating task details",
             error: error.message,
         });
     }
 };
+
 
 // Get All Tasks For Junior
 
