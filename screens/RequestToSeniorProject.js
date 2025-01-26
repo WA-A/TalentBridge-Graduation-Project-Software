@@ -438,7 +438,7 @@ console.log(projectId);
     style={styles.applyButton}
     onPress={() => {
       if (status === 'In Progress') {
-        navigation.navigate('ThePlaneProjectSenior', { projectId: projectId }); // شاشة عرض المشروع
+        navigation.navigate('ThePlaneProjectSenior', { projectId: projectId,juniors:applications}); // شاشة عرض المشروع
 
       } else if (status === 'Open') {
         startProject(); // تنفيذ بدء المشروع
