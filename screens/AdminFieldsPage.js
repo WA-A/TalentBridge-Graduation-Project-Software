@@ -112,7 +112,45 @@ export default function AdminFieldsPage({ navigation, route}) {
                         }
                     };
 
-                   
+                    const handleAddNewSkills = async () => {
+                      try {
+                        const token = await AsyncStorage.getItem('userToken');
+                        if (!token) {
+                          console.error('Token not found');
+                          return;
+                        }
+                          const baseUrl = Platform.OS === 'web'
+                              ? 'http://localhost:3000'
+                              : 'http://192.168.1.239:3000';
+                  
+                          const formData = new FormData();
+                  
+                          formData.append('name', name);
+                          formData.append('code', code);
+
+                              console.log('Sending data Add New Skills:', formData);
+
+                         const response = await fetch(`${baseUrl}/admin/addnewskills`, {
+                        method: 'POST',
+                           headers: {
+                              'Authorization': `Wasan__${token}`,
+                                     },
+                               body: formData,
+                           });
+                  
+              
+                          if (!response.ok) {
+                              const errorData = await response.json();
+                              throw new Error(errorData.message || 'Something went wrong');
+                          }
+                  
+                          const result = await response.json();
+                          console.log('Add New Skills  successfully', result);
+                           Alert.alert('Add New Skills successfully.');
+                      } catch (error) {
+                          console.error('Error Sending Request :', error);
+                      }
+                  };
  return(
   
 <TouchableWithoutFeedback >
@@ -282,7 +320,7 @@ export default function AdminFieldsPage({ navigation, route}) {
                     />
                 </View>
 <View style={[styles.addButtonText,{marginBottom:40}]}>
-                <TouchableOpacity style={styles.submitButton} >
+                <TouchableOpacity style={styles.submitButton} onPress={handleAddNewSkills}>
                     <Text style={styles.submitText}>Add New Skills</Text>
                 </TouchableOpacity></View>
             </ScrollView>
