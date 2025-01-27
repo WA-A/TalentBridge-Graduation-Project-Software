@@ -23,7 +23,7 @@ router.get('/getallsubmissionsbysenior/:ProjectId', auth(EndPoints.GetTaskSubmis
 
 router.post('/addreviewtosubmit/:ProjectId',auth(EndPoints.AddReviewToSubmission),TasksController.AddReviewToSubmission);
 router.post('/reviewskills/:ProjectId',auth(EndPoints.ReviewSkills),TasksController.ReviewSkills);
-router.patch('/UpdateTaskinformations/:ProjectId',auth(EndPoints.CreateTask),TasksController.UpdateTaskInformations);
+router.patch('/UpdateTaskinformations/:ProjectId',auth(EndPoints.CreateTask),fileUpload(FileValue.file).fields([{ name:'TaskFile'}]),TasksController.UpdateTaskInformations);
 
 
 export default router;
