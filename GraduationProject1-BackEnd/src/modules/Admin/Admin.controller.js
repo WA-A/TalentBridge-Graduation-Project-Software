@@ -100,10 +100,10 @@ export const AddNewFields = async (req, res) => {
 
   export const AddNewSkills = async (req, res) => {
     try {
-      const { name, code } = req.body;
+      const { name, codeSkill } = req.body;
   
       // Validate that the required fields are provided
-      if (!name || !code) {
+      if (!name || !codeSkill) {
         return res.status(400).json({ error: "All Skills are required except ID!" });
       }
   
@@ -120,7 +120,7 @@ export const AddNewFields = async (req, res) => {
       const newSkill = {
         id: newId,
         name,
-        code,
+        code: codeSkill,
       };
   
       // Add the new skill to the list
