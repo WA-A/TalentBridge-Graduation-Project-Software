@@ -6,13 +6,13 @@ import UserModel from '../../Model/User.Model.js';
 import { SendNotification } from '../../../utls/SendNotfication.js';
 import Notification from '../../Model/Notfication.js';
 import { AddFieldsWithOutToken } from '../../../ExternalApiFields/ExternealApiFields.controller.js';
-import {  AddSkillWithoutToken } from '../../../ExternalApiSkills/ExternealApiSkills.controller.js';
+import {  AddSkillsWithoutToken } from '../../../ExternalApiSkills/ExternealApiSkills.controller.js';
 
 
 export const SignUp = async (req, res) => {
     console.log('Received data:', req.body);
     
-    const { FullName, Email, Password, ConfirmPassword, Gender, Role, BirthDate, PhoneNumber, Location, YearsOfExperience, FieldId, SkillId, Rate } = req.body;
+    const { FullName, Email, Password, ConfirmPassword, Gender, Role, BirthDate, PhoneNumber, Location, YearsOfExperience, FieldId, Skills } = req.body;
     const HashedPassword = bcrypt.hashSync(Password, parseInt(process.env.SALTROUND));
     const HashedConfirmPassword = bcrypt.hashSync(ConfirmPassword, parseInt(process.env.SALTROUND));
 
@@ -25,12 +25,16 @@ export const SignUp = async (req, res) => {
         const fieldToAdd = await AddFieldsWithOutToken(FieldId.toString());
         console.log('Field data:', fieldToAdd);
 
-        console.log('Requesting Skill data with SkillId and Rate:', SkillId, Rate);
-        const skillWithRate = await AddSkillWithoutToken(SkillId.toString(), Rate);
-        console.log('Skill data:', skillWithRate);
+        if (!Array.isArray(Skills) || Skills.length === 0) {
+            return res.status(400).json({ message: "Skills array is required." });
+        }
 
-        if (!skillWithRate || !skillWithRate.Rate) {
-            return res.status(400).json({ message: "Skill Rate is required." });
+        console.log('Requesting Skill data with Skills:', Skills);
+        const skillsWithRate = await AddSkillsWithoutToken(Skills);
+        console.log('Skills data:', skillsWithRate);
+
+        if (!skillsWithRate || skillsWithRate.length === 0) {
+            return res.status(400).json({ message: "At least one valid skill with Rate is required." });
         }
 
         if (YearsOfExperience > 0) {
@@ -48,7 +52,12 @@ export const SignUp = async (req, res) => {
                 YearsOfExperience: YearsofExperienceN,
                 SeniorAccountStatus: "Pending",
                 Fields: [{ id: fieldToAdd.id, sub_specialization: fieldToAdd.sub_specialization, code: fieldToAdd.code }],
-                Skills: [{ id: skillWithRate.id, name: skillWithRate.name, code: skillWithRate.code, Rate: skillWithRate.Rate }]
+                Skills: skillsWithRate.map(skill => ({
+                    id: skill.id,
+                    name: skill.name,
+                    code: skill.code,
+                    Rate: skill.Rate
+                }))
             });
             const token = jwt.sign({ Email }, process.env.CONFIRM_EMAILTOKEN);
             return res.status(201).json({ message: "success", user: CreateUser, token: token });
@@ -64,7 +73,12 @@ export const SignUp = async (req, res) => {
                 Location,
                 YearsOfExperience,
                 Field: [{ id: fieldToAdd.id, sub_specialization: fieldToAdd.sub_specialization, code: fieldToAdd.code }],
-                Skill: [{ id: skillWithRate.id, name: skillWithRate.name, code: skillWithRate.code, Rate: skillWithRate.Rate }]
+                Skills: skillsWithRate.map(skill => ({
+                    id: skill.id,
+                    name: skill.name,
+                    code: skill.code,
+                    Rate: skill.Rate
+                }))
             });
             const token = jwt.sign({ Email }, process.env.CONFIRM_EMAILTOKEN);
             return res.status(201).json({ message: "success", user: CreateUser, token: token });
@@ -74,8 +88,6 @@ export const SignUp = async (req, res) => {
         return res.status(error.statusCode || 500).json({ message: error.message || "Server error" });
     }
 };
-
-
 
 
 
