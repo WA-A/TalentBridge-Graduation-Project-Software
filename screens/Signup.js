@@ -52,8 +52,8 @@ export default function Signup({ navigation }) {
     });
 
 
-    const [selectedJob, setSelectedJob] = useState('Software Engineer');
-    const [selectedSkill, setselectedSkill] = useState([]);  
+    const [selectedJob, setSelectedJob] = useState(['Software Engineer']);
+    const [selectedSkills, setselectedSkills] = useState([]);  
     const [jobFields, setJobFields] = useState([]); // تخزين الوظائف المحملة من API
     const [skills, setskills] = useState([]); // تخزين مهارات المحملة من API
     const [hidePassword, setHidePassword] = useState(true);
@@ -204,8 +204,10 @@ export default function Signup({ navigation }) {
     // Join Api With FrontPage 
     const handleSignup = async (values) => {
         try {
-            // استخراج المهارة المختارة (التي تحتوي على المعرف والتقييم)
-            const selectedSkillData = selectedSkill[0]; 
+            const selectedSkillsData = selectedSkills.map(skill => ({
+                SkillId: skill.id,
+                Rate: skill.Rate
+            }));
     
             const dataToSend = {
                 ...values,
@@ -213,15 +215,13 @@ export default function Signup({ navigation }) {
                 Gender: gender,
                 FieldId: selectedJob,
                 Role: userType,
-                SkillId: selectedSkillData?.id,  // إرسال SkillId فقط
-                Rate: selectedSkillData?.Rate,  // إرسال Rate فقط
+                Skills: selectedSkillsData 
             };
     
             if (userType === 'Senior') {
                 dataToSend.SeniorAccountStatus = 'Pending';
             }
     
-            // تحقق من وجود FieldId و SkillId و Rate
             if (!dataToSend.FieldId) {
                 console.error('FieldId is missing. Please select a job.');
                 setErrorMessage3('Please select a job field.');
@@ -229,9 +229,9 @@ export default function Signup({ navigation }) {
                 return;
             }
     
-            if (!dataToSend.SkillId || !dataToSend.Rate) {
-                console.error('SkillId or Rate is missing.');
-                setErrorMessage3('Please select a skill and rate it.');
+            if (!Array.isArray(dataToSend.Skills) || dataToSend.Skills.length === 0) {
+                console.error('Skills array is missing.');
+                setErrorMessage3('Please select at least one skill and rate it.');
                 setMenuVisible(true);
                 return;
             }
@@ -281,6 +281,7 @@ export default function Signup({ navigation }) {
             setMenuVisible(true);
         }
     };
+    
     
     
 
@@ -337,8 +338,7 @@ export default function Signup({ navigation }) {
             if (data && data.Skills) {
                 setskills(data.Skills.map(skill => ({
                     label: skill.name,
-                    value: skill.id.toString(), // تحويل المعرف إلى نص
-                 //   Rate: skill.Rate || 0, 
+                    value: skill.id.toString(),
                 })));
             }
         } catch (error) {
@@ -778,72 +778,58 @@ export default function Signup({ navigation }) {
   <Text style={labelStyle}>Skills</Text>
   <View style={styles.container}>
     <View style={styles.pickerWrapper}>
-      {Platform.OS === 'web' ? (
-        <Picker
-          selectedValue={selectedSkill[0]?.id}  // عرض المهارة المختارة
-          onValueChange={(SitemValue) => {
-            // تحديث المهارة المختارة مع الريت
-            setselectedSkill([{ id: SitemValue, Rate: 0 }]);
-          }}
-          style={styles.pickerWeb}
-        >
-          {skills.map((skill) => (
-            <Picker.Item
-              label={skill.label}  // عرض اسم المهارة
-              value={skill.value}  // القيمة التي يتم تخزينها في selectedSkill
-              key={skill.value}
-            />
-          ))}
-        </Picker>
-      ) : (
-        <Picker
-          selectedValue={selectedSkill[0]?.id}  // عرض المهارة المختارة
-          onValueChange={(SitemValue) => {
-            // تحديث المهارة المختارة مع الريت
-            setselectedSkill([{ id: SitemValue, Rate: 0 }]);
-          }}
-        >
-          {skills.map((skill) => (
-            <Picker.Item
-              label={skill.label}  // عرض اسم المهارة
-              value={skill.value}  // القيمة التي يتم تخزينها في selectedSkill
-              key={skill.value}
-            />
-          ))}
-        </Picker>
-      )}
+      <Picker
+        selectedValue={null} // السماح باختيار مهارات جديدة
+        onValueChange={(itemValue) => {
+          // إضافة مهارة جديدة للمصفوفة
+          if (!selectedSkills.find(skill => skill.id === itemValue)) {
+            setselectedSkills([...selectedSkills, { id: itemValue, Rate: 0 }]);
+          }
+        }}
+        style={Platform.OS === 'web' ? styles.pickerWeb : null}
+      >
+        {skills.map((skill) => (
+          <Picker.Item
+            label={skill.label}
+            value={skill.value}
+            key={skill.value}
+          />
+        ))}
+      </Picker>
     </View>
   </View>
 
-  {/* إضافة التقييم بعد اختيار المهارة */}
-  {selectedSkill.length > 0 && selectedSkill[0]?.id && (
-    <View style={{ marginTop: 20 }}>
+  {/* عرض المهارات المختارة مع إمكانية التقييم */}
+  {selectedSkills.map((skill, index) => (
+    <View key={skill.id} style={{ marginTop: 20 }}>
       <Text style={{ fontSize: 16, fontWeight: 'bold', marginBottom: 10 }}>
-        Rate the selected skill:
+        {`Rate the skill: ${skills.find(s => s.value === skill.id)?.label || ''}`}
       </Text>
       <View style={{ flexDirection: 'row', alignItems: 'center' }}>
         {[1, 2, 3, 4, 5].map((starIndex) => (
           <TouchableOpacity
             key={starIndex}
             onPress={() => {
-              const updatedSkill = { ...selectedSkill[0], Rate: starIndex };
-              setselectedSkill([updatedSkill]);  // تحديث الـ selectedSkill
+              // تحديث تقييم المهارة المختارة
+              const updatedSkills = [...selectedSkills];
+              updatedSkills[index] = { ...updatedSkills[index], Rate: starIndex };
+              setselectedSkills(updatedSkills);
             }}
           >
             <MaterialCommunityIcons
               name={
-                starIndex <= selectedSkill[0]?.Rate
+                starIndex <= skill.Rate
                   ? 'star'
                   : 'star-outline'
               }
               size={24}
-              color={starIndex <= selectedSkill[0]?.Rate ? '#F7A8B8' : '#ccc'}
+              color={starIndex <= skill.Rate ? '#F7A8B8' : '#ccc'}
             />
           </TouchableOpacity>
         ))}
       </View>
     </View>
-  )}
+  ))}
 </View>
 
 
