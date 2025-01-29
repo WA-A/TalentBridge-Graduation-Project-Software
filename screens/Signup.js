@@ -266,21 +266,29 @@ export default function Signup({ navigation }) {
             const result = await response.json();
             console.log('User registered successfully:', result);
     
-            if (userType === 'Senior') {
-                console.log('Senior user registered with status Pending');
-                navigation.navigate('RequestToSeniorPage');
-            } else if (result.token) {
-                await AsyncStorage.setItem('userToken', result.token); // تخزين التوكين
-                navigation.navigate('HomeScreen');
+            if (result.token) {
+                await AsyncStorage.setItem('userToken', result.token);
+                console.log('User token saved successfully!');
+    
+                if (userType === 'Senior') {
+                    console.log('Senior user registered with status Pending');
+                    navigation.navigate('RequestToSeniorPage');
+                } else {
+                    navigation.navigate('HomeScreen');
+                }
             } else {
                 console.warn('No token found in response.');
             }
+    
+           
+    
         } catch (error) {
             console.error('Error in Signup Process:', error.message);
             setErrorMessage3('An unexpected error occurred.');
             setMenuVisible(true);
         }
     };
+    
     
     
     
@@ -835,14 +843,14 @@ export default function Signup({ navigation }) {
 
 
                                   {/* Request senior to admin */}
-                         {userType === 'Senior' && (
+                         {/* {userType === 'Senior' && (
 
                        <StyledButton style={{ backgroundColor: brand, marginBottom: 10}}
                                     onPress={() => navigation.navigate('RequestSeniorToAdminPage')}
                                 >
                                     <ButtonText> Request To Senior </ButtonText>
                                 </StyledButton>
-                          )}
+                          )} */}
 
                                 {isMenuVisible && (
                                     <View style={[
