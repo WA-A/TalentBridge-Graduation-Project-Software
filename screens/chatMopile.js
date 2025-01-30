@@ -904,7 +904,7 @@ const openFileInBrowser = async (uri) => {
     >
       <View style={{ marginBottom: Platform.OS === 'web' ? 100 : 60, margin: 4 }}>
         {chatsData?.length > 0 ? (
-          <FlatList
+      <FlatList style={{ marginBottom: Platform.OS === 'web' ? 50 : 0 }}
             ref={flatListRef} // تعيين المرجع
             data={chatsData[0]?.messages || []}
             keyExtractor={(item) => item._id}

@@ -1257,7 +1257,7 @@ const handleGetAllPosts = async () => {
 
     setIsLoading(false);
   } catch (error) {
-    console.error('Error fetching posts:', error);
+ //   console.error('Error fetching posts:', error);
     setIsLoading(false);
   }
 };
@@ -1325,7 +1325,7 @@ const handleGetAllPosts = async () => {
   <Ionicons name="folder" size={20} color={isNightMode ? "#000": "#000"} />
 </TouchableOpacity>
 
-         <TouchableOpacity onPress={() => nav.navigate('AddTaskForProject')} style={{ marginRight:100 }}>
+         <TouchableOpacity onPress={() => nav.navigate('AddPostScreen')} style={{ marginRight:100 }}>
            <Ionicons name="add-circle" size={25} color= {isNightMode ? primary : "#000"} />
          </TouchableOpacity>
    
@@ -1616,147 +1616,158 @@ const handleGetAllPosts = async () => {
       ):('')}
 
 
-{posts.map((post, index) => (
-  <React.Fragment key={index}>
-    <View
-      style={{
-        width: Platform.OS === 'web' ? '50%' : '100%',
-        alignItems: 'center',
-        marginBottom: 15,marginTop: 30,
-      }}
-    >
+      {posts?.length === 0 ? (
+  <Text style={{ textAlign: 'center', fontSize: 18, marginTop: 30 }}>
+  No post available
+  </Text>
+) : (
+  posts?.map((post, index) => (
+    <React.Fragment key={index}>
       <View
         style={{
-          backgroundColor: isNightMode ? '#3a3a3a' : '#fff',
-          width: '95%',
-          borderRadius: 15,
-          padding: 15,
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.3,
-          shadowRadius: 5,
-          elevation: 5,
+          width: Platform.OS === 'web' ? '50%' : '100%',
+          alignItems: 'center',
+          marginBottom: 15,
+          marginTop: 30,
         }}
       >
-        {/* Header */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
-          <Image
-            source={{ uri: post.UserId.PictureProfile.secure_url }}
-            style={{
-              width: 50,
-              height: 50,
-              borderRadius: 25,
-              marginRight: 10,
-              borderWidth: 2,
-              borderColor: isNightMode ? primary : '#ddd',
-            }}
-          />
-          <View>
-            <Text style={{ color: isNightMode ? primary : '#000', fontWeight: 'bold', fontSize: 16 }}>
-              {post.UserId.FullName}
-            </Text>
-            <Text style={{ color: darkLight, fontSize: 12 }}>
-              {new Date(post.createdAt).toLocaleString()}
-            </Text>
-          </View>
-        </View>
-
-        {/* Body */}
-        <Text style={{ color: isNightMode ? primary : '#000', fontSize: 16, lineHeight: 22, marginBottom: 15 }}>
-          {post.Body}
-        </Text>
-        <View style={styles.divider} />
-
-        {/* Images */}
-        {post.Images && post.Images.length > 0 && post.Images.map((image, idx) => (
-          <TouchableOpacity
-            key={idx}
-            onPress={() => openImageViewer(image?.secure_url)}
-          >
+        <View
+          style={{
+            backgroundColor: isNightMode ? '#3a3a3a' : '#fff',
+            width: '95%',
+            borderRadius: 15,
+            padding: 15,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.3,
+            shadowRadius: 5,
+            elevation: 5,
+          }}
+        >
+          {/* Header */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
+            {/* صورة المستخدم */}
             <Image
-              source={{ uri: image.secure_url }}
+              source={{ uri: post.UserId.PictureProfile.secure_url }}
               style={{
-                width: '100%',
-                height: 300,
-                borderRadius: 10,
-                marginBottom: 10,
-                resizeMode: 'cover',
+                width: 50,
+                height: 50,
+                borderRadius: 25,
+                marginRight: 10,
+                borderWidth: 2,
+                borderColor: isNightMode ? primary : '#ddd',
               }}
             />
-          </TouchableOpacity>
-        ))}
 
-        {/* Videos */}
-        {post.Videos && post.Videos.length > 0 && post.Videos.map((video, idx) => (
-          <View key={idx}>
-          {Platform.OS === 'web' ? (
+            {/* اسم المستخدم والتاريخ */}
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: isNightMode ? primary : '#000', fontWeight: 'bold', fontSize: 16 }}>
+                {post.UserId.FullName}
+              </Text>
+              <Text style={{ color: darkLight, fontSize: 12 }}>
+                {new Date(post.createdAt).toLocaleString()}
+              </Text>
+            </View>
+
+            {/* أيقونة الثلاث نقاط */}
+            <TouchableOpacity style={{ padding: 10 }}>
+              <Entypo name="dots-three-vertical" size={20} color={isNightMode ? '#fff' : '#000'} />
+            </TouchableOpacity>
+          </View>
+
+          {/* Body */}
+          <Text style={{ color: isNightMode ? primary : '#000', fontSize: 16, lineHeight: 22, marginBottom: 15 }}>
+            {post.Body}
+          </Text>
+          <View style={styles.divider} />
+
+          {/* Images */}
+          {post.Images && post.Images.length > 0 && post.Images.map((image, idx) => (
+            <TouchableOpacity
+              key={idx}
+              onPress={() => openImageViewer(image?.secure_url)}
+            >
+              <Image
+                source={{ uri: image.secure_url }}
+                style={{
+                  width: '100%',
+                  height: 300,
+                  borderRadius: 10,
+                  marginBottom: 10,
+                  resizeMode: 'cover',
+                }}
+              />
+            </TouchableOpacity>
+          ))}
+
+          {/* Videos */}
+          {post.Videos && post.Videos.length > 0 && post.Videos.map((video, idx) => (
+            <View key={idx}>
+              {Platform.OS === 'web' ? (
                 <video
                     controls
                     style={styles.video}
                     src={video.secure_url}
                     resizeMode="contain" // التأكد من أن الفيديو يبقى ضمن الحدود
                 />
-            ) : (
+              ) : (
                 <ExpoVideo
                     source={{ uri: video.secure_url }}
                     style={styles.video}
                     useNativeControls
                     resizeMode="contain" // التأكد من أن الفيديو يبقى ضمن الحدود
                 />
-            )}
-        </View>
-            ))}
+              )}
+            </View>
+          ))}
 
-      {/* Files */}
-      {post.Files && post.Files.length > 0 && post.Files.map((file, index) => (
-  <TouchableOpacity
-    key={index}
-    style={styles.fileCard}
-    onPress={() => openFileInBrowser (file.secure_url, file.originalname)} // تمرير secure_url و originalname
-  >
-    <FontAwesome name="file-o" size={24} color="#555" style={styles.icon} />
-    <Text style={styles.fileName}>
-      {file.originalname || 'Click to view/download file'}
-    </Text>
-  </TouchableOpacity>
-))}
+          {/* Files */}
+          {post.Files && post.Files.length > 0 && post.Files.map((file, index) => (
+            <TouchableOpacity
+              key={index}
+              style={styles.fileCard}
+              onPress={() => openFileInBrowser(file.secure_url, file.originalname)} // تمرير secure_url و originalname
+            >
+              <FontAwesome name="file-o" size={24} color="#555" style={styles.icon} />
+              <Text style={styles.fileName}>
+                {file.originalname || 'Click to view/download file'}
+              </Text>
+            </TouchableOpacity>
+          ))}
 
-<View style={{ flexDirection: 'row', justifyContent: 'space-around', marginTop: 10 }}>
-  {/* Like Button */}
-  <TouchableOpacity onPress={() => handleLike(post._id, post.like)} style={{ flexDirection: 'column', alignItems: 'center', marginRight: 0 }}>
-    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-    <Text style={{ color: isNightMode ? primary : '#000', fontSize: 14, marginLeft: 0, fontWeight: 'bold',marginTop: 0 }}>
-        {post.like.length}
-      </Text>
-      <Ionicons name="heart-circle" size={27} color={post.isLiked ? '#ff0000' : '#ccc34'} />
-     
-    </View>
-  </TouchableOpacity>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-around', marginTop: 10 }}>
+            {/* Like Button */}
+            <TouchableOpacity onPress={() => handleLike(post._id, post.like)} style={{ flexDirection: 'column', alignItems: 'center', marginRight: 0 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Text style={{ color: isNightMode ? primary : '#000', fontSize: 14, marginLeft: 0, fontWeight: 'bold', marginTop: 0 }}>
+                  {post.like.length}
+                </Text>
+                <Ionicons name="heart-circle" size={27} color={post.isLiked ? '#ff0000' : '#ccc34'} />
+              </View>
+            </TouchableOpacity>
 
-          <TouchableOpacity 
-  onPress={() => ActionComment(post._id)} // تمرير الدالة بدون تنفيذها مباشرة
-  style={{ alignItems: 'center' }}
->
-  <Ionicons 
-    name="chatbubbles" 
-    size={26} 
-    color={isNightMode ? secondary : '#ccc34'} 
-  />
-  <Text style={{ color: isNightMode ? primary : '#000', fontSize: 14 }}>
-  </Text>
-</TouchableOpacity>
-
+            <TouchableOpacity 
+              onPress={() => ActionComment(post._id)} // تمرير الدالة بدون تنفيذها مباشرة
+              style={{ alignItems: 'center' }}
+            >
+              <Ionicons 
+                name="chatbubbles" 
+                size={26} 
+                color={isNightMode ? secondary : '#ccc34'} 
+              />
+              <Text style={{ color: isNightMode ? primary : '#000', fontSize: 14 }}></Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
-    </View>
 
-    {/* Divider */}
-    {index < posts.length - 1 && (
-      <View style={{ width: '100%', height:3, backgroundColor: isNightMode ? '#555' : '#ddd', marginVertical: 20 }} />
-    )}
-  </React.Fragment>
-))}
-
+      {/* Divider */}
+      {index < posts.length - 1 && (
+        <View style={{ width: '100%', height: 3, backgroundColor: isNightMode ? '#555' : '#ddd', marginVertical: 20 }} />
+      )}
+    </React.Fragment>
+  ))
+)}
 
 
 

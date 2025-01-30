@@ -1,5 +1,6 @@
 import cloudinary from '../../../utls/Cloudinary.js';
 import PostModel from './../../Model/PostModel.js';
+import UserModel from './../../Model/User.Model.js';
 // Create Own Post
 export const CreatePost = async (req, res, next) => {
     console.log("req.body:", req.body);
@@ -167,9 +168,21 @@ export const GetUserPosts = async (req, res, next) => {
 // Get All Posts
 export const GetAllPosts = async (req, res, next) => {
     try {
-        const posts = await PostModel.find()
-            .populate('UserId', 'FullName PictureProfile') // اجلب الحقول المطلوبة فقط
-            .sort({ createdAt: -1 }); // الترتيب تنازلي (الأحدث أولاً)
+        const userId = req.user._id; // استخراج معرف المستخدم من التوكن
+
+        // جلب بيانات المستخدم للحصول على الفئات الخاصة به
+        const user = await UserModel.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: "User not found." });
+        }
+
+        // استخراج الفئات (sub_specialization) الخاصة بالمستخدم
+        const userCategories = user.Fields.map(field => field.sub_specialization);
+
+        // جلب المنشورات التي تنتمي إلى إحدى فئات المستخدم
+        const posts = await PostModel.find({ Category: { $in: userCategories } })
+            .populate('UserId', 'FullName PictureProfile') // إحضار بيانات المستخدم
+            .sort({ createdAt: -1 }); // ترتيب تنازلي (الأحدث أولاً)
 
         if (!posts || posts.length === 0) {
             return res.status(404).json({ message: "No posts found." });
