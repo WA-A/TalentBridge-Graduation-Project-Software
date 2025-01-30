@@ -609,8 +609,10 @@ const [project,setProject]=useState();
       style={[
         styles.grid,
         {
-          flexDirection: isMobile ? "column" : "row",
-          justifyContent: isMobile ? "flex-start" : "space-between",
+          flexDirection: isMobile ? "column" : "column",
+          justifyContent: isMobile ? "flex-start" : "center", 
+          alignContent:'center',
+          alignItems:'center'
         },
         { backgroundColor: isNightMode ? "#000" : Colors.primary },
       ]}
