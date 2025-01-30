@@ -107,6 +107,118 @@ export default function AdminRequestPage({ navigation, route}) {
           ];
 
 
+
+           const [PreviousExperiences, setPreviousExperiences] = useState('');
+                      const [Motivation, setMotivation] = useState('');
+                      const [Contribution, setContribution] = useState('');
+                      const [Major, setMajor] = useState('');
+                      const [file, setFile] = useState(null);
+          
+                       const handleFilePicker = async () => {
+                              try {
+                                const result = await DocumentPicker.getDocumentAsync({
+                                  type: 'application/pdf', // فقط ملفات PDF
+                                });
+                                console.log(result.uri);
+                                console.log(result);
+                                // التأكد من أن المستخدم لم يلغي العملية
+                                if (result.canceled) {
+                                  console.log('User canceled file selection');
+                                } else {
+                                  // التعامل مع النتيجة
+                                  const pickedFile = result.assets ? result.assets[0] : null;
+                                  if (pickedFile) {
+                                    setFile(pickedFile);
+                                    console.log('File URI:', pickedFile.uri);  // عرض مسار الملف
+                                  }
+                                }
+                              } catch (error) {
+                                console.error('Error picking file:', error);
+                              }
+                            };
+                            const convertFileToBase64 = async (fileUri) => {
+                              console.log("filebefore",fileUri)
+                              try {
+                                  // Fetch the file from its URI
+                                  const response = await fetch(fileUri);
+                                  const blob = await response.blob();
+                          
+                                  return new Promise((resolve, reject) => {
+                                      const reader = new FileReader();
+                                      
+                                      // Triggered when the reading is completed
+                                      reader.onloadend = () => {
+                                          resolve(reader.result); // Base64 data
+                                      };
+                          
+                                      // Triggered on error
+                                      reader.onerror = (error) => {
+                                          reject(`Error converting file to Base64: ${error}`);
+                                      };
+                          
+                                      // Read the blob as a Base64 string
+                                      reader.readAsDataURL(blob);
+                                  });
+                              } catch (error) {
+                                  console.error('Error fetching or converting file:', error);
+                                  throw error;
+                              }
+                          };
+                          function base64ToBlob(base64Data, mimeType) {
+                              const byteCharacters = atob(base64Data.split(',')[1]);  // إزالة الـ prefix 'data:application/pdf;base64,'
+                              const byteArrays = [];
+                          
+                              for (let offset = 0; offset < byteCharacters.length; offset += 1024) {
+                                  const slice = byteCharacters.slice(offset, offset + 1024);
+                                  const byteNumbers = new Array(slice.length);
+                          
+                                  for (let i = 0; i < slice.length; i++) {
+                                      byteNumbers[i] = slice.charCodeAt(i);
+                                  }
+                          
+                                  const byteArray = new Uint8Array(byteNumbers);
+                                  byteArrays.push(byteArray);
+                              }
+                          
+                              return new Blob(byteArrays, { type: mimeType });
+                          }
+    
+    
+                          const handleGetRequestSeniorToAdmin = async () => {
+                            try {
+                              const baseUrl = Platform.OS === 'web'
+                                ? 'http://localhost:3000'
+                                : 'http://192.168.1.239:3000';
+                          
+                              console.log('Sending GET request to fetch all senior requests...');
+                          
+                              const response = await fetch(`${baseUrl}/admin/getallrequestseniortoadmin`, {
+                                method: 'GET', // استخدام GET بدلًا من POST أو PUT
+                                headers: {
+                                  'Content-Type': 'application/json', // تحديد نوع المحتوى
+                                },
+                              });
+                          
+                              if (!response.ok) {
+                                const errorData = await response.json();
+                                throw new Error(errorData.message || 'Something went wrong');
+                              }
+                          
+                              const result = await response.json();
+                              console.log('Requests fetched successfully:', result);
+                          
+                              // إرجاع البيانات للاستخدام في الواجهة
+                              return result.requestseniortoadmin;
+                            } catch (error) {
+                              console.error('Error fetching requests:', error);
+                              throw error; // إعادة رمي الخطأ للتعامل معه في مكان آخر
+                            }
+                          };
+
+                          useEffect(() => {
+                            handleGetRequestSeniorToAdmin
+                          }, []);
+
  return(
   
 <TouchableWithoutFeedback >
@@ -233,7 +345,7 @@ export default function AdminRequestPage({ navigation, route}) {
               <Text style={{ fontSize: 20, fontWeight: 'bold', color: isNightMode ? '#fff' : '#334664' }}>{senior.name}</Text>
               <Text style={{ fontSize: 16, color: isNightMode ? '#ddd' : '#000' }}>Email: {senior.email}</Text>
               <Text style={{ fontSize: 16, color: isNightMode ? '#ddd' : '#000' }}>Phone: {senior.phone}</Text>
-              <Text style={{ fontSize: 16, color: isNightMode ? '#ddd' : '#000' }}>Experience: {senior.previousExperiences}</Text>
+              <Text style={{ fontSize: 16, color: isNightMode ? '#ddd' : '#000' }}>PreviousExperiences: {senior.previousExperiences}</Text>
               <Text style={{ fontSize: 16, color: isNightMode ? '#ddd' : '#000' }}>Motivation: {senior.motivation}</Text>
               <Text style={{ fontSize: 16, color: isNightMode ? '#ddd' : '#000' }}>Contribution: {senior.contribution}</Text>
               <Text style={{ fontSize: 16, color: isNightMode ? '#ddd' : '#000' }}>Major: {senior.major}</Text>
