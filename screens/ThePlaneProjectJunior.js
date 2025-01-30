@@ -8,22 +8,157 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Colors } from './../compnent/Style';
 import { TextInput } from 'react-native-gesture-handler';
 const { tertiary, firstColor, secColor,fifthColor,secondary, primary, darkLight, fourhColor, careysPink} = Colors;
-import { EvilIcons,AntDesign,Feather,FontAwesome5,FontAwesome
+import { EvilIcons,AntDesign,Feather,FontAwesome5,FontAwesome,MaterialCommunityIcons,Fontisto
 } from '@expo/vector-icons';
 import MultiSelect from 'react-native-multiple-select';
 import { useSharedValue, useAnimatedStyle, withSpring } from "react-native-reanimated";
 import { Dimensions } from "react-native";
 import * as Animatable from "react-native-animatable";
 import Slider from '@react-native-community/slider';
-
 const { width } = Dimensions.get("window");
+import moment from 'moment/moment';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { color } from 'react-native-elements/dist/helpers';
+import * as DocumentPicker from "expo-document-picker";
+import { use } from 'i18next';
+import * as WebBrowser from 'expo-web-browser'
+
 
 
 export default function  ThePlaneProjectJunior ({ navigation, route }) {
 
+    const [modalVisibleProject, setModalVisibleProject] = useState(false);
+    const closeModalProject = () => {
+      setModalVisibleProject(false);
+    };
+
+  const { projectId,juniors} = route.params;  // الحصول على projectId من التنقل
+  const [showJuniorList, setShowJuniorList] = useState(false);
+  const [selectedJuniors, setSelectedJuniors] = useState([]);
+    const [file, setFile] = useState(null);
+    const [deliveryType, setDeliveryType] = useState("Online");
+
+    const [showStartTaskModal, setShowStartTaskModal] = useState(false); // لتحديد حالة ظهور المودال
+// دالة لإغلاق المودال
+
+    const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+    const scaleValue = useState(new Animated.Value(0))[0]; // قيمة للأنميشن
+  
+    // تفعيل الأنميشن عند إغلاق المودال
+    const animateCheckMark = () => {
+      Animated.sequence([
+        Animated.timing(scaleValue, {
+          toValue: 1,
+          duration: 2000,
+          useNativeDriver: true,
+        }),
+      
+      ]).start();
+    };
+      const openFileInBrowser = async (uri) => {
+        console.log("sama",uri);
+          if (!uri) {
+            Alert.alert('Error', 'Invalid file URL');
+            return;
+          }
+        
+          try {
+            // إضافة المعامل download إلى الرابط لتنزيل الملف مباشرة
+            const downloadUrl = `${uri}?download=true`; 
+            await WebBrowser.openBrowserAsync(downloadUrl); // فتح الرابط في المتصفح
+          } catch (error) {
+            console.log('Error opening file:', error);
+            Alert.alert('Error', 'Failed to open file');
+          }
+        };
+        
+const handleCloseModal = () => {
+  setShowStartTaskModal(false); // إغلاق المودال
+};
+   const handleFilePicker = async () => {
+            try {
+              const result = await DocumentPicker.getDocumentAsync({
+                type: 'application/pdf', // فقط ملفات PDF
+              });
+              console.log(result.uri);
+              console.log(result);
+              // التأكد من أن المستخدم لم يلغي العملية
+              if (result.canceled) {
+                console.log('User canceled file selection');
+              } else {
+                // التعامل مع النتيجة
+                const pickedFile = result.assets ? result.assets[0] : null;
+                if (pickedFile) {
+                  setFile(pickedFile);
+                  console.log('File URI:', pickedFile.uri);  // عرض مسار الملف
+                }
+              }
+            } catch (error) {
+              console.error('Error picking file:', error);
+            }
+          };
+          
+  const handleSelectJuniors = (id) => {
+    setSelectedJuniors((prevSelected) => {
+      if (prevSelected.includes(id)) {
+        return prevSelected.filter((item) => item !== id); // Deselect if already selected
+      }
+      return [...prevSelected, id]; // Add new selection
+    });
+  };
+  const handleSelectJunior = (id) => {
+    setSelectedJuniors((prevSelected) => {
+      if (prevSelected.includes(id)) {
+        // إذا كان الشخص موجودًا بالفعل في القائمة، نقوم بإزالته
+        return prevSelected.filter((item) => item !== id);
+      }
+      // إضافة الشخص إلى القائمة إذا لم يكن موجودًا
+      return [...prevSelected, id];
+    });
+  };
+
+  const handleSaveSelection = () => {
+    console.log("save juniors", selectedJuniors);
+    setShowJuniorList(false); // إغلاق المودال بعد الحفظ
+  };
+
+  const handleFileUpload = (event, taskId) => {
+    const file = event.target.files[0];
+    if (file) {
+      console.log(`File uploaded for task ${taskId}:`, file);
+      // هنا يمكنك التعامل مع الملف مثل رفعه إلى الخادم أو حفظه محلياً
+    }
+  };
+  
+  
+
+// تعريف الحالات بشكل منفصل
+const [startDate, setStartDate] = useState(new Date());
+const [endDate, setEndDate] = useState(new Date());
+
+const [showStartPicker, setShowStartPicker] = useState(false);
+const [showEndPicker, setShowEndPicker] = useState(false);
+
+const handleDateChange = (selectedDate, isStartDate) => {
+  if (selectedDate) {
+    if (isStartDate) {
+      setStartDate(selectedDate); // تحديث StartDate
+    } else {
+      setEndDate(selectedDate); // تحديث EndDate
+    }
+  }
+
+  // إخفاء DatePicker بناءً على نوع التاريخ
+  isStartDate ? setShowStartPicker(false) : setShowEndPicker(false);
+};
+
+
+
     const baseUrl = Platform.OS === 'web'
       ? 'http://localhost:3000'
       : 'http://192.168.1.239:3000' || 'http://192.168.0.107:3000';
+
+
         const [selectedFeilds, setSelectedFeilds] = useState([]);
         const [Feilds, setFeilds] = useState([]);
   const [currentModal, setCurrentModal] = useState('');
@@ -48,8 +183,28 @@ const [project,setProject]=useState();
   
     /////////////////////////////////////////// Filter /////////////////////////////////////////////////////
     const [isModalVisible, setIsModalVisible] = useState(false);
-   
+    const [daysLeft,setdaysLeft]=useState('');
+    const [newTask, setNewTask] = useState({
+      PhaseName: "",
+      TaskName: "",
+      Description: "",
+      TaskRoleName: "",
+      StartDate: "",
+      EndDate: "",
+      Priority: "",
+    });
+    const addTask = () => {
+      // Logic to add the new task (e.g., updating state or sending data to an API)
+      console.log("New Task:", newTask);
+    };
   
+    const calculateDaysLeft = (currentDate, endDate) => {
+      const current = moment(currentDate).startOf('day'); // ضبط الوقت إلى بداية اليوم
+      const end = moment(endDate).startOf('day'); // ضبط الوقت إلى بداية اليوم
+      const difference = end.diff(current, "days");
+      return difference > 0 ? difference : "Deadline passed";
+    };
+    
     const toggleModal = () => setIsModalVisible(!isModalVisible);
   
 
@@ -89,6 +244,7 @@ const [project,setProject]=useState();
     
    
     /////////////////////////////////////////////////////////////////////////////////////////////////////////
+    
   
         const handleGetFeilds = async () => {
           try {
@@ -304,6 +460,38 @@ const [project,setProject]=useState();
   };
 
 
+  const handleShowAllTaskToJunior = async () => {
+    try {
+      const token = await AsyncStorage.getItem('userToken'); // استرجاع التوكن
+      console.log('Retrieved Token:', token,projectId); // تحقق من التوكن
+      if (!token) { 
+        console.error('Token not found');
+        return;
+      }
+
+      const response = await fetch(`${baseUrl}/tasks/GetProjectTasks/${projectId}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Wasan__${token}`, // تأكد من التنسيق الصحيح هنا
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json(); // إذا كان هناك خطأ في الرد
+    // throw new Error(errorData.message || 'Failed to fetch skills');
+      }
+
+      const data = await response.json(); // تحويل الرد إلى JSON
+      console.log(data.tasks);
+      setProject(data.tasks);
+
+ //     console.log('Fetched Project:', data.tasks); // تحقق من البيانات
+
+    } catch (error) {
+   //   console.error('Error fetching tasks:', error.message);
+    }
+  };
+
 
   const handleViewOtherProfile = async (userId) => {
     console.log(userId);
@@ -371,18 +559,166 @@ const [project,setProject]=useState();
       outputRange: [0, 100], // 100 to move it off-screen
       extrapolate: 'clamp',
     });
+    const [taskID,setTaskId]=useState(null);
   const [searchQuery, setSearchQuery] = useState('');
+  function  consthandleshowModalTas  ()  {
+    setShowStartTaskModal(true)    
+    console.log(taskID);
+  };
+  function base64ToBlob(base64Data, mimeType) {
+            const byteCharacters = atob(base64Data.split(',')[1]);  // إزالة الـ prefix 'data:application/pdf;base64,'
+            const byteArrays = [];
+        
+            for (let offset = 0; offset < byteCharacters.length; offset += 1024) {
+                const slice = byteCharacters.slice(offset, offset + 1024);
+                const byteNumbers = new Array(slice.length);
+        
+                for (let i = 0; i < slice.length; i++) {
+                    byteNumbers[i] = slice.charCodeAt(i);
+                }
+        
+                const byteArray = new Uint8Array(byteNumbers);
+                byteArrays.push(byteArray);
+            }
+        
+            return new Blob(byteArrays, { type: mimeType });
+        }
+        
+       
 
+        const handleAddTaskAssigneesAndFile = async (values) => {
+          const token = await AsyncStorage.getItem('userToken');
+          if (!token) {
+            console.error('Token not found');
+            return;
+          }
+          try {
+          const formData = new FormData();
+                    // تأكد من استخدام TaskId بشكل صحيح
+          formData.append("TaskId",values);
+
+     
+          if (file) {
+            console.log("The file", file);
+            const fileUri = file.uri.startsWith('file://') ? file.uri : `file://${file.uri}`;
+        
+            // إذا كان التطبيق على الويب
+            if (Platform.OS === 'web') {
+              // تحويل البيانات إلى Blob (بيانات الـ PDF المشفرة بتنسيق Base64)
+              const pdfBlob = base64ToBlob(file.uri, 'application/pdf');
+              formData.append('SubmitFile', pdfBlob, 'ProjectFile.pdf');  // اسم الملف الذي سيتم حفظه
+            } else {
+              formData.append('SubmitFile', {
+                uri: fileUri,
+                name: file.name,
+                type: file.mimeType || 'application/pdf',
+              });
+            }
+          }
+        
+          
+          for (let [key, value] of formData.entries()) {
+            console.log(`${key}:`, value);
+          }
+          // إرسال الطلب إلى الخادم لإضافة المرفقات والمكلفين
+          const response = await fetch(`${baseUrl}/tasks/submittask/${projectId}`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Wasan__${token}`,
+              'Accept': 'application/json',
+            },
+            body: formData,
+          });
+        
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Failed to add languages');
+          }
+          handleShowAllTaskToJunior();
+
+            // عرض رسالة النجاح
+            setShowSuccessMessage(true);
+            setModalVisibleProject(true);
+            animateCheckMark(); // تفعيل الأنميشن
+        
+            // إخفاء البطاقة بعد 7 ثوانٍ
+            setTimeout(() => {
+              setModalVisibleProject(false);
+            },9000); // 7 ثواني
+            const result = await response.json();
+            console.log('Add Project successfully',result.task);
+
+        }
+          catch (error) {
+             console.error('Error Add:', error.message);
+          }
+        };    
+        
+        
+        const handleUpdateTask = async (values) => {
+          console.log("taskID",taskID);
+          const token = await AsyncStorage.getItem('userToken');
+          if (!token) {
+              console.error('Token not found');
+              return;
+          }
+      
+          try {
+              // إرسال البيانات كـ JSON بدلاً من FormData
+              const requestData = {
+                  TaskId: taskID,          // تأكد من استخدام TaskId بشكل صحيح
+                  StartDate: startDate.toISOString(),  // تأكد من تنسيق StartDate بشكل صحيح
+                  EndDate: endDate.toISOString(),    // تأكد من تنسيق EndDate بشكل صحيح
+              };
+      
+              console.log('Sending updated task data:', requestData);
+      
+              // إرسال الطلب إلى الخادم
+              const response = await fetch(`${baseUrl}/tasks/UpdateTaskinformations/${projectId}`, {
+                  method: 'PUT',
+                  headers: {
+                      'Authorization': `Wasan__${token}`,
+                      'Accept': 'application/json',
+                      'Content-Type': 'application/json', // نحدد نوع المحتوى كـ JSON
+                  },
+                  body: JSON.stringify(requestData), // تحويل البيانات إلى JSON
+              });
+      
+              // التحقق من استجابة الخادم
+              console.log('Response status:', response.status);
+      
+              if (!response.ok) {
+                  const errorData = await response.json();
+                  throw new Error(errorData.message || 'Failed to update task');
+              }
+              const result = await response.json();
+              console.log('Add Project successfully',result.task);
+
+        await handleAddTaskAssigneesAndFile (taskID);
+               // في حال نجاح العملية، يمكنك إضافة خطوات إضافية هنا إذا كانت مطلوبة
+          } catch (error) {
+              console.error('Error Update:', error.message);
+          }
+      };
+      
+     
   useEffect(() => {
     handleViewProfile();
     handleGetFeilds();
-    handleGetProjectByFeildOrSkills();
+    handleShowAllTaskToJunior();
   }, []);
   
 
 
   const cardScale = useSharedValue(1);
-
+  const handlePress = (id,taskid,sumid) => {
+    
+   
+    console.log("sama",id,taskid,sumid);
+    // إذا كان الدور Junior، انتقل إلى الصفحة التي تريدها
+     navigation.navigate('ReviewTaskForJunior',{projectId:id,taskIDD:taskid,sumid:sumid}); // استبدل 'YourTargetScreen' باسم الصفحة
+  
+};
   const handlePressIn = () => {
     cardScale.value = withSpring(0.95);
   };
@@ -468,7 +804,7 @@ const [project,setProject]=useState();
 
 
 
-            <TouchableOpacity onPress={() => nav.navigate('Chat')} style={{ marginRight: 100 }}>
+            <TouchableOpacity onPress={() => nav.navigate('AllPeapleItalk')} style={{ marginRight: 100 }}>
               <EvilIcons name="sc-telegram" size={30} color={isNightMode ? primary : "#000"} />
             </TouchableOpacity>
 
@@ -531,7 +867,7 @@ const [project,setProject]=useState();
                 Talent Bridge
               </Text>
 
-              <TouchableOpacity onPress={() => nav.navigate('Chat')}>
+              <TouchableOpacity onPress={() => nav.navigate('AllPeapleItalk')}>
                 <EvilIcons name="sc-telegram" size={39} color={careysPink} style={{ position: 'absolute', top: -20, left: 10 }} />
                 <EvilIcons name="sc-telegram" size={37} color={darkLight} style={{ position: 'absolute', top: -20, left: 10 }} />
               </TouchableOpacity>
@@ -587,7 +923,7 @@ const [project,setProject]=useState();
       borderRadius: 20,
       opacity: 0.7,
     }}>
-      Suggested for you
+     Project Task
     </Text>
     
   </TouchableOpacity>
@@ -605,8 +941,8 @@ const [project,setProject]=useState();
   <View style={{ position: 'absolute', right: 10,  flexDirection: 'row',  // عرض النص والأيقونة بشكل أفقي
   alignItems: 'center', }}>
  <TouchableOpacity  onPress={toggleModal}>
-  <FontAwesome
-    name="folder-open"
+  <Fontisto
+    name="preview"
     size={25}
     color={fourhColor}
     style={{ marginRight: 6 }}  // المسافة بين النص والأيقونة
@@ -628,81 +964,345 @@ const [project,setProject]=useState();
 <View style={styles.divider1} />
 
 <ScrollView 
-  contentContainerStyle={[styles.container, { backgroundColor: isNightMode ? "#000" : "#fff" }]}
->
-  {project && project.filteredProjects.length > 0 ? (
+  contentContainerStyle={[styles.container, { backgroundColor: isNightMode ? "#000" : "#fff" }]}>
+  {project && project.length > 0 ? (
     <View
       style={[
         styles.grid,
-        { flexDirection: isMobile ? "column" : "row", justifyContent: isMobile ? "flex-start" : "space-between" },{backgroundColor: isNightMode ? "#000" : Colors.primary }
+        {
+          flexDirection: "column", // تغيير إلى عمودي
+          justifyContent: "center", // مركز العناصر عمودياً
+          alignItems: "center", // مركز العناصر أفقياً
+          backgroundColor: isNightMode ? "#000" : Colors.primary,
+        },
       ]}
     >
-      {project.filteredProjects.map((project, index) => (
+      {project.map((task, index) => (
         <Animatable.View
-          key={project._id}
+          key={task._id}
           animation="zoomIn"
-          delay={index * 100} // تأخير كل بطاقة 100ms لتظهر بالتتابع
-          duration={500} // مدة تأثير الزوم
-          style={[isMobile ? styles.cardMobile : styles.cardWeb]} // تنسيق مخصص لكل منصة
+          delay={index * 100}
+          duration={500}
+          style={isMobile ? styles.cardMobile : styles.cardWeb}
         >
           <TouchableOpacity
+           onPress={() => handlePress(projectId,task._id,task.Submissions[0]?._id)} // تمرير القيمة مباشرة
+                        
+                                 
+                                  >
+          <View
             style={isMobile ? styles.cardMobileContent : styles.cardWebContent}
-            onPress={() => navigateToProjectDetails(project,project.senior.role)}
           >
-          
-        
             <View style={styles.cardDetails}>
-            
-             
-              <Text style={styles.projectName}>{project.ProjectName}</Text>
-              <Text style={styles.projectDescription}>
-                {project.Description.slice(0, 50)}...
-              </Text>
-              <Text style={styles.projectCreatedAt}>
-                Created on: {new Date(project.created_at).toLocaleDateString('en-US')}
-              </Text>
-              <Text style={styles.projectStatus}>
-                Status: {project.Status}
-              </Text>
-              <Text style={styles.projectPrice}>
-                Price: ${project.Price}
-              </Text>
-                       <View style={styles.divider} />
-           
-
-              <View style={styles.seniorInfo}>
-              <TouchableOpacity style={styles.seniorInfo}
-  onPress={() => navigateToSeniorProfile(project.CreatedBySenior)}
+              <View style={{ flexDirection: "row" }}>
+                {/* Start DatePicker */}
+              </View>
+              <Modal
+  visible={showStartTaskModal}
+  animationType="slide"
+  onRequestClose={() => setShowStartTaskModal(false)}
 >
-<Image
-  source={{
-    uri: project.CreatedBySenior?.PictureProfile?.secure_url || "https://via.placeholder.com/50",
-  }}
-  style={styles.seniorAvatar}
-/>
+  <View style={styles.modalWrapper}>
+    <Text style={styles.modalTitle}>Start Task</Text>
 
-  <Text style={styles.seniorName}>
-    {project.CreatedBySenior ? project.CreatedBySenior.FullName : "Unknown Senior"}
-  </Text>
-</TouchableOpacity>
+    {/* اختيار الجونيور */}
+    <TouchableOpacity
+      style={styles.actionButtonSelect}
+      onPress={() => setShowJuniorList(true)}
+    >
+      <Text style={styles.actionButtonText}>Select Junior</Text>
+    </TouchableOpacity>
 
-</View>
-              {/* "See More" Button */}
+    {/* تحديد تاريخ البداية */}
+    <Text style={styles.label}>Start Date:</Text>
+    {Platform.OS === "web" ? (
+      <input
+        type="date"
+        value={moment(startDate).format("YYYY-MM-DD")}
+        onChange={(e) =>
+          handleDateChange(new Date(e.target.value), true)
+        }
+        style={styles.input}
+      />
+    ) : (
+      <>
+        {showStartPicker && (
+          <DateTimePicker
+            value={startDate}
+            mode="date"
+            display="default"
+            onChange={(event, selectedDate) =>
+              handleDateChange(selectedDate, true)
+            }
+          />
+        )}
+        <TouchableOpacity onPress={() => setShowStartPicker(true)}>
+          <Text style={styles.dateText}>
+            {moment(startDate).format("MMM DD, YYYY")}
+          </Text>
+        </TouchableOpacity>
+      </>
+    )}
+
+    {/* تحديد تاريخ النهاية */}
+    <Text style={styles.label}>End Date:</Text>
+    {Platform.OS === "web" ? (
+      <input
+        type="date"
+        value={moment(endDate).format("YYYY-MM-DD")}
+        onChange={(e) =>
+          handleDateChange(new Date(e.target.value), false)
+        }
+        style={styles.input}
+      />
+    ) : (
+      <>
+        <TouchableOpacity onPress={() => setShowEndPicker(true)}>
+          <Text style={styles.dateText}>
+            {moment(endDate).format("MMM DD, YYYY")}
+          </Text>
+        </TouchableOpacity>
+        {showEndPicker && (
+          <DateTimePicker
+            value={endDate}
+            mode="date"
+            display="default"
+            onChange={(event, selectedDate) =>
+              handleDateChange(selectedDate, false)
+            }
+          />
+        )}
+      </>
+    )}
+ {/* حالة التسليم */}
+ <Text style={styles.label}>Delivery Type:</Text>
+    <View style={styles.deliveryTypeContainer}>
+      <TouchableOpacity
+        style={[
+          styles.deliveryTypeButton,
+          deliveryType === "Online" && styles.selectedDeliveryTypeButton,
+        ]}
+        onPress={() => setDeliveryType("Online")}
+      >
+        <Text style={styles.deliveryTypeText}>Online</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={[
+          styles.deliveryTypeButton,
+          deliveryType === "On-site" && styles.selectedDeliveryTypeButton,
+        ]}
+        onPress={() => setDeliveryType("On-site")}
+      >
+        <Text style={styles.deliveryTypeText}>On-site</Text>
+      </TouchableOpacity>
+    </View>
+    {/* اختيار الملف */}
+    <TouchableOpacity
+      style={styles.uploadButton}
+      onPress={handleFilePicker}
+    >
+      <Text style={styles.uploadButtonText}>Choose File</Text>
+    </TouchableOpacity>
+
+    {/* عرض اسم الملف */}
+    {file ? (
+      <View style={styles.fileNameContainer}>
+        <Text style={styles.fileNameText}>Name: {file.name}</Text>
+        <Text style={styles.fileNameText}>Type: {file.mimeType}</Text>
+        <TouchableOpacity
+          style={[styles.uploadButton, { position: 'absolute', right: 10, bottom: 10 }]}
+          onPress={() => setFile([])}
+        >
+          <Text style={styles.uploadButtonText}>Cancel</Text>
+        </TouchableOpacity>
+      </View>
+    ) : (
+      <Text style={styles.noFileText}>No file selected</Text>
+    )}
+
+    <View style={styles.divider}></View>
+
+    {/* أزرار الإجراء */}
+    <View style={styles.taskActions}>
+      <TouchableOpacity
+        style={styles.actionButton}
+      >
+        <Text style={styles.actionButtonText}>Start The Task</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={styles.actionButton}
+        onPress={() => setShowStartTaskModal(false)}
+        >
+        <Text style={styles.actionButtonText}>Cancel</Text>
+      </TouchableOpacity>
+    </View>
+
+ 
+  </View>
+</Modal>
+
+
+              <View style={styles.taskActionsDate}>
+                <Text style={styles.projectName}>{task.PhaseName}</Text>
+
+                {/* المودال يظهر بناءً على حالة showJuniorList */}
+                <Modal
+                  visible={showJuniorList}
+                  animationType="slide"
+                  onRequestClose={() => setShowJuniorList(false)}
+                >
+                  <View style={styles.modalContainer}>
+                    <Text style={styles.modalTitle}>Select Juniors</Text>
+
+                    <FlatList
+                      data={juniors}
+                      keyExtractor={(item) => item._id}
+                      renderItem={({ item }) => (
+                        <TouchableOpacity
+                          style={styles.juniorItem}
+                          onPress={() => handleSelectJunior(item._id)}
+                        >
+                          <View style={styles.juniorTextContainer}>
+                            <Text style={styles.juniorText}>
+                              {item.userId.FullName}
+                            </Text>
+                            <Text style={styles.juniorRole}>{item.roleName}</Text>
+                          </View>
+                          {selectedJuniors.includes(item._id) && (
+                            <Text style={styles.checkMark}>✔</Text>
+                          )}
+                        </TouchableOpacity>
+                      )}
+                    />
+
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                      }}
+                    >
+                      <TouchableOpacity
+                        style={styles.saveButton}
+                        onPress={handleSaveSelection}
+                      >
+                        <Text style={styles.saveButtonText}>Save</Text>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        style={styles.closeButton}
+                        onPress={() => setShowJuniorList(false)}
+                      >
+                        <Text style={styles.closeButtonText}>Close</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                </Modal>
+              </View>
+              <View style={styles.divider1} />
+              <Text style={styles.projectDescription}>
+                Task Name: {task.TaskName}
+              </Text>
+              <Text style={styles.projectDescription}>
+                Description: {task.Description}
+              </Text>
+
+              {/* Start Date */}
+              <Text style={styles.label}>Start Date:</Text>
+              <Text>{moment(task.StartDate).format("YYYY-MM-DD")}</Text>
+
+              {/* End Date */}
+              <Text style={styles.label}>End Date:</Text>
+              <Text>{moment(task.EndDate).format("YYYY-MM-DD")}</Text>
+
+
+              <Text style={styles.taskPriority}>
+                Priority: {task.Priority}
+              </Text>
+              <Text style={styles.taskMethode}>
+              Submit Task Method: {task.SubmitTaskMethod
+                }
+              </Text>  
+              {task.TaskFile? (
+                  <TouchableOpacity
+                    style={styles.fileCard}
+                    onPress={() => openFileInBrowser (task.TaskFile[0]?.secure_url)} // تمرير secure_url و originalname
+                  >
+                    <View style={styles.fileNameContainer}>
+                      <Text style={styles.fileNameText}>Name: {task.TaskFile[0]?.originalname || ''}</Text>
+                    </View>
+                  </TouchableOpacity>
+                    
+                  ) : (
+                    <Text style={styles.noFileText}>No file selected</Text>
+                  )}
+                  <TouchableOpacity
+                  style={styles.actionButton}
+                  onPress={() => {
+                    setTaskId(task._id);             // استدعاء الدالة الثانية
+                    handleFilePicker(); // استدعاء الدالة الأولى
+                       }}                 >
+                  <Text style={styles.actionButtonText}>Select File</Text>
+                </TouchableOpacity>
+                  <Text style={styles.taskMethode}>
+              Submit File: 
+                
+              </Text>  
             
+              {file || (task?.Submissions?.length > 0) ? (
+  <TouchableOpacity style={styles.fileCard}>
+    <View style={styles.fileNameContainer}>
+      <Text style={styles.fileNameText}>
+        Name: {file?.name || (task?.Submissions[0]?.SubmitFile[0]?.originalname || '')}
+      </Text>
+      {calculateDaysLeft(moment(), task.EndDate) !== "Deadline passed" && (
+        // عرض زر "إزالة الملف" فقط إذا كان الموعد النهائي لم ينتهِ
+        <TouchableOpacity
+          style={[styles.uploadButton, { position: 'absolute', right: 10, bottom: 10 }]}
+          onPress={() => setFile([])}
+        >
+          <Text style={styles.uploadButtonText}>Cancel</Text>
+        </TouchableOpacity>
+      )}
+    </View>
+  </TouchableOpacity>
+) : (
+  <Text style={styles.noFileText}>No file selected</Text>
+)}
+
+<Text style={styles.taskDates}>
+  <Text style={styles.label}>Days Left:</Text>{" "}
+  {calculateDaysLeft(moment(), task.EndDate)}
+</Text>
+<View style={styles.divider1} />
+
+{calculateDaysLeft(moment(), task.EndDate) !== "Deadline passed" && (
+  // عرض زر "Confirm Upload" فقط إذا كان الموعد النهائي لم ينتهِ
+  !task?.Submissions?.length > 0 && (
+    <TouchableOpacity
+      style={styles.actionButton}
+      onPress={() => handleAddTaskAssigneesAndFile(taskID)}
+    >
+      <Text style={styles.actionButtonText}>Confirm Upload</Text>
+    </TouchableOpacity>
+  )
+)}
+
+              </View>
             </View>
-          </TouchableOpacity>
+
+          <View style={styles.divider3}></View></TouchableOpacity>
         </Animatable.View>
       ))}
     </View>
   ) : (
-    <Text style={styles.noProjects}>
-      No projects available.
-    </Text>
+    <Text>No tasks available</Text>
   )}
 </ScrollView>
 
 
-  
+
+    
             
             {/* Bottom Navigation Bar */}
  {/* Bottom Navigation Bar */}
@@ -957,6 +1557,24 @@ Select Field           </Text>
         </View>
       </View>
     </Modal>
+
+    
+    <Modal animationType="slide" transparent={true} visible={modalVisibleProject} onRequestClose={closeModalProject}>
+      <View style={styles.modalContainerp}>
+        <View style={[styles.modalContentp, { backgroundColor: isNightMode ? '#000' : '#fff' }]}>          
+          {showSuccessMessage && (
+            <View style={styles.successContainer}>
+              <Animated.View style={[styles.checkmark, { transform: [{ scale: scaleValue }] }]}>
+                <MaterialCommunityIcons name="check-circle" size={30} color="#28a745" />
+              </Animated.View>
+              <Text style={styles.successMessage}>
+                Submission send successfully!
+              </Text>
+            </View>
+          )}
+        </View>
+      </View>
+    </Modal>
       {/*///////////////////////////////////////////////Show Feild////////////////////////////*/}
    {/* Modal لكل بطاقة */}
    <Modal animationType="slide" transparent={true} visible={modalVisible} onRequestClose={closeModal}>
@@ -1174,7 +1792,7 @@ closeButtonText: {
         projectDescription: {
             fontSize: 14,
             color: '#666',
-            marginBottom: 10,
+            marginBottom: 10,fontWeight:'bold',
         },
         projectField: {
             fontSize: 14,
@@ -1278,11 +1896,11 @@ flex:"1",  gap: 20, // توفير مسافة ثابتة بين البطاقات
 },
 
   cardMobile: {
-    marginBottom: 20,
+    marginBottom: 10,
     width: width - 20, // تأكيد أن عرض البطاقة يتناسب مع عرض الشاشة
   },
 cardWeb: {
-  marginBottom: 20,
+  marginBottom: 10,
   flexBasis: "30%", // تحديد نسبة العرض للبطاقة
   width: '50%',
   height: "auto", // السماح للارتفاع بالتكيف مع المحتوى
@@ -1291,8 +1909,8 @@ cardWeb: {
 
 
   cardMobileContent: {
-    backgroundColor: "#fff",
-    borderRadius: 10,
+    backgroundColor: Colors.primary,
+    borderRadius: 5,
     shadowColor: "#000",
     shadowOpacity: 0.2,
     shadowRadius: 10,
@@ -1304,7 +1922,7 @@ cardWeb: {
 cardWebContent: {
   height: "auto", // السماح للارتفاع بالتكيف
   padding: 10,
-  backgroundColor: "#fff",
+  backgroundColor:  Colors.primary,
   borderRadius: 10,
   shadowColor: "#000",
   shadowOpacity: 0.2,
@@ -1334,7 +1952,7 @@ projectName: {
   projectDescription: {
     fontSize: 14,
     color: "#666",
-    marginBottom: 10,
+    marginBottom: 10,fontWeight:'bold'
   },
   seniorInfo: {
     flexDirection: "row",
@@ -1359,7 +1977,7 @@ projectName: {
   projectDescription: {
     fontSize: 14,
     color: '#555',
-    marginBottom: 5,
+    marginBottom: 5,fontWeight:'bold'
   },
  
   projectPrice: {
@@ -1393,12 +2011,12 @@ projectName: {
     fontWeight: 'bold',
   },divider: {
     height: 3,
-    backgroundColor: '#ddd',
+    backgroundColor: Colors.brand,
     marginVertical: 8,
   },
   divider1: {
-    height: 5,
-    backgroundColor: Colors.fourhColor,
+    height: 3,
+    backgroundColor: Colors.darkLight,
     marginVertical: 8,
   },
   divider3: {
@@ -1487,6 +2105,228 @@ filterOption: {
     marginBottom: 2,padding:5,  borderRadius: 8,
 
   },
+  taskActions: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
+  },
+  taskActionsDate: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
+  },
+  actionButton: {
+    backgroundColor: Colors.darkLight,
+    paddingVertical: 8,
+    paddingHorizontal: 30,
+    borderRadius: 10,alignItems:'center',marginBottom:5
+  },
+  actionButtonSelect: {
+    backgroundColor: Colors.fifthColor,
+    paddingVertical: 8,
+    paddingHorizontal: 5,
+    borderRadius: 10,
+  },
+  actionButtonText: {
+    color: "#fff",
+    fontSize: 13,
+    fontWeight: "600",
+    textAlign: "center",fontWeight:'bold',
+  },
+taskDates: {
+    fontSize: 13,
+    color: "#2c3e50",
+    marginBottom: 6,
+  },
+  taskPriority: {
+    fontSize: 14,
+    fontWeight: "bold",
+    color: "#e74c3c",
+    marginTop: 6,
+  },
+  taskMethode: {
+    fontSize: 14,
+    fontWeight: "bold",
+    color: Colors.fifthColor,
+    marginTop: 1,    marginBottom: 6,
+  }, modalContainer: {
+    flex: 1,
+    backgroundColor: 'white',
+    padding: 20,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 20,
+  },
+  juniorItem: {
+    padding: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ddd',
+  },
+  juniorText: {
+    fontSize: 16,
+  },
+  juniorRole: {
+    fontSize: 14,
+    color: 'gray',
+  },
+  closeButton: {
+    backgroundColor: 'red',
+    padding: 10,
+    marginTop: 20,
+    borderRadius: 5,
+  },
+  closeButtonText: {
+    color: 'white',
+    textAlign: 'center',
+  },
+  selectedText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: 'gray',
+  }, 
   
+   saveButton: { backgroundColor: '#28a745', padding: 10, borderRadius: 5, marginTop: 20 },
+  saveButtonText: { color: '#fff' },
+  closeButton: { backgroundColor: '#dc3545', padding: 10, borderRadius: 5, marginTop: 10 },
+  closeButtonText: { color: '#fff' },
+  uploadButton: {
+    paddingVertical: 3,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+  },
+  uploadButtonText: {
+    color: Colors.fifthColor,
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  fileNameContainer: {
+marginBottom: 8,
+    padding: 10,
+    backgroundColor: "#f8f8f8",
+    borderRadius: 5,
+    borderColor: "#ddd",
+    borderWidth: 1,
+  },
+  fileNameText: {
+    fontSize: 16,
+    color: "#333",
+  },
+  noFileText: {
+    fontSize: 16,
+    color: "#aaa",
+  }, modalWrapper: {
+    flex: 1,
+    justifyContent: "flex-start",
+    padding: 20,
+    backgroundColor: "white",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: "bold",
+    marginBottom: 20,
+    textAlign: "center",
+  },
+  label: {
+    fontSize: 16,
+    marginTop: 10,
+    marginBottom: 5,
+  },
+  dateText: {
+    fontSize: 16,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 5,
+    marginBottom: 10,
+  },
 
+  fileNameContainer: {
+    marginTop: 10,
+    marginBottom: 20,
+    padding: 10,
+    borderRadius: 5,
+    borderWidth: 1,
+    borderColor: "#ccc",
+  },
+  fileNameText: {
+    fontSize: 14,
+    marginBottom: 5,
+  },
+  noFileText: {
+    fontSize: 14,
+    color: "gray",
+  },
+  divider: {
+    height: 1,
+    backgroundColor: "#ccc",
+    marginVertical: 20,
+  },
+  taskActions: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    marginTop: 20,
+  },
+
+  actionButtonText: {
+    color: "white",
+    fontSize: 16,
+  },
+  closeButton: {
+    backgroundColor: "#dc3545",
+    padding: 10,
+    borderRadius: 5,
+    alignItems: "center",
+    marginTop: 20,
+  },
+  closeButtonText: {
+    color: "white",
+    fontSize: 16,
+  },deliveryTypeContainer: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    marginTop: 20,
+  },
+  deliveryTypeButton: {
+    padding: 10,
+    borderRadius: 5,
+    backgroundColor: Colors.firstColor,
+    width: "45%",
+    alignItems: "center",
+  },
+  selectedDeliveryTypeButton: {
+    backgroundColor: Colors.darkLight,
+  },
+  deliveryTypeText: {
+    fontSize: 16,
+    color: "#333",
+  },  successMessage: {
+    fontSize: 15,
+    color: Colors.fifthColor,
+    fontWeight: 'bold',
+  },
+modalContainerp: {
+flex: 1,
+justifyContent: 'center',
+alignItems: 'center'
+},
+modalContentp: {
+width: '80%',
+borderRadius: 10,
+padding: 20,
+alignItems: 'center',borderWidth:3,borderColor:Colors.fifthColor,
+},
+modalTitlep: {
+fontSize: 20,
+fontWeight: 'bold',
+marginBottom: 20,
+},
+successContainer: {
+flexDirection: 'row',
+alignItems: 'center',
+marginBottom: 20,
+}
 });

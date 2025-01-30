@@ -138,8 +138,10 @@ const [pushNotToken,setpushNotToken]=useState('');
       
           if (!response.ok) {
             const errorData = await response.json();
-            console.error('Error response:', errorData);
-            throw new Error(errorData.message || 'Something went wrong');
+            setErrorMessage3(errorData.message);
+
+          //  console.error('Error response:', errorData);
+         //   throw new Error(errorData.message || 'Something went wrong');
           }
       
           const result = await response.json();
@@ -179,9 +181,9 @@ const [pushNotToken,setpushNotToken]=useState('');
           }
       
         } catch (error) {
-          console.error('Login Error:', error);
+      //    console.error('Login Error:', error);
           setMenuVisible(true);
-          setErrorMessage3(error.message);
+         // setErrorMessage3(error.message);
         }
       };
       

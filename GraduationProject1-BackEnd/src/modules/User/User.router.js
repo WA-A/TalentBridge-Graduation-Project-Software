@@ -74,5 +74,7 @@ router.get('/getUserFeild', auth(EndPoints.CreateProfile), UserController.getUse
 router.post('/addrecommendations',auth(EndPoints.CreateProfile),UserController.addRecommendation);
 router.patch('/updaterecommendations/:recommendationId',auth(EndPoints.CreateProfile),UserController.updateRecommendation);
 router.delete('/deleterecommendations/:recommendationId',auth(EndPoints.CreateProfile),UserController.deleteRecommendation);
+router.get('/getRecommendations',auth(EndPoints.CreateProfile),UserController.getRecommendations);
+router.get('/getRecommendationsByID/:userId',auth(EndPoints.CreateProfile),UserController.getRecommendationsByID);
 
 export default router

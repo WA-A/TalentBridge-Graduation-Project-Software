@@ -797,7 +797,7 @@ const baseUrl = Platform.OS === 'web'
         
               
         
-              <TouchableOpacity onPress={() => nav.navigate('Chat')} style={{ marginRight:100}}>
+              <TouchableOpacity onPress={() => nav.navigate('AllPeapleItalk')} style={{ marginRight:100}}>
                 <EvilIcons name="sc-telegram" size={30} color= {isNightMode ? primary : "#000"} />
               </TouchableOpacity>
         
@@ -860,7 +860,7 @@ const baseUrl = Platform.OS === 'web'
               Talent Bridge
             </Text>
         
-            <TouchableOpacity onPress={() => nav.navigate('Chat')}>
+            <TouchableOpacity onPress={() => nav.navigate('AllPeapleItalk')}>
               <EvilIcons name="sc-telegram" size={39} color={careysPink} style={{ position: 'absolute', top: -20, left: 10 }} />
               <EvilIcons name="sc-telegram" size={37} color={darkLight} style={{ position: 'absolute', top: -20, left: 10 }} />
             </TouchableOpacity>

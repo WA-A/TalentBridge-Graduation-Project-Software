@@ -1,8 +1,54 @@
 import ProjectsModel from "../../Model/ProjectsModel.js";
 import cloudinary from '../../../utls/Cloudinary.js';
+import  UserModel from "../../Model/User.Model.js";
+
 import mongoose from "mongoose";
-
-
+export const GetProjectTasks = async (req, res) => {
+    try {
+      const { ProjectId } = req.params; // الحصول على ProjectId من الطلب
+      const UserId = req.user._id; // استخراج UserId من التوكن
+  
+      // التحقق من وجود ProjectId
+      if (!ProjectId) {
+        return res.status(400).json({ message: "Project ID is required" });
+      }
+  
+      // البحث عن المشروع
+      const project = await ProjectsModel.findById(ProjectId);
+      if (!project) {
+        return res.status(404).json({ message: "Project not found" });
+      }
+  
+      // تصفية المهام المرتبطة بـ UserId فقط
+      const filteredTasks = project.Tasks.filter((task) =>
+        task.AssignedTo.some((assignedUserId) => assignedUserId.toString() === UserId.toString())
+      );
+  
+      // إذا لم تكن هناك مهام مرتبطة
+      if (filteredTasks.length === 0) {
+        return res.status(404).json({ message: "No tasks found assigned to you in this project" });
+      }
+  
+      // تجهيز المهام بالشكل المطلوب مع جميع الحقول
+      const tasks = filteredTasks.map((task) => ({
+        ...task._doc, // جميع الحقول الموجودة في المهمة
+        AssignedTo: task.AssignedTo.map((assignedUserId) => assignedUserId.toString()), // تحويل AssignedTo إلى نصوص
+      }));
+  
+      return res.status(200).json({
+        message: "Tasks retrieved successfully",
+        tasks,
+      });
+    } catch (error) {
+      console.error("Error retrieving project tasks:", error.message);
+      return res.status(500).json({
+        message: "Error retrieving project tasks",
+        error: error.message,
+      });
+    }
+  };
+  
+  
 export const CreateTask = async (req, res) => {
     try {
         const {
@@ -115,11 +161,11 @@ export const GetAllTasksBySenior = async (req, res) => {
 };
 
 
-export const UpdateTaskInformations = async (req, res) => {
+export const updateTaskDatesAndStatus = async (req, res) => {
     try {
         const { ProjectId } = req.params;
-        const { TaskId, StartDate, EndDate, AssignedTo, SubmitTaskMethod } = req.body;
-
+        const { TaskId, StartDate, EndDate } = req.body;
+        console.log(ProjectId,TaskId,StartDate,EndDate);
         if (!ProjectId || !TaskId || !StartDate || !EndDate) {
             return res.status(400).json({ message: "All fields are required" });
         }
@@ -138,56 +184,110 @@ export const UpdateTaskInformations = async (req, res) => {
             return res.status(404).json({ message: "Task not found" });
         }
 
+        // تحديث التواريخ وحالة المهمة
+        task.StartDate = StartDate;
+        task.EndDate = EndDate;
+        task.TaskStatus = "In Progress"; // تغيير الحالة إلى "قيد التقدم"
+
+        await project.save();
+
+        return res.status(200).json({
+            message: "Task dates and status updated successfully",
+            task: {
+                TaskId: task._id,
+                StartDate: task.StartDate,
+                EndDate: task.EndDate,
+                TaskStatus: task.TaskStatus,
+            },
+        });
+    } catch (error) {
+        console.error("Error updating task dates and status:", error.message);
+        return res.status(500).json({
+            message: "Error updating task dates and status",
+            error: error.message,
+        });
+    }
+};
+
+
+
+export const addTaskAssigneesAndFile = async (req, res) => {
+    try {
+        const { ProjectId } = req.params;
+        const { TaskId, AssignedTo, SubmitTaskMethod } = req.body;
+
+        if (!ProjectId || !TaskId) {
+            return res.status(400).json({ message: "All fields are required" });
+        }
+
+        const project = await ProjectsModel.findById(ProjectId);
+        if (!project) {
+            return res.status(404).json({ message: "Project not found" });
+        }
+
+        const task = project.Tasks.find((t) => t._id.toString() === TaskId);
+        if (!task) {
+            return res.status(404).json({ message: "Task not found" });
+        }
+
+        // سجل الوقت لمعرفة أداء العملية
+        console.time("TaskProcessing");
+        console.time("FileUpload");
+
+        // معالجة الملفات المرفوعة
         const TaskFile = req.files?.['TaskFile']
             ? await Promise.all(
                   req.files['TaskFile'].map(async (file) => {
-                      const { secure_url, public_id } = await cloudinary.uploader.upload(file.path, {
-                          folder: `GraduationProject1-Software/Project/Task/TaskFile/${ProjectId}`,
-                      });
+                      // التحقق من حجم الملف قبل رفعه
+                      if (file.size > 0) {
+                          const { secure_url, public_id } = await cloudinary.uploader.upload(file.path, {
+                              folder: `GraduationProject1-Software/Project/Task/TaskFile/${ProjectId}`,
+                          });
 
-                      return {
-                          secure_url,
-                          public_id,
-                          originalname: file.originalname,
-                      };
+                          return {
+                              secure_url,
+                              public_id,
+                              originalname: file.originalname,
+                          };
+                      }
+                      return null;
                   })
-              )
+              ).then((files) => files.filter((file) => file !== null)) // استبعاد الملفات الفارغة
             : [];
 
-        task.StartDate = StartDate;
-        task.EndDate = EndDate;
+        // إضافة TaskFile إلى المهمة
+        if (TaskFile.length > 0) {
+            task.TaskFile = TaskFile;
+        }
+        console.timeEnd("FileUpload");
 
+        // تحديث الأشخاص المعيّنين
         if (AssignedTo) {
             const assignedIds = Array.isArray(AssignedTo) ? AssignedTo : [AssignedTo];
             task.AssignedTo = assignedIds.map((id) => new mongoose.Types.ObjectId(id));
         }
-        
 
-        task.TaskStatus = "In Progress";
-
+        // تحديث طريقة تسليم المهمة
         if (SubmitTaskMethod) {
             task.SubmitTaskMethod = SubmitTaskMethod;
         }
 
         await project.save();
+        console.timeEnd("TaskProcessing");
 
         return res.status(200).json({
-            message: "Task details updated successfully",
+            message: "Task assignees and file added successfully",
             task: {
                 TaskId: task._id,
-                TaskName: task.TaskName,
-                StartDate: task.StartDate,
-                EndDate: task.EndDate,
-                TaskStatus: task.TaskStatus,
                 AssignedTo: task.AssignedTo,
                 TaskFile,
                 SubmitTaskMethod: task.SubmitTaskMethod,
             },
         });
     } catch (error) {
-        console.error("Error updating task details:", error.message);
+        console.error("Error adding task assignees and file:", error.message);
         return res.status(500).json({
-            message: "Error updating task details",
+            message: "Error adding task assignees and file",
             error: error.message,
         });
     }
@@ -455,8 +555,8 @@ export const GetAllJuniorSubmissions = async (req, res) => {
 
 export const GetTaskSubmissionsBySenior = async (req, res) => {
     try {
-        const { ProjectId } = req.params; 
-        const { TaskId } = req.body;    
+        const { ProjectId } = req.params;
+        const { TaskId } = req.query; // استخراج TaskId من الـ query parameters
 
         if (!ProjectId || !TaskId) {
             return res.status(400).json({ message: "ProjectId and TaskId are required" });
@@ -478,12 +578,23 @@ export const GetTaskSubmissionsBySenior = async (req, res) => {
             return res.status(404).json({ message: "No submissions found for this task" });
         }
 
+        // إحضار بيانات المستخدمين المرتبطة بـ UserId لكل تسليم
+        const submissionsWithUserDetails = await Promise.all(
+            submissions.map(async (submission) => {
+                const user = await UserModel.findById(submission.UserId); // افتراض وجود موديل المستخدم
+                return {
+                    ...submission.toObject(),
+                    UserFullName: user ? user.FullName : "User not found", // إرجاع اسم المستخدم أو رسالة عند عدم وجوده
+                };
+            })
+        );
+
         return res.status(200).json({
             message: "Submissions retrieved successfully",
             task: {
                 TaskId: task._id,
                 TaskName: task.TaskName,
-                Submissions: submissions,
+                Submissions: submissionsWithUserDetails,
             },
         });
     } catch (error) {
@@ -495,6 +606,50 @@ export const GetTaskSubmissionsBySenior = async (req, res) => {
     }
 };
 
+
+export const CompleteTask = async (req, res) => {
+    try {
+        const { ProjectId } = req.params; // استخراج ProjectId من الـ params
+        const { TaskId } = req.query; // استخراج TaskId من الـ query parameters
+
+        // تحقق من إدخال القيم
+        if (!ProjectId || !TaskId) {
+            return res.status(400).json({ message: "ProjectId and TaskId are required" });
+        }
+
+        // البحث عن المشروع
+        const project = await ProjectsModel.findById(ProjectId);
+        if (!project) {
+            return res.status(404).json({ message: "Project not found" });
+        }
+
+        // البحث عن المهمة داخل المشروع
+        const taskIndex = project.Tasks.findIndex((task) => task._id.toString() === TaskId);
+
+        if (taskIndex === -1) {
+            return res.status(404).json({ message: "Task not found in this project" });
+        }
+
+        // تحديث حالة المهمة إلى "Completed"
+        project.Tasks[taskIndex].TaskStatus = "Completed";
+        await project.save();
+
+        return res.status(200).json({
+            message: "Task completed successfully",
+            task: {
+                TaskId: project.Tasks[taskIndex]._id,
+                TaskName: project.Tasks[taskIndex].TaskName,
+                TaskStatus: project.Tasks[taskIndex].TaskStatus,
+            },
+        });
+    } catch (error) {
+        console.error("Error completing task:", error.message);
+        return res.status(500).json({
+            message: "Error completing task",
+            error: error.message,
+        });
+    }
+};
 
 // Create Revivew For Task By Senior
 
@@ -552,29 +707,85 @@ export const AddReviewToSubmission = async (req, res) => {
 };
 
 
+export const GetReviewForTaskSubmission = async (req, res) => {
+    try {
+      // استخراج معرّف المشروع و معرّف المهمة و معرّف الإرسال من الـ request
+      const { ProjectId, TaskId, SubmissionId } = req.params;
+      const UserId = req.user._id;  // معرّف المستخدم المستخرج من التوكن
+  
+      if (!ProjectId || !TaskId || !SubmissionId) {
+        return res.status(400).json({ message: "ProjectId, TaskId, and SubmissionId are required" });
+      }
+  
+      // البحث عن المشروع باستخدام ProjectId
+      const project = await ProjectsModel.findById(ProjectId);
+      if (!project) {
+        return res.status(404).json({ message: "Project not found" });
+      }
+  
+      // العثور على المهمة ضمن المشروع باستخدام TaskId
+      const task = project.Tasks.find(task => task._id.toString() === TaskId);
+      if (!task) {
+        return res.status(404).json({ message: "Task not found" });
+      }
+  
+      // العثور على الإرسال باستخدام SubmissionId
+      const submission = task.Submissions.find(submission => submission._id.toString() === SubmissionId);
+      if (!submission) {
+        return res.status(404).json({ message: "Submission not found" });
+      }
+  
+      // مقارنة معرّف المستخدم (UserId) مع معرّف المستخدم في الإرسال
+      if (submission.UserId.toString() !== UserId.toString()) {
+        return res.status(403).json({ message: "User is not authorized to view this review" });
+      }
+  
+      // التحقق من وجود المراجعة في الـ Submission
+      if (!submission.Review) {
+        return res.status(404).json({ message: "No review found for this submission" });
+      }
+  
+      // إرجاع المراجعة
+      return res.status(200).json({
+        message: "Review found successfully",
+        review: submission.Review,
+      });
+    } catch (error) {
+      console.error("Error retrieving review for task submission:", error.message);
+      return res.status(500).json({
+        message: "Error retrieving review for task submission",
+        error: error.message,
+      });
+    }
+  };
+  
 // Review Skills By Senior
 
-export const ReviewSkills = async (req, res) => {    
+export const ReviewSkills = async (req, res) => {
     try {
         const { ProjectId } = req.params;
-        const UserId = req.user._id;
-        const { SkillsRatings } = req.body;
+        const seniorUserId = req.user._id;
+        const { SkillsRatings, JuniorUserId } = req.body;
 
-        if (!ProjectId || !SkillsRatings || !Array.isArray(SkillsRatings)) {
-            return res.status(400).json({ message: "Project ID and an array of skill ratings are required" });
+        if (!ProjectId || !SkillsRatings || !Array.isArray(SkillsRatings) || !JuniorUserId) {
+            return res.status(400).json({ message: "Project ID, Junior User ID, and an array of skill ratings are required" });
         }
 
         const project = await ProjectsModel.findById(ProjectId);
-        if (!project) {
-            return res.status(404).json({ message: "Project not found" });
-        }
+        if (!project) return res.status(404).json({ message: "Project not found" });
+
+        const junior = await UserModel.findById(JuniorUserId);
+        if (!junior) return res.status(404).json({ message: "Junior user not found" });
 
         const requiredSkillIds = project.RequiredSkills.map(skill => skill.id.toString());
-
         const reviewsToAdd = [];
 
         for (const rating of SkillsRatings) {
-            const { SkillId, NewRatingSkill } = rating;
+            const { SkillId, SkillName, NewRatingSkill } = rating;
+
+            if (!SkillId || !SkillName || !NewRatingSkill) {
+                return res.status(400).json({ message: "Each skill rating must include SkillId, SkillName, and NewRatingSkill" });
+            }
 
             if (!requiredSkillIds.includes(SkillId.toString())) {
                 return res.status(400).json({ message: `Skill with ID ${SkillId} does not exist in the project's required skills` });
@@ -584,23 +795,21 @@ export const ReviewSkills = async (req, res) => {
                 return res.status(400).json({ message: `Rating for Skill ${SkillId} must be between 1 and 5` });
             }
 
-            const existingReview = project.SkillReviews.find(review => review.UserId.toString() === UserId.toString() && review.SkillId.toString() === SkillId.toString());
+            const existingReview = project.SkillReviews.find(review =>
+                review.UserId.toString() === JuniorUserId.toString() &&
+                review.SkillId.toString() === SkillId.toString()
+            );
 
-            if (existingReview) {
-                if (NewRatingSkill < existingReview.NewRatingSkill) {
-                    return res.status(400).json({
-                        message: `New rating for Skill ${SkillId} cannot be less than the previous rating`
-                    });
-                }
-            } else {
-                if (NewRatingSkill === undefined) {
-                    return res.status(400).json({ message: `New rating for Skill ${SkillId} is required` });
-                }
+            if (existingReview && NewRatingSkill < existingReview.NewRatingSkill) {
+                return res.status(400).json({
+                    message: `New rating for Skill ${SkillId} cannot be less than the previous rating`,
+                });
             }
 
             reviewsToAdd.push({
                 SkillId,
-                UserId,
+                skillName: SkillName, // استخدام اسم المهارة القادم من اليوزر
+                UserId: JuniorUserId,
                 NewRatingSkill,
             });
         }
@@ -616,7 +825,3 @@ export const ReviewSkills = async (req, res) => {
         res.status(500).json({ message: "Error reviewing skills", error: error.message });
     }
 };
-
-
-
-

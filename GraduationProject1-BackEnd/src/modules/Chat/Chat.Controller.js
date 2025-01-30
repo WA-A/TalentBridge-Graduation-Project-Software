@@ -6,7 +6,45 @@ import mongoose from 'mongoose';
 
 import fs from 'fs';
 
+export const sendMessage = async (req, res) => {
+    try {
+        const loggedInUserId = req.user._id;  // المستخدم الذي يرسل الرسالة
+        const { userId, MessageContent, messageType = 'text' } = req.body;
 
+        if (!userId || !MessageContent) {
+            return res.status(400).json({ message: 'User ID and message content are required' });
+        }
+
+        // البحث عن محادثة بين المستخدمين
+        let chat = await ChatModel.findOne({ users: { $all: [loggedInUserId, userId] } });
+
+        // إذا لم توجد محادثة، يتم إنشاؤها
+        if (!chat) {
+            chat = new ChatModel({
+                users: [loggedInUserId, userId], 
+                messages: []
+            });
+        }
+
+        // إنشاء الرسالة
+        const newMessage = {
+            sender: loggedInUserId,
+            content: MessageContent,
+            messageType,
+            timestamp: new Date(),
+        };
+
+        // إضافة الرسالة إلى المحادثة
+        chat.messages.push(newMessage);
+        await chat.save();
+
+        return res.status(200).json({ message: 'Message sent successfully', chat });
+
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: 'Failed to send message' });
+    }
+};
 export const CreateChat = async (req, res, next) => {
     try {
         const { OtherUserId, FirstMessage } = req.body;
@@ -83,98 +121,226 @@ export const CreateChat = async (req, res, next) => {
 };
 
 
-export const AddMessageToChat = async (req, res) => {
+export const AddMessageToChat = async (req, res, next) => {
     try {
-        const loggedInUserId = req.user.id;  
-        const { ChatId, MessageContent, messageType = 'text', media = null } = req.body;
+        const { MessageContent } = req.body;
+        const loggedInUserId = req.user._id;  // المستخدم المتصل
+        const otherUserId = req.params.otherUserId; // المستخدم الآخر
 
-        if (!ChatId || !MessageContent) {
-            return res.status(400).json({ message: 'Chat ID and message content are required' });
+        if (!MessageContent || !otherUserId) {
+            return next(new Error("Message content and other user ID are required."));
         }
 
-        const chat = await ChatModel.findById(ChatId);
-        if (!chat) {
-            return res.status(404).json({ message: 'Chat not found' });
-        }
-
-        if (!chat.users.includes(loggedInUserId)) {
-            return res.status(403).json({ message: 'You are not authorized to send messages in this chat' });
-        }
-
-        let uploadedMedia = [];
-
-        if (req.files) {
-            if (req.files['images']) {
-                const images = await Promise.all(req.files['images'].map(async (file) => {
-                    const { secure_url, public_id } = await cloudinary.uploader.upload(file.path, {
-                        folder: `Chats/${loggedInUserId}`,
-                    });
-                    fs.unlinkSync(file.path);
-                    return { secure_url, public_id };
-                }));
-                uploadedMedia.push(...images);
-            }
-
-            if (req.files['videos']) {
-                const videos = await Promise.all(req.files['videos'].map(async (file) => {
-                    const { secure_url, public_id } = await cloudinary.uploader.upload(file.path, {
-                        resource_type: 'video',
-                        folder: `Chats/${loggedInUserId}`,
-                    });
-                    fs.unlinkSync(file.path);
-                    return { secure_url, public_id };
-                }));
-                uploadedMedia.push(...videos);
-            }
-
-            if (req.files['files']) {
-                const files = await Promise.all(req.files['files'].map(async (file) => {
-                    const { secure_url, public_id } = await cloudinary.uploader.upload(file.path, {
-                        resource_type: 'auto',
-                        folder: `Chats/${loggedInUserId}`,
-                    });
-                    fs.unlinkSync(file.path);
-                    return { secure_url, public_id };
-                }));
-                uploadedMedia.push(...files);
-            }
-        }
-
-        const finalMessageType = uploadedMedia.length > 0 ? (
-            uploadedMedia[0].secure_url ? 'image' : 
-            uploadedMedia[0].video_url ? 'video' : 'file'
-        ) : messageType;
-
-        chat.messages.push({
-            sender: loggedInUserId,
-            content: MessageContent,
-            messageType: finalMessageType,
-            media: uploadedMedia,
+        const existingChat = await ChatModel.findOne({
+            users: { $all: [loggedInUserId, otherUserId] },
+            project: null
         });
 
-        await ChatModel.findByIdAndUpdate(ChatId, { messages: chat.messages }, { new: true });
+        if (existingChat) {
+            const images = req.files['images'] ? await Promise.all(req.files['images'].map(async (file) => {
+                const { secure_url, public_id } = await cloudinary.uploader.upload(file.path, { folder: `Chats/${loggedInUserId}` });
+                return { secure_url, public_id, originalname: file.originalname };
+            })) : [];
 
-        return res.status(200).json({ message: 'Message added successfully', chat });
+            const videos = req.files['videos'] ? await Promise.all(req.files['videos'].map(async (file) => {
+                const { secure_url, public_id } = await cloudinary.uploader.upload(file.path, { folder: `Chats/${loggedInUserId}`, resource_type: "video" });
+                return { secure_url, public_id, originalname: file.originalname };
+            })) : [];
+
+            const files = req.files['files'] ? await Promise.all(req.files['files'].map(async (file) => {
+                const { secure_url, public_id } = await cloudinary.uploader.upload(file.path, { folder: `Chats/${loggedInUserId}` });
+                return { secure_url, public_id, originalname: file.originalname };
+            })) : [];
+
+            const messageType = (images.length > 0) ? 'image' :
+                (videos.length > 0) ? 'video' :
+                (files.length > 0) ? 'file' : 'text';
+
+            const newMessage = {
+                sender: loggedInUserId,
+                content: MessageContent,
+                messageType,
+                media: [...images, ...videos, ...files],
+                timestamp: Date.now(),
+            };
+
+            existingChat.messages.push(newMessage);
+            await existingChat.save();
+
+            return res.status(200).json({
+                message: "Message added successfully to existing chat.",
+                chat: existingChat,
+            });
+        }
+
+        // إنشاء دردشة جديدة إذا لم تكن موجودة
+        const newChat = new ChatModel({
+            users: [loggedInUserId, otherUserId],
+            messages: [],
+            project: null,
+        });
+
+        const images = req.files['images'] ? await Promise.all(req.files['images'].map(async (file) => {
+            const { secure_url, public_id } = await cloudinary.uploader.upload(file.path, { folder: `Chats/${loggedInUserId}` });
+            return { secure_url, public_id, originalname: file.originalname };
+        })) : [];
+
+        const videos = req.files['videos'] ? await Promise.all(req.files['videos'].map(async (file) => {
+            const { secure_url, public_id } = await cloudinary.uploader.upload(file.path, { folder: `Chats/${loggedInUserId}`, resource_type: "video" });
+            return { secure_url, public_id, originalname: file.originalname };
+        })) : [];
+
+        const files = req.files['files'] ? await Promise.all(req.files['files'].map(async (file) => {
+            const { secure_url, public_id } = await cloudinary.uploader.upload(file.path, { folder: `Chats/${loggedInUserId}` });
+            return { secure_url, public_id, originalname: file.originalname };
+        })) : [];
+
+        const messageType = (images.length > 0) ? 'image' :
+            (videos.length > 0) ? 'video' :
+            (files.length > 0) ? 'file' : 'text';
+
+        const newMessage = {
+            sender: loggedInUserId,
+            content: MessageContent,
+            messageType,
+            media: [...images, ...videos, ...files],
+            timestamp: Date.now(),
+        };
+
+        newChat.messages.push(newMessage);
+        await newChat.save();
+
+        return res.status(200).json({
+            message: "Message added successfully to new chat.",
+            chat: newChat,
+        });
     } catch (error) {
-        console.error(error);
-        return res.status(500).json({ message: 'Failed to add message' });
+        console.error("Error adding message:", error);
+        return next(error);
+    }
+};
+
+
+export const GetChatBetweenUsers = async (req, res, next) => {
+    try {
+        const loggedInUserId = req.user._id;  // المستخدم المتصل
+        const otherUserId = req.params.otherUserId;  // المستخدم الآخر الذي تريد الحصول على الدردشة معه
+
+        // التحقق من وجود otherUserId
+        if (!otherUserId) {
+            return next(new Error("Other user ID is required."));
+        }
+
+        // البحث عن دردشة بين المستخدمين تحتوي على مشروع null
+        const chat = await ChatModel.findOne({
+            users: { $all: [loggedInUserId, otherUserId] },
+            project: null
+        })
+        .populate({
+            path: 'messages.sender',  // جلب بيانات المرسل المرتبط بكل رسالة
+            select: 'FullName UserName PictureProfile Role'  // تحديد الحقول التي نحتاجها للمُرسلين
+        })
+        .populate({
+            path: 'users',  // جلب تفاصيل جميع المستخدمين المرتبطين بالشات
+            select: 'FullName UserName PictureProfile'  // الحقول المطلوبة للمستخدمين
+        });
+
+        // إذا لم توجد دردشة، تعيين متغير للإشارة إلى أنه لا توجد دردشة
+        if (!chat) {
+            return res.status(404).json({
+                message: "No chat found between these users with project null.",
+                chatExists: false  // المتغير الذي يشير إلى أنه لا توجد دردشة
+            });
+        }
+
+        // إعادة الشات مع تفاصيل المستخدمين والرسائل
+        return res.status(200).json({
+            message: "Chat found successfully.",
+            chat,
+            chatExists: true  // المتغير الذي يشير إلى أن الدردشة موجودة
+        });
+
+    } catch (error) {
+        console.error("Error fetching chat:", error);
+        return next(error);
     }
 };
 
 
 export const GetAllChats = async (req, res) => {
     try {
-        const loggedInUserId = req.user.id;  
+        const loggedInUserId = req.user._id;  // الحصول على معرف المستخدم المتصل
 
+        // العثور على جميع الدردشات التي تضم المستخدم المتصل
         const chats = await ChatModel.find({
             users: loggedInUserId  
-        });
+        }).populate('users', 'PictureProfile FullName');  // تحميل صورة الملف الشخصي واسم المستخدم لكل مستخدم
 
         if (chats.length === 0) {
             return res.status(404).json({ message: 'No chats found for this user' });
         }
 
-        return res.status(200).json({ message: 'Chats retrieved successfully', chats });
+        // الآن سنقوم بتهيئة الرد ليتضمن صورة المستخدمين واسمائهم في كل شات
+        const chatDetails = await Promise.all(chats.map(async (chat) => {  // استخدام async داخل map
+            let usersInfo = [];
+            let chatType = 'multiple users';  // افتراضًا أنها دردشة عدة مستخدمين
+            let projectId = null;  // في حال كانت دردشة فردية، لا حاجة لإرجاع projectId
+            let projectName = null;  // هنا نضيف المتغير لاسم المشروع
+
+            // التحقق من وجود بيانات للمستخدمين
+            if (!chat.users || chat.users.length === 0) {
+                return {
+                    chatId: chat._id,
+                    usersInfo: [],  // إذا كانت البيانات غير متوفرة
+                    chatType: 'unknown',
+                    lastMessage: chat.lastMessage,
+                    createdAt: chat.createdAt
+                };
+            }
+
+            // تحديد نوع الدردشة بناءً على وجود projectId
+            if (chat.project) {
+                // إذا كانت دردشة تحتوي على مشروع
+                chatType = 'multiple users';  // إذا كانت دردشة جماعية
+                projectId = chat.project;  // إضافة الـ projectId للدردشة الجماعية
+                // نحاول جلب اسم المشروع باستخدام projectId
+                const project = await ProjectsModel.findById(projectId);
+                if (project) {
+                    projectName = project.ProjectName;  // الحصول على اسم المشروع
+                }
+            } else {
+                // إذا كانت دردشة فردية بين شخصين
+                chatType = 'individual';  // إذا كانت دردشة فردية
+
+                // التحقق من الـ userId في الدردشة الفردية
+                const otherUser = chat.users.find(user => user._id.toString() !== loggedInUserId.toString());
+
+                if (otherUser) {
+                    // إذا كانت دردشة فردية، نرجع بيانات المستخدم الآخر فقط
+                    usersInfo = [{
+                        userId: otherUser._id,  // إضافة الـ userId الخاص بالمستخدم الآخر
+                        profileImage: otherUser.PictureProfile,
+                        name: otherUser.FullName
+                    }];
+                }
+            }
+
+            return {
+                chatId: chat._id,
+                usersInfo,  // صور وأسماء المستخدمين بالإضافة إلى معرّفهم
+                chatType,  // نوع الدردشة
+                projectId,  // إرجاع الـ projectId إذا كانت دردشة جماعية
+                projectName,  // إرجاع اسم المشروع إذا كانت دردشة جماعية
+                lastMessage: chat.lastMessage,
+                createdAt: chat.createdAt
+            };
+        }));
+
+        // ترتيب المحادثات بترتيب عكسي حسب تاريخ الإنشاء (أحدث المحادثات أولاً)
+        const sortedChatDetails = chatDetails.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+        return res.status(200).json({ message: 'Chats retrieved successfully', chatDetails: sortedChatDetails });
+
     } catch (error) {
         console.error(error);
         return res.status(500).json({ message: 'Failed to retrieve chats' });
@@ -182,20 +348,49 @@ export const GetAllChats = async (req, res) => {
 };
 
 
-export const GetChatMessages = async (req, res, next) => {
-    console.log("sama")
-    try {
-        const { ChatId } = req.params;
 
-        const chat = await ChatModel.findById(ChatId).populate('messages.sender', 'name email');
-        if (!chat) {
-            return next(new Error("Chat not found."));
+export const GetChatMessages = async (req, res, next) => {
+    try {
+        const currentUserId = req.user._id; // المستخدم الحالي
+        let targetUserId = req.params.userId; // المستخدم المدخل
+
+        console.log("Current User ID:", currentUserId);
+        console.log("Target User ID:", targetUserId);
+
+        // التحقق من أن كلا المستخدمين يملكان ObjectId صالح
+        if (!mongoose.isValidObjectId(currentUserId) || !mongoose.isValidObjectId(targetUserId)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid user ID format.",
+                messages: [],
+            });
         }
 
-        return res.status(200).json({ messages: chat.messages });
+        // البحث عن محادثة تحتوي فقط على المستخدمين الاثنين
+        const chat = await ChatModel.findOne({
+            users: { $all: [currentUserId, targetUserId] } // يجب أن يحتوي الـ array على المستخدمين الاثنين
+        });
+
+        if (!chat) {
+            return res.status(200).json({
+                success: false,
+                message: "No chat found between these users.",
+                messages: [],
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            chats: chat.messages || [],
+        });
+
     } catch (error) {
         console.error("Error fetching chat messages:", error);
-        return next(error);
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error.",
+            messages: [],
+        });
     }
 };
 

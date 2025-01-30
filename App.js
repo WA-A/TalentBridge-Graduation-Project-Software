@@ -36,6 +36,10 @@ import ThePlaneProjectSenior from './screens/ThePlaneProjectSenior.js';
 import ThePlaneProjectJunior from './screens/ThePlaneProjectJunior.js';
 import ProjectYouAreIN from './screens/ProjectYouAreIN.js';
 import ChatMopile from './screens/chatMopile.js';
+import TheSubmission from './screens/TheSubmission.js';
+import ReviewTaskForJunior from './screens/ReviewTaskForJunior.js';
+import AllPeapleItalk from './screens/AllPeapleItalk.js';
+import ChatUser from './screens/ChatUser.js';
 Notifications.setNotificationHandler({
     handleNotification: async () => ({
       shouldShowAlert: true,
@@ -258,6 +262,26 @@ export default function App() {
              <Stack.Screen
             name="ChatMopile"
             component={ChatMopile}
+            options={{ headerShown: false }}
+          />
+             <Stack.Screen
+            name="TheSubmission"
+            component={TheSubmission}
+            options={{ headerShown: false }}
+          />
+           <Stack.Screen
+            name="ReviewTaskForJunior"
+            component={ReviewTaskForJunior}
+            options={{ headerShown: false }}
+          />
+           <Stack.Screen
+            name="ChatUser"
+            component={ChatUser}
+            options={{ headerShown: false }}
+          />
+           <Stack.Screen
+            name="AllPeapleItalk"
+            component={AllPeapleItalk}
             options={{ headerShown: false }}
           />
         </Stack.Navigator>

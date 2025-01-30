@@ -24,7 +24,7 @@ import { decode as atob } from 'base-64'; // إذا كنت تستخدم React Na
 import * as DocumentPicker from "expo-document-picker";
 const { width } = Dimensions.get("window");
 
-export default function ChatMopile ({ navigation, route }) {
+export default function ChatUser ({ navigation, route }) {
   const {projectID} = route.params || {}; 
 
     const baseUrl = Platform.OS === 'web'
@@ -388,7 +388,7 @@ const openFileInBrowser = async (uri) => {
           });
   
           const data = await response.json();
-          console.log(data.message);
+          console.log(data.messages);
           fetchMessages();
       } catch (error) {
           console.error('Error deleting message:', error);
@@ -563,6 +563,7 @@ const openFileInBrowser = async (uri) => {
  
    
   const handleSendMessage = async () => {
+    console.log("user",projectID);
     if (!newMessage.trim() && !file && !imageChat) return; // التحقق من أن الرسالة غير فارغة
 
     try {
@@ -572,7 +573,6 @@ const openFileInBrowser = async (uri) => {
         console.error('Token not found');
         return;
       }
-      console.log(imageChat);
       const formData = new FormData();
     
       formData.append('MessageContent', newMessage);
@@ -616,7 +616,7 @@ const openFileInBrowser = async (uri) => {
 
    
  
-      const response = await fetch(`${baseUrl}/chat/AddmessageToChatProject/${projectID}`,{
+      const response = await fetch(`${baseUrl}/chat/addmessagetochat/${projectID}`,{
         method: 'POST',
         headers: {
           'Authorization': `Wasan__${token}`, // تأكد من كتابة التوكن بالشكل الصحيح
@@ -629,7 +629,7 @@ const openFileInBrowser = async (uri) => {
         throw new Error(errorData.message || 'Something went wrong');
       }
   
-      fetchMessages();
+   fetchMessages();
       const data = await response.json();
       console.log(data); // قم بإجراء شيء ما مع البيانات المستلمة من الخادم
       setNewMessage(''); // إعادة تعيين الرسالة بعد الإرسال  
@@ -656,9 +656,9 @@ const openFileInBrowser = async (uri) => {
     }
     if (file) {
       return (
-        <View style={styles.previewContainer}>
+        <View style={styles.fileCard}>
           <Text style={styles.previewLabel}>Selected Media:</Text>
-          <Text>file.name</Text>
+          <Text style={{fontSize:12,fontWeight:'bold'}}>{file.name}</Text>
          
         </View>
       );
@@ -678,7 +678,7 @@ const openFileInBrowser = async (uri) => {
         return;
       }
   
-      const response = await fetch(`${baseUrl}/chat/GetAllChatsProject/${projectID}`, {
+      const response = await fetch(`${baseUrl}/chat/GetChatBetweenUsers/${projectID}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -691,7 +691,9 @@ const openFileInBrowser = async (uri) => {
       }
   
       const data = await response.json();
-      setchatsData(data.chats);  // تحديث حالة البروفايل
+      setchatsData(data.chat); 
+      console.log("no chat",data.chat);
+       // تحديث حالة البروفايل
         flatListRef.current?.scrollToEnd({ animated: true });
       
     } catch (error) {
@@ -896,92 +898,100 @@ const openFileInBrowser = async (uri) => {
         )}
               
         <View
-      style={{
-        flex: 1,
-        marginBottom: Platform.OS === 'web' ? 0 : 50,
-        marginHorizontal: Platform.OS === 'web' ? '20%' : 0,
-      }}
-    >
-      <View style={{ marginBottom: Platform.OS === 'web' ? 100 : 60, margin: 4 }}>
-        {chatsData?.length > 0 ? (
-          <FlatList
-            ref={flatListRef} // تعيين المرجع
-            data={chatsData[0]?.messages || []}
-            keyExtractor={(item) => item._id}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                onLongPress={() => handleLongPressMessage(item._id)}
-                style={styles.messageContainer}
-              >
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <Image
-                    source={{
-                      uri: item.sender.PictureProfile?.secure_url || 'https://via.placeholder.com/80',
-                    }}
-                    style={styles.profileImage}
-                  />
-                  <Text style={styles.senderName}>
-                    {item.sender.FullName} (@{item.sender.UserName})
-                  </Text>
-                </View>
+  style={{
+    flex: 1,
+    marginBottom: Platform.OS === 'web' ? 0 : 50,
+    marginHorizontal: Platform.OS === 'web' ? '20%' : 0,
+  }}
+>
+  <View style={{ marginBottom: Platform.OS === 'web' ? 100 : 60, margin: 4 }}>
+    {chatsData?.messages?.length > 0 ? (
+      <FlatList
+        ref={flatListRef} // تعيين المرجع
+        data={chatsData?.messages || []}
+        keyExtractor={(item) => item._id}
+        renderItem={({ item }) => {
+          const isMyMessage = item.sender._id === projectID; // تحقق إذا كانت الرسالة من المستخدم الحالي
 
-                {/* وقت الإرسال */}
-                <Text style={styles.timeText}>{formatTime(item.timestamp)}</Text>
+          return (
+            <TouchableOpacity
+              onLongPress={() => handleLongPressMessage(item._id)}
+              style={[
+                styles.messageContainer,
+                isMyMessage ? styles.myMessage : styles.otherMessage, // تغيير التنسيق بناءً على المُرسل
+              ]}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Image
+                  source={{
+                    uri: item.sender.PictureProfile?.secure_url || 'https://via.placeholder.com/80',
+                  }}
+                  style={styles.profileImage}
+                />
+                <Text style={styles.senderName}>
+                  {item.sender.FullName} (@{item.sender.UserName})
+                </Text>
+              </View>
 
-                <View style={styles.divider}></View>
-                <View style={styles.messageContent}>
-                  <Text style={styles.messageText}>{item.content}</Text>
+              {/* وقت الإرسال */}
+              <Text style={styles.timeText}>{formatTime(item.timestamp)}</Text>
 
-                  {item.messageType === 'file' &&
-                    item.media &&
-                    item.media.map((file, index) => (
-                      <TouchableOpacity
-                        key={index}
-                        style={styles.fileCard}
-                        onPress={() =>
-                          openFileInBrowser(file.secure_url, file.originalname)
-                        }
-                      >
-                        <FontAwesome
-                          name="file-o"
-                          size={24}
-                          color="#555"
-                          style={styles.icon}
-                        />
-                        <Text style={styles.fileName}>
-                          {file.originalname || 'Click to view/download file'}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
+              <View style={styles.divider}></View>
+              <View style={styles.messageContent}>
+                <Text style={styles.messageText}>{item.content}</Text>
 
-                  {item.messageType === 'image' &&
-                    item.media &&
-                    item.media.map((image, index) => (
-                      <TouchableOpacity
-                        key={index}
-                        onPress={() => openImageViewer(image?.secure_url)}
-                      >
-                        <Image
-                          source={{ uri: image.secure_url }}
-                          style={{
-                            width: '100%',
-                            height: 300,
-                            borderRadius: 10,
-                            marginVertical: 10,
-                            width: Platform.OS === 'web' ? '30%' : '100%',
-                            resizeMode: 'cover',
-                          }}
-                        />
-                      </TouchableOpacity>
-                    ))}
-                </View>
-              </TouchableOpacity>
-            )}
-          />
-        ) : (
-          <Text>No messages available.</Text>
-        )}
-      </View>
+                {item.messageType === 'file' &&
+                  item.media &&
+                  item.media.map((file, index) => (
+                    <TouchableOpacity
+                      key={index}
+                      style={styles.fileCard}
+                      onPress={() =>
+                        openFileInBrowser(file.secure_url, file.originalname)
+                      }
+                    >
+                      <FontAwesome
+                        name="file-o"
+                        size={24}
+                        color="#555"
+                        style={styles.icon}
+                      />
+                      <Text style={styles.fileName}>
+                        {file.originalname || 'Click to view/download file'}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+
+                {item.messageType === 'image' &&
+                  item.media &&
+                  item.media.map((image, index) => (
+                    <TouchableOpacity
+                      key={index}
+                      onPress={() => openImageViewer(image?.secure_url)}
+                    >
+                      <Image
+                        source={{ uri: image.secure_url }}
+                        style={{
+                          width: '100%',
+                          height: 300,
+                          borderRadius: 10,
+                          marginVertical: 10,
+                          width: Platform.OS === 'web' ? '30%' : '100%',
+                          resizeMode: 'cover',
+                        }}
+                      />
+                    </TouchableOpacity>
+                  ))}
+              </View>
+            </TouchableOpacity>
+          );
+        }}
+      />
+    ) : (
+      <Text>No messages available.</Text>
+    )}
+  </View>
+
 
       {/* عرض الصورة أو الملف المختار */}
       <View style={styles.inputContainerImage}>{renderSelectedMedia()}</View>
@@ -1963,8 +1973,14 @@ inputContainer: {
   },
   timeText: {
     fontSize: 12,
-    color: 'gray',
+    color: '#000',
     marginTop: 5,
   },
 
+  myMessage: {
+    backgroundColor: "#ccc", 
+  },
+otherMessage:{
+    backgroundColor: '#aeb6bf', // رمادي داكن دافئ للرسائل الخاصة بي
+}
 });

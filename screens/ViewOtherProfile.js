@@ -15,6 +15,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import io from 'socket.io-client';
 import Modal from 'react-native-modal';
 import ImageViewer from 'react-native-image-zoom-viewer';
+import moment from 'moment';
 
 import {
   Colors,
@@ -48,6 +49,7 @@ export default function ViewOtherProfile ({ navigation,route}) {
     const [selectedItem, setSelectedItem] = useState(null);
   const [modalVisibleEditting, setModalEdittingVisible] = useState(false);
   const [currentModalEditting, setCurrentModalEditting] = useState('');
+  const [skillsRecommendation, setSkillsRecommendation] = useState([]);
 
   const openModalEditting = (item, type) => {
     setSelectedItem({ ...item, type }); // تخزين بيانات البطاقة والنوع
@@ -587,6 +589,37 @@ export default function ViewOtherProfile ({ navigation,route}) {
 
   /////////////////////////////////////////////////////////////////
 
+  const handleGetRecomandation = async () => {
+    try {
+      const token = await AsyncStorage.getItem('userToken'); // استرجاع التوكن
+      if (!token) {
+        console.error('Token not found');
+        return;
+      }
+
+      const response = await fetch(`${baseUrl}/user/getRecommendationsByID/${userData._id}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Wasan__${token}`, // تضمين التوكن في الهيدر
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json(); // إذا كان هناك خطأ في الرد
+        throw new Error(errorData.message || 'Failed to fetch languages');
+      }
+
+      const data = await response.json(); // تحويل الرد إلى JSON
+      if(data.recommendations=== null || data.skillsWithReviews=== null){
+        return;
+      }
+      setRecommendation(data.recommendations); // تخزين اللغات في الحالة لعرضها
+      setSkillsRecommendation(data.skillsWithReviews);
+      console.log('Fetched languages:', data.skillsWithReviews); // تحقق من البيانات
+    } catch (error) {
+   //   console.error('Error fetching languages:', error.message);
+    }
+  };
 
 
   const handleViewProfile = async () => {  
@@ -607,6 +640,7 @@ export default function ViewOtherProfile ({ navigation,route}) {
       setNewUserName(userName);
       setSearchQuery(userData.FullName);
       setRole(userData.Role);
+    
  //     socket.emit('profileUpdated', userData.user); // إرسال التحديث للسيرفر
   };
 
@@ -1457,6 +1491,7 @@ export default function ViewOtherProfile ({ navigation,route}) {
 
   useEffect(() => {
     handleViewProfile();
+    handleGetRecomandation();
     getAllExperiance();
     getAllEducation();
    getAllCertifications();
@@ -1774,7 +1809,7 @@ export default function ViewOtherProfile ({ navigation,route}) {
 
 
 
-            <TouchableOpacity onPress={() => nav.navigate('Chat')} style={{ marginRight: 100 }}>
+            <TouchableOpacity onPress={() => nav.navigate('AllPeapleItalk')} style={{ marginRight: 100 }}>
               <EvilIcons name="sc-telegram" size={30} color={isNightMode ? primary : "#000"} />
             </TouchableOpacity>
 
@@ -1837,7 +1872,7 @@ export default function ViewOtherProfile ({ navigation,route}) {
                 Talent Bridge
               </Text>
 
-              <TouchableOpacity onPress={() => nav.navigate('Chat')}>
+              <TouchableOpacity onPress={() => nav.navigate('AllPeapleItalk')}>
                 <EvilIcons name="sc-telegram" size={39} color={careysPink} style={{ position: 'absolute', top: -20, left: 10 }} />
                 <EvilIcons name="sc-telegram" size={37} color={darkLight} style={{ position: 'absolute', top: -20, left: 10 }} />
               </TouchableOpacity>
@@ -1929,19 +1964,17 @@ export default function ViewOtherProfile ({ navigation,route}) {
 
               {/* حاوية النصوص (الاسم واسم المستخدم) */}
               <View style={{ flex: 1, justifyContent: 'center', marginTop: -23 }}>
-                <Text
-                  style={{
+                  <Text style={{
                     fontSize: 20,
                     fontWeight: 'bold',
                     color: isNightMode ? Colors.primary : Colors.black,
-                    flexShrink: 1, // يسمح بتقليص النص إذا زاد عن المساحة المتاحة
+                    flexShrink: 1,marginTop:14
                   }}
                   numberOfLines={1}
-                  ellipsizeMode="tail"
-                >
+                  ellipsizeMode="tail">
                   {FullName || 'Full Name'}
                 </Text>
-
+     
                 <Text
                   style={{
                     fontSize: 14,
@@ -1961,7 +1994,27 @@ export default function ViewOtherProfile ({ navigation,route}) {
               </View>
 
             
-
+              <TouchableOpacity
+    style={{
+      backgroundColor: isNightMode ? Colors.careysPink : Colors.darkLight, // تحديد لون الخلفية حسب الوضع
+      borderRadius: 5, // لجعل الزر ذو حواف دائرية
+      justifyContent: 'center',
+      shadowColor: '#fff', // إضافة ظل خفيف للزر
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.3,
+      shadowRadius: 4,marginTop:14
+    }}
+    activeOpacity={0.7} // تأثير التفاعل عند الضغط
+    onPress={()=>navigation.navigate('ChatUser',{projectID:userData._id})}
+  >
+    <Text style={{
+      color: '#fff',
+      fontWeight: 'bold',
+      fontSize: 11,padding:5
+    }}>
+      Send a message
+    </Text>
+  </TouchableOpacity>  
             </View>
 
 
@@ -2005,51 +2058,8 @@ export default function ViewOtherProfile ({ navigation,route}) {
           </View>
 
           {/* قسم الأصدقاء والتقدم والإنجازات */}
-          <View style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            backgroundColor: isNightMode ? Colors.tertiary : Colors.secondary,
-            width: '100%',
-            marginTop: 20,
-            padding: 10,
-          }}>
-
-            {/* عدد الأصدقاء */}
-            <View style={{ flex: 1, alignItems: 'center' }}>
-              <TouchableOpacity>
-                <Text style={{
-                  fontSize: 18,
-                  fontWeight: 'bold',
-                  color: isNightMode ? Colors.primary : Colors.black
-                }}>
-                  Friends {friendsCount || '0'}
-                </Text></TouchableOpacity>
-            </View>
-
-            {/* التقدم */}
-            <View style={{ flex: 1, alignItems: 'center', left: 18 }}>
-              <Text style={{
-                fontSize: 18,
-                fontWeight: 'bold',
-                color: isNightMode ? Colors.fourhColor : Colors.gray
-              }}>
-                {userProgress || 'Beginner'}
-              </Text>
-            </View>
-
-            {/* قائمة الإنجازات */}
-            <View style={{ flex: 1, alignItems: 'center', left: 19 }}>
-              <MaterialIcons
-                name="emoji-events"
-                size={24}
-                color={isNightMode ? Colors.fourhColor : Colors.gold}
-              />
-            </View>
-
-          </View>
-
-          <View style={[styles.divider, { height: 3 }]} />
+   
+<View style={[styles.divider, { height: 3 }]} />
 
 
 
@@ -2290,18 +2300,7 @@ export default function ViewOtherProfile ({ navigation,route}) {
           <View style={[styles.divider, { height: 3 }]} />
 
 
-          {/* بطاقة Project */}
-          <View style={[styles.card, { backgroundColor: isNightMode ? Colors.black : Colors.primary }]}>
-            <View style={styles.cardHeader}>
-              <Text style={[styles.cardTitle, { color: isNightMode ? Colors.primary : Colors.black }]}>Project</Text>
-              <View style={styles.actionButtons}>
 
-              </View>
-            </View>
-          </View>
-
-
-          <View style={[styles.divider, { height: 3 }]} />
 
 
           {/* بطاقة Skills */}
@@ -2420,16 +2419,84 @@ export default function ViewOtherProfile ({ navigation,route}) {
           <View style={[styles.divider, { height: 3 }]} />
 
           {/* بطاقة Recommendation */}
-          <View style={[styles.card, { backgroundColor: isNightMode ? Colors.black : Colors.primary }]}>
-            <View style={styles.cardHeader}>
-              <Text style={[styles.cardTitle, { color: isNightMode ? Colors.primary : Colors.black }]}>Recommendation</Text>
-              <View style={styles.actionButtons}>
-                
-              </View>
-            </View>
+        
+                  <View style={[styles.card, { backgroundColor: isNightMode ? Colors.black : Colors.primary }]}>
+          <View style={styles.cardHeader}>
+            <Text style={[styles.cardTitle, { color: isNightMode ? Colors.primary : Colors.black }]}>
+              Review
+            </Text>
           </View>
+        
+          {/* عرض التوصيات فقط إذا كانت موجودة */}
+          <View style={styles.experienceItem}>
+          {Array.isArray(recommendation) && recommendation.length > 0 && recommendation.slice(0, 2).map((rec, index) => (
+            <View key={index}>
+              <TouchableOpacity   
+               onPress={() => {{
+                navigateToSeniorProfile(rec.author.id); // الانتقال
+          }}}
+             style={styles.authorContainer}>
+                {/* عرض صورة المؤلف */}
+                <Image source={{ uri: rec.author.profilePicture.secure_url }} style={styles.authorImage} />
+                <View>
+                  {/* اسم المؤلف */}
+                <Text style={styles.recommendationAuthor}>{rec.author.fullName}</Text>
+                  <Text style={styles.dateText}>
+          {moment(rec.date).format('DD MMM YYYY, hh:mm A')}
+        </Text>
+                  {/* النص الخاص بالتوصية */}
+                  <Text style={styles.recommendationText}>{rec.text}</Text>
+                </View>        
+        
+              </TouchableOpacity>
+            </View>
+          ))}
+        <View style={styles.divider2}></View>
+          {/* عرض المهارات والتقييمات داخل نفس البطاقة */}
+          {Array.isArray(skillsRecommendation) && skillsRecommendation.length > 0 && (
+            <View style={styles.skillsContainer}>
+              {skillsRecommendation.slice(0, 2).map((skill, index) => (
+                <View key={index} style={styles.skillCard}>
+                  <Text style={styles.projectName}>{skill.projectName}</Text>
+                  
+                  {Array.isArray(skill.reviews) && skill.reviews.length > 0 && skill.reviews.map((review, reviewIndex) => (
+                    <View key={reviewIndex} style={{ flexDirection: 'row', alignItems: 'center',justifyContent:'space-between' }}>
+                      {/* اسم السينيور (الذي قام بالتقييم) */}
+        
+                      <Text style={styles.seniorName}>{review.skillName}</Text>
+                      {/* تقييم النجوم */}
+                      <View style={[styles.starRating,{justifyContent:'space-between'}]}>
+                        {[1, 2, 3, 4, 5].map((starIndex) => (
+                          <TouchableOpacity
+                            key={starIndex}
+                            onPress={() => {
+                              const updatedSkills = [...skillsRecommendation];
+                              updatedSkills[index].reviews[reviewIndex].rating = starIndex;
+                              setSkillsRecommendation(updatedSkills);
+                            }}
+                          >
+                            <MaterialCommunityIcons
+                              name={starIndex <= review.rating ? 'star' : 'star-outline'}
+                              size={20}
+                              color={starIndex <= review.rating ? '#F7A8B8' : isNightMode ? Colors.primary : Colors.black}
+                            />
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                    </View>
+                  ))}
+                </View>
+              ))}
+            </View>
+          )}</View>
+        </View>
+        
+        
+        
+        <View style={[styles.divider, { height: 3 }]} />
+        
+        
 
-          <View style={[styles.divider, { height: 3 }]} />
 
           {/* Modal لكل بطاقة */}
           <Modal animationType="slide" transparent={true} visible={modalVisible} onRequestClose={closeModal}>
@@ -3037,10 +3104,7 @@ export default function ViewOtherProfile ({ navigation,route}) {
 
             {/* عرض محتوى التبويب المختار */}
             <View style={[styles.content, { backgroundColor: isNightMode ? Colors.black : Colors.primary }]}>
-              {activeTab === 'Messages' && <Text style={[styles.tabContent, { color: isNightMode ? Colors.primary : Colors.black }]}>Messages Content</Text>}
-              {activeTab === 'Connect' && <Text style={[styles.tabContent, { color: isNightMode ? Colors.primary : Colors.black }]}>Connect Content</Text>}
               {activeTab === 'Posts' && <Text style={[styles.tabContent, { color: isNightMode ? Colors.primary : Colors.black }]}>Posts Content</Text>}
-              {activeTab === 'Comments' && <Text style={[styles.tabContent, { color: isNightMode ? Colors.primary : Colors.black }]}>Comments Content</Text>}
             </View>
           </View>
 
@@ -3965,7 +4029,72 @@ const styles = StyleSheet.create({
     flex: 1
   },
 
-
+projectName: {
+  fontSize: 14,
+  fontWeight: 'bold',
+  color: '#333',
+},
+reviewContainer: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+},
+seniorImage: {
+  width: 40,
+  height: 40,
+  borderRadius: 20,
+  marginRight: 10,
+},
+seniorName: {
+  fontSize: 16,
+  color: '#333',
+  flex: 1,
+},
+starRating: {
+  flexDirection: 'row',
+  alignItems: 'center',
+},authorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  authorImage: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 10,
+  },
+  recommendationAuthor: {
+    fontWeight: 'bold',
+  },
+  recommendationText: {
+    fontSize: 14,
+    color: '#000',
+  },
+  skillsContainer: {
+  },
+  skillCard: {
+    marginBottom: 15,
+  },
+  projectName: {
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  reviewContainer: {
+    marginTop: 5,
+  },
+  seniorName: {
+    fontSize: 14,
+    color: '#000',
+  },
+  starRating: {
+    flexDirection: 'row',
+    marginTop: 5,
+  },dateText: {
+    fontSize: 10,              // حجم الخط
+    color: '#333',             // اللون (يمكنك تخصيصه حسب التصميم)
+    fontFamily: 'Arial',       // الخط المستخدم (اختياري)
+  },
 });
 
 
