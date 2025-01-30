@@ -290,39 +290,47 @@ export const AddSkills = async (req, res) => {     // With Token
 };
 
 
-export const AddSkillWithoutToken = async (SkillId, Rate) => {
+export const AddSkillsWithoutToken = async (skillsArray) => {
     try {
-
-        // const { SkillId, Rate } = req.body;
-
-        if (!SkillId || Rate === undefined) {
-            return { status: 400, message: "SkillId and Rate are required." };
+        if (!Array.isArray(skillsArray) || skillsArray.length === 0) {
+            return [];
         }
 
-        if (Rate < 1 || Rate > 5) {
-            return { status: 400, message: "Rate must be between 1 and 5." };
+        const selectedSkills = [];
+
+        for (const skillObj of skillsArray) {
+            const { SkillId, Rate } = skillObj;
+
+            if (!SkillId || Rate === undefined) {
+                continue;
+            }
+
+            if (Rate < 1 || Rate > 5) {
+                continue;
+            }
+
+            const skillToAdd = Skills.find(skill => skill.id.toString() === SkillId.toString());
+
+            if (!skillToAdd) {
+                continue;
+            }
+
+            selectedSkills.push({
+                id: skillToAdd.id,
+                name: skillToAdd.name,
+                code: skillToAdd.code,
+                Rate: Rate
+            });
         }
 
-        console.log("Request received:", { SkillId, Rate });
-
-        const skillToAdd = Skills.find(skill => skill.id.toString() === SkillId.toString());
-
-        if (!skillToAdd) {
-            console.log("Available Skills:", Skills);
-            return { status: 404, message: "Skill not found for SkillId." };
-        }
-
-        console.log("Skill found:", skillToAdd);
-        //return skillToAdd;
-        return { id: skillToAdd.id, name: skillToAdd.name, code: skillToAdd.code, Rate: Rate };
-
-        //return res.status(400).json({id: skillToAdd.id, name: skillToAdd.name, code: skillToAdd.code, Rate});
-
+        return selectedSkills; // ✅ تأكد من إرجاع مصفوفة
     } catch (error) {
-        console.error("Error selecting skill:", error.message);
-        throw error;
+        console.error("Error selecting skills:", error.message);
+        return [];
     }
 };
+
+
 
 
 
