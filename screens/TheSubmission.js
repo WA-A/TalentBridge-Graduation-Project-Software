@@ -25,14 +25,33 @@ import * as WebBrowser from 'expo-web-browser'
 
 
 
-export default function  ThePlaneProjectSenior ({ navigation, route }) {
+export default function  TheSubmission({ navigation, route }) {
+  const [selectedSkills, setSelectedSkills] = useState([]);
 
     const [modalVisibleProject, setModalVisibleProject] = useState(false);
     const closeModalProject = () => {
       setModalVisibleProject(false);
-    };
 
-  const { projectId,juniors} = route.params;  // الحصول على projectId من التنقل
+    };
+    
+    const [recommendation, setRecommendation] = useState("");
+
+    const handleRecommendationChange = (text) => {
+      setRecommendation(text);
+      console.log("Recommendation text:", text);
+    };
+        const [selectedSkillsText, setSelectedSkillsText] = useState('');
+    
+  const [Skills, setSkills] = useState([]);
+  const saveSkills = () => {
+    console.log("sss");
+    const skillNamesWithRating = selectedSkills
+      .map((skill) => `${skill.name} (Rating: ${skill.rating})`)
+      .join(', '); // دمج المهارات مع التقييم
+    setSelectedSkillsText(skillNamesWithRating);
+    closeModal(); // إغلاق المودال بعد حفظ المهارات
+  };
+  const { projectId,taskIDD} = route.params;  // الحصول على projectId من التنقل
   const [showJuniorList, setShowJuniorList] = useState(false);
   const [selectedJuniors, setSelectedJuniors] = useState([]);
     const [file, setFile] = useState(null);
@@ -55,6 +74,184 @@ export default function  ThePlaneProjectSenior ({ navigation, route }) {
       
       ]).start();
     };
+      const openFileInBrowser = async (uri) => {
+        console.log("sama",uri);
+          if (!uri) {
+            Alert.alert('Error', 'Invalid file URL');
+            return;
+          }
+        
+          try {
+            // إضافة المعامل download إلى الرابط لتنزيل الملف مباشرة
+            const downloadUrl = `${uri}?download=true`; 
+            await WebBrowser.openBrowserAsync(downloadUrl); // فتح الرابط في المتصفح
+          } catch (error) {
+            console.log('Error opening file:', error);
+            Alert.alert('Error', 'Failed to open file');
+          }
+        };
+        
+
+        const [reviews, setReviews] = useState({}); // تخزين المراجعات لكل تسليم
+
+const handleReviewChange = (text, submissionId) => {
+  setReviews((prev) => ({
+    ...prev,
+    [submissionId]: { ...prev[submissionId], review: text },
+  }));
+};
+
+const handleRatingChange = (text, submissionId) => {
+  setReviews((prev) => ({
+    ...prev,
+    [submissionId]: { ...prev[submissionId], rating: text },
+  }));
+};
+
+const handleSubmitRecommendation = async (text,userId) => {
+  if (!text) {
+    alert("Please enter text!");
+    return;
+  }
+console.log("texxxxxxxxxxx",text,userId);
+  try {
+    const token = await AsyncStorage.getItem("userToken");
+    if (!token) {
+      console.error("Token not found");
+      alert("You are not authorized. Please log in.");
+      return;
+    }
+
+    // إعداد البيانات لإرسالها
+    const payload = { "text":text,"juniorID":userId }; // إرسال النص ككائن
+
+    // إرسال الطلب إلى الخادم
+    const response = await fetch(`${baseUrl}/user/addrecommendations`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Wasan__${token}`,
+      },
+      body: JSON.stringify(payload), // إرسال النص كجزء من كائن
+    });
+
+    // التحقق من نجاح الطلب
+    const responseData = await response.json();
+    if (!response.ok) {
+      throw new Error(responseData.message || "Failed to submit the recommendation.");
+    }
+
+    // عرض رسالة النجاح
+    alert("Recommendation submitted successfully!");
+    console.log("Recommendation response:", responseData);
+  } catch (error) {
+    console.error("Error while submitting recommendation:", error.message);
+    alert(`Error: ${error.message}`);
+  }
+};
+const handleSubmitSkillsRating = async (skills,juniorUserId) => {
+  console.log("ssss",skills);
+  if (!skills || skills.length === 0) {
+    alert("Please select skills and provide ratings!");
+    return;
+  }
+
+  try {
+    const token = await AsyncStorage.getItem("userToken");
+    if (!token) {
+      console.error("Token not found");
+      alert("You are not authorized. Please log in.");
+      return;
+    }
+
+    // تحقق من وجود الـ JuniorUserId
+    if (!juniorUserId) {
+      alert("Junior user ID is required!");
+      return;
+    }
+
+    // إنشاء البيانات لإرسالها
+    const skillRatings = skills.map(skill => ({
+      "SkillId": skill.id,
+      "NewRatingSkill": skill.rating,
+      "SkillName": skill.name,
+    }));
+
+    // إرسال الطلب إلى الخادم
+    const response = await fetch(`${baseUrl}/tasks/reviewskills/${projectId}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Wasan__${token}`,
+      },
+      body: JSON.stringify({ "SkillsRatings": skillRatings,"JuniorUserId":juniorUserId }),
+       // إرسال التقييمات ككائن
+    });
+
+    // التحقق من نجاح الطلب
+    const responseData = await response.json();
+    if (!response.ok) {
+      throw new Error(responseData.message || "Failed to submit skill ratings.");
+    }
+
+    alert("Skill ratings submitted successfully!");
+    console.log("Skill ratings response:", responseData);
+  } catch (error) {
+    console.error("Error while submitting skill ratings:", error.message);
+    alert(`Error: ${error.message}`);
+  }
+};
+
+
+const handleSubmitReview = async (submissionId) => {
+  const { review, rating } = reviews[submissionId] || {};
+  if (!review || !rating) {
+    alert("Please enter both review and rating!");
+    return;
+  }
+
+  try {
+    const token = await AsyncStorage.getItem("userToken");
+    if (!token) {
+      console.error("Token not found");
+      alert("You are not authorized. Please log in.");
+      return;
+    }
+
+    // إعداد بيانات المراجعة
+    const reviewData = {
+      "SubmissionId":submissionId,
+     "TaskId":taskIDD, // قم بتحديث هذا المتغير إذا كان غير موجود في السياق
+      "TaskRating":rating,
+      "Feedback":review,
+    };
+  
+
+    // إرسال الطلب إلى الخادم
+    const response = await fetch(`${baseUrl}/tasks/addreviewtosubmit/${projectId}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Wasan__${token}`,
+      },
+      body: JSON.stringify(reviewData),
+    });
+
+    // التحقق من نجاح الطلب
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Failed to submit the review.");
+    }
+
+    alert("Review submitted successfully!");
+    console.log(`Review for ${submissionId}:`, reviewData);
+  } catch (error) {
+    console.error("Error while submitting review:", error.message);
+    alert(`Error: ${error.message}`);
+  }
+};
+
+
 const handleCloseModal = () => {
   setShowStartTaskModal(false); // إغلاق المودال
 };
@@ -176,17 +373,20 @@ const [project,setProject]=useState();
       EndDate: "",
       Priority: "",
     });
+    const [TaskName, setTaskName] = useState('');
+
     const addTask = () => {
       // Logic to add the new task (e.g., updating state or sending data to an API)
       console.log("New Task:", newTask);
     };
   
     const calculateDaysLeft = (currentDate, endDate) => {
-      const current = moment(currentDate, "YYYY-MM-DD");
-      const end = moment(endDate, "YYYY-MM-DD");
+      const current = moment(currentDate).startOf('day'); // ضبط الوقت إلى بداية اليوم
+      const end = moment(endDate).startOf('day'); // ضبط الوقت إلى بداية اليوم
       const difference = end.diff(current, "days");
       return difference > 0 ? difference : "Deadline passed";
     };
+    
     const toggleModal = () => setIsModalVisible(!isModalVisible);
   
 
@@ -441,37 +641,42 @@ const [project,setProject]=useState();
     }
   };
 
-
   const handleShowAllTaskToJunior = async () => {
     try {
       const token = await AsyncStorage.getItem('userToken'); // استرجاع التوكن
-      console.log('Retrieved Token:', token); // تحقق من التوكن
+      console.log('Retrieved Token:', token, projectId); // تحقق من التوكن
       if (!token) { 
         console.error('Token not found');
         return;
       }
-
-      const response = await fetch(`${baseUrl}/tasks/getalltasksbysenior/${projectId}`, {
+  
+      const response = await fetch(`${baseUrl}/tasks/getallsubmissionsbysenior/${projectId}?TaskId=${taskIDD}`, {
         method: 'GET',
         headers: {
-          'Authorization': `Wasan__${token}`, // تأكد من التنسيق الصحيح هنا
+          'Authorization': `Wasan__${token}`, // التأكد من التنسيق الصحيح هنا
         },
       });
-
+  
       if (!response.ok) {
         const errorData = await response.json(); // إذا كان هناك خطأ في الرد
-   //     throw new Error(errorData.message || 'Failed to fetch skills');
+        throw new Error(errorData.message || 'Failed to fetch tasks');
       }
-
+  
       const data = await response.json(); // تحويل الرد إلى JSON
-      setProject(data.tasks);
-
-      console.log('Fetched Project:', data.tasks); // تحقق من البيانات
-
+      console.log('Fetched Task:', data.task); // تحقق من البيانات
+      setTaskName(data.task.TaskName);
+      // إذا كنت تحتاج إلى Submissions
+      if (data.task && data.task.Submissions) {
+        setProject(data.task.Submissions); // تعيين البيانات بشكل صحيح
+      } else {
+        setProject([]); // إذا لم توجد بيانات، تعيين المصفوفة فارغة
+      }
+  
     } catch (error) {
-    //  console.error('Error fetching tasks:', error.message);
+      console.error('Error fetching tasks:', error.message);
     }
   };
+  
 
 
   const handleViewOtherProfile = async (userId) => {
@@ -574,41 +779,13 @@ const [project,setProject]=useState();
             return;
           }
           try {
-          const formData = new FormData();
-                    // تأكد من استخدام TaskId بشكل صحيح
-          formData.append("TaskId",values);
-
-          // إضافة المكلفين
-          if (selectedJuniors && selectedJuniors.length > 0) {
-            selectedJuniors.forEach(junior => {
-              formData.append('AssignedTo', junior);
-            });
-          }
-          formData.append('SubmitTaskMethod',deliveryType);
-          if (file) {
-            console.log("The file", file);
-            const fileUri = file.uri.startsWith('file://') ? file.uri : `file://${file.uri}`;
-        
-            // إذا كان التطبيق على الويب
-            if (Platform.OS === 'web') {
-              // تحويل البيانات إلى Blob (بيانات الـ PDF المشفرة بتنسيق Base64)
-              const pdfBlob = base64ToBlob(file.uri, 'application/pdf');
-              formData.append('TaskFile', pdfBlob, 'ProjectFile.pdf');  // اسم الملف الذي سيتم حفظه
-            } else {
-              formData.append('TaskFile', {
-                uri: fileUri,
-                name: file.name,
-                type: file.mimeType || 'application/pdf',
-              });
-            }
-          }
-        
+   
           
           for (let [key, value] of formData.entries()) {
             console.log(`${key}:`, value);
           }
           // إرسال الطلب إلى الخادم لإضافة المرفقات والمكلفين
-          const response = await fetch(`${baseUrl}/tasks/addTaskAssigneesAndFile/${projectId}`, {
+          const response = await fetch(`${baseUrl}/tasks/submittask/${projectId}`, {
             method: 'POST',
             headers: {
               'Authorization': `Wasan__${token}`,
@@ -621,20 +798,7 @@ const [project,setProject]=useState();
             const errorData = await response.json();
             throw new Error(errorData.message || 'Failed to add languages');
           }
-          handleCloseModal();
-          handleShowAllTaskToJunior();
-
-            // عرض رسالة النجاح
-            setShowSuccessMessage(true);
-            setModalVisibleProject(true);
-            animateCheckMark(); // تفعيل الأنميشن
-        
-            // إخفاء البطاقة بعد 7 ثوانٍ
-            setTimeout(() => {
-              setModalVisibleProject(false);
-            },9000); // 7 ثواني
-            const result = await response.json();
-            console.log('Add Project successfully',result.task);
+      
 
         }
           catch (error) {
@@ -688,59 +852,55 @@ const [project,setProject]=useState();
               console.error('Error Update:', error.message);
           }
       };
-      const completeTask = async (values) => {
-        console.log("taskID",values);
-        const token = await AsyncStorage.getItem('userToken');
-        if (!token) {
+      
+      const handleGetSkills = async () => {
+        try {
+          const token = await AsyncStorage.getItem('userToken'); // استرجاع التوكن
+          if (!token) {
             console.error('Token not found');
             return;
-        }
+          }
     
-        try {
-            // إرسال البيانات كـ JSON بدلاً من FormData
-           
+          const response = await fetch(`${baseUrl}/externalapiSkills/getskills`, {
+            method: 'GET',
+            headers: {
+              'Authorization': `Wasan__${token}`, // تضمين التوكن في الهيدر
+            },
+          });
     
-            // إرسال الطلب إلى الخادم
-            const response = await fetch(`${baseUrl}/tasks/CompleteTask/${projectId}?TaskId=${values}`, {
-                method: 'PUT',
-                headers: {
-                    'Authorization': `Wasan__${token}`,
-                    'Accept': 'application/json',
-                },
-            });
+          if (!response.ok) {
+            const errorData = await response.json(); // إذا كان هناك خطأ في الرد
+            throw new Error(errorData.message || 'Failed to fetch skills');
+          }
     
-            // التحقق من استجابة الخادم
-    
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'Failed to update task');
-            }
-            const result = await response.json();
-            console.log('Add Project successfully',result.task);
-            handleShowAllTaskToJunior();
+          const data = await response.json(); // تحويل الرد إلى JSON
+          setSkills(data.Skills); // تخزين اللغات في الحالة لعرضها
+          console.log(Skills);
+          console.log('Fetched skills:', data.Skills); // تحقق من البيانات
         } catch (error) {
-            console.error('Error Update:', error.message);
+          console.error('Error fetching skills:', error.message);
         }
-    };
+      };
     
-     
   useEffect(() => {
     handleViewProfile();
     handleGetFeilds();
     handleShowAllTaskToJunior();
+    handleGetSkills ();
+
   }, []);
   
 
 
   const cardScale = useSharedValue(1);
-  const handlePress = (id,taskid,Submissionid) => {
+  const handlePress = (id,taskid) => {
     
    
-      console.log("sama",id,taskid,Submissionid);
-      // إذا كان الدور Junior، انتقل إلى الصفحة التي تريدها
-        navigation.navigate('TheSubmission',{projectId:id,taskIDD:taskid}); // استبدل 'YourTargetScreen' باسم الصفحة
-    
-  };
+    console.log("sama",id,taskid);
+    // إذا كان الدور Junior، انتقل إلى الصفحة التي تريدها
+      navigation.navigate('TheSubmission',{projectId:id,taskIDD:taskid}); // استبدل 'YourTargetScreen' باسم الصفحة
+  
+};
   const handlePressIn = () => {
     cardScale.value = withSpring(0.95);
   };
@@ -889,7 +1049,7 @@ const [project,setProject]=useState();
                 Talent Bridge
               </Text>
 
-              <TouchableOpacity onPress={() => nav.navigate('AllPeapleItalk')}>
+              <TouchableOpacity onPress={() => nav.navigate('Chat')}>
                 <EvilIcons name="sc-telegram" size={39} color={careysPink} style={{ position: 'absolute', top: -20, left: 10 }} />
                 <EvilIcons name="sc-telegram" size={37} color={darkLight} style={{ position: 'absolute', top: -20, left: 10 }} />
               </TouchableOpacity>
@@ -985,310 +1145,285 @@ const [project,setProject]=useState();
 </View>
 <View style={styles.divider1} />
 
-<ScrollView 
-  contentContainerStyle={[styles.container, { backgroundColor: isNightMode ? "#000" : "#fff" }]}>
-  {project && project.length > 0 ? (
-    <View
-      style={[
-        styles.grid,
-        {
-          flexDirection: "column", // تغيير إلى عمودي
-          justifyContent: "center", // مركز العناصر عمودياً
-          alignItems: "center", // مركز العناصر أفقياً
-          backgroundColor: isNightMode ? "#000" : Colors.primary,
-        },
-      ]}
-    >
-      {project.map((task, index) => (
-        <Animatable.View
-          key={task._id}
-          animation="zoomIn"
-          delay={index * 100}
-          duration={500}
-          style={isMobile ? styles.cardMobile : styles.cardWeb}
-        >
-        <TouchableOpacity
-                            onPress={() => handlePress(projectId,task._id,task.Submissions[0]?._id)} // تمرير القيمة مباشرة
-                
-                         
-                          >
-          <View
-            style={isMobile ? styles.cardMobileContent : styles.cardWebContent}
-          >
-            <View style={styles.cardDetails}>
-              <View style={{ flexDirection: "row" }}>
-                {/* Start DatePicker */}
-              </View>
-              <Modal
-  visible={showStartTaskModal}
-  animationType="slide"
-  onRequestClose={() => setShowStartTaskModal(false)}
+<ScrollView
+  contentContainerStyle={[
+    styles.container,
+    { backgroundColor: isNightMode ? "#000" : "#fff" },
+  ]}
 >
-  <View style={styles.modalWrapper}>
-    <Text style={styles.modalTitle}>Start Task</Text>
-
-    {/* اختيار الجونيور */}
-    <TouchableOpacity
-      style={styles.actionButtonSelect}
-      onPress={() => setShowJuniorList(true)}
-    >
-      <Text style={styles.actionButtonText}>Select Junior</Text>
-    </TouchableOpacity>
-
-    {/* تحديد تاريخ البداية */}
-    <Text style={styles.label}>Start Date:</Text>
-    {Platform.OS === "web" ? (
-      <input
-        type="date"
-        value={moment(startDate).format("YYYY-MM-DD")}
-        onChange={(e) =>
-          handleDateChange(new Date(e.target.value), true)
-        }
-        style={styles.input}
-      />
-    ) : (
-      <>
-        {showStartPicker && (
-          <DateTimePicker
-            value={startDate}
-            mode="date"
-            display="default"
-            onChange={(event, selectedDate) =>
-              handleDateChange(selectedDate, true)
-            }
-          />
-        )}
-        <TouchableOpacity onPress={() => setShowStartPicker(true)}>
-          <Text style={styles.dateText}>
-            {moment(startDate).format("MMM DD, YYYY")}
-          </Text>
-        </TouchableOpacity>
-      </>
-    )}
-
-    {/* تحديد تاريخ النهاية */}
-    <Text style={styles.label}>End Date:</Text>
-    {Platform.OS === "web" ? (
-      <input
-        type="date"
-        value={moment(endDate).format("YYYY-MM-DD")}
-        onChange={(e) =>
-          handleDateChange(new Date(e.target.value), false)
-        }
-        style={styles.input}
-      />
-    ) : (
-      <>
-        <TouchableOpacity onPress={() => setShowEndPicker(true)}>
-          <Text style={styles.dateText}>
-            {moment(endDate).format("MMM DD, YYYY")}
-          </Text>
-        </TouchableOpacity>
-        {showEndPicker && (
-          <DateTimePicker
-            value={endDate}
-            mode="date"
-            display="default"
-            onChange={(event, selectedDate) =>
-              handleDateChange(selectedDate, false)
-            }
-          />
-        )}
-      </>
-    )}
- {/* حالة التسليم */}
- <Text style={styles.label}>Delivery Type:</Text>
-    <View style={styles.deliveryTypeContainer}>
-      <TouchableOpacity
-        style={[
-          styles.deliveryTypeButton,
-          deliveryType === "Online" && styles.selectedDeliveryTypeButton,
-        ]}
-        onPress={() => setDeliveryType("Online")}
+  {project?.length > 0 ? (
+    project.map((submission, index) => (
+      <Animatable.View
+        key={submission._id}
+        animation="zoomIn"
+        delay={index * 100}
+        duration={500}
+        style={isMobile ? styles.cardMobile : styles.cardWeb}
       >
-        <Text style={styles.deliveryTypeText}>Online</Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={[
-          styles.deliveryTypeButton,
-          deliveryType === "On-site" && styles.selectedDeliveryTypeButton,
-        ]}
-        onPress={() => setDeliveryType("On-site")}
-      >
-        <Text style={styles.deliveryTypeText}>On-site</Text>
-      </TouchableOpacity>
-    </View>
-    {/* اختيار الملف */}
-    <TouchableOpacity
-      style={styles.uploadButton}
-      onPress={handleFilePicker}
-    >
-      <Text style={styles.uploadButtonText}>Choose File</Text>
-    </TouchableOpacity>
+        <TouchableOpacity onPress={() => handlePress(projectId, task._id)}>
+          <View style={isMobile ? styles.cardMobileContent : styles.cardWebContent}>
+            {/* اسم المهمة */}
+            <Text style={styles.projectName}>{TaskName}</Text>
+            <Text style={styles.projectName}>{submission.UserFullName}</Text>
 
-    {/* عرض اسم الملف */}
-    {file ? (
-      <View style={styles.fileNameContainer}>
-        <Text style={styles.fileNameText}>Name: {file.name}</Text>
-        <Text style={styles.fileNameText}>Type: {file.mimeType}</Text>
-        <TouchableOpacity
-          style={[styles.uploadButton, { position: 'absolute', right: 10, bottom: 10 }]}
-          onPress={() => setFile([])}
-        >
-          <Text style={styles.uploadButtonText}>Cancel</Text>
-        </TouchableOpacity>
-      </View>
-    ) : (
-      <Text style={styles.noFileText}>No file selected</Text>
-    )}
+            {/* تاريخ ووقت التسليم */}
+            <Text style={styles.taskMethode}>
+              Submitted At:{" "}
+              {moment(submission.SubmittedAt).format("YYYY-MM-DD HH:mm")}
+            </Text>
 
-    <View style={styles.divider}></View>
-
-    {/* أزرار الإجراء */}
-    <View style={styles.taskActions}>
-      <TouchableOpacity
-        style={styles.actionButton}
-        onPress={()=>handleUpdateTask(taskID)}
-      >
-        <Text style={styles.actionButtonText}>Start The Task</Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={styles.actionButton}
-        onPress={() => setShowStartTaskModal(false)}
-        >
-        <Text style={styles.actionButtonText}>Cancel</Text>
-      </TouchableOpacity>
-    </View>
-
- 
-  </View>
-</Modal>
-
-
-              <View style={styles.taskActionsDate}>
-                <Text style={styles.projectName}>{task.PhaseName}</Text>
-
-                {/* المودال يظهر بناءً على حالة showJuniorList */}
-                <Modal
-                  visible={showJuniorList}
-                  animationType="slide"
-                  onRequestClose={() => setShowJuniorList(false)}
+            {/* عرض رابط الملف المرفق */}
+            {submission.SubmitFile && submission.SubmitFile.length > 0 && (
+              <Text style={styles.taskMethode}>
+                File:{" "}
+                <Text
+                  onPress={() =>
+                    openFileInBrowser(submission.SubmitFile[0]?.secure_url)
+                  } // تمرير secure_url و originalname
+                  style={styles.fileLink}
                 >
-                  <View style={styles.modalContainer}>
-                    <Text style={styles.modalTitle}>Select Juniors</Text>
-
-                    <FlatList
-                      data={juniors}
-                      keyExtractor={(item) => item._id}
-                      renderItem={({ item }) => (
-                        <TouchableOpacity
-                          style={styles.juniorItem}
-                          onPress={() => handleSelectJunior(item._id)}
-                        >
-                          <View style={styles.juniorTextContainer}>
-                            <Text style={styles.juniorText}>
-                              {item.userId.FullName}
-                            </Text>
-                            <Text style={styles.juniorRole}>{item.roleName}</Text>
-                          </View>
-                          {selectedJuniors.includes(item._id) && (
-                            <Text style={styles.checkMark}>✔</Text>
-                          )}
-                        </TouchableOpacity>
-                      )}
-                    />
-
-                    <View
-                      style={{
-                        flexDirection: "row",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                      }}
-                    >
-                      <TouchableOpacity
-                        style={styles.saveButton}
-                        onPress={handleSaveSelection}
-                      >
-                        <Text style={styles.saveButtonText}>Save</Text>
-                      </TouchableOpacity>
-
-                      <TouchableOpacity
-                        style={styles.closeButton}
-                        onPress={() => setShowJuniorList(false)}
-                      >
-                        <Text style={styles.closeButtonText}>Close</Text>
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                </Modal>
-              </View>
-              <View style={styles.divider1} />
-              <Text style={styles.projectDescription}>
-                Task Name: {task.TaskName}
+                  {submission.SubmitFile[0].originalname}
+                </Text>
               </Text>
-              <Text style={styles.projectDescription}>
-                Description: {task.Description}
-              </Text>
+            )}
+
+            {/* إضافة المراجعة والتقييم */}
+            <View style={styles.reviewContainer}>
+              <TextInput
+                placeholder="Write your review here..."
+                style={styles.reviewInput}
+                onChangeText={(text) => handleReviewChange(text, submission._id)}
+              />
+              <TextInput
+                placeholder="Rating"
+                keyboardType="numeric"
+                style={styles.ratingInput}
+                onChangeText={(text) => handleRatingChange(text, submission._id)}
+              />
              
-              {/* Start Date */}
-              <Text style={styles.label}>Start Date:</Text>
-              <Text>{moment(task.StartDate).format("YYYY-MM-DD")}</Text>
 
-              {/* End Date */}
-              <Text style={styles.label}>End Date:</Text>
-              <Text>{moment(task.EndDate).format("YYYY-MM-DD")}</Text>
+            {/* إضافة خانة التوصيات */}
+            <View style={styles.reviewInput}>
+              <TextInput
+                placeholder="Write your recommendation..."
+                style={styles.recommendationInput}
+                onChangeText={(text) =>
+                  handleRecommendationChange(text)
+                }
+              />
+            </View>
 
-
-              <Text style={styles.taskPriority}>
-                Priority: {task.Priority}
-              </Text>
-              <Text style={styles.taskPriority}>
-               TaskStatus : {task.TaskStatus}
-              </Text>
-              {task.TaskFile? (
-                    <View style={styles.fileNameContainer}>
-                      <Text style={styles.fileNameText}>Name: {task.TaskFile[0]?.originalname || ''}</Text>
-                    </View>
-                  ) : (
-                    <Text style={styles.noFileText}>No file selected</Text>
-                  )}
-              <Text style={styles.taskDates}>
-                <Text style={styles.label}>Days Left:</Text>{" "}
-                {calculateDaysLeft(moment(), task.EndDate)}
-              </Text>
-              <View style={styles.divider1} />
-              <View style={styles.taskActions}>
-                <TouchableOpacity
-                  style={styles.actionButton}
-                  onPress={() => {
-                    setTaskId(task._id);             // استدعاء الدالة الثانية
-                    consthandleshowModalTas(); // استدعاء الدالة الأولى
-                       }}                 >
-                  <Text style={styles.actionButtonText}>Start Task</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.actionButton}
-                  onPress={() => completeTask(task._id)}
+            {/* تحديد المهارات */}
+            <View style={styles.skillsContainer}>
+              <TouchableOpacity
+                onPress={() => openModal("skills")}
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                }}
+              >
+                <Text
+                  style={[
+                    styles.label,
+                    {
+                      marginRight: 5,
+                      fontSize: 16,
+                      color: isNightMode ? Colors.primary : "#000",
+                    },
+                  ]}
                 >
-                  <Text style={styles.actionButtonText}>End Task</Text>
-                </TouchableOpacity>
-              </View>
+                  Select Skills
+                </Text>
+                <AntDesign
+                  name="caretdown"
+                  size={14}
+                  color={isNightMode ? Colors.primary : "#000"}
+                />
+              </TouchableOpacity>
+
+              {/* عرض المهارات المختارة */}
+              {selectedSkills?.length > 0 && (
+                <View style={{ marginTop: 10 }}>
+                  {selectedSkills.map((skill, index) => (
+                    <View
+                      key={skill.id}
+                      style={{ flexDirection: "row", alignItems: "center" }}
+                    >
+                      <Text
+                        style={{
+                          fontSize: 16,
+                          color: isNightMode ? "#FFF" : "#000",
+                          flex: 1,
+                        }}
+                      >
+                        {skill.name}
+                      </Text>
+
+                      {/* عرض التقييم باستخدام النجوم */}
+                      <View style={{ flexDirection: "row" }}>
+                        {[1, 2, 3, 4, 5].map((starIndex) => (
+                          <MaterialCommunityIcons
+                            key={starIndex}
+                            name={
+                              starIndex <= skill.rating
+                                ? "star"
+                                : "star-outline"
+                            }
+                            size={20}
+                            color={
+                              starIndex <= skill.rating ? "#F7A8B8" : "#C0C0C0"
+                            }
+                          />
+                        ))}
+                      </View>
+
+                      {/* فاصل بين المهارات */}
+                      {index < selectedSkills.length - 1 && (
+                        <View style={styles.divider1} />
+                      )}
+                    </View>
+                  ))}
+                </View>
+              )}
             </View>
           </View>
-
-          <View style={styles.divider3}></View>
-          </TouchableOpacity>
-        </Animatable.View>
-      ))}
-    </View>
+          <TouchableOpacity
+                style={styles.submitButton}
+                onPress={() => {
+    handleSubmitReview(submission._id); // إرسال مراجعة النص والتقييم
+    handleSubmitRecommendation(recommendation,submission.UserId); // إرسال التوصيات
+    handleSubmitSkillsRating(selectedSkills,submission.UserId); // إرسال تقييم المهارات
+  }}              >
+                <Text style={styles.submitButtonText}>Submit</Text>
+              </TouchableOpacity>
+            </View>
+        </TouchableOpacity>
+      </Animatable.View>
+    ))
   ) : (
-    <Text>No tasks available</Text>
+    <Text style={styles.noSubmissionsText}>No submissions available</Text>
   )}
 </ScrollView>
 
 
 
+            <Modal animationType="slide" transparent={true} visible={modalVisible} onRequestClose={closeModal}>
+                          <View style={styles.modalContainer}>
+                            <View style={[styles.modalContent, { backgroundColor: isNightMode ? Colors.black : Colors.primary }]}>      
+          {currentModal === 'skills' && (
+                      <>
+                        {/* عنوان النافذة */}
+                        <Text style={[styles.modalTitle, { marginTop: 0 }]}>Select Skill(s)</Text>
+                        <Text style={{ color: Colors.brand }}>{error}</Text>
     
+                        {/* قائمة المهارات متعددة الاختيار */}
+                        <MultiSelect
+                          style={styles.scrollableItemsContainer}
+                          items={Skills} // قائمة المهارات
+                          uniqueKey="id" // المفتاح الفريد لكل مهارة
+                          onSelectedItemsChange={(selectedItems) => {
+                            const updatedSkills = selectedItems.map((itemId) => {
+                              const existingSkill = selectedSkills.find((skill) => skill.id === itemId);
+                              return existingSkill || {
+                                id: itemId,
+                                name: Skills.find((s) => s.id === itemId).name,
+                                rating: 0, // التقييم الافتراضي 0
+                                Rate: 0, // إضافة خاصية التقييم
+                              };
+                            });
+                            setSelectedSkills(updatedSkills);
+                          }}
+    
+                          selectedItems={selectedSkills.map((skill) => skill.id)} // تحديد العناصر المختارة حاليًا
+                          selectText="Choose Skills"
+                          submitButtonColor={isNightMode ? Colors.fourhColor : Colors.fourhColor}
+                          tagRemoveIconColor={isNightMode ? Colors.brand : Colors.brand}
+                          tagBorderColor={isNightMode ? '#4A90E2' : '#333'}
+                          tagTextColor={isNightMode ? Colors.fifthColor : '#333'}
+                          selectedItemTextColor={isNightMode ? Colors.fifthColor : '#333'}
+                          selectedItemIconColor={isNightMode ? Colors.brand : '#333'}
+                          itemTextColor={isNightMode ? '#000' : '#333'}
+                          displayKey="name"
+                          styleDropdownMenu={{
+                            backgroundColor: isNightMode ? '#444' : '#EEE',
+                          }}
+                          styleTextDropdown={{
+                            color: isNightMode ? '#000' : '#333',
+                            fontSize: 16,
+                            fontWeight: 'bold',
+                          }}
+                          fixedHeight={true}
+                          styleItemsContainer={{
+                            maxHeight: 190,
+                            overflow: 'hidden', // منع تجاوز العناصر للحاوية
+    
+                          }}
+                        />
+    
+                        {/* عرض المهارات المحددة مع نظام التقييم */}
+                        {selectedSkills.map((skill, index) => (
+                          <View
+                            key={skill.id}
+                            style={{
+                              flexDirection: 'row',
+                              alignItems: 'center',
+                              marginVertical: 10,
+                              justifyContent: 'space-between',
+                            }}
+                          >
+                            {/* عرض اسم المهارة */}
+                            <Text
+                              style={{
+                                color: isNightMode ? '#FFF' : '#000',
+                                fontSize: 16,
+                                flex: 1,
+                              }}
+                            >
+                              {skill.name}
+                            </Text>
+    
+                            {/* عرض نظام النجوم للتقييم */}
+                            <View style={{ flexDirection: 'row', flex: 1 }}>
+                              {[1, 2, 3, 4, 5].map((starIndex) => (
+                                <TouchableOpacity
+                                  key={starIndex}
+                                  onPress={() => {
+                                    const updatedSkills = [...selectedSkills];
+                                    updatedSkills[index].rating = starIndex; // تحديث التقييم في rating
+                                    updatedSkills[index].Rate = starIndex;   // تخزين التقييم في Rate
+                                    setSelectedSkills(updatedSkills);
+                                  }}
+                                >
+                                  <MaterialCommunityIcons
+                                    name={starIndex <= skill.rating ? 'star' : 'star-outline'}
+                                    size={20}
+                                    color={
+                                      starIndex <= skill.rating
+                                        ? '#F7A8B8'
+                                        : isNightMode
+                                          ? Colors.primary
+                                          : Colors.black
+                                    }
+                                  />
+                                </TouchableOpacity>
+                              ))}
+                            </View>
+                          </View>
+                        ))}
+                      </>
+                    )}
+    
+                    <View style={styles.buttonsContainer}>
+                    <TouchableOpacity onPress={saveSkills} style={styles.saveButton}>
+                  <Text style={styles.saveButtonText}>Save</Text>
+                </TouchableOpacity>
+                      <TouchableOpacity onPress={closeModal} style={styles.closeButton}>
+                        <Text style={styles.closeButtonText}>Close</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                </View>
+              </Modal>
             
             {/* Bottom Navigation Bar */}
  {/* Bottom Navigation Bar */}
@@ -1554,7 +1689,7 @@ Select Field           </Text>
                 <MaterialCommunityIcons name="check-circle" size={30} color="#28a745" />
               </Animated.View>
               <Text style={styles.successMessage}>
-                Task  send to Juniora successfully!
+                Submission send successfully!
               </Text>
             </View>
           )}
@@ -1562,63 +1697,7 @@ Select Field           </Text>
       </View>
     </Modal>
       {/*///////////////////////////////////////////////Show Feild////////////////////////////*/}
-   {/* Modal لكل بطاقة */}
-   <Modal animationType="slide" transparent={true} visible={modalVisible} onRequestClose={closeModal}>
-                  <View style={styles.modalContainer}>
-                    <View style={[styles.modalContent, { backgroundColor: isNightMode ? Colors.black : Colors.primary }]}>
-                   <>
-                                      <Text style={[styles.modalTitle, { marginTop: 0 }]}>Select Feild(s)</Text>
-                                      <Text style={{ color: Colors.brand }}>{error}</Text>
-                                      <MultiSelect
-                                        style={styles.scrollableItemsContainer}
-                                        items={Feilds} // قائمة اللغات
-                                        uniqueKey="id" // المفتاح الفريد لكل عنصر
-                                        onSelectedItemsChange={onSelectedItemsChange} // التعامل مع التحديد
-                                        selectedItems={selectedFeilds} // العناصر المحددة حالياً
-                                        selectText="Choose Feilds"
-                                        submitButtonColor={isNightMode ? Colors.fourhColor : Colors.fourhColor} // لون خلفية زر "Submit"
-                                        tagRemoveIconColor={isNightMode ? Colors.brand : Colors.brand} // لون أيقونة الحذف
-                                        tagBorderColor={isNightMode ? '#4A90E2' : '#333'} // لون الحدود
-                                        tagTextColor={isNightMode ? Colors.fifthColor : '#333'} // لون النص في التاج
-                                        selectedItemTextColor={isNightMode ? Colors.fifthColor : '#333'} // لون النص في العنصر المحدد
-                                        selectedItemIconColor={isNightMode ? Colors.brand : '#333'} // لون أيقونة العنصر المحدد
-                                        itemTextColor={isNightMode ? '#000' : '#333'} // لون النص في العنصر غير المحدد
-                                        displayKey="sub_specialization"
-                  
-                                        // تخصيص النص عند عدم اختيار أي عنصر
-                  
-                                        // تخصيص رأس القائمة (الخلفية التي تحتوي النص الافتراضي)
-                                        styleDropdownMenu={{
-                                          backgroundColor: isNightMode ? '#444' : '#EEE', // خلفية رأس القائمة
-                                        }}
-                                        // تخصيص النص داخل الحقل
-                                        styleTextDropdown={{
-                                          color: isNightMode ? '#000' : '#333', // لون النص
-                                          fontSize: 16, // حجم الخط
-                                          fontWeight: 'bold', // سمك الخط
-                                        }}
-                                        // خصائص إضافية لتحسين العرض والتخصيص
-                                        fixedHeight={true} // تحديد ارتفاع ثابت
-                                        styleItemsContainer={{
-                                          maxHeight: 190, // تحديد الحد الأقصى للارتفاع
-                                          overflow: 'hidden', // منع تجاوز العناصر للحاوية
-                  
-                                        }}
-                  
-                                      />
-                                    </>
-              
-                  <View style={styles.buttonsContainer}>
-                                  <TouchableOpacity onPress={()=>handleSave(selectedFeilds)} style={styles.saveButton}>
-                                    <Text style={styles.saveButtonText}>Save</Text>
-                                  </TouchableOpacity>
-                                  <TouchableOpacity onPress={closeModal} style={styles.closeButton}>
-                                    <Text style={styles.closeButtonText}>Close</Text>
-                                  </TouchableOpacity>
-                                </View>
-                </View>
-                              </View>
-                          </Modal>
+  
 
 </View>
     );
@@ -1903,7 +1982,7 @@ cardWeb: {
     shadowOffset: { width: 0, height: 5 },
     elevation: 5,
     overflow: "hidden",
-    justifyContent: "space-between",
+    justifyContent: "space-between",padding:5
   },
 cardWebContent: {
   height: "auto", // السماح للارتفاع بالتكيف
@@ -1914,7 +1993,7 @@ cardWebContent: {
   shadowOpacity: 0.2,
   shadowRadius: 10,
   shadowOffset: { width: 0, height: 5 },
-  elevation: 5,
+  elevation: 5,padding:5
 },
 
 
@@ -2105,7 +2184,7 @@ filterOption: {
     backgroundColor: Colors.darkLight,
     paddingVertical: 8,
     paddingHorizontal: 30,
-    borderRadius: 10,
+    borderRadius: 10,alignItems:'center',marginBottom:5
   },
   actionButtonSelect: {
     backgroundColor: Colors.fifthColor,
@@ -2129,6 +2208,12 @@ taskDates: {
     fontWeight: "bold",
     color: "#e74c3c",
     marginTop: 6,
+  },
+  taskMethode: {
+    fontSize: 14,
+    fontWeight: "bold",
+    color: Colors.fifthColor,
+    marginTop: 1,    marginBottom: 6,
   }, modalContainer: {
     flex: 1,
     backgroundColor: 'white',
@@ -2308,5 +2393,223 @@ successContainer: {
 flexDirection: 'row',
 alignItems: 'center',
 marginBottom: 20,
-}
+},reviewContainer: {
+  marginTop: 10,
+  padding: 10,
+  borderTopWidth: 1,
+  borderTopColor: '#ddd',
+},
+reviewInput: {
+  borderWidth: 1,
+  borderColor: '#ccc',
+  borderRadius: 8,
+  padding: 8,
+  marginBottom: 10,
+  fontSize: 14,
+},
+ratingInput: {
+  borderWidth: 1,
+  borderColor: '#ccc',
+  borderRadius: 8,
+  padding: 8,
+  marginBottom: 10,
+  fontSize: 14,
+  width: 100,
+},
+submitButton: {
+  backgroundColor: Colors.fifthColor,
+  padding: 10,
+  borderRadius: 8,
+  alignItems: 'center',
+},
+submitButtonText: {
+  color: '#fff',
+  fontWeight: 'bold',
+},scrollableItemsContainer: {
+    flex: 1
+  },  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 15,
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+  modalContent: {
+    width: '90%',
+    padding: 20,
+    backgroundColor: 'white',
+    borderRadius: 10,
+    elevation: 5, borderWidth: 1,
+    borderColor: Colors.fourhColor,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 15,
+  },
+  closeButton: {
+    backgroundColor: '#dc3545',
+    padding: 10,
+    borderRadius: 5,
+    alignItems: 'center',
+  },
+  closeButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  buttonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 20,
+  },
+  saveButton: {
+    backgroundColor: fifthColor,
+    padding: 10,
+    borderRadius: 5,
+    width: '45%',
+    alignItems: 'center',
+  },
+  saveButtonText: {
+    color: 'white',
+    fontSize: 16,
+  },
+  smallButtonText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#000',
+  },
+  closeButton: {
+    backgroundColor: fourhColor,
+    padding: 10,
+    borderRadius: 5,
+    width: '45%',
+    alignItems: 'center',
+  },
+  inputContainer: {
+    marginBottom: 20,
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 5,
+    color: '#333',
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    padding: 10,
+    backgroundColor: '#fff',
+    color: '#333',
+  },
+  textArea: {
+    height: 100,
+    textAlignVertical: 'top',
+  },
+  dynamicItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  removeButton: {
+    marginLeft: 10,
+    backgroundColor: '#ff4d4d',
+    borderRadius: 8,
+    padding: 5,
+  },
+  removeButtonText: {
+    color: '#fff',
+    fontSize: 14,
+  },
+  addButton: {
+    marginTop: 10,    marginBottom: 10,
+
+    borderRadius: 8,
+    paddingVertical: 10,
+    padding:5,
+      backgroundColor: Colors.secondary, // لون خلفية متناسق
+      elevation: 10,               // تأثير ظل خفيف لتحسين العمق
+      shadowColor: '#000',         // لون الظل
+    alignItems: 'center',
+  },
+  addButtonText: {
+    color: '#000',
+    fontWeight: 'bold',
+  },
+fieldContainer: {
+    flexDirection: 'row',  // عرض النص والأيقونة بشكل أفقي
+    alignItems: 'center',  // محاذاة النص والأيقونة عموديًا
+  margin: 10, justifyContent:'center',         // تقليل المسافة العمودية قليلاً لجعل التصميم أكثر تناسقًا
+  borderRadius: 5, marginHorizontal:20,           // زيادة الزوايا المنحنية لجعل التصميم أكثر انسيابية
+padding:5,
+  backgroundColor: Colors.secondary, // لون خلفية متناسق
+  elevation: 10,               // تأثير ظل خفيف لتحسين العمق
+  shadowColor: '#000',         // لون الظل
+  shadowOffset: {              // إزاحة الظل
+    width: 0,
+    height: 5,
+  },
+  shadowOpacity: 0.2,          // شفافية الظل
+  shadowRadius: 10,            // حجم التمويه للظل
+},
+divider: {
+    height: 3,
+    backgroundColor: '#ddd',
+    marginVertical: 8,
+  },
+  divider1: {
+    height: 5,
+    backgroundColor: Colors.fourhColor,
+    marginVertical: 8,
+  },
+  divider3: {
+    height: 1,
+    backgroundColor: Colors.fourhColor,
+    marginVertical: 8,
+  },
+  fieldText: {
+    fontSize: 13,
+    fontWeight: "bold",
+    color: Colors.fifthColor,
+  },
+  inputContainer: {
+    marginTop: 20,
+    padding: 10,
+  },
+  label: {
+    fontSize: 16,
+    color: "#333",
+    fontWeight: "600",
+  },
+  inputContainer: {
+    padding: 10,
+    borderRadius: 8,
+    margin: 10,
+  },
+  text: {
+    fontSize: 18,
+    color: '#333',
+  },
+  dynamicItem: {
+    flexDirection: 'row', // جعل العناصر تظهر أفقياً
+    alignItems: 'center', // محاذاة عمودية
+    marginVertical: 10, // مسافة عمودية بين العناصر
+    width: '100%', // العرض الكامل
+  },
+  inputFullWidth: {
+    flex: 1, // يتمدد لملء المساحة المتبقية
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 5,
+    marginRight: 10, // مسافة بين الـ Input والزر
+  },
+  removeButton: {
+    backgroundColor: 'red',
+    padding: 10,
+    borderRadius: 5,
+  },
 });

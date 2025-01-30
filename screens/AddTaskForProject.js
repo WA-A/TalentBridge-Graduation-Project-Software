@@ -26,7 +26,6 @@ import ImageViewer from 'react-native-image-zoom-viewer';
 const { secondary, primary, careysPink, darkLight, fourhColor, tertiary, fifthColor,brand } = Colors;
 import { Picker } from '@react-native-picker/picker';
 import DateTimePickerModal from '@react-native-community/datetimepicker';  // للموبايل
-import { color } from 'react-native-elements/dist/helpers';
 import { use } from 'react';
 let DatePicker;
 if (Platform.OS === 'web') {
@@ -472,6 +471,7 @@ const [erorWep,setErrorWep]=useState('');
               console.error('Error picking file:', error);
             }
           };
+          
           const convertFileToBase64 = async (fileUri) => {
             console.log("filebefore",fileUri)
             try {
@@ -557,7 +557,7 @@ const [erorWep,setErrorWep]=useState('');
               }
             }
         
-            console.log("Thefile", project);
+            console.log("Theproject", project);
         
             allTasks.forEach((task, index) => {
               project.append(`Tasks[${index}].PhaseName`, task.PhaseName);
@@ -574,7 +574,9 @@ const [erorWep,setErrorWep]=useState('');
             // إضافة القيم الجديدة عند إرسال البيانات
             project.append('isAutoApproval', isAutoApproval);
             project.append('maxAutoApproved', maxAutoApproved);
-        
+            for (let [key, value] of project.entries()) {
+              console.log(`${key}: ${value}`);
+          }
             const response = await fetch(`${baseUrl}/project/createproject`, {
               method: 'POST',
               headers: {
@@ -586,6 +588,7 @@ const [erorWep,setErrorWep]=useState('');
             if (!response.ok) {
               const errorData = await response.json();
               throw new Error(errorData.message || 'Something went wrong');
+              console.log(errorData.message);
             }
         
             // عرض رسالة النجاح
@@ -677,7 +680,7 @@ const [erorWep,setErrorWep]=useState('');
   
   
   
-              <TouchableOpacity onPress={() => nav.navigate('Chat')} style={{ marginRight: 100 }}>
+              <TouchableOpacity onPress={() => nav.navigate('AllPeapleItalk')} style={{ marginRight: 100 }}>
                 <EvilIcons name="sc-telegram" size={30} color={isNightMode ? primary : "#000"} />
               </TouchableOpacity>
   
@@ -740,7 +743,7 @@ const [erorWep,setErrorWep]=useState('');
                   Talent Bridge
                 </Text>
   
-                <TouchableOpacity onPress={() => nav.navigate('Chat')}>
+                <TouchableOpacity onPress={() => nav.navigate('AllPeapleItalk')}>
                   <EvilIcons name="sc-telegram" size={39} color={careysPink} style={{ position: 'absolute', top: -20, left: 10 }} />
                   <EvilIcons name="sc-telegram" size={37} color={darkLight} style={{ position: 'absolute', top: -20, left: 10 }} />
                 </TouchableOpacity>
@@ -1018,7 +1021,7 @@ const [erorWep,setErrorWep]=useState('');
         <View style={[styles.addButtonText, { marginBottom: 40 }]}>
   {Platform.OS === 'web' ? (
     <>
-      <Text style={color="red"} >{erorWep}</Text>
+      <Text>{erorWep}</Text>
       <TouchableOpacity style={styles.submitButton} onPress={handleAddProject}>
         <Text style={styles.submitText}>Create Project</Text>
       </TouchableOpacity>

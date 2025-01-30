@@ -7,10 +7,15 @@ import { EndPoints } from "./Chat.Role.js";
 const router = Router();
 
 router.post('/createchat', auth(EndPoints.CreateChat),fileUpload(FileValue.image).fields([{ name: 'images' }, { name: 'videos' }, { name: 'files' }]), ChatController.CreateChat);
-router.post('/addmessagetochat', auth(EndPoints.CreateChat), fileUpload(FileValue.image).fields([{ name: 'images' }, { name: 'videos' }, { name: 'files' }]), ChatController.AddMessageToChat);
-router.get('/getallchats', auth(EndPoints.CreateChat), ChatController.GetAllChats);
-router.get('/getchatmessages/:ChatId', auth(EndPoints.CreateChat), ChatController.GetChatMessages);
+router.post('/addmessagetochat/:otherUserId',auth(EndPoints.CreateChat),fileUpload(FileValue.image.concat(FileValue.video, FileValue.file)).fields([
+    { name: 'images', maxCount: 5 }, // السماح بتحميل 5 صور
+    { name: 'videos', maxCount: 5 }, // السماح بتحميل 5 فيديوهات
+    { name: 'files', maxCount: 10 }, // السماح بتحميل 10 ملفات (بما في ذلك ملفات ZIP)
+]),ChatController.AddMessageToChat);
+router.get('/getallchats',auth(EndPoints.CreateChat),ChatController.GetAllChats);
+router.get('/getchatmessages/:userId', auth(EndPoints.CreateChat), ChatController.GetChatMessages);
 router.get('/getchatusers', auth(EndPoints.GetChatUsers), ChatController.GetChatUsers); 
+router.get('/GetChatBetweenUsers/:otherUserId', auth(EndPoints.CreateChat), ChatController.GetChatBetweenUsers);
 
 
 router.put('/updatemessageinchat', auth(EndPoints.CreateChat),fileUpload(FileValue.image).fields([{ name: 'images' }, { name: 'videos' }, { name: 'files' }]), ChatController.UpdateMessageInChat)

@@ -22,6 +22,8 @@ import jwtDecode from 'jwt-decode'; // استيراد مكت
 
 
 export default function  ProjectYouAreIN ({ navigation, route }) {
+  const [userRolee,setUserRoleee]=useState('');
+  const [projectId,setProjectID]=useState('');
 
     const baseUrl = Platform.OS === 'web'
       ? 'http://localhost:3000'
@@ -228,6 +230,7 @@ const [userRoless,setRoleUser]=useState('');
       const payload = JSON.parse(atob(jwt.split('.')[1])); // فك تشفير الـ payload
 
       const userRole = payload.role; // الحصول على الدور
+      setUserRoleee(userRole);
               // تغيير اسم الـ API بناءً على الدور
               let apiUrl = `${baseUrl}/project/viewownprojectcreated`;
               if (userRole === 'Senior') {
@@ -462,7 +465,17 @@ const [userRoless,setRoleUser]=useState('');
       extrapolate: 'clamp',
     });
   const [searchQuery, setSearchQuery] = useState('');
-
+  const handlePress = (id) => {
+    
+    if (userRolee === 'Junior') {
+      console.log("sama",id);
+      // إذا كان الدور Junior، انتقل إلى الصفحة التي تريدها
+        navigation.navigate('ThePlaneProjectJunior',{projectId:id}); // استبدل 'YourTargetScreen' باسم الصفحة
+    } else {
+      // إذا لم يكن Junior، لا يتم الانتقال إلى أي مكان
+      console.log("No navigation for Junior users");
+    }
+  };
   useEffect(() => {
     handleViewProfile();
     handleGetFeilds();
@@ -555,7 +568,7 @@ const [userRoless,setRoleUser]=useState('');
 
 
 
-            <TouchableOpacity onPress={() => nav.navigate('Chat')} style={{ marginRight: 100 }}>
+            <TouchableOpacity onPress={() => nav.navigate('AllPeapleItalk')} style={{ marginRight: 100 }}>
               <EvilIcons name="sc-telegram" size={30} color={isNightMode ? primary : "#000"} />
             </TouchableOpacity>
 
@@ -618,7 +631,7 @@ const [userRoless,setRoleUser]=useState('');
                 Talent Bridge
               </Text>
 
-              <TouchableOpacity onPress={() => nav.navigate('Chat')}>
+              <TouchableOpacity onPress={() => nav.navigate('AllPeapleItalk')}>
                 <EvilIcons name="sc-telegram" size={39} color={careysPink} style={{ position: 'absolute', top: -20, left: 10 }} />
                 <EvilIcons name="sc-telegram" size={37} color={darkLight} style={{ position: 'absolute', top: -20, left: 10 }} />
               </TouchableOpacity>
@@ -661,7 +674,7 @@ const [userRoless,setRoleUser]=useState('');
   flexDirection: 'row',  // عرض النص والأيقونة بشكل أفقي
   alignItems: 'center',  // محاذاة النص والأيقونة عموديًا
 }}>
-  <TouchableOpacity onPress={() => viewownprojectcreated()}>
+  <TouchableOpacity onPress={() =>viewOwnProjectCreated()}>
     <Text style={{
       fontSize: 16,
       fontWeight: 'bold',
@@ -672,7 +685,7 @@ const [userRoless,setRoleUser]=useState('');
       borderRadius: 20,
       opacity: 0.7,
     }}>
-     Your Projects
+     Your Projects underway or completed
     </Text>
   </TouchableOpacity>
 
@@ -686,28 +699,7 @@ const [userRoless,setRoleUser]=useState('');
   </TouchableOpacity>
 
   {/* أيقونة الفلتر */}
-  <View style={{ position: 'absolute', right: 10,  flexDirection: 'row',  // عرض النص والأيقونة بشكل أفقي
-  alignItems: 'center', }}>
- <TouchableOpacity  onPress={toggleModal}>
-  <FontAwesome
-    name="folder-open"
-    size={25}
-    color={fourhColor}
-    style={{ marginRight: 6 }}  // المسافة بين النص والأيقونة
-
-  />
-</TouchableOpacity>
-
-    <TouchableOpacity onPress={toggleModal}>
-      <Feather
-        name="sliders"
-        size={25}
-        color={fifthColor}
-        style={{ rotate: '90deg' }} // تحويل الأيقونة لتكون عمودية
-      />
-
-    </TouchableOpacity>
-  </View>
+ 
 </View>
       <View style={styles.divider1} />
                   
@@ -732,22 +724,15 @@ const [userRoless,setRoleUser]=useState('');
         >
           <TouchableOpacity
             style={isMobile ? styles.cardMobileContent : styles.cardWebContent}
-            onPress={() => navigateToProjectDetails(project,project.senior.role)}
+            onPress={() => handlePress(project._id)} // تمرير القيمة مباشرة
+
+         
           >
           
         
             <View style={styles.cardDetails}>
             <View style={styles.experienceHeader}>
    <Text style={styles.status}>{project.Status}</Text>
-  {isModalSEnoir && (
-    <TouchableOpacity     onPress={() => handleShowApplication(project._id)} style={styles.editButton}>
-      <Ionicons
-        name="people-sharp"
-        size={25}
-        color={isNightMode ? Colors.primary : Colors.black}
-      />
-    </TouchableOpacity>
-  )}
   <TouchableOpacity onPress={() => nav.navigate('ChatMopile',{projectID: project._id })}
 
 style={styles.deleteButton}
@@ -1428,7 +1413,7 @@ const styles = StyleSheet.create({
   },
   deleteButton: {
     position: 'absolute',
-    right: 30, /* موقع الأيقونة من اليمين */
+    right: 0, /* موقع الأيقونة من اليمين */
     cursor: 'pointer',
   },
   grid: {

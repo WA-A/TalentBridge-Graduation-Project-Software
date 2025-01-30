@@ -1,4 +1,4 @@
-import React, {  useRef,useState, useContext,useEffect } from 'react';
+import React, { useState, useContext,useEffect } from 'react';
 import { View, Text, TouchableOpacity,StyleSheet, Modal, FlatList, ScrollView, Image,Platform,Animated} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
@@ -15,17 +15,11 @@ import { useSharedValue, useAnimatedStyle, withSpring } from "react-native-reani
 import { Dimensions } from "react-native";
 import * as Animatable from "react-native-animatable";
 import Slider from '@react-native-community/slider';
-import * as FileSystem from 'expo-file-system';
-import * as MediaLibrary from 'expo-media-library';
-import * as ImagePicker from 'expo-image-picker';
-import ImageViewer from 'react-native-image-zoom-viewer';
-import * as WebBrowser from 'expo-web-browser'
-import { decode as atob } from 'base-64'; // إذا كنت تستخدم React Native
-import * as DocumentPicker from "expo-document-picker";
+
 const { width } = Dimensions.get("window");
 
-export default function ChatMopile ({ navigation, route }) {
-  const {projectID} = route.params || {}; 
+
+export default function AllPeapleItalk ({ navigation, route }) {
 
     const baseUrl = Platform.OS === 'web'
       ? 'http://localhost:3000'
@@ -53,37 +47,6 @@ const [project,setProject]=useState();
     };
   
     /////////////////////////////////////////// Filter /////////////////////////////////////////////////////
-    const flatListRef = useRef(null); // مرجع لـ FlatList
-
-
-
-
-
-    const [selectedMessage, setSelectedMessage] = useState(null); // الرسالة المختارة عند الضغط المطول
-    const [isModalVisibleMassage, setModalVisibleMassage] = useState(false); // للتحكم في ظهور المودال
-  
-    // التعامل مع حذف الرسالة
-    const handleDeleteMessage = (messageId) => {
-      console.log(`Delete message with ID: ${messageId}`);
-      deleteMessage(messageId);
-      setModalVisibleMassage(false);
-    };
-  
-    // التعامل مع تعديل الرسالة
-    const handleEditMessage = (messageId) => {
-      console.log(`Edit message with ID: ${messageId}`);
-      setModalVisibleMassage(false);
-    };
-  
-    // فتح المودال عند الضغط المطوّل
-    const handleLongPressMessage = (messageId) => {
-      setSelectedMessage(messageId);
-      setModalVisibleMassage(true);
-    };
-
-
-
-
     const [isModalVisible, setIsModalVisible] = useState(false);
    
   
@@ -165,7 +128,7 @@ const [project,setProject]=useState();
               return;
             }
       
-            const response = await fetch(`${baseUrl}/project/GetProjectsByFieldAndSkills`, {
+            const response = await fetch(`${baseUrl}/chat/getallchats`, {
               method: 'GET',
               headers: {
                 'Authorization': `Wasan__${token}`, // تأكد من التنسيق الصحيح هنا
@@ -178,9 +141,9 @@ const [project,setProject]=useState();
             }
       
             const data = await response.json(); // تحويل الرد إلى JSON
-            setProject(data.projects);
+            setProject(data.chatDetails);
 
-            console.log('Fetched Project:', data.projects); // تحقق من البيانات
+            console.log('Fetched Project:', data.chatDetails); // تحقق من البيانات
 
           } catch (error) {
             console.error('Error fetching Project:', error.message);
@@ -305,96 +268,9 @@ const [project,setProject]=useState();
           }
         };
         
-   const [isModalVisibleviewImage, setIsModalVisibleViewImage] = useState(false);
-    const [currentImage, setCurrentImage] = useState(null);
-    
-    // دالة لفتح نافذة عرض الصورة
-    const openImageViewer = (imageUri) => {
-      console.log('Open Image Viewer:', imageUri);
-      // تعيين الصورة المعروضة
    
-      setCurrentImage([{ url: imageUri }]);
-      setIsModalVisibleViewImage(true);  // فتح النافذة
-    };
-    
-    // إغلاق نافذة عرض الصورة
-    const closeImageViewer = () => {
-      setIsModalVisibleViewImage(false);
-    };
-    const formatTime = (timestamp) => {
-      const date = new Date(timestamp);
-    
-      // أسماء أيام الأسبوع
-      const daysOfWeek = [
-        'Sunday',
-        'Monday',
-        'Tuesday',
-        'Wednesday',
-        'Thursday',
-        'Friday',
-        'Saturday',
-      ];
-    
-      // تحديد اليوم (Sunday, Monday, ...)
-      const day = daysOfWeek[date.getDay()];
-    
-      // تحديد الوقت بصيغة AM/PM
-      let hours = date.getHours();
-      const minutes = date.getMinutes();
-      const isAM = hours < 12;
-      const period = isAM ? 'AM' : 'PM';
-    
-      // تحويل الساعة إلى صيغة 12 ساعة
-      if (hours > 12) {
-        hours -= 12;
-      } else if (hours === 0) {
-        hours = 12;
-      }
-    
-      // صيغة الوقت النهائية: Day, HH:MM AM/PM
-      return `${day}, ${hours}:${minutes < 10 ? '0' + minutes : minutes} ${period}`;
-    };
-    
-const openFileInBrowser = async (uri) => {
-      if (!uri) {
-        Alert.alert('Error', 'Invalid file URL');
-        return;
-      }
-    
-      try {
-        // إضافة المعامل download إلى الرابط لتنزيل الملف مباشرة
-        const downloadUrl = `${uri}?download=true`; 
-        await WebBrowser.openBrowserAsync(downloadUrl); // فتح الرابط في المتصفح
-      } catch (error) {
-        console.log('Error opening file:', error);
-        Alert.alert('Error', 'Failed to open file');
-      }
-    };
-    
-    
+      
 
-    const deleteMessage = async (messageId) => {
-      try {
-        const token = await AsyncStorage.getItem('userToken'); // الحصول على التوكن من التخزين
-        console.log(token);
-        if (!token) {
-          console.error('Token not found');
-          return;
-        }          const response = await fetch(`${baseUrl}/chat/deletechatProject/${projectID}/${messageId}`, {
-              method: 'DELETE',
-              headers: {
-                  'Authorization': `Wasan__${token}`,
-              },
-          });
-  
-          const data = await response.json();
-          console.log(data.message);
-          fetchMessages();
-      } catch (error) {
-          console.error('Error deleting message:', error);
-      }
-  };
-  
   const [profile,setprofileimg] = useState('');
   const [profileUser,setOtherProfile] = useState('');
 
@@ -474,6 +350,20 @@ const openFileInBrowser = async (uri) => {
         'Lato-Regular': require('./../compnent/fonts/Lato-Regular.ttf'),
     });
 
+    if (!fontsLoaded) {
+        return <View><Text>Loading...</Text></View>;
+    }
+
+    const handleFieldSelect = (field) => {
+        selectFieldModalVisible(field);
+        setSelectFieldModalVisible(false);
+    };
+
+    const handleApplyNow = () => {
+      setNumberOfTrain();
+      setProfileLink();
+      setApplyNowModalVisible(true);
+  };
 
     // Load custom fonts
     const bottomBarTranslate = scrollY.interpolate({
@@ -483,229 +373,11 @@ const openFileInBrowser = async (uri) => {
     });
   const [searchQuery, setSearchQuery] = useState('');
 
-  const { ProjectId } = route.params; // الحصول على الـ ProjectId من الـ Route
-  const [messages, setMessages] = useState([]); // لتخزين الرسائل المستلمة
-  const [newMessage, setNewMessage] = useState(''); // لتخزين الرسالة الجديدة
-  const [loading, setLoading] = useState(true); // لتحديد حالة تحميل الرسائل
-  const [userData, setUserData] = useState(null); // لتخزين بيانات المستخدم السينيور
-  const [chatsData , setchatsData] = useState(); // لتخزين بيانات المستخدم السينيور
-  const [file , setFile] = useState(); // لتخزين بيانات المستخدم السينيور
-  const [imageChat , setImageChat] = useState(); // لتخزين بيانات المستخدم السينيور
-    const handleFilePicker = async () => {
-              try {
-                const result = await DocumentPicker.getDocumentAsync({
-                  type: 'application/pdf', // فقط ملفات PDF
-                });
-                console.log(result.uri);
-                console.log(result);
-                // التأكد من أن المستخدم لم يلغي العملية
-                if (result.canceled) {
-                  console.log('User canceled file selection');
-                } else {
-                  // التعامل مع النتيجة
-                  const pickedFile = result.assets ? result.assets[0] : null;
-                  if (pickedFile) {
-                    setFile(pickedFile);
-                    console.log('File URI:', pickedFile.uri);  // عرض مسار الملف
-                  }
-                }
-              } catch (error) {
-                console.error('Error picking file:', error);
-              }
-            };
-
-  const pickImage = async (type) => {
-     try {
-       // طلب إذن الوصول إلى مكتبة الصور
-       let permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-       if (permissionResult.granted === false) {
-         Alert.alert('Permission required', 'You need to grant permission to access the gallery.');
-         return;
-       }
-       let result;
-       // إطلاق نافذة لاختيار الصورة
- 
-         result = await ImagePicker.launchImageLibraryAsync({
-           mediaTypes: ['images'],
-           allowsEditing: true,
-           aspect: [8, 5],
-           quality: 1,
-         });
-       
-      
-       console.log(result);
-       // إذا تم اختيار صورة
-      
-           setImageChat(result.assets[0].uri); // تعيين صورة البروفايل
-    
-     } catch (error) {
-       console.log('Error picking image: ', error);
-     }
-   };
-    function base64ToBlob(base64Data, mimeType) {
-            const byteCharacters = atob(base64Data.split(',')[1]);  // إزالة الـ prefix 'data:application/pdf;base64,'
-            const byteArrays = [];
-        
-            for (let offset = 0; offset < byteCharacters.length; offset += 1024) {
-                const slice = byteCharacters.slice(offset, offset + 1024);
-                const byteNumbers = new Array(slice.length);
-        
-                for (let i = 0; i < slice.length; i++) {
-                    byteNumbers[i] = slice.charCodeAt(i);
-                }
-        
-                const byteArray = new Uint8Array(byteNumbers);
-                byteArrays.push(byteArray);
-            }
-        
-            return new Blob(byteArrays, { type: mimeType });
-        };
- 
-   
-  const handleSendMessage = async () => {
-    if (!newMessage.trim() && !file && !imageChat) return; // التحقق من أن الرسالة غير فارغة
-
-    try {
-      const token = await AsyncStorage.getItem('userToken'); // الحصول على التوكن من التخزين
-      console.log(token);
-      if (!token) {
-        console.error('Token not found');
-        return;
-      }
-      console.log(imageChat);
-      const formData = new FormData();
-    
-      formData.append('MessageContent', newMessage);
-
-           if (imageChat) {
-              if (Platform.OS === 'web') {
-                // استخدام Blob للويب
-                const profileBlob = base64ToBlob(imageChat, 'image/jpeg');
-                formData.append('images', profileBlob, 'images.jpg');
-              } else {
-                // استخدام uri للموبايل
-                formData.append('images', {
-                  uri: imageChat,
-                  type: 'image/jpeg',
-                  name: 'images.jpg',
-                });
-              }
-            }
-
-         
-                     if (file) {
-                       console.log("Thefile", file);
-                 
-                       const fileUri = file.uri.startsWith('file://') ? file.uri : `file://${file.uri}`;
-                 
-                       // إذا كان التطبيق على الويب
-                       if (Platform.OS === 'web') {
-                         // تحويل البيانات إلى Blob (بيانات الـ PDF المشفرة بتنسيق Base64)
-                         const pdfBlob = base64ToBlob(file.uri, 'application/pdf');
-                         formData.append('files', pdfBlob,file.name);  // اسم الملف الذي سيتم حفظه
-                 
-                       } else {
-                        formData.append('files', {
-                           uri: fileUri,
-                           name: file.name,
-                           type: file.mimeType || 'application/pdf',
-                         });
-                       }
-                     }
-  console.log(formData);
-
-   
- 
-      const response = await fetch(`${baseUrl}/chat/AddmessageToChatProject/${projectID}`,{
-        method: 'POST',
-        headers: {
-          'Authorization': `Wasan__${token}`, // تأكد من كتابة التوكن بالشكل الصحيح
-        },
-          body: formData, // إرسال البيانات كـ FormData
-      });
-   
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Something went wrong');
-      }
-  
-      fetchMessages();
-      const data = await response.json();
-      console.log(data); // قم بإجراء شيء ما مع البيانات المستلمة من الخادم
-      setNewMessage(''); // إعادة تعيين الرسالة بعد الإرسال  
-      setImageChat('');
-      setFile('');
-    } catch (error) {
-      console.error('Error fetching chat', error);
-    }
-     
-  };
-
-
-  const renderSelectedMedia = () => {
-    if (imageChat) {
-      return (
-        <View style={styles.previewContainer}>
-          <Text style={styles.previewLabel}>Selected Media:</Text>
-          <Image
-            source={{ uri: imageChat }}
-            style={styles.previewImage}
-          />
-        </View>
-      );
-    }
-    if (file) {
-      return (
-        <View style={styles.previewContainer}>
-          <Text style={styles.previewLabel}>Selected Media:</Text>
-          <Text>file.name</Text>
-         
-        </View>
-      );
-    }
-    return null;
-  };
-
-
-  const fetchMessages = async () => {
-
-    console.log("projectId",projectID);
-    try {
-      const token = await AsyncStorage.getItem('userToken'); // الحصول على التوكن من التخزين
-      console.log(token);
-      if (!token) {
-        console.error('Token not found');
-        return;
-      }
-  
-      const response = await fetch(`${baseUrl}/chat/GetAllChatsProject/${projectID}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Wasan__${token}`, // تأكد من كتابة التوكن بالشكل الصحيح
-        },
-      });
-  
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-  
-      const data = await response.json();
-      setchatsData(data.chats);  // تحديث حالة البروفايل
-        flatListRef.current?.scrollToEnd({ animated: true });
-      
-    } catch (error) {
-//      console.error('Error fetching chat:', error);
-    }
-  };
-
-
   useEffect(() => {
-    fetchMessages();
     handleViewProfile();
-    flatListRef.current?.scrollToEnd({ animated: true });
-
-  },[]);
+    handleGetFeilds();
+    handleGetProjectByFeildOrSkills();
+  }, []);
   
 
 
@@ -859,7 +531,7 @@ const openFileInBrowser = async (uri) => {
                 Talent Bridge
               </Text>
 
-              <TouchableOpacity onPress={() => nav.navigate('AllPeapleItalk')}>
+              <TouchableOpacity onPress={() => nav.navigate('Chat')}>
                 <EvilIcons name="sc-telegram" size={39} color={careysPink} style={{ position: 'absolute', top: -20, left: 10 }} />
                 <EvilIcons name="sc-telegram" size={37} color={darkLight} style={{ position: 'absolute', top: -20, left: 10 }} />
               </TouchableOpacity>
@@ -894,141 +566,129 @@ const openFileInBrowser = async (uri) => {
             </View>
           </>
         )}
+               
               
-        <View
-      style={{
-        flex: 1,
-        marginBottom: Platform.OS === 'web' ? 0 : 50,
-        marginHorizontal: Platform.OS === 'web' ? '20%' : 0,
-      }}
+
+        <View style={{
+  top: 5,
+  left: 0,  // يحدد أن يكون العنصر عند أقصى اليسار
+  marginBottom: 15,  // المسافة بين العناصر الأخرى
+  flexDirection: 'row',  // عرض النص والأيقونة بشكل أفقي
+  alignItems: 'center',  // محاذاة النص والأيقونة عموديًا
+}}>
+  <TouchableOpacity onPress={() => handleGetProjectByFeildOrSkills()}>
+    <Text style={{
+      fontSize: 16,
+      fontWeight: 'bold',
+      color: isNightMode ? primary : '#000',
+      backgroundColor: isNightMode ? '#000' : '#f9f9f9',
+      paddingHorizontal: 10,
+      paddingVertical: 3,
+      borderRadius: 20,
+      opacity: 0.7,
+    }}>
+     My Messages
+    </Text>
+    
+  </TouchableOpacity>
+
+  <TouchableOpacity onPress={toggleDropdown}>
+    <AntDesign 
+      name="caretdown" 
+      size={16} 
+      color={isNightMode ? primary : '#000'} 
+      style={{ marginLeft: 1 }}  // المسافة بين النص والأيقونة
+    />
+  </TouchableOpacity>
+</View>
+<View style={styles.divider1} />
+
+<ScrollView contentContainerStyle={[styles.container, { backgroundColor: isNightMode ? "#000" : "#fff" }]}>
+  {project?.length > 0 ? (
+    <View
+      style={[
+        styles.grid,
+        {
+          flexDirection: isMobile ? "column" : "row",
+          justifyContent: isMobile ? "flex-start" : "space-between",
+        },
+        { backgroundColor: isNightMode ? "#000" : Colors.primary },
+      ]}
     >
-      <View style={{ marginBottom: Platform.OS === 'web' ? 100 : 60, margin: 4 }}>
-        {chatsData?.length > 0 ? (
-          <FlatList
-            ref={flatListRef} // تعيين المرجع
-            data={chatsData[0]?.messages || []}
-            keyExtractor={(item) => item._id}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                onLongPress={() => handleLongPressMessage(item._id)}
-                style={styles.messageContainer}
-              >
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <Image
-                    source={{
-                      uri: item.sender.PictureProfile?.secure_url || 'https://via.placeholder.com/80',
-                    }}
-                    style={styles.profileImage}
-                  />
-                  <Text style={styles.senderName}>
-                    {item.sender.FullName} (@{item.sender.UserName})
-                  </Text>
-                </View>
+      {project.map((chat, index) => (
+        <Animatable.View
+          key={chat.chatId}
+          animation="zoomIn"
+          delay={index * 100}
+          duration={500}
+          style={[isMobile ? styles.cardMobile : styles.cardWeb]}
+        >
+          <TouchableOpacity
+            style={isMobile ? styles.cardMobileContent : styles.cardWebContent}
+            onPress={() => {
+              // التوجيه بناءً على نوع الدردشة
+              if (chat.chatType === "multiple users") {
+                // إذا كانت دردشة جماعية، اذهب إلى صفحة الجروب
+                nav.navigate("ChatMopile", { projectID: chat.projectId });
+              } else {
+                // إذا كانت دردشة فردية، اذهب إلى صفحة الدردشة الفردية
+                nav.navigate("ChatUser", { projectID: chat.usersInfo[0].userId });
+              }
+            }}
+          >
+            <View style={styles.cardDetails}>
+              {/* عرض اسم الدردشة */}
+              {chat.chatType === "multiple users" ? (
+                // إذا كانت دردشة جماعية
+                <Text style={styles.projectName}>{chat.projectName}</Text>
+              ) : (
+                <Text style={styles.projectName}>{chat.usersInfo[0].name}</Text>
+              )}
 
-                {/* وقت الإرسال */}
-                <Text style={styles.timeText}>{formatTime(item.timestamp)}</Text>
+              {/* عرض نوع الدردشة */}
+              <Text style={styles.projectStatus}>
+                Chat Type: {chat.chatType}
+              </Text>
 
-                <View style={styles.divider}></View>
-                <View style={styles.messageContent}>
-                  <Text style={styles.messageText}>{item.content}</Text>
+              {/* عرض تاريخ الإنشاء */}
+              <Text style={styles.projectPrice}>
+                Created At: {new Date(chat.createdAt).toLocaleString()}
+              </Text>
 
-                  {item.messageType === 'file' &&
-                    item.media &&
-                    item.media.map((file, index) => (
-                      <TouchableOpacity
-                        key={index}
-                        style={styles.fileCard}
-                        onPress={() =>
-                          openFileInBrowser(file.secure_url, file.originalname)
-                        }
-                      >
-                        <FontAwesome
-                          name="file-o"
-                          size={24}
-                          color="#555"
-                          style={styles.icon}
-                        />
-                        <Text style={styles.fileName}>
-                          {file.originalname || 'Click to view/download file'}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
+              <View style={styles.divider} />
 
-                  {item.messageType === 'image' &&
-                    item.media &&
-                    item.media.map((image, index) => (
-                      <TouchableOpacity
-                        key={index}
-                        onPress={() => openImageViewer(image?.secure_url)}
-                      >
-                        <Image
-                          source={{ uri: image.secure_url }}
-                          style={{
-                            width: '100%',
-                            height: 300,
-                            borderRadius: 10,
-                            marginVertical: 10,
-                            width: Platform.OS === 'web' ? '30%' : '100%',
-                            resizeMode: 'cover',
-                          }}
-                        />
-                      </TouchableOpacity>
-                    ))}
-                </View>
-              </TouchableOpacity>
-            )}
-          />
-        ) : (
-          <Text>No messages available.</Text>
-        )}
-      </View>
-
-      {/* عرض الصورة أو الملف المختار */}
-      <View style={styles.inputContainerImage}>{renderSelectedMedia()}</View>
-      <View style={styles.inputContainer}>
-        <TouchableOpacity onPress={pickImage} style={{ marginRight: 5 }}>
-          <Ionicons name="image" size={25} color="#000" />
-        </TouchableOpacity>
-        <TouchableOpacity onPress={handleFilePicker} style={{ marginRight: 5 }}>
-          <Feather name="file" size={23} color="#000" />
-        </TouchableOpacity>
-        <TextInput
-          style={styles.input}
-          placeholder="Type a message..."
-          value={newMessage}
-          onChangeText={setNewMessage} // تحديث الحالة عند تغيير النص
-        />
-        <TouchableOpacity onPress={handleSendMessage}>
-          <Ionicons name="send" size={25} color="#000" />
-        </TouchableOpacity>
-      </View>
+              <View style={styles.seniorInfo}>
+                {chat.chatType === "multiple users" ? (
+                  // إذا كانت دردشة جماعية
+                  <View style={styles.avatarCircle}>
+                    <Text style={styles.avatarText}>G</Text>
+                  </View>
+                ) : (
+                  // إذا كانت دردشة فردية
+                  <TouchableOpacity
+                    style={styles.seniorInfo}
+                    onPress={() => navigateToSeniorProfile(chat.usersInfo[0])}
+                  >
+                    <Image
+                      source={{
+                        uri: chat.usersInfo[0].profileImage.secure_url || "https://via.placeholder.com/50",
+                      }}
+                      style={styles.seniorAvatar}
+                    />
+                    <Text style={styles.seniorName}>{chat.usersInfo[0].name}</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            </View>
+          </TouchableOpacity>
+        </Animatable.View>
+      ))}
     </View>
-          {/* المودال عند الضغط المطول */}
-      <Modal
-        visible={isModalVisibleMassage}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setModalVisibleMassage(false)}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-           
-            <TouchableOpacity
-              onPress={() => handleDeleteMessage(selectedMessage)}
-              style={styles.modalButton}
-            >
-              <Text style={styles.modalButtonText}>Delete Message</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => setModalVisibleMassage(false)}
-              style={[styles.modalButton, { backgroundColor: '#ccc' }]}
-            >
-              <Text style={styles.modalButtonText}>Cancel</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-  
+  ) : (
+    <Text style={styles.noProjects}>No chats available.</Text>
+  )}
+</ScrollView>
+
             
             {/* Bottom Navigation Bar */}
  {/* Bottom Navigation Bar */}
@@ -1237,7 +897,6 @@ Select Field           </Text>
               
             </View>
           )}
-          
 
           {activeFilters.includes("Status") && (
             <View style={styles.filterOptionContainer}>
@@ -1605,11 +1264,11 @@ flex:"1",  gap: 20, // توفير مسافة ثابتة بين البطاقات
 },
 
   cardMobile: {
-    marginBottom: 20,
+    marginBottom:1,
     width: width - 20, // تأكيد أن عرض البطاقة يتناسب مع عرض الشاشة
   },
 cardWeb: {
-  marginBottom: 20,
+  marginBottom: 1,
   flexBasis: "30%", // تحديد نسبة العرض للبطاقة
   width: '50%',
   height: "auto", // السماح للارتفاع بالتكيف مع المحتوى
@@ -1626,7 +1285,8 @@ cardWeb: {
     shadowOffset: { width: 0, height: 5 },
     elevation: 5,
     overflow: "hidden",
-    justifyContent: "space-between",
+    justifyContent: "space-between",    padding: 15, // تقليل الحشوة داخل البطاقة
+
   },
 cardWebContent: {
   height: "auto", // السماح للارتفاع بالتكيف
@@ -1637,7 +1297,8 @@ cardWebContent: {
   shadowOpacity: 0.2,
   shadowRadius: 10,
   shadowOffset: { width: 0, height: 5 },
-  elevation: 5,
+  elevation: 5,    padding: 15, // تقليل الحشوة داخل البطاقة
+
 },
 
 
@@ -1814,157 +1475,72 @@ filterOption: {
     marginBottom: 2,padding:5,  borderRadius: 8,
 
   },
-  messagesList: {
-    flex: 1,
-    marginBottom: 10,
+  cardDetails: {
+    marginTop: 5, // تقليل المسافة بين العناصر داخل البطاقة
   },
-  messageContainer: {
-    marginBottom: 10,
-    padding: 10,
-    borderRadius: 5,
-    backgroundColor: '#f1f1f1',
+  projectName: {
+    fontSize: 14, // تقليل حجم النص
+    fontWeight: "bold",
+    color: "#333",
   },
-  messageHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 5,
-  },
-  userImage: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    marginRight: 10,
-  },
-  sender: {
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  seniorLabel: {
-    color: 'red',
-    fontWeight: 'bold',
-    marginBottom: 5,
-  },
-  message: {
-    fontSize: 16,
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderTopWidth: 1,
-    borderTopColor: '#ccc',
-    paddingTop: 10,
-  },
- 
-  senderName: {
-    fontWeight: 'bold',
-  }, profileImage: {
-    width: 40,
-    height: 40,
-    marginRight: 10,
-                borderRadius: 30,
-                borderColor: tertiary,
-                borderWidth: 1
-  },
-inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    position: 'absolute', // تثبيت المدخل في الأسفل
-    bottom: 0,
-    left: 0,
-    right: 0,
-    padding: 10,
-    backgroundColor: '#fff',
-    borderTopWidth: 2,
-    borderTopColor: '#ccc',
-  },
-  inputContainerImage: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    position: 'absolute', // تثبيت المدخل في الأسفل
-    bottom: 50,
-    left: 0,
-    right: 0,
-    padding: 10,
-    backgroundColor: '#fff',
-
-  },
-  input: {
-    flex: 1,
-    height: 40,
-    borderColor: '#ccc',
-    borderWidth: 1,
-    borderRadius: 20,
-    paddingHorizontal: 10,
-    marginRight: 10,
-  },
-  sendIcon: {
-    padding: 5,
-    backgroundColor: '#E8E8E8',
-    borderRadius: 20,
-  },
-  fileCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#f9f9f9',
-    borderRadius: 10,
-    padding: 10,
-    marginBottom: 10,marginTop: 10,
-    width: '100%',
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
-  },
-  
-  icon: {
-    marginRight: 10,
-  },
-  fileName: {
-    color: Colors.darkLight,
-    textDecorationLine: 'underline',
-    flexShrink: 1,
-    fontSize: 14,
-  }, previewContainer: {
-    marginBottom: 10,
-    alignItems: 'center',
-  },
-  previewLabel: {
-    fontWeight: 'bold',
-    marginBottom: 5,
-  },
-  previewImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 10,
-  },
-  modalContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.5)',
-  },
-  modalContent: {
-    backgroundColor: '#fff',
-    padding: 20,
-    borderRadius: 10,
-    width: '80%',
-  },
-  modalButton: {
-    padding: 15,
+  groupName: {
+    color:Colors.primary,
+    fontSize: 15, // تقليل حجم النص في القروب
+    backgroundColor: Colors.fifthColor,
+    padding: 4, // تقليل الحشوة داخل خلفية القروب
     borderRadius: 8,
-    backgroundColor: Colors.darkLight,
-    marginVertical: 5,
-    alignItems: 'center',
+    fontWeight: "bold",
+    textAlign: "center",
   },
-  modalButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
+  projectStatus: {
+    fontSize: 12, // تقليل حجم النص
+    color: "#777",
+    marginVertical: 4, // تقليل المسافة بين العناصر
   },
-  timeText: {
+  projectPrice: {
     fontSize: 12,
-    color: 'gray',
-    marginTop: 5,
+    color: "#888",
+    marginVertical: 4,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: "#e0e0e0",
+    marginVertical: 8, // تقليل المسافة بين الخطوط
+  },
+  seniorInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 5, // تقليل المسافة بين الصورة والنص
+  },
+  groupAvatar: {
+    backgroundColor: Colors.primary,
+    borderRadius: 50,
+    width: 30, // تقليل حجم الأيقونة
+    height: 30, // تقليل حجم الأيقونة
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  avatarText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 14, // تقليل حجم النص
+  },
+  seniorAvatar: {
+    width: 30, // تقليل حجم الصورة
+    height: 30, // تقليل حجم الصورة
+    borderRadius: 50,
+    marginRight: 8, // تقليل المسافة بين الصورة والنص
+  },
+  seniorName: {
+    fontSize: 12, // تقليل حجم النص
+    fontWeight: "bold",
+    color: "#333",
+  },
+  noProjects: {
+    textAlign: "center",
+    fontSize: 14, // تقليل حجم النص
+    color: "#aaa",
+    marginTop: 20,
   },
 
 });

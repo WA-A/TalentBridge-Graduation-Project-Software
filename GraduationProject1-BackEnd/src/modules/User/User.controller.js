@@ -1,7 +1,6 @@
 import UserModel from "../../Model/User.Model.js";
 import Cloudinary from '../../../utls/Cloudinary.js';
-
-
+import ProjectsModel from "../../Model/ProjectsModel.js";
 
 export const test = async (req, res) => {
     return res.status(404).json({ message: "success join " });
@@ -524,23 +523,38 @@ export const addLanguage = async (req, res) => {
 
 
 
-
 export const addRecommendation = async (req, res) => {
     try {
-        const { text, author, date } = req.body;
-        const authUser = req.user;
+        const { text, juniorID } = req.body; // الجنيور ID يتم إرساله في الـ body
+        const authUser = req.user._id; // المستخدم الحالي (السنيور)
 
-        const user = await UserModel.findById(authUser._id);
-        if (!user) {
-            return res.status(404).json({ message: "User not found" });
+        // التحقق من وجود المستخدم السنيور
+        const senior = await UserModel.findById(authUser);
+        if (!senior) {
+            return res.status(404).json({ message: "Senior user not found" });
         }
 
-        const newRecommendation = { text, author, date };
+        // التحقق من وجود الجنيور باستخدام juniorID
+        const junior = await UserModel.findById(juniorID); 
+        if (!junior) {
+            return res.status(404).json({ message: "Junior user not found" });
+        }
 
-        user.Recommendations.push(newRecommendation);
-        await user.save();
+        // إنشاء التوصية الجديدة
+        const newRecommendation = {
+            text,
+            author: senior._id, // تخزين ID السنيور
+            date: Date.now(), // تعيين التاريخ الحالي
+        };
 
-        return res.status(200).json({ message: "Recommendation added successfully", user });
+        // إضافة التوصية إلى قائمة توصيات الجنيور
+        junior.Recommendations.push(newRecommendation);
+        await junior.save();
+
+        return res.status(200).json({
+            message: "Recommendation added successfully",
+            recommendation: newRecommendation,
+        });
     } catch (error) {
         console.error("Error adding recommendation:", error);
         return res.status(500).json({ message: error.message });
@@ -549,7 +563,166 @@ export const addRecommendation = async (req, res) => {
 
 
 
+export const getRecommendations = async (req, res) => {
+    try {
+      const juniorId = req.user._id; // جلب ID الجنيور من التوكين
+  
+      // التحقق من وجود الجنيور في قاعدة البيانات وجلب التوصيات
+      const junior = await UserModel.findById(juniorId).select('Recommendations');
+  
+      if (!junior) {
+        return res.status(404).json({ message: 'Junior user not found' });
+      }
+  
+      // التحقق من وجود توصيات
+      if (!junior.Recommendations || junior.Recommendations.length === 0) {
+        return res.status(200).json({
+          message: 'No recommendations found',
+          recommendations: [],
+        });
+      }
+  
+      // جلب بيانات المؤلفين (السينيور) بناءً على الـ ID الموجود في التوصية
+      const recommendationsWithAuthors = await Promise.all(
+        junior.Recommendations.map(async (rec) => {
+          // البحث عن المؤلف بناءً على الـ ID
+          const author = await UserModel.findById(rec.author).select('FullName PictureProfile');
+  
+          return {
+            text: rec.text,
+            author: {
+              id: author._id,
+              fullName: author.FullName,
+              profilePicture: author.PictureProfile,
+            },
+            date: rec.date,
+            _id: rec._id,
+          };
+        })
+      );
+  
+      // الآن سنبحث عن المراجعات الخاصة بالجنيور في المشاريع المرتبطة به
+      const projects = await ProjectsModel.find({
+        'SkillReviews.UserId': juniorId, // نبحث عن المشاريع التي تحتوي على هذا الجنيور في المراجعات
+      })
+        .populate({
+          path: 'SkillReviews.UserId',
+          select: 'FullName profilePicture', // جلب بيانات السنيور الذي كتب المراجعة
+        })
+        .select('ProjectName _id SkillReviews'); // جلب اسم المشروع، المعرف، والمراجعات فقط
+  
+      // إنشاء قائمة تحتوي على المهارات والتقييمات الخاصة بالجنيور
+      const recommendationsWithSkills = projects.map(project => {
+        const reviews = project.SkillReviews.filter(
+          review => review.UserId._id.toString() === juniorId.toString()
+        );
+        return {
+          projectId: project._id, // إضافة ID المشروع
+          projectName: project.ProjectName,
+          reviews: reviews.map(review => ({
+            skillId: review.SkillId,
+            rating: review.NewRatingSkill,
+            skillName: review.skillName,
+            seniorName: review.UserId.FullName,
+            seniorProfilePicture: review.UserId.profilePicture,
+          })),
+        };
+      });
+  
+      // إرجاع التوصيات مع المهارات والتقييمات
+      return res.status(200).json({
+        message: 'Recommendations fetched successfully',
+        recommendations: recommendationsWithAuthors,
+        skillsWithReviews: recommendationsWithSkills,
+      });
+  
+    } catch (error) {
+      console.error('Error fetching recommendations:', error);
+      return res.status(500).json({ message: error.message });
+    }
+  };
+  
 
+
+  export const getRecommendationsByID = async (req, res) => {
+    try {
+      const juniorId = req.params.userId; // جلب ID الجنيور من التوكين
+  
+      // التحقق من وجود الجنيور في قاعدة البيانات وجلب التوصيات
+      const junior = await UserModel.findById(juniorId).select('Recommendations');
+  
+      if (!junior) {
+        return res.status(404).json({ message: 'Junior user not found' });
+      }
+  
+      // التحقق من وجود توصيات
+      if (!junior.Recommendations || junior.Recommendations.length === 0) {
+        return res.status(200).json({
+          message: 'No recommendations found',
+          recommendations: [],
+        });
+      }
+  
+      // جلب بيانات المؤلفين (السينيور) بناءً على الـ ID الموجود في التوصية
+      const recommendationsWithAuthors = await Promise.all(
+        junior.Recommendations.map(async (rec) => {
+          // البحث عن المؤلف بناءً على الـ ID
+          const author = await UserModel.findById(rec.author).select('FullName PictureProfile');
+  
+          return {
+            text: rec.text,
+            author: {
+              id: author._id,
+              fullName: author.FullName,
+              profilePicture: author.PictureProfile,
+            },
+            date: rec.date,
+            _id: rec._id,
+          };
+        })
+      );
+  
+      // الآن سنبحث عن المراجعات الخاصة بالجنيور في المشاريع المرتبطة به
+      const projects = await ProjectsModel.find({
+        'SkillReviews.UserId': juniorId, // نبحث عن المشاريع التي تحتوي على هذا الجنيور في المراجعات
+      })
+        .populate({
+          path: 'SkillReviews.UserId',
+          select: 'FullName profilePicture', // جلب بيانات السنيور الذي كتب المراجعة
+        })
+        .select('ProjectName _id SkillReviews'); // جلب اسم المشروع، المعرف، والمراجعات فقط
+  
+      // إنشاء قائمة تحتوي على المهارات والتقييمات الخاصة بالجنيور
+      const recommendationsWithSkills = projects.map(project => {
+        const reviews = project.SkillReviews.filter(
+          review => review.UserId._id.toString() === juniorId.toString()
+        );
+        return {
+          projectId: project._id, // إضافة ID المشروع
+          projectName: project.ProjectName,
+          reviews: reviews.map(review => ({
+            skillId: review.SkillId,
+            rating: review.NewRatingSkill,
+            skillName: review.skillName,
+            seniorName: review.UserId.FullName,
+            seniorProfilePicture: review.UserId.profilePicture,
+          })),
+        };
+      });
+  
+      // إرجاع التوصيات مع المهارات والتقييمات
+      return res.status(200).json({
+        message: 'Recommendations fetched successfully',
+        recommendations: recommendationsWithAuthors,
+        skillsWithReviews: recommendationsWithSkills,
+      });
+  
+    } catch (error) {
+      console.error('Error fetching recommendations:', error);
+      return res.status(500).json({ message: error.message });
+    }
+  };
+  
 
 // حذف خبرة موجودة
 // حذف خبرة موجودة

@@ -57,7 +57,25 @@ const { width, height } = Dimensions.get('window');
 
 export default function ProfilePage({ navigation }) {
 
+  const [skillsRecommendation, setSkillsRecommendation] = useState([]);
+  const [showAllRecommendations, setShowAllRecommendations] = useState(false);
 
+  const handleShowAllRecommendations = () => {
+    setShowAllRecommendations(true);
+  };
+
+  const handleHideRecommendations = () => {
+    setShowAllRecommendations(false);
+  };
+  
+  const handleShowAllSkillsRec = () => {
+    setShowAllSkills(true);
+  };
+  const handleHideSkillsRec = () => {
+    setShowAllSkills(false);
+  };
+  
+    
 /////////
  const [likedPosts, setLikedPosts] = useState({});
 
@@ -2044,6 +2062,37 @@ return;
     }
   };
 
+  const handleGetRecomandation = async () => {
+    try {
+      const token = await AsyncStorage.getItem('userToken'); // استرجاع التوكن
+      if (!token) {
+        console.error('Token not found');
+        return;
+      }
+
+      const response = await fetch(`${baseUrl}/user/getRecommendations`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Wasan__${token}`, // تضمين التوكن في الهيدر
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json(); // إذا كان هناك خطأ في الرد
+        throw new Error(errorData.message || 'Failed to fetch languages');
+      }
+
+      const data = await response.json(); // تحويل الرد إلى JSON
+      if(data.recommendations=== null || data.skillsWithReviews=== null){
+        return;
+      }
+      setRecommendation(data.recommendations); // تخزين اللغات في الحالة لعرضها
+      setSkillsRecommendation(data.skillsWithReviews);
+    } catch (error) {
+   //   console.error('Error fetching languages:', error.message);
+    }
+  };
+
 
   // دالة لاسترجاع اللغات من الـ API (لعرضها فقط)
   const handleGetLanguagesUser = async () => {
@@ -2343,12 +2392,51 @@ return;
       
   
 
+  const [dataprofile,setIDProfile]=useState('');
 
+  const [profileUser,setOtherProfile] = useState('');
 
-
-
+  const handleViewOtherProfile = async (id) => {
+    try {
+      const token = await AsyncStorage.getItem('userToken'); // الحصول على التوكن من التخزين
+      console.log(token);
+      if (!token) {
+        console.error('Token not found');
+        return;
+      }
+  
+      const response = await fetch(`${baseUrl}/User/viewotherprofile/${id}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Wasan__${token}`, // تأكد من كتابة التوكن بالشكل الصحيح
+        },
+      });
+  
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+  
+      const data = await response.json();
+      setOtherProfile(data);  // تحديث حالة البروفايل
+      console.log('senior', data);
+  
+    } catch (error) {
+      console.error('Error fetching ProfileData:', error);
+    }
+  };
+  const navigateToSeniorProfile = async (id) => {
+    await handleViewOtherProfile(id);  // الانتظار حتى يتم تحميل البيانات
+    // التأكد من تحميل البيانات قبل الانتقال
+    if (profileUser) {
+      console.log('Navigate to Senior Profile:',profileUser);
+      navigation.navigate('ViewOtherProfile', { userData: profileUser });
+    } else {
+      console.log('No profile data available');
+    }
+  };
   useEffect(() => {
-    
+    handleGetRecomandation();
     loadSelectedLanguages();
     handleGetLanguages(); // استرجاع اللغات عند تحميل المكون
     loadSelectedSkills();
@@ -2719,7 +2807,7 @@ return;
 
 
 
-            <TouchableOpacity onPress={() => nav.navigate('Chat')} style={{ marginRight: 100 }}>
+            <TouchableOpacity onPress={() => nav.navigate('AllPeapleItalk')} style={{ marginRight: 100 }}>
               <EvilIcons name="sc-telegram" size={30} color={isNightMode ? primary : "#000"} />
             </TouchableOpacity>
 
@@ -2782,7 +2870,7 @@ return;
                 Talent Bridge
               </Text>
 
-              <TouchableOpacity onPress={() => nav.navigate('Chat')}>
+              <TouchableOpacity onPress={() => nav.navigate('AllPeapleItalk')}>
                 <EvilIcons name="sc-telegram" size={39} color={careysPink} style={{ position: 'absolute', top: -20, left: 10 }} />
                 <EvilIcons name="sc-telegram" size={37} color={darkLight} style={{ position: 'absolute', top: -20, left: 10 }} />
               </TouchableOpacity>
@@ -2956,51 +3044,6 @@ return;
                 <Ionicons name="logo-github" size={30} color="#000" />
               </TouchableOpacity>*/
             )}
-          </View>
-
-          {/* قسم الأصدقاء والتقدم والإنجازات */}
-          <View style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            backgroundColor: isNightMode ? Colors.tertiary : Colors.secondary,
-            width: '100%',
-            marginTop: 20,
-            padding: 10,
-          }}>
-
-            {/* عدد الأصدقاء */}
-            <View style={{ flex: 1, alignItems: 'center' }}>
-              <TouchableOpacity>
-                <Text style={{
-                  fontSize: 18,
-                  fontWeight: 'bold',
-                  color: isNightMode ? Colors.primary : Colors.black
-                }}>
-                  Friends {friendsCount || '0'}
-                </Text></TouchableOpacity>
-            </View>
-
-            {/* التقدم */}
-            <View style={{ flex: 1, alignItems: 'center', left: 18 }}>
-              <Text style={{
-                fontSize: 18,
-                fontWeight: 'bold',
-                color: isNightMode ? Colors.fourhColor : Colors.gray
-              }}>
-                {userProgress || 'Beginner'}
-              </Text>
-            </View>
-
-            {/* قائمة الإنجازات */}
-            <View style={{ flex: 1, alignItems: 'center', left: 19 }}>
-              <MaterialIcons
-                name="emoji-events"
-                size={24}
-                color={isNightMode ? Colors.fourhColor : Colors.gold}
-              />
-            </View>
-
           </View>
 
           <View style={[styles.divider, { height: 3 }]} />
@@ -3412,18 +3455,83 @@ return;
           <View style={[styles.divider, { height: 3 }]} />
 
           {/* بطاقة Recommendation */}
+     
           <View style={[styles.card, { backgroundColor: isNightMode ? Colors.black : Colors.primary }]}>
-            <View style={styles.cardHeader}>
-              <Text style={[styles.cardTitle, { color: isNightMode ? Colors.primary : Colors.black }]}>Recommendation</Text>
-              <View style={styles.actionButtons}>
-                <TouchableOpacity onPress={() => openModal('recommendation')} style={styles.smallButton}>
-                  <Text style={styles.smallButtonText}>Add</Text>
-                </TouchableOpacity>
+  <View style={styles.cardHeader}>
+    <Text style={[styles.cardTitle, { color: isNightMode ? Colors.primary : Colors.black }]}>
+      Review
+    </Text>
+  </View>
+
+  {/* عرض التوصيات فقط إذا كانت موجودة */}
+  <View style={styles.experienceItem}>
+  {Array.isArray(recommendation) && recommendation.length > 0 && recommendation.slice(0, 2).map((rec, index) => (
+    <View key={index}>
+      <TouchableOpacity   
+       onPress={() => {{
+        navigateToSeniorProfile(rec.author.id); // الانتقال
+  }}}
+     style={styles.authorContainer}>
+        {/* عرض صورة المؤلف */}
+        <Image source={{ uri: rec.author.profilePicture.secure_url }} style={styles.authorImage} />
+        <View>
+          {/* اسم المؤلف */}
+        <Text style={styles.recommendationAuthor}>{rec.author.fullName}</Text>
+          <Text style={styles.dateText}>
+  {moment(rec.date).format('DD MMM YYYY, hh:mm A')}
+</Text>
+          {/* النص الخاص بالتوصية */}
+          <Text style={styles.recommendationText}>{rec.text}</Text>
+        </View>        
+
+      </TouchableOpacity>
+    </View>
+  ))}
+<View style={styles.divider2}></View>
+  {/* عرض المهارات والتقييمات داخل نفس البطاقة */}
+  {Array.isArray(skillsRecommendation) && skillsRecommendation.length > 0 && (
+    <View style={styles.skillsContainer}>
+      {skillsRecommendation.slice(0, 2).map((skill, index) => (
+        <View key={index} style={styles.skillCard}>
+          <Text style={styles.projectName}>{skill.projectName}</Text>
+          
+          {Array.isArray(skill.reviews) && skill.reviews.length > 0 && skill.reviews.map((review, reviewIndex) => (
+            <View key={reviewIndex} style={{ flexDirection: 'row', alignItems: 'center',justifyContent:'space-between' }}>
+              {/* اسم السينيور (الذي قام بالتقييم) */}
+
+              <Text style={styles.seniorName}>{review.skillName}</Text>
+              {/* تقييم النجوم */}
+              <View style={[styles.starRating,{justifyContent:'space-between'}]}>
+                {[1, 2, 3, 4, 5].map((starIndex) => (
+                  <TouchableOpacity
+                    key={starIndex}
+                    onPress={() => {
+                      const updatedSkills = [...skillsRecommendation];
+                      updatedSkills[index].reviews[reviewIndex].rating = starIndex;
+                      setSkillsRecommendation(updatedSkills);
+                    }}
+                  >
+                    <MaterialCommunityIcons
+                      name={starIndex <= review.rating ? 'star' : 'star-outline'}
+                      size={20}
+                      color={starIndex <= review.rating ? '#F7A8B8' : isNightMode ? Colors.primary : Colors.black}
+                    />
+                  </TouchableOpacity>
+                ))}
               </View>
             </View>
-          </View>
+          ))}
+        </View>
+      ))}
+    </View>
+  )}</View>
+</View>
 
-          <View style={[styles.divider, { height: 3 }]} />
+
+
+<View style={[styles.divider, { height: 3 }]} />
+
+
 
           {/* Modal لكل بطاقة */}
           <Modal animationType="slide" transparent={true} visible={modalVisible} onRequestClose={closeModal}>
@@ -4042,7 +4150,7 @@ return;
           <View style={{ flex: 1, marginBottom: 50 }}>
             {/* قائمة التبويبات */}
             <View style={styles.tabContainer}>
-              {['Messages', 'Connect', 'Posts', 'Request'].map((tab) => (
+              {['Posts',].map((tab) => (
                 <TouchableOpacity
       key={tab}
       onPress={() => handleTabPress(tab)}
@@ -4061,7 +4169,6 @@ return;
             {/* عرض محتوى التبويب المختار */}
             {/* عرض محتوى التبويب المختار */}
       <View style={[styles.content, { backgroundColor: isNightMode ? Colors.black : Colors.primary }]}>
-        {activeTab === 'Messages' && <Text style={[styles.tabContent, { color: isNightMode ? Colors.primary : Colors.black }]}>Messages Content</Text>}
         {activeTab === 'Connect' && <Text style={[styles.tabContent, { color: isNightMode ? Colors.primary : Colors.black }]}>Connect Content</Text>}
         {activeTab === 'Posts' && 
   posts.map((post, index) => (
@@ -4653,7 +4760,8 @@ return;
           const isOwner = item.UserId === currentUserId; // تحقق إن كان صاحب الحساب
           return (
             <View style={[styles.commentItem, isNightMode && styles.commentItemDark]}>
-              <TouchableOpacity onPress={() => handleProfilePress(item.UserId)}>
+              <TouchableOpacity onPress={() => navigation.navigate('ViewOtherProfile', { userData: item.UserId})} // تمرير بيانات المستخدم
+>
                 {item.PictureProfile && item.PictureProfile.secure_url && (
                   <Image
                     source={{ uri: item.PictureProfile.secure_url }}
@@ -4891,7 +4999,7 @@ const styles = StyleSheet.create({
   fullName: {
     right: width * 0.21, // تخصيص المسافة بناءً على ارتفاع الشاشة
     top: height * -0.003, // تخصيص المسافة بناءً على ارتفاع الشاشة
-    fontSize: 20,
+    fontSize: 25,
     fontWeight: 'bold',
   },
   userName: {
@@ -5686,7 +5794,83 @@ container: {
 },
 backButton: {
   marginRight: 10,
+}, 
+recommendationText: {
+  fontSize: 16,
+  color: '#000',fontWeight:'bold'
 },
+recommendationAuthor: {
+  fontSize: 14,
+  color: '#777',
+  marginTop: 5,
+},
+
+projectName: {
+  fontSize: 14,
+  fontWeight: 'bold',
+  color: '#333',
+},
+reviewContainer: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+},
+seniorImage: {
+  width: 40,
+  height: 40,
+  borderRadius: 20,
+  marginRight: 10,
+},
+seniorName: {
+  fontSize: 16,
+  color: '#333',
+  flex: 1,
+},
+starRating: {
+  flexDirection: 'row',
+  alignItems: 'center',
+},authorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  authorImage: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 10,
+  },
+  recommendationAuthor: {
+    fontWeight: 'bold',
+  },
+  recommendationText: {
+    fontSize: 14,
+    color: '#000',
+  },
+  skillsContainer: {
+  },
+  skillCard: {
+    marginBottom: 15,
+  },
+  projectName: {
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  reviewContainer: {
+    marginTop: 5,
+  },
+  seniorName: {
+    fontSize: 14,
+    color: '#000',
+  },
+  starRating: {
+    flexDirection: 'row',
+    marginTop: 5,
+  },dateText: {
+    fontSize: 10,              // حجم الخط
+    color: '#333',             // اللون (يمكنك تخصيصه حسب التصميم)
+    fontFamily: 'Arial',       // الخط المستخدم (اختياري)
+  },
 });
 
 

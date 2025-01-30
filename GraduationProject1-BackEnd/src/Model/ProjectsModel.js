@@ -151,6 +151,7 @@ const ProjectsSchema = new Schema(
         SkillId: { type: Number, required: true },
         UserId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
         NewRatingSkill: { type: Number, required: true, min: 1, max: 5 },
+        skillName: { type: String }, 
       },
     ],
     created_at: {
