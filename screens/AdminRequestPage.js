@@ -21,6 +21,7 @@ import { decode as atob } from 'base-64'; // إذا كنت تستخدم React Na
 import './../compnent/webCardStyle.css';
 import {
     Colors,
+    ButtonText,
     Card,
     ContainerCard,
     UserIMg,
@@ -32,11 +33,12 @@ import {
     PostIMg,
     ReactionOfPost,
     Interaction,
+    StyledButton,
     InteractionText,
 } from './../compnent/Style'
 import ImageViewer from 'react-native-image-zoom-viewer';
 // Color constants
-const { secondary, primary, careysPink, darkLight, fourhColor, tertiary, fifthColor } = Colors;
+const { secondary, primary, careysPink, darkLight,brand ,fourhColor, tertiary, fifthColor } = Colors;
 const { width } = Dimensions.get('window');
 import * as WebBrowser from 'expo-web-browser'
 
@@ -60,8 +62,49 @@ export default function AdminRequestPage({ navigation, route}) {
      
           const nav = useNavigation();
       
-
-      
+      // Test Data
+          const seniorData = [
+            {
+              name: 'Jihad Awwad',
+              email: 'jihad165@example.com',
+              phone: '+9709876578',
+              previousExperiences: '7 years in DevOps',
+              motivation: 'Automation enthusiast',
+              contribution: 'Optimized CI/CD pipelines',
+              certifications: 'AWS DevOps Engineer',
+              major: 'Computer Engineering' 
+            },
+            {
+              name: 'Yazan Awwad',
+              email: 'yazan187@example.com',
+              phone: '+970946829965',
+              previousExperiences: '3 years in Mobile Development',
+              motivation: 'Enjoys solving complex problems',
+              contribution: 'Developed a successful fintech app',
+              certifications: 'Google Associate Android Developer',
+              major: 'Software Engineering' 
+            },
+            {
+              name: 'Aws Awwad',
+              email: 'aws301@example.com',
+              phone: '+97094178654',
+              previousExperiences: '5 years in Software Development',
+              motivation: 'Passionate about AI and ML',
+              contribution: 'Led a team of 10 developers',
+              certifications: 'AWS Certified Solutions Architect',
+              major: 'Computer Science' 
+            },
+            {
+              name: 'Bara Awwad',
+              email: 'bara83@example.com',
+              phone: '+970999865135',
+              previousExperiences: '6 years in Frontend Development',
+              motivation: 'Loves UI/UX design',
+              contribution: 'Built scalable React applications',
+              certifications: 'Certified UI/UX Designer',
+              major: 'Information Technology' 
+            },
+          ];
 
 
  return(
@@ -167,6 +210,84 @@ export default function AdminRequestPage({ navigation, route}) {
 </View></>
       )}
 
+
+<ScrollView style={{ marginTop: Platform.OS === 'web' ? 70 : 20 }}>
+      <View style={{ flex: 1, padding: 20, backgroundColor: isNightMode ? '#333' : 'transparent' }}>
+        <FlatList
+          data={seniorData}
+          numColumns={2} // يعرض عنصرين في كل صف
+          keyExtractor={(item, index) => index.toString()}
+          renderItem={({ item: senior }) => (
+            <View style={{
+              flex: 1,
+              margin: 10,
+              backgroundColor: isNightMode ? '#444' : '#fff',
+              borderRadius: 16,
+              padding: 20,
+              elevation: 3,
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.2,
+              shadowRadius: 5
+            }}>
+              <Text style={{ fontSize: 20, fontWeight: 'bold', color: isNightMode ? '#fff' : '#334664' }}>{senior.name}</Text>
+              <Text style={{ fontSize: 16, color: isNightMode ? '#ddd' : '#000' }}>Email: {senior.email}</Text>
+              <Text style={{ fontSize: 16, color: isNightMode ? '#ddd' : '#000' }}>Phone: {senior.phone}</Text>
+              <Text style={{ fontSize: 16, color: isNightMode ? '#ddd' : '#000' }}>Experience: {senior.previousExperiences}</Text>
+              <Text style={{ fontSize: 16, color: isNightMode ? '#ddd' : '#000' }}>Motivation: {senior.motivation}</Text>
+              <Text style={{ fontSize: 16, color: isNightMode ? '#ddd' : '#000' }}>Contribution: {senior.contribution}</Text>
+              <Text style={{ fontSize: 16, color: isNightMode ? '#ddd' : '#000' }}>Major: {senior.major}</Text>
+              <TouchableOpacity style={{ marginTop: 10, padding: 10, backgroundColor: '#9EABCB', borderRadius: 8 }}>
+                <Text style={{ color: '#fff', textAlign: 'center' }}>View Certifications</Text>
+              </TouchableOpacity>
+
+              {/* تصميم أزرار الموافقة والرفض */}
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 10 }}>
+                <TouchableOpacity
+                  style={{
+                    flex: 1,
+                    marginRight: 5,
+                    padding: 10,
+                    backgroundColor: brand,
+                    borderRadius: 8,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    elevation: 2,
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 1 },
+                    shadowOpacity: 0.2,
+                    shadowRadius: 2
+                  }}
+                >
+                  <Text style={{ color: '#fff', fontWeight: 'bold' }}>Accept</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={{
+                    flex: 1,
+                    marginLeft: 5,
+                    padding: 10,
+                    backgroundColor: fifthColor,
+                    borderRadius: 8,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    elevation: 2,
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 1 },
+                    shadowOpacity: 0.2,
+                    shadowRadius: 2
+                  }}
+                >
+                  <Text style={{ color: '#fff', fontWeight: 'bold' }}>Reject</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+        />
+      </View>
+    </ScrollView>
+
+    
         </View>
     </TouchableWithoutFeedback>
     
