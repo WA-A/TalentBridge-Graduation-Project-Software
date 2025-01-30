@@ -219,6 +219,37 @@ export default function AdminRequestPage({ navigation, route}) {
                             handleGetRequestSeniorToAdmin
                           }, []);
 
+                          const handleAdminAcceptSeniorRequest = async (UserId) => {
+                            try {
+                              const baseUrl = Platform.OS === 'web'
+                                ? 'http://localhost:3000'
+                                : 'http://192.168.1.239:3000';
+                          
+                              console.log('Sending PUT request to accept senior request...');
+                          
+                              const response = await fetch(`${baseUrl}/admin/acceptseniorrequest/${UserId}`, {
+                                method: 'PATCH', 
+                                headers: {
+                                  'Content-Type': 'application/json', 
+                                },
+                              });
+                          
+                              if (!response.ok) {
+                                const errorData = await response.json();
+                                throw new Error(errorData.message || 'Something went wrong');
+                              }
+                          
+                              const result = await response.json();
+                              console.log('Senior request accepted successfully:', result);
+                          
+                              alert('Senior request accepted successfully!');
+                              return result.user; 
+                            } catch (error) {
+                              console.error('Error accepting senior request:', error);
+                              alert(`Error: ${error.message}`); 
+                              throw error; 
+                            }
+                          };
  return(
   
 <TouchableWithoutFeedback >
@@ -371,7 +402,7 @@ export default function AdminRequestPage({ navigation, route}) {
                     shadowRadius: 2
                   }}
                 >
-                  <Text style={{ color: '#fff', fontWeight: 'bold' }}>Accept</Text>
+                  <Text style={{ color: '#fff', fontWeight: 'bold' }} onPress={handleAdminAcceptSeniorRequest}>Accept</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
