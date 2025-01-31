@@ -138,7 +138,6 @@ export const SendCode = async (req, res) => {
     }    
 
     await SendEmail(Email, `Reset Password`, `<h2>Code is ${Code}</h2>`);
-    await SendNotification("6748a0f4981726b143898388",Email, `Reset Password Notfication`, `<h2>Code is ${Code}</h2>`);
     return res.status(200).json({ message: "Success", user });
 };
 
