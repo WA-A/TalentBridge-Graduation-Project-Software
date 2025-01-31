@@ -31,6 +31,8 @@ export default function  ThePlaneProjectJunior ({ navigation, route }) {
     const closeModalProject = () => {
       setModalVisibleProject(false);
     };
+      const [seniorUser,setUserSEnior]=useState('');
+
 
   const { projectId,taskIDD,sumid} = route.params;  // الحصول على projectId من التنقل
   const [showJuniorList, setShowJuniorList] = useState(false);
@@ -207,7 +209,12 @@ const [project,setProject]=useState();
     
     const toggleModal = () => setIsModalVisible(!isModalVisible);
   
+ const [recommendation, setRecommendation] = useState("");
 
+    const handleRecommendationChange = (text) => {
+      setRecommendation(text);
+      console.log("Recommendation text:", text);
+    };
       const [selectedFilters, setSelectedFilters] = useState({
         projectName: "",
         seniorName: "",
@@ -321,58 +328,59 @@ const [project,setProject]=useState();
       
         };
         const handleFilter = async () => {
-          console.log(selectedFilters.maxPrice);
-          try {
-            const token = await AsyncStorage.getItem("userToken"); // استرجاع التوكن
-            if (!token) {
-              setError("Token not found. Please log in.");
-              return;
-            }
         
-            // بناء استعلام الفلاتر بناءً على الفلاتر المحددة
-            const queryParams = new URLSearchParams({
-              ...(selectedFilters.projectName && { projectName: selectedFilters.projectName }),
-              ...(selectedFilters.minPrice !='undefined' &&
-                selectedFilters.maxPrice != 'undefined' && {
-                  priceRange: `${selectedFilters.minPrice}-${selectedFilters.maxPrice}`,
-                }),              ...(selectedFilters.seniorName && { seniorName: selectedFilters.seniorName }),
-              ...(selectedFilters.field && { FieldId: selectedFilters.field }),
-              ...(selectedFilters.status && { status: selectedFilters.status }),
-            }).toString();
-        
-            const response = await fetch(`${baseUrl}/project/filterprojects?${queryParams}`,
-              {
-                method: "GET",
-                headers: {
-                  Authorization: `Wasan__${token}`,
-                },
-              }
-            );
-        
-            if (!response.ok) {
-              const errorData = await response.json();
-              throw new Error(errorData.message || "Failed to fetch projects.");
-            }
-        
-            const data = await response.json(); // تحويل الرد إلى JSON
-            setProject(data.projects);
-            if(data.projects.filteredProjects == null){
-              console.log(data.message);
-              setProject(null);
-            }
-            console.log('Fetched Project:', data.projects); // تحقق من البيانات
-                  setModalVisible(false);
-          } catch (error) {
-            console.error('Error fetching Project:', error.message);
-          }
+           
         };
         
         const applyFilters = () => {
-          console.log('Filters applied:', selectedFilters);
+         
           handleFilter(); // استدعاء دالة الفلترة التي تقوم بإرسال الفلاتر إلى الخادم
           toggleModal(); // إغلاق المودال بعد تطبيق الفلاتر
         };
-         
+        const handleSubmitRecommendation = async (text,userId) => {
+          if (!text) {
+            alert("Please enter text!");
+            return;
+          }
+        console.log("texxxxxxxxxxx",text,userId);
+          try {
+            const token = await AsyncStorage.getItem("userToken");
+            if (!token) {
+              console.error("Token not found");
+              alert("You are not authorized. Please log in.");
+              return;
+            }
+        
+            // إعداد البيانات لإرسالها
+            const payload = { "text":text,"juniorID":userId }; // إرسال النص ككائن
+        
+            // إرسال الطلب إلى الخادم
+            const response = await fetch(`${baseUrl}/user/addrecommendations`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Wasan__${token}`,
+              },
+              body: JSON.stringify(payload), // إرسال النص كجزء من كائن
+            });
+        
+            // التحقق من نجاح الطلب
+            const responseData = await response.json();
+            if (!response.ok) {
+              throw new Error(responseData.message || "Failed to submit the recommendation.");
+            }
+        
+            // عرض رسالة النجاح
+            alert("Recommendation submitted successfully!");
+            console.log("Recommendation response:", responseData);
+          } catch (error) {
+            console.error("Error while submitting recommendation:", error.message);
+            alert(`Error: ${error.message}`);
+          }
+        };
+
+
+
         const GetProjectsByField = async (id) => {
           console.log(id);
           try {
@@ -459,7 +467,6 @@ const [project,setProject]=useState();
     }
   };
 
-
   const handleShowAllTaskToJunior = async () => {
     try {
       const token = await AsyncStorage.getItem('userToken'); // استرجاع التوكن
@@ -484,7 +491,7 @@ const [project,setProject]=useState();
       const data = await response.json(); // تحويل الرد إلى JSON
       console.log(data.review);
       setProject(data.review);
-
+      setUserSEnior(data.senior);
  //     console.log('Fetched Project:', data.tasks); // تحقق من البيانات
 
     } catch (error) {
@@ -916,7 +923,7 @@ const [project,setProject]=useState();
       borderRadius: 20,
       opacity: 0.7,
     }}>
-     Project Task
+     Task review
     </Text>
     
   </TouchableOpacity>
@@ -943,15 +950,7 @@ const [project,setProject]=useState();
   />
 </TouchableOpacity>
 
-    <TouchableOpacity onPress={toggleModal}>
-      <Feather
-        name="sliders"
-        size={25}
-        color={fifthColor}
-        style={{ rotate: '90deg' }} // تحويل الأيقونة لتكون عمودية
-      />
-
-    </TouchableOpacity>
+   
   </View>
 </View>
 <View style={styles.divider1} />
@@ -1073,157 +1072,29 @@ const [project,setProject]=useState();
     >
       <View style={styles.modalContainer}>
         <View style={styles.modalContent}>
-          <Text style={styles.modalTitle}>Filter Options</Text>
+          <Text style={styles.modalTitle}>Recommendation</Text>
 
           {/* قائمة اختيار الفلاتر */}
           <View >
-            <Text style={styles.label}>Select Filters:</Text>
-            {["Project Name", "Senior Name", "Price Range", "Field", "Status"].map(
-              (type) => (
-                <TouchableOpacity
-                  key={type}
-                  style={[
-                    styles.filterOption,
-                    activeFilters.includes(type) && styles.activeFilterOption,
-                  ]}
-                  onPress={() => toggleFilter(type)}
-                >
-                  <Ionicons
-                    name={
-                      activeFilters.includes(type) ? "checkbox" : "square-outline"
-                    }
-                    size={24}
-                    color={activeFilters.includes(type) ? Colors.tertiary : Colors.brand}
-                  />
-                  <Text style={styles.filterText}>{type}</Text>
-                </TouchableOpacity>
-              )
-            )}
+              <View style={styles.reviewInput}>
+                          <TextInput
+                            placeholder="Write your recommendation to Senior..."
+                            style={styles.recommendationInput}
+                            onChangeText={(text) =>
+                              handleRecommendationChange(text)
+                            }
+                          />
+                        </View>
           </View>
           <View style={styles.divider} />
 
-          {/* حقول الفلاتر النشطة */}
-                         {/* حقول الفلاتر النشطة */}
-                         {activeFilters.includes("Project Name") ? (
-          <View style={styles.filterOptionContainer}>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter project name"
-              value={selectedFilters.projectName}
-              onChangeText={(text) =>
-                setSelectedFilters((prev) => ({ ...prev, projectName: text }))
-              }
-            />
-          </View>
-        ) : (
-          selectedFilters.projectName !== "" &&   setSelectedFilters((prev) => ({ ...prev, projectName : "" }))
-        
-        )}
-        
-        {activeFilters.includes("Senior Name") ? (
-          <View style={styles.filterOptionContainer}>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter senior name"
-              value={selectedFilters.seniorName}
-              onChangeText={(text) =>
-                setSelectedFilters((prev) => ({ ...prev, seniorName: text }))
-              }
-            />
-          </View>
-        ) : (
-          selectedFilters.seniorName !== "" &&
-          setSelectedFilters((prev) => ({ ...prev, seniorName: "" }))
-        )}
-        
-               
-        {activeFilters.includes("Price Range") ? (
-          <View style={styles.filterOptionContainer}>
-            <Text style={styles.label}>Price Range (in $):</Text>
-            <View style={styles.priceRange}>
-              <Text style={styles.priceLabel}>${selectedFilters.minPrice}</Text>
-              <Slider
-                style={{ flex: 1 }}
-                minimumValue={0}
-                maximumValue={1000}
-                value={selectedFilters.minPrice}
-                onValueChange={(value) =>
-                  setSelectedFilters((prev) => ({
-                    ...prev,
-                    minPrice: Math.round(value),
-                  }))
-                }
-              />
-              <Text style={styles.priceLabel}>${selectedFilters.maxPrice}</Text>
-              <Slider
-                style={{ flex: 1 }}
-                minimumValue={0}
-                maximumValue={1000}
-                value={selectedFilters.maxPrice}
-                onValueChange={(value) =>
-                  setSelectedFilters((prev) => ({
-                    ...prev,
-                    maxPrice: Math.round(value),
-                  }))
-                }
-              />
-            </View>
-          </View>
-        ) : (
-          (selectedFilters.minPrice !== 0 || selectedFilters.maxPrice !== 1000) &&
-          setSelectedFilters((prev) => ({
-            ...prev,
-            minPrice: 0,
-            maxPrice: 1000,
-          }))
-        )}
-          {activeFilters.includes("Field") && (
-            
-            <View style={styles.filterOptionContainer}>
-              <View >
-          <TouchableOpacity onPress={() =>openModal('Feild')}>
-          <Text style={{
-    fontWeight: 'bold',
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    borderRadius: 8,
-    opacity: 0.7,
-  }}>
-Select Field           </Text>
-          </TouchableOpacity>
-        </View>
-              
-            </View>
-          )}
-
-          {activeFilters.includes("Status") && (
-            <View style={styles.filterOptionContainer}>
-              <Text style={styles.label}>Select Status:</Text>
-              {["Open", "In Progress", "Completed"].map((status) => (
-                <TouchableOpacity
-                  key={status}
-                  style={[
-                    styles.statusOption,
-                    selectedFilters.status === status && styles.selectedStatus,
-                  ]}
-                  onPress={() =>
-                    setSelectedFilters((prev) => ({ ...prev, status }))
-                  }
-                >
-                
-                  <Text style={styles.statusText}>{status}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-            
-          )}
+       
 
           {/* أزرار التحكم بالمودال */}
           <View style={styles.modalButtons}>
             <TouchableOpacity
               onPress={() => {
                 toggleModal();
-                resetFilters();
               }}
               style={styles.cancelButton}
             >
@@ -1231,7 +1102,9 @@ Select Field           </Text>
               <Text style={styles.buttonText}>Cancel</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              onPress={applyFilters}
+              onPress={()=>{handleSubmitRecommendation(recommendation,seniorUser); // إرسال التوصيات
+              toggleModal();
+              }}
               style={styles.applyButton}
             >
               <Ionicons name="checkmark-circle" size={24} color= {fifthColor} />
@@ -1339,7 +1212,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalContainer: {
-    width: '90%',
+    width: '10%',
     backgroundColor: '#fff',
     borderRadius: 10,
     padding: 20,
@@ -1523,10 +1396,10 @@ closeButtonText: {
   modalContainer: {
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'center'
+    alignItems: 'center',
   },
   modalContent: {
-    width: '90%',
+    width: '100%',
     padding: 20,
     backgroundColor: 'white',
     borderRadius: 10,

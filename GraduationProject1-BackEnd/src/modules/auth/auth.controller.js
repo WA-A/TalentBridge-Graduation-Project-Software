@@ -72,7 +72,7 @@ export const SignUp = async (req, res) => {
                 PhoneNumber,
                 Location,
                 YearsOfExperience,
-                Field: [{ id: fieldToAdd.id, sub_specialization: fieldToAdd.sub_specialization, code: fieldToAdd.code }],
+                Fields: [{ id: fieldToAdd.id, sub_specialization: fieldToAdd.sub_specialization, code: fieldToAdd.code }],
                 Skills: skillsWithRate.map(skill => ({
                     id: skill.id,
                     name: skill.name,

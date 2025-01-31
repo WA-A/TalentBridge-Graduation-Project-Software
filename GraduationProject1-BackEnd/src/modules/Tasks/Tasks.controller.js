@@ -749,6 +749,7 @@ export const GetReviewForTaskSubmission = async (req, res) => {
       return res.status(200).json({
         message: "Review found successfully",
         review: submission.Review,
+        senior: project.CreatedBySenior,
       });
     } catch (error) {
       console.error("Error retrieving review for task submission:", error.message);

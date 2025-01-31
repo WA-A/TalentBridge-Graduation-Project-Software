@@ -642,7 +642,38 @@ const [project,setProject]=useState();
           }
         };    
         
-        
+        const endProject = async () => {
+          const token = await AsyncStorage.getItem('userToken');
+          if (!token) {
+              console.error('Token not found');
+              return;
+          }
+      
+          try {
+              // إرسال البيانات كـ JSON بدلاً من FormData
+             
+      
+              // إرسال الطلب إلى الخادم
+              const response = await fetch(`${baseUrl}/project/UpdateProjectStatusToCompleted/${projectId}`, {
+                  method: 'PUT',
+                  headers: {
+                      'Authorization': `Wasan__${token}`,
+                      'Accept': 'application/json',
+                  },
+              });
+      
+              // التحقق من استجابة الخادم
+      
+              if (!response.ok) {
+                  const errorData = await response.json();
+                  throw new Error(errorData.message || 'Failed to update project');
+              }
+              const result = await response.json();
+          } catch (error) {
+              console.error('Error Update:', error.message);
+          }
+      };
+      
         const handleUpdateTask = async (values) => {
           console.log("taskID",taskID);
           const token = await AsyncStorage.getItem('userToken');
@@ -962,25 +993,12 @@ const [project,setProject]=useState();
   {/* أيقونة الفلتر */}
   <View style={{ position: 'absolute', right: 10,  flexDirection: 'row',  // عرض النص والأيقونة بشكل أفقي
   alignItems: 'center', }}>
- <TouchableOpacity  onPress={toggleModal}>
-  <Fontisto
-    name="preview"
-    size={25}
-    color={fourhColor}
-    style={{ marginRight: 6 }}  // المسافة بين النص والأيقونة
-
-  />
-</TouchableOpacity>
-
-    <TouchableOpacity onPress={toggleModal}>
-      <Feather
-        name="sliders"
-        size={25}
-        color={fifthColor}
-        style={{ rotate: '90deg' }} // تحويل الأيقونة لتكون عمودية
-      />
-
-    </TouchableOpacity>
+   <TouchableOpacity
+        style={styles.actionButtonCancle}
+        onPress={() => endProject()}
+        >
+        <Text style={styles.actionButtonText}>End Project</Text>
+      </TouchableOpacity>
   </View>
 </View>
 <View style={styles.divider1} />
@@ -1257,22 +1275,26 @@ const [project,setProject]=useState();
                 {calculateDaysLeft(moment(), task.EndDate)}
               </Text>
               <View style={styles.divider1} />
-              <View style={styles.taskActions}>
-                <TouchableOpacity
-                  style={styles.actionButton}
-                  onPress={() => {
-                    setTaskId(task._id);             // استدعاء الدالة الثانية
-                    consthandleshowModalTas(); // استدعاء الدالة الأولى
-                       }}                 >
-                  <Text style={styles.actionButtonText}>Start Task</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.actionButton}
-                  onPress={() => completeTask(task._id)}
-                >
-                  <Text style={styles.actionButtonText}>End Task</Text>
-                </TouchableOpacity>
-              </View>
+              {task.TaskStatus !== "Completed" && (
+  <View style={styles.taskActions}>
+    <TouchableOpacity
+      style={styles.actionButton}
+      onPress={() => {
+        setTaskId(task._id);
+        consthandleshowModalTas();
+      }}
+    >
+      <Text style={styles.actionButtonText}>Start Task</Text>
+    </TouchableOpacity>
+    <TouchableOpacity
+      style={styles.actionButton}
+      onPress={() => completeTask(task._id)}
+    >
+      <Text style={styles.actionButtonText}>End Task</Text>
+    </TouchableOpacity>
+  </View>
+)}
+
             </View>
           </View>
 
@@ -2106,6 +2128,12 @@ filterOption: {
     paddingVertical: 8,
     paddingHorizontal: 30,
     borderRadius: 10,
+  },
+  actionButtonCancle: {
+    backgroundColor: "red",
+    paddingVertical: 3,
+    paddingHorizontal: 15,
+    borderRadius: 8,
   },
   actionButtonSelect: {
     backgroundColor: Colors.fifthColor,

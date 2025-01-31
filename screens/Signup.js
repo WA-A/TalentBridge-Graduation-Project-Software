@@ -9,6 +9,7 @@ import { Colors, StyledContainer, InnerContainer, PageLogo, StyledFormArea, Styl
 import axios from 'axios';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useNotification } from "./../contex/NotificationContext";
 
 // استيراد مكتبة DatePicker  فقط للويب
 let DatePicker;
@@ -26,6 +27,7 @@ export default function Signup({ navigation }) {
     const [gender, setGender] = useState('');
     const [BirthDate, setDateOfBirth] = useState(new Date());
     const [isDatePickerVisible, setIsDatePickerVisible] = useState(false);
+    const { notification, expoPushToken, error } = useNotification();
 
     // التعامل مع التاريخ على الموبايل
     const handleDateConfirm = (event, date) => {
@@ -203,6 +205,7 @@ export default function Signup({ navigation }) {
 
     // Join Api With FrontPage 
     const handleSignup = async (values) => {
+        console.log(selectedJob);
         try {
             const selectedSkillsData = selectedSkills.map(skill => ({
                 SkillId: skill.id,
@@ -267,20 +270,28 @@ export default function Signup({ navigation }) {
             console.log('User registered successfully:', result);
     
             if (result.token) {
-                await AsyncStorage.setItem('userToken', result.token);
-                console.log('User token saved successfully!');
-    
+                await AsyncStorage.setItem('userToken', result.token); // تخزين التوكين محليًا
+                console.log('Token saved successfully');
+          
                 if (userType === 'Senior') {
                     console.log('Senior user registered with status Pending');
-                    navigation.navigate('RequestToSeniorPage');
+                    navigation.navigate('RequestSeniorToAdminPage');
                 } else {
                     navigation.navigate('HomeScreen');
                 }
-            } else {
-                console.warn('No token found in response.');
+              } else {
+                console.warn('No token found in response');
+              }
+        
+          // حفظ expoPushToken إذا كان موجودًا
+          if (expoPushToken) {
+            try {
+              await AsyncStorage.setItem('expoPushToken', expoPushToken); // Save the token in AsyncStorage
+              console.log('Push token saved successfully after login');
+            } catch (error) {
+              console.error('Error saving push token:', error);
             }
-    
-           
+          }
     
         } catch (error) {
             console.error('Error in Signup Process:', error.message);

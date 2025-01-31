@@ -3308,21 +3308,8 @@ return;
           <View style={[styles.divider, { height: 3 }]} />
 
 
-          {/* بطاقة Project */}
-          <View style={[styles.card, { backgroundColor: isNightMode ? Colors.black : Colors.primary }]}>
-            <View style={styles.cardHeader}>
-              <Text style={[styles.cardTitle, { color: isNightMode ? Colors.primary : Colors.black }]}>Project</Text>
-              <View style={styles.actionButtons}>
-
-                <TouchableOpacity onPress={() => openModal('project')} style={styles.smallButton}>
-                  <Text style={styles.smallButtonText}>Add</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
 
 
-          <View style={[styles.divider, { height: 3 }]} />
 
 
           {/* بطاقة Skills */}
