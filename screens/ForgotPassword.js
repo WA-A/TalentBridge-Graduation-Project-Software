@@ -79,7 +79,7 @@ export default function ForgotPassword({ navigation }) {
 
 
 
-<Text>Bezier Line Chart</Text>
+{/* <Text>Bezier Line Chart</Text>
   <LineChart
     data={{
       labels: ["January", "February", "March", "April", "May", "June"],
@@ -122,7 +122,7 @@ export default function ForgotPassword({ navigation }) {
       marginVertical: 8,
       borderRadius: 16
     }}
-  />
+  /> */}
 
                 <Text style={{ fontSize: 18, marginBottom: 20 }}>Enter you'r email address: </Text>
                 <View style={{ position: 'relative', width: 300 }}>
