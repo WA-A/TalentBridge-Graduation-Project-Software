@@ -568,6 +568,7 @@ const [project,setProject]=useState();
        
 
         const handleAddTaskAssigneesAndFile = async (values) => {
+          console.log("dddd",selectedJuniors);
           const token = await AsyncStorage.getItem('userToken');
           if (!token) {
             console.error('Token not found');
@@ -583,6 +584,7 @@ const [project,setProject]=useState();
             selectedJuniors.forEach(junior => {
               formData.append('AssignedTo', junior);
             });
+
           }
           formData.append('SubmitTaskMethod',deliveryType);
           if (file) {
@@ -1054,6 +1056,7 @@ const [project,setProject]=useState();
     </TouchableOpacity>
 
     {/* تحديد تاريخ البداية */}
+
     <Text style={styles.label}>Start Date:</Text>
     {Platform.OS === "web" ? (
       <input
@@ -1201,7 +1204,7 @@ const [project,setProject]=useState();
                       renderItem={({ item }) => (
                         <TouchableOpacity
                           style={styles.juniorItem}
-                          onPress={() => handleSelectJunior(item._id)}
+                          onPress={() => handleSelectJunior(item.userId._id)}
                         >
                           <View style={styles.juniorTextContainer}>
                             <Text style={styles.juniorText}>
@@ -1209,7 +1212,7 @@ const [project,setProject]=useState();
                             </Text>
                             <Text style={styles.juniorRole}>{item.roleName}</Text>
                           </View>
-                          {selectedJuniors.includes(item._id) && (
+                          {selectedJuniors.includes(item.userId._id) && (
                             <Text style={styles.checkMark}>✔</Text>
                           )}
                         </TouchableOpacity>

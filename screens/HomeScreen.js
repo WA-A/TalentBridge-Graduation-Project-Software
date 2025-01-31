@@ -1383,7 +1383,7 @@ const handleGetAllPosts = async () => {
       ) : (
         <>
 
-    <View style={{ height: 0, backgroundColor: isNightMode ? "#000" : secondary,marginTop:7}} />
+    <View style={{ height: 0, backgroundColor: isNightMode ? "#000" : secondary,marginTop:25}} />
 
     {/* Header */}
     <View style={{

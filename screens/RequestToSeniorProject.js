@@ -125,7 +125,7 @@ console.log(projectId);
       const data = await response.json();
 
       console.log(data.project);
-      navigation.navigate('ThePlaneProjectSenior',{ projectId: projectId });
+      navigation.navigate('ThePlaneProjectSenior',{ projectId: projectId,juniors:applications });
     } catch (error) {
       console.error('Error updating Project :', error);
     }
@@ -407,7 +407,7 @@ console.log(projectId);
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.requestsCount}>
-          Total Requests: {applications ? applications.length : 0}/4
+          Total Requests: {applications ? applications.length : 0}/2
         </Text>
       </View>
       <View style={styles.divider3}></View>
