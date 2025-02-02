@@ -94,10 +94,14 @@ TalentBridge addresses the critical challenge faced by junior-level students who
 ---
 
 ## 🔗 External APIs
-- **Fields**: The senior can choose the field in which they want to train, and the junior can choose the field in which they will train. 🌐
-- **Skills**: The user, whether junior or senior, can choose their skills to display on their profile. 🛠️
-- **Languages**: The senior and junior can choose the languages they are proficient in to display on their profile. 🌍
-
+- **Fields Api**: The senior can choose the field in which they want to train, and the junior can choose the field in which they will train. 🌐
+  **API Reference**: [ISCO-08 API]
+  
+- **Skills API**: The user, whether junior or senior, can choose their skills to display on their profile. 🛠️
+  **API Reference**: [ESCO API (European Skills, Competences, Qualifications and Occupations)]
+  
+- **Languages API**: The senior and junior can choose the languages they are proficient in to display on their profile. 🌍
+**API Reference**: [REST Countries API]
 ---
 
 ## 🤝 Join Us with TalentBridge
